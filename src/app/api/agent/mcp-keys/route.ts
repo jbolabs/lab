@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 	if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 	const db = getDb(env);
 	const rows = await db.select({ id: apiKeys.id, name: apiKeys.name, prefix: apiKeys.prefix, scopes: apiKeys.scopes, lastUsedAt: apiKeys.lastUsedAt, createdAt: apiKeys.createdAt }).from(apiKeys).where(and(eq(apiKeys.userId, user.id), eq(apiKeys.kind, "mcp")));
-	const keys = rows.filter((key) => !parseScopes(key.scopes).some((scope) => ADMIN_SCOPES.has(scope)));
+	const keys = rows.filter((key) => !key.id.startsWith("oauth_") && !parseScopes(key.scopes).some((scope) => ADMIN_SCOPES.has(scope)));
 	const allowed = keys.length ? await db.select().from(mcpKeyMailboxes).where(inArray(mcpKeyMailboxes.keyId, keys.map((key) => key.id))) : [];
 	return Response.json({ keys: keys.map((key) => ({ ...key, mailboxIds: allowed.filter((row) => row.keyId === key.id).map((row) => row.mailboxId) })) });
 }

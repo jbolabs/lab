@@ -1,8 +1,8 @@
-import type { SessionUser } from "@/lib/auth/types";
+import type { users } from "@/db/schema";
 
 export type McpPrincipal = {
 	keyId: string;
-	user: SessionUser;
+	user: typeof users.$inferSelect;
 	scopes: string[];
 	mailboxIds: string[];
 };

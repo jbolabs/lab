@@ -2,7 +2,7 @@ import type { BackupTableGroupId, DatabaseBackupDocument, DatabaseBackupTable, D
 import { mergeLegacyMessageBodies } from "./utils";
 import { BACKUP_TABLE_GROUPS, getSelectedBackupTables } from "./table-groups";
 
-export const BACKUP_TABLES: DatabaseBackupTable[] = ["users", "domains", "mailboxes", "mailbox_access", "contacts", "folders", "api_keys", "messages", "message_attachments", "shared_attachment_links", "outbound_jobs", "routing_rules", "webhooks", "webhook_deliveries", "sessions", "audit_logs", "backup_settings", "backups", "app_settings", "license_settings", "email_templates", "calendar_events", "booking_events", "auto_reply_deliveries", "spam_token_stats", "spam_reputation", "spam_feedback", "mailbox_aliases", "password_reset_tokens", "mfa_recovery_codes", "login_challenges", "mailbox_agent_settings", "agent_conversations", "agent_chat_messages", "agent_jobs", "agent_draft_metadata", "agent_send_approvals", "mcp_key_mailboxes", "ai_usage", "drive_items", "drive_upload_parts", "drive_shares"];
+export const BACKUP_TABLES: DatabaseBackupTable[] = ["users", "domains", "mailboxes", "mailbox_access", "contacts", "folders", "api_keys", "messages", "message_attachments", "shared_attachment_links", "outbound_jobs", "routing_rules", "webhooks", "webhook_deliveries", "sessions", "audit_logs", "backup_settings", "backups", "app_settings", "license_settings", "email_templates", "calendar_events", "booking_events", "auto_reply_deliveries", "spam_token_stats", "spam_reputation", "spam_feedback", "mailbox_aliases", "password_reset_tokens", "mfa_recovery_codes", "login_challenges", "mailbox_agent_settings", "agent_conversations", "agent_chat_messages", "agent_jobs", "agent_draft_metadata", "agent_send_approvals", "mcp_key_mailboxes", "ai_usage", "drive_items", "drive_upload_parts", "drive_shares", "oauth_clients", "oauth_grants"];
 /**
  * Tables every backup document must contain. Tables added to BACKUP_TABLES
  * after the format shipped are absent from older documents, so they stay
@@ -24,6 +24,9 @@ export const INTERNAL_TABLE_PATTERNS = ["sqlite_%", "_cf%", "messages_fts%"];
  * restored, so it is neither exported nor part of the coverage check.
  */
 export const INTERNAL_TABLES = [
+	// OAuth codes, pending consent, token hashes and rate counters are short-lived credentials.
+	// Restore intentionally requires clients to authorize again; durable clients/grants are backed up.
+	"oauth_requests", "oauth_codes", "oauth_tokens", "oauth_rate_limits",
 	"d1_migrations",
 	// JMAP state counters, also derived: the jmap_messages_* triggers on
 	// `messages` insert and bump a row per mailbox as messages are restored.
@@ -80,7 +83,7 @@ export async function exportDatabaseRecords(db: D1Database, excludedGroups: Back
 	if (!includedTables.length) throw new Error("Select at least one backup table group");
 	const tables: DatabaseBackupDocument["tables"] = {};
 	for (const table of includedTables) {
-		if ((table === "shared_attachment_links" || table === "booking_events" || table.startsWith("drive_")) && !databaseTables.has(table)) {
+		if ((table === "shared_attachment_links" || table === "booking_events" || table.startsWith("drive_") || table.startsWith("oauth_")) && !databaseTables.has(table)) {
 			tables[table] = [];
 			continue;
 		}
@@ -108,7 +111,9 @@ export async function restoreDatabaseRecords(db: D1Database, content: ArrayBuffe
 		await db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('drive_items', 'drive_upload_parts', 'drive_shares')").all<{ name: string }>()
 	).results.map((row) => row.name);
 	if (["drive_items", "drive_upload_parts", "drive_shares"].some((table) => document.tables[table]?.length) && driveTableNames.length !== 3) throw new Error("Apply pending database migrations before restoring the Drive tables.");
-	const restoreTables = BACKUP_TABLES.filter((table) => (table !== "shared_attachment_links" || sharedLinksTable) && (table !== "booking_events" || bookingTable) && (!table.startsWith("drive_") || driveTableNames.includes(table)));
+	const oauthTableNames = (await db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('oauth_clients', 'oauth_grants')").all<{ name: string }>()).results.map((row) => row.name);
+	if ((document.tables.oauth_clients?.length || document.tables.oauth_grants?.length) && oauthTableNames.length !== 2) throw new Error("Apply pending database migrations before restoring OAuth connections.");
+	const restoreTables = BACKUP_TABLES.filter((table) => (table !== "shared_attachment_links" || sharedLinksTable) && (table !== "booking_events" || bookingTable) && (!table.startsWith("drive_") || driveTableNames.includes(table)) && (!table.startsWith("oauth_") || oauthTableNames.includes(table)));
 	const userColumns = new Set((await db.prepare("PRAGMA table_info(users)").all<{ name: string }>()).results.map((column) => column.name));
 	const bookingColumns = bookingTable ? new Set((await db.prepare("PRAGMA table_info(booking_events)").all<{ name: string }>()).results.map((column) => column.name)) : null;
 	for (const table of [...restoreTables].reverse()) await db.prepare(`DELETE FROM ${table}`).run();

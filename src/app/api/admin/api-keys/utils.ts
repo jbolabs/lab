@@ -38,7 +38,7 @@ export async function GET(request: Request) {
 		createdAt: apiKeys.createdAt,
 		lastUsedAt: apiKeys.lastUsedAt,
 	}).from(apiKeys).where(eq(apiKeys.userId, access.user!.id));
-	return NextResponse.json({ apiKeys: rows.map((row) => ({ ...row, scopes: scopesToJson(parseScopes(row.scopes).filter((scope) => adminScopes.has(scope))) })).filter((row) => parseScopes(row.scopes).length > 0) });
+	return NextResponse.json({ apiKeys: rows.filter((row) => !row.id.startsWith("oauth_")).map((row) => ({ ...row, scopes: scopesToJson(parseScopes(row.scopes).filter((scope) => adminScopes.has(scope))) })).filter((row) => parseScopes(row.scopes).length > 0) });
 }
 
 export async function POST(request: Request) {

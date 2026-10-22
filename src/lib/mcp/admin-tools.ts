@@ -9,6 +9,7 @@ import { GET as getAccount, PATCH as updateAccount } from "@/app/api/v1/accounts
 import { GET as listMailboxes, POST as createMailbox } from "@/app/api/v1/mailboxes/route";
 import { GET as getMailbox, PATCH as updateMailbox, DELETE as deleteMailbox } from "@/app/api/v1/mailboxes/[id]/route";
 import { GET as getStorage, POST as testStorage } from "@/app/api/v1/storage/route";
+import { attachMcpPrincipal } from "./admin-auth";
 import type { McpPrincipal } from "./types";
 
 const adminInput = z.object({
@@ -26,12 +27,12 @@ async function responseResult(response: Response) {
 	return result({ status: response.status, data }, !response.ok);
 }
 
-function adminRequest(baseUrl: string, path: string, authorization: string, method = "GET", data?: Record<string, unknown>) {
-	return new Request(new URL(path, baseUrl), {
+function adminRequest(baseUrl: string, path: string, authorization: string, principal: McpPrincipal, method = "GET", data?: Record<string, unknown>) {
+	return attachMcpPrincipal(new Request(new URL(path, baseUrl), {
 		method,
 		headers: { Authorization: authorization, ...(data ? { "Content-Type": "application/json" } : {}) },
 		...(data ? { body: JSON.stringify(data) } : {}),
-	});
+	}), principal);
 }
 
 export function registerAdminMcpTools(server: McpServer, principal: McpPrincipal, baseUrl: string, authorization: string) {
@@ -44,12 +45,12 @@ export function registerAdminMcpTools(server: McpServer, principal: McpPrincipal
 		const path = id ? `/api/v1/domains/${encodeURIComponent(id)}` : "/api/v1/domains";
 		try {
 			switch (action) {
-				case "list": return responseResult(await listDomains(adminRequest(baseUrl, path, authorization)));
-				case "get": return responseResult(await getDomain(adminRequest(baseUrl, path, authorization), { params: Promise.resolve({ id: id! }) }));
-				case "create": return responseResult(await createDomain(adminRequest(baseUrl, path, authorization, "POST", data ?? {})));
-				case "delete": return responseResult(await deleteDomain(adminRequest(baseUrl, path, authorization, "DELETE"), { params: Promise.resolve({ id: id! }) }));
-				case "dns": return responseResult(await getDomainDns(adminRequest(baseUrl, `${path}/dns`, authorization), { params: Promise.resolve({ id: id! }) }));
-				case "setup_dns": return responseResult(await setupDomainDns(adminRequest(baseUrl, `${path}/dns/setup`, authorization, "POST", data ?? {}), { params: Promise.resolve({ id: id! }) }));
+				case "list": return responseResult(await listDomains(adminRequest(baseUrl, path, authorization, principal)));
+				case "get": return responseResult(await getDomain(adminRequest(baseUrl, path, authorization, principal), { params: Promise.resolve({ id: id! }) }));
+				case "create": return responseResult(await createDomain(adminRequest(baseUrl, path, authorization, principal, "POST", data ?? {})));
+				case "delete": return responseResult(await deleteDomain(adminRequest(baseUrl, path, authorization, principal, "DELETE"), { params: Promise.resolve({ id: id! }) }));
+				case "dns": return responseResult(await getDomainDns(adminRequest(baseUrl, `${path}/dns`, authorization, principal), { params: Promise.resolve({ id: id! }) }));
+				case "setup_dns": return responseResult(await setupDomainDns(adminRequest(baseUrl, `${path}/dns/setup`, authorization, principal, "POST", data ?? {}), { params: Promise.resolve({ id: id! }) }));
 				default: return result({ error: "Unknown action" }, true);
 			}
 		} catch (error) { return result({ error: error instanceof Error ? error.message : "Domain action failed" }, true); }
@@ -64,10 +65,10 @@ export function registerAdminMcpTools(server: McpServer, principal: McpPrincipal
 		const path = id ? `/api/v1/accounts/${encodeURIComponent(id)}` : "/api/v1/accounts";
 		try {
 			switch (action) {
-				case "list": return responseResult(await listAccounts(adminRequest(baseUrl, path, authorization)));
-				case "get": return responseResult(await getAccount(adminRequest(baseUrl, path, authorization), { params: Promise.resolve({ id: id! }) }));
-				case "create": return responseResult(await createAccount(adminRequest(baseUrl, path, authorization, "POST", data ?? {})));
-				case "update": return responseResult(await updateAccount(adminRequest(baseUrl, path, authorization, "PATCH", data ?? {}), { params: Promise.resolve({ id: id! }) }));
+				case "list": return responseResult(await listAccounts(adminRequest(baseUrl, path, authorization, principal)));
+				case "get": return responseResult(await getAccount(adminRequest(baseUrl, path, authorization, principal), { params: Promise.resolve({ id: id! }) }));
+				case "create": return responseResult(await createAccount(adminRequest(baseUrl, path, authorization, principal, "POST", data ?? {})));
+				case "update": return responseResult(await updateAccount(adminRequest(baseUrl, path, authorization, principal, "PATCH", data ?? {}), { params: Promise.resolve({ id: id! }) }));
 				default: return result({ error: "Unknown action" }, true);
 			}
 		} catch (error) { return result({ error: error instanceof Error ? error.message : "Account action failed" }, true); }
@@ -82,11 +83,11 @@ export function registerAdminMcpTools(server: McpServer, principal: McpPrincipal
 		const path = id ? `/api/v1/mailboxes/${encodeURIComponent(id)}` : "/api/v1/mailboxes";
 		try {
 			switch (action) {
-				case "list": return responseResult(await listMailboxes(adminRequest(baseUrl, path, authorization)));
-				case "get": return responseResult(await getMailbox(adminRequest(baseUrl, path, authorization), { params: Promise.resolve({ id: id! }) }));
-				case "create": return responseResult(await createMailbox(adminRequest(baseUrl, path, authorization, "POST", data ?? {})));
-				case "update": return responseResult(await updateMailbox(adminRequest(baseUrl, path, authorization, "PATCH", data ?? {}), { params: Promise.resolve({ id: id! }) }));
-				case "delete": return responseResult(await deleteMailbox(adminRequest(baseUrl, path, authorization, "DELETE"), { params: Promise.resolve({ id: id! }) }));
+				case "list": return responseResult(await listMailboxes(adminRequest(baseUrl, path, authorization, principal)));
+				case "get": return responseResult(await getMailbox(adminRequest(baseUrl, path, authorization, principal), { params: Promise.resolve({ id: id! }) }));
+				case "create": return responseResult(await createMailbox(adminRequest(baseUrl, path, authorization, principal, "POST", data ?? {})));
+				case "update": return responseResult(await updateMailbox(adminRequest(baseUrl, path, authorization, principal, "PATCH", data ?? {}), { params: Promise.resolve({ id: id! }) }));
+				case "delete": return responseResult(await deleteMailbox(adminRequest(baseUrl, path, authorization, principal, "DELETE"), { params: Promise.resolve({ id: id! }) }));
 				default: return result({ error: "Unknown action" }, true);
 			}
 		} catch (error) { return result({ error: error instanceof Error ? error.message : "Mailbox action failed" }, true); }
@@ -99,8 +100,8 @@ export function registerAdminMcpTools(server: McpServer, principal: McpPrincipal
 		if (!principal.scopes.includes("storage")) return result({ error: "Permission denied" }, true);
 		try {
 			switch (action) {
-				case "status": return responseResult(await getStorage(adminRequest(baseUrl, "/api/v1/storage", authorization)));
-				case "test": return responseResult(await testStorage(adminRequest(baseUrl, "/api/v1/storage", authorization, "POST", {})));
+				case "status": return responseResult(await getStorage(adminRequest(baseUrl, "/api/v1/storage", authorization, principal)));
+				case "test": return responseResult(await testStorage(adminRequest(baseUrl, "/api/v1/storage", authorization, principal, "POST", {})));
 				default: return result({ error: "Unknown action" }, true);
 			}
 		} catch (error) { return result({ error: error instanceof Error ? error.message : "Storage action failed" }, true); }

@@ -1,0 +1,29 @@
+name: MCP OAuth
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run db:bundle
+      - name: OAuth, backup and admin integration tests
+        run: node --test tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs tests/account-alias-selection.test.mjs
+      - run: npx tsc --noEmit
+      - name: Build Cloudflare Worker without credentials
+        run: npm run build
+      - name: Build Node runtime without credentials
+        run: npm run build:node
