@@ -11,17 +11,19 @@ export const dynamic = "force-dynamic";
 
 export const generateMetadata = () => authPageMetadata("auth.signIn");
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ add?: string }> }) {
-	const adding = (await searchParams).add === "1";
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ add?: string; returnTo?: string }> }) {
+	const params = await searchParams;
+	const adding = params.add === "1";
+	const returnTo = params.returnTo?.startsWith("/oauth/authorize?") ? params.returnTo : undefined;
 	const env = getEnv();
 	if (!(await hasAdminAccount(env))) redirect("/setup");
 	const cookieStore = await cookies();
 	const user = await getUserFromSession(env, cookieStore.get(SESSION_COOKIE)?.value);
-	if (user && !user.disabled && !adding) redirect("/inbox");
+	if (user && !user.disabled && !adding) redirect(returnTo ?? "/inbox");
 
 	return (
-		<AuthGuard mode="public" allowAuthenticated={adding}>
-			<LoginClient adding={adding} />
+		<AuthGuard mode="public" allowAuthenticated={adding || !!returnTo}>
+			<LoginClient returnTo={returnTo} adding={adding} />
 		</AuthGuard>
 	);
 }

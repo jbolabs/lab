@@ -19,6 +19,7 @@ await build({
 			export { createUserAccountSchema } from "./src/lib/validators.ts";
 			export { POST as dashboardCreate } from "./src/app/api/accounts/route.ts";
 			export { POST as apiCreate } from "./src/app/api/v1/accounts/route.ts";
+			export { authenticateApiKeyValue } from "./src/lib/api/key-auth.ts";
 			export { registerAdminMcpTools } from "./src/lib/mcp/admin-tools.ts";
 			export { getMailboxDomainAddresses } from "./src/lib/mailboxes/domain-addresses.ts";
 			export { resolveInboundAddress } from "./src/lib/email/routing.ts";
@@ -39,7 +40,7 @@ await build({
 });
 const {
 	SqliteDatabase, applyMigrations, getDb, createSession, generateApiKey, createUserAccountSchema,
-	dashboardCreate, apiCreate, registerAdminMcpTools, getMailboxDomainAddresses, resolveInboundAddress, getAuthorizedSenderAddress,
+	dashboardCreate, apiCreate, authenticateApiKeyValue, registerAdminMcpTools, getMailboxDomainAddresses, resolveInboundAddress, getAuthorizedSenderAddress,
 } = await import(pathToFileURL(join(directory, "entry.mjs")).href);
 const key = generateApiKey();
 
@@ -154,7 +155,8 @@ test("omitted settings preserve API compatibility; opting in includes future dom
 test("admin MCP forwards alias selection to the same account creation handler", async (t) => {
 	const f = await fixture(t);
 	const handlers = new Map();
-	registerAdminMcpTools({ registerTool: (name, _schema, handler) => handlers.set(name, handler) }, { scopes: ["accounts"] }, "https://mailflare.test", `Bearer ${key.fullKey}`);
+	const auth = await authenticateApiKeyValue(f.env, key.fullKey);
+	registerAdminMcpTools({ registerTool: (name, _schema, handler) => handlers.set(name, handler) }, { keyId: auth.keyId, user: auth.user, scopes: auth.scopes, mailboxIds: [] }, "https://mailflare.test", `Bearer ${key.fullKey}`);
 	const result = await handlers.get("manage_accounts")({ action: "create", data: { username: "sam", domainId: "one", password: "test-password", useAllDomains: false, aliases: [{ domainId: "two", localPart: "sales" }] } });
 	assert.equal(result.isError, false);
 	assert.equal(JSON.parse(result.content[0].text).status, 201);

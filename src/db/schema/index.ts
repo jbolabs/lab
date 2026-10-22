@@ -933,7 +933,32 @@ export const driveShares = sqliteTable("drive_shares", {
 	index("drive_shares_user_idx").on(t.userId),
 ]);
 
+// OAuth credentials use epoch seconds, matching the framework-independent D1/SQLite store.
+export const oauthClients = sqliteTable("oauth_clients", {
+	id: text("id").primaryKey(), name: text("name").notNull(), redirectUris: text("redirect_uris").notNull(), grants: text("grants").notNull(), createdAt: integer("created_at").notNull(),
+});
+export const oauthGrants = sqliteTable("oauth_grants", {
+	keyId: text("key_id").primaryKey().references(() => apiKeys.id, { onDelete: "cascade" }),
+	clientId: text("client_id").notNull().references(() => oauthClients.id, { onDelete: "cascade" }),
+	resource: text("resource").notNull(), expiresAt: integer("expires_at").notNull(), revokedAt: integer("revoked_at"),
+});
+export const oauthRequests = sqliteTable("oauth_requests", {
+	hash: text("hash").primaryKey(), userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }), parameters: text("parameters").notNull(), expiresAt: integer("expires_at").notNull(),
+});
+export const oauthCodes = sqliteTable("oauth_codes", {
+	hash: text("hash").primaryKey(), keyId: text("key_id").notNull().references(() => oauthGrants.keyId, { onDelete: "cascade" }),
+	redirectUri: text("redirect_uri").notNull(), challenge: text("challenge").notNull(), scopes: text("scopes").notNull(), expiresAt: integer("expires_at").notNull(), consumedAt: integer("consumed_at"),
+}, (t) => [index("oauth_codes_grant_idx").on(t.keyId)]);
+export const oauthTokens = sqliteTable("oauth_tokens", {
+	accessHash: text("access_hash").primaryKey(), refreshHash: text("refresh_hash").notNull().unique(), keyId: text("key_id").notNull().references(() => oauthGrants.keyId, { onDelete: "cascade" }),
+	scopes: text("scopes").notNull(), accessExpiresAt: integer("access_expires_at").notNull(), refreshExpiresAt: integer("refresh_expires_at").notNull(), consumedAt: integer("consumed_at"),
+}, (t) => [index("oauth_tokens_grant_idx").on(t.keyId)]);
+export const oauthRateLimits = sqliteTable("oauth_rate_limits", {
+	id: text("id").primaryKey(), attempts: integer("attempts").notNull(), expiresAt: integer("expires_at").notNull(),
+});
+
 export const schema = {
+	oauthClients, oauthGrants, oauthRequests, oauthCodes, oauthTokens, oauthRateLimits,
 	users,
 	domains,
 	mailboxes,

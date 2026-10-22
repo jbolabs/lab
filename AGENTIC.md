@@ -135,7 +135,7 @@ Expose an MCP **server** for external clients; the built-in assistant calls the 
 - Validate Origin when present, bound inputs/results and request rates, and authenticate every request. If compatibility requires stateful sessions, bind each session to the same user/key and recheck access; a session ID is not authorization.
 - Add a connection screen showing the endpoint, supported client/auth mode, selected mailboxes, scopes, last use, and revocation. Show newly generated secrets only once; generated examples use placeholders after that.
 
-OAuth discovery/authorization for clients without header-based credential setup is a later milestone. Follow the applicable MCP authorization specification rather than passing session cookies or Cloudflare admin tokens to clients.
+OAuth discovery and browser authorization are implemented; see [MCP OAuth](docs/mcp-oauth.md) for scoped consent, token lifetimes, and revocation. Browser session cookies and Cloudflare admin tokens are never passed to MCP clients.
 
 ## Architecture and storage
 
@@ -248,4 +248,4 @@ The current implementation is **not yet a verified production release**. The fol
 - There is no separate immutable send-command/outbox table. A claimed approval calls the existing delivery service once, and an uncertain provider outcome remains `unknown` for manual reconciliation. This avoids automatic duplicate retries but does not provide transactional exactly-once delivery.
 - The assistant panel has a fixed width. Auto-draft cards can open, request a new draft through chat, or discard the current draft; richer tool progress, mobile accessibility review, and multi-mailbox selection in the MCP key UI remain to be completed. The MCP key API supports explicit scopes and mailbox allowlists; the UI supports scope selection for the current mailbox.
 - Optional sender/folder filters, suspicious-content scanning, intake-completion markers, model usage audit/budget reservation, and restore-time pause/reconciliation are not implemented. Default eligibility is limited to newly received inbox mail and skips known automated/self/spam/error cases.
-- MCP uses scoped Bearer keys for clients that can set headers. OAuth-based client authorization remains a later milestone.
+- MCP supports scoped Bearer keys and OAuth browser authorization; see [MCP OAuth](docs/mcp-oauth.md).
