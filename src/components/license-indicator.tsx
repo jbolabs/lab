@@ -32,11 +32,8 @@ export function LicenseIndicator() {
 	if (!license || license.active) return null;
 
 	return (
-		<Link
-				href="/licenses"
-				className="rounded-full bg-signal-soft px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-signal-soft-foreground hover:bg-signal-soft"
-			>
-				{t("license.upgrade")}
-			</Link>
+		<Button variant="ghost" size="sm" asChild className="max-md:min-h-11">
+			<Link href="/licenses">{t("license.upgrade")}</Link>
+		</Button>
 	);
 }
