@@ -17,7 +17,7 @@ import { authFetch } from "@/lib/auth/client";
 import { isMarkdownFile } from "@/lib/drive/documents-client";
 import { canEditDrive, DRIVE_MAX_FILE_BYTES, formatDriveSize } from "@/lib/drive/utils";
 import type { DriveItemDto } from "@/lib/drive/types";
-import { DRIVE_FOLDERS_EVENT, DRIVE_NEW_FOLDER_EVENT, DRIVE_REFRESH_EVENT, DRIVE_STORAGE_EVENT, DRIVE_UPLOAD_EVENT } from "../drive-events";
+import { DRIVE_FOLDERS_EVENT, DRIVE_LOCATION_EVENT, DRIVE_NEW_FOLDER_EVENT, DRIVE_REFRESH_EVENT, DRIVE_STORAGE_EVENT, DRIVE_UPLOAD_EVENT } from "../drive-events";
 import { DrivePreviewBody } from "../drive-preview";
 import { DriveShareDialog } from "../drive-share-dialog";
 import { driveFileUrl, driveIconFor, emailUrl, sortDriveItems } from "../drive-utils";
@@ -98,6 +98,7 @@ export default function DrivePage() {
 			setListing({ key, data }); setFailedKey(null);
 			window.dispatchEvent(new CustomEvent(DRIVE_STORAGE_EVENT, { detail: { used: data.storageUsed, limit: data.storageLimit } }));
 			window.dispatchEvent(new Event(DRIVE_FOLDERS_EVENT));
+			window.dispatchEvent(new CustomEvent(DRIVE_LOCATION_EVENT, { detail: { folderId: folder, canWrite: folder ? canEditDrive(data.role) : view === "my" } }));
 		} catch {
 			if (key === requestRef.current) setFailedKey(key);
 		}

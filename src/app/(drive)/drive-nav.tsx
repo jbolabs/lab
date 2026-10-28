@@ -15,8 +15,8 @@ import { PoweredBy } from "@/components/sidebar-footer";
 import { useSidebar } from "@/components/sidebar-state";
 import { authFetch } from "@/lib/auth/client";
 import { formatDriveSize } from "@/lib/drive/utils";
-import { DRIVE_FOLDERS_EVENT, DRIVE_NEW_FOLDER_EVENT, DRIVE_REFRESH_EVENT, DRIVE_STORAGE_EVENT, DRIVE_UPLOAD_EVENT } from "./drive-events";
-import type { DriveStorageDetail } from "./drive-events";
+import { DRIVE_FOLDERS_EVENT, DRIVE_LOCATION_EVENT, DRIVE_NEW_FOLDER_EVENT, DRIVE_REFRESH_EVENT, DRIVE_STORAGE_EVENT, DRIVE_UPLOAD_EVENT } from "./drive-events";
+import type { DriveLocationDetail, DriveStorageDetail } from "./drive-events";
 import { canDropDrive, driveDropHandlers } from "./drive-drag";
 import type { DriveDropTarget } from "./drive-drag";
 
@@ -50,12 +50,14 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 	const params = useSearchParams();
 	const view = params.get("view") ?? "my";
 	const activeFolder = params.get("folder");
+	const [location, setLocation] = useState<DriveLocationDetail | null>(null);
 	const [storage, setStorage] = useState<DriveStorageDetail | null>(null);
 	const [foldersOpen, setFoldersOpen] = useState(false);
 	const [folders, setFolders] = useState<FolderNode[]>([]);
 	const compact = minimal && !mobile;
-	// New documents land in the folder being viewed; the server still checks edit access on save.
+	// Wait for this folder’s listing permissions before offering creation there.
 	const newDocumentParent = pathname === "/drive" && view !== "trash" ? activeFolder : null;
+	const canCreateDocument = !newDocumentParent || (location?.folderId === newDocumentParent && location.canWrite);
 	const [creating, setCreating] = useState(false);
 	const [folderName, setFolderName] = useState("");
 	const [saving, setSaving] = useState(false);
@@ -63,9 +65,11 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 	const [dropKey, setDropKey] = useState<string | null>(null);
 
 	useEffect(() => {
+		const onLocation = (event: Event) => setLocation((event as CustomEvent<DriveLocationDetail>).detail);
+		window.addEventListener(DRIVE_LOCATION_EVENT, onLocation);
 		const onStorage = (event: Event) => setStorage((event as CustomEvent<DriveStorageDetail>).detail);
 		window.addEventListener(DRIVE_STORAGE_EVENT, onStorage);
-		return () => window.removeEventListener(DRIVE_STORAGE_EVENT, onStorage);
+		return () => { window.removeEventListener(DRIVE_STORAGE_EVENT, onStorage); window.removeEventListener(DRIVE_LOCATION_EVENT, onLocation); };
 	}, []);
 
 	useEffect(() => {
@@ -144,7 +148,7 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 					<DropdownMenu.Portal>
 						<DropdownMenu.Content align="start" sideOffset={6} className="z-[200] min-w-52 rounded-xl border border-neutral-200 bg-white p-1.5 shadow-xl">
 							<DropdownMenu.Item className={itemClass} onSelect={() => { window.dispatchEvent(new Event(DRIVE_NEW_FOLDER_EVENT)); onNavigate?.(); }}><FolderPlus size={18} />{t("drive.newFolder")}</DropdownMenu.Item>
-							<DropdownMenu.Item asChild className={itemClass}><Link href={`/drive/document${newDocumentParent ? `?parent=${encodeURIComponent(newDocumentParent)}` : ""}`} onClick={() => onNavigate?.()}><FilePlus2 size={18} />{t("docs.create")}</Link></DropdownMenu.Item>
+							{canCreateDocument ? <DropdownMenu.Item asChild className={itemClass}><Link href={`/drive/document${newDocumentParent ? `?parent=${encodeURIComponent(newDocumentParent)}` : ""}`} onClick={() => onNavigate?.()}><FilePlus2 size={18} />{t("docs.create")}</Link></DropdownMenu.Item> : <DropdownMenu.Item disabled className={`${itemClass} opacity-50`}><FilePlus2 size={18} />{t("docs.create")}</DropdownMenu.Item>}
 							<DropdownMenu.Separator className="my-1 h-px bg-neutral-100" />
 							<DropdownMenu.Item className={itemClass} onSelect={() => { window.dispatchEvent(new Event(DRIVE_UPLOAD_EVENT)); onNavigate?.(); }}><UploadCloud size={18} />{t("drive.fileUpload")}</DropdownMenu.Item>
 						</DropdownMenu.Content>

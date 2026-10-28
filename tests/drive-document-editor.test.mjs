@@ -9,9 +9,9 @@ import { JSDOM } from "jsdom";
 const project = join(dirname(fileURLToPath(import.meta.url)), "..");
 const directory = mkdtempSync(join(project, "node_modules", "drive-editor-test-"));
 after(() => rmSync(directory, { recursive: true, force: true }));
-await build({ entryPoints: [join(project, "src/app/(drive)/drive/document/page.tsx")], outfile: join(directory, "editor.mjs"), jsx: "automatic", bundle: true, platform: "node", format: "esm", packages: "external", tsconfig: join(project, "tsconfig.json"), plugins: [{ name: "navigation-boundaries", setup(builder) {
+await build({ stdin: { contents: 'export { default } from "./src/app/(drive)/drive/document/page.tsx"; export { DriveNav } from "./src/app/(drive)/drive-nav.tsx"; export { DRIVE_LOCATION_EVENT } from "./src/app/(drive)/drive-events.ts";', resolveDir: project }, outfile: join(directory, "editor.mjs"), jsx: "automatic", bundle: true, platform: "node", format: "esm", packages: "external", tsconfig: join(project, "tsconfig.json"), plugins: [{ name: "navigation-boundaries", setup(builder) {
  builder.onResolve({ filter: /^(next\/navigation|next\/link|@\/hooks\/use-current-user)$/ }, args => ({ path: args.path, namespace: "fixture" }));
- builder.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({ contents: args.path === "next/navigation" ? "export function useSearchParams(){return new URLSearchParams(globalThis.window?.location.search ?? '')}" : args.path === "next/link" ? "import {createElement} from 'react';export default function Link(props){return createElement('a',props)}" : "export function useCurrentUser(){return {id:'user'}}", loader: "js", resolveDir: project }));
+ builder.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({ contents: args.path === "next/navigation" ? "export function usePathname(){return '/drive'} export function useRouter(){return {}} export function useSearchParams(){return new URLSearchParams(globalThis.window?.location.search ?? '')}" : args.path === "next/link" ? "import {createElement} from 'react';export default function Link(props){return createElement('a',props)}" : "export function useCurrentUser(){return {id:'user'}}", loader: "js", resolveDir: project }));
 } }], logLevel: "silent" });
 
 test("a save completing after navigation preserves a newer draft and does not rewrite the route", async () => {
@@ -73,4 +73,26 @@ test("a view-only document opens rendered, with no editor or Save", async () => 
   assert.equal([...document.querySelectorAll('button')].some(button=>button.textContent==='Save'),false);
   assert.equal(document.querySelector('a[aria-label="Back to Drive"]').getAttribute('href'),'/drive?view=shared');
  } finally {await close();}
+});
+
+
+test("New document stays disabled until the current folder has write access", async () => {
+ const dom=new JSDOM("<!doctype html><div id='root'></div>",{url:'https://mail.example/drive?folder=shared'});
+ const names=['window','document','location','localStorage','HTMLElement','Element','Node','Event','CustomEvent','MutationObserver','getComputedStyle'];
+ const previous=new Map(names.map(name=>[name,globalThis[name]]));
+ for(const name of names) globalThis[name]=name==='getComputedStyle'?dom.window.getComputedStyle.bind(dom.window):name==='window'?dom.window:dom.window[name];
+ globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+ const {createElement,act}=await import('react');const {createRoot}=await import('react-dom/client');
+ const {DriveNav,DRIVE_LOCATION_EVENT}=await import(pathToFileURL(join(directory,'editor.mjs')).href);
+ const root=createRoot(document.getElementById('root'));
+ const access=canWrite=>act(async()=>window.dispatchEvent(new dom.window.CustomEvent(DRIVE_LOCATION_EVENT,{detail:{folderId:'shared',canWrite}})));
+ try {
+  await act(async()=>root.render(createElement(DriveNav)));
+  await act(async()=>document.querySelector('button[aria-label="New"]').dispatchEvent(new dom.window.MouseEvent('pointerdown',{bubbles:true,button:0})));
+  const entry=()=>[...document.querySelectorAll('[role=menuitem]')].find(element=>element.textContent==='New document');
+  assert.ok(entry(),'creation menu is open');assert.equal(entry().getAttribute('aria-disabled'),'true');assert.equal(entry().hasAttribute('href'),false);
+  await access(false);assert.equal(entry().getAttribute('aria-disabled'),'true');assert.equal(entry().hasAttribute('href'),false);
+  await access(true);assert.equal(entry().getAttribute('href'),'/drive/document?parent=shared');assert.notEqual(entry().getAttribute('aria-disabled'),'true');
+  await access(false);assert.equal(entry().getAttribute('aria-disabled'),'true');assert.equal(entry().hasAttribute('href'),false);
+ } finally {await act(async()=>{root.unmount();await new Promise(resolve=>setTimeout(resolve,0));});dom.window.close();for(const name of names) {if(previous.get(name)===undefined) delete globalThis[name];else globalThis[name]=previous.get(name);}delete globalThis.IS_REACT_ACT_ENVIRONMENT;}
 });

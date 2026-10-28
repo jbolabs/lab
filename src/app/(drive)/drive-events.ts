@@ -9,3 +9,7 @@ export const DRIVE_FOLDERS_EVENT = "mailflare:drive-folders";
 export const DRIVE_REFRESH_EVENT = "mailflare:drive-refresh";
 
 export type DriveStorageDetail = { used: number; limit: number | null };
+
+/** Current listing destination permissions, used by sidebar creation controls. */
+export const DRIVE_LOCATION_EVENT = "mailflare:drive-location";
+export type DriveLocationDetail = { folderId: string | null; canWrite: boolean };
