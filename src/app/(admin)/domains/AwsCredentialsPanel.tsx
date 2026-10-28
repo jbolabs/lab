@@ -1,4 +1,5 @@
 "use client";
+import { AdminConfirmationProvider, useAdminConfirmation } from "../admin-confirmation-provider";
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/language-provider";
@@ -28,8 +29,9 @@ function isCapabilityReport(value: unknown): value is AwsCapabilityReport {
  * with AWS (identity, then a harmless call per service) and lists any permission
  * the key lacks, along with the IAM policy that grants everything.
  */
-export default function AwsCredentialsPanel({ need, onChanged }: Props) {
+function AwsCredentialsPanelContent({ need, onChanged }: Props) {
 	const { t } = useLanguage();
+	const confirm = useAdminConfirmation();
 	const [status, setStatus] = useState<AwsConfigStatus | null>(null);
 	const [policy, setPolicy] = useState<unknown>(null);
 	const [report, setReport] = useState<AwsCapabilityReport | null>(null);
@@ -95,7 +97,7 @@ export default function AwsCredentialsPanel({ need, onChanged }: Props) {
 		onChanged?.(true, data.report);
 	});
 	const remove = () => run("remove", async () => {
-		if (!window.confirm(t("aws.removeConfirm"))) return;
+		if (!await confirm(t("aws.removeConfirm"))) return;
 		const data = await requestJson<{ status: AwsConfigStatus }>("/api/admin/aws", "DELETE", {});
 		setStatus(data.status);
 		setReport(null);
@@ -110,8 +112,8 @@ export default function AwsCredentialsPanel({ need, onChanged }: Props) {
 	const missingReport = rejected ?? (configured && !editing ? report : null);
 
 	return (
-		<div className="space-y-2">
-			<ul className="space-y-2">
+		<div className="flex flex-col gap-2">
+			<ul className="flex flex-col gap-2">
 				<StatusRow
 					ok={configured && !editing}
 					title={t("aws.credentials")}
@@ -173,4 +175,8 @@ export default function AwsCredentialsPanel({ need, onChanged }: Props) {
 			)}
 		</div>
 	);
+}
+
+export default function AwsCredentialsPanel(props: Props) {
+	return <AdminConfirmationProvider><AwsCredentialsPanelContent {...props} /></AdminConfirmationProvider>;
 }

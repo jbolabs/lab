@@ -1,4 +1,5 @@
 "use client";
+import { useAdminConfirmation } from "../admin-confirmation-provider";
 
 import { useState } from "react";
 import { useLanguage } from "@/components/language-provider";
@@ -17,6 +18,7 @@ type Props = {
 /** The shared Resend API key, used by both the sending and receiving setup. */
 export default function ResendKeyRow({ configured, onChanged, onError }: Props) {
 	const { t } = useLanguage();
+	const confirm = useAdminConfirmation();
 	const [apiKey, setApiKey] = useState("");
 	const [editing, setEditing] = useState(false);
 	const [busy, setBusy] = useState(false);
@@ -35,7 +37,7 @@ export default function ResendKeyRow({ configured, onChanged, onError }: Props) 
 		onChanged(true);
 	});
 	const remove = () => run(async () => {
-		if (!window.confirm(t("resend.removeConfirm"))) return;
+		if (!await confirm(t("resend.removeConfirm"))) return;
 		await postJson("/api/admin/resend-key", "DELETE", {});
 		onChanged(false);
 	});

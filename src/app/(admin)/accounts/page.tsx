@@ -1,13 +1,14 @@
 "use client";
+import { FieldSet, Field, FieldLabel } from "@/components/ui/field";
 
-import { mobilePrimaryActionClass } from "@/components/page-header-utils";
+import { mobilePrimaryActionClass } from "../admin-ui-utils";
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AdminFormPanel as Dialog, AdminFormPanelContent as DialogContent, AdminFormPanelDescription as DialogDescription, AdminFormPanelHeader as DialogHeader, AdminFormPanelTitle as DialogTitle } from "../admin-form-panel";
+import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupText } from "@/components/ui/input-group";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { authFetch } from "@/lib/auth/client";
 import { LicenseRequiredOverlay } from "@/components/license-required-overlay";
@@ -112,19 +113,19 @@ export default function AccountsPage() {
 
 	const seatsFull = !!seats && seats.limit !== null && seats.used >= seats.limit;
 
-	return <div className="space-y-6">
-		<div className="flex items-center justify-between gap-4"><div><h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("accounts.title")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("accounts.description")}</p>{seats && seats.limit !== null && <p className={`mt-1 text-sm ${seatsFull ? "text-amber-700" : "text-muted-foreground"}`}>{t("accounts.seatsUsed", { used: seats.used, limit: seats.limit })}{seatsFull ? ` ${t("accounts.seatsFull")}` : ""}</p>}</div>{!teamRequired && canManage && <Button disabled={seatsFull} className={mobilePrimaryActionClass} onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" />{t("accounts.new")}</Button>}</div>
+	return <div className="flex flex-col gap-6">
+		<div className="flex items-center justify-between gap-4"><div><h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("accounts.title")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("accounts.description")}</p>{seats && seats.limit !== null && <p className={`mt-1 text-sm ${seatsFull ? "text-amber-700" : "text-muted-foreground"}`}>{t("accounts.seatsUsed", { used: seats.used, limit: seats.limit })}{seatsFull ? ` ${t("accounts.seatsFull")}` : ""}</p>}</div>{!teamRequired && canManage && <Button disabled={seatsFull} className={mobilePrimaryActionClass} onClick={() => setCreateOpen(true)}><Plus data-icon="inline-start" />{t("accounts.new")}</Button>}</div>
 		{message && !createOpen && <p role="alert" className="text-sm text-red-600">{message}</p>}
-		<div className="relative">{teamRequired && <LicenseRequiredOverlay required="Pro or Team"><div className="min-h-48 rounded-3xl bg-card" /></LicenseRequiredOverlay>}
+		<div className="relative">{teamRequired && <LicenseRequiredOverlay required="Pro or Team"><div className="min-h-48 rounded-lg bg-card" /></LicenseRequiredOverlay>}
 			<AccountsTable accounts={accounts} currentUserId={currentUser?.id} isPrimaryAdmin={!!currentUser?.isPrimaryAdmin} loading={loading} selected={selected} onSelectedChange={setSelected} onDeleteSelected={() => setDeleteOpen(true)} onRestore={restoreAccount} restoringId={restoringId} />
 		</div>
 		<DeleteAccountsDialog open={deleteOpen} onOpenChange={setDeleteOpen} accounts={accounts.filter((account) => selected.has(account.id))} candidates={accounts} onDeleted={async () => { setDeleteOpen(false); setSelected(new Set()); await loadAccounts(); }} />
-		<Dialog open={createOpen} onOpenChange={setCreateOpen}><DialogContent className="max-h-[calc(100dvh-4rem)] w-[min(640px,calc(100vw-32px))] overflow-y-auto"><DialogHeader><DialogTitle>{t("accounts.addTitle")}</DialogTitle><DialogDescription>{t("accounts.addDescription")}</DialogDescription></DialogHeader><form onSubmit={createAccount}><fieldset disabled={saving} className="space-y-4">
-			<div className="space-y-2"><Label htmlFor="account-username">{t("auth.email")}</Label><div className="flex h-10 overflow-hidden rounded-md border border-border bg-card"><Input id="account-username" value={username} onChange={(event) => setUsername(event.target.value)} placeholder={t("accounts.username")} className="min-w-0 flex-1 rounded-none border-0 shadow-none" required /><span className="flex items-center text-sm text-muted-foreground">@</span><NativeSelect aria-label={t("accounts.domain")} value={domainId} onChange={(event) => setDomainId(event.target.value)} containerClassName="min-w-0 max-w-[55%] shrink-0 rounded-none border-0 px-0" className="bg-transparent px-3 text-sm" required><option value="">{t("accounts.selectDomain")}</option>{domains.map((domain) => <option key={domain.id} value={domain.id}>{domain.hostname}</option>)}</NativeSelect></div></div>
-			<div className="space-y-2"><Label htmlFor="account-password">{t("auth.password")}</Label><Input id="account-password" type="password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} required /></div>
-			{canChooseRole && <div className="space-y-2"><Label htmlFor="account-role">{t("accounts.role")}</Label><NativeSelect id="account-role" value={role} onChange={(event) => setRole(event.target.value as "admin" | "user")} containerClassName="h-10 w-full bg-card px-0" className="px-3 text-sm"><option value="user">{t("accounts.roleUser")}</option><option value="admin">{t("accounts.roleAdmin")}</option></NativeSelect></div>}
+		<Dialog open={createOpen} onOpenChange={setCreateOpen}><DialogContent><DialogHeader><DialogTitle>{t("accounts.addTitle")}</DialogTitle><DialogDescription>{t("accounts.addDescription")}</DialogDescription></DialogHeader><form onSubmit={createAccount}><FieldSet disabled={saving} className="flex flex-col gap-4">
+			<Field className="flex flex-col gap-2"><FieldLabel htmlFor="account-username">{t("auth.email")}</FieldLabel><InputGroup><InputGroupInput id="account-username" value={username} onChange={(event) => setUsername(event.target.value)} placeholder={t("accounts.username")}  required /><InputGroupAddon align="inline-end"><InputGroupText>@</InputGroupText><NativeSelect aria-label={t("accounts.domain")} value={domainId} onChange={(event) => setDomainId(event.target.value)} containerClassName="w-36 shrink-0" className="border-0 shadow-none" required><option value="">{t("accounts.selectDomain")}</option>{domains.map((domain) => <option key={domain.id} value={domain.id}>{domain.hostname}</option>)}</NativeSelect></InputGroupAddon></InputGroup></Field>
+			<Field className="flex flex-col gap-2"><FieldLabel htmlFor="account-password">{t("auth.password")}</FieldLabel><Input id="account-password" type="password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} required /></Field>
+			{canChooseRole && <Field className="flex flex-col gap-2"><FieldLabel htmlFor="account-role">{t("accounts.role")}</FieldLabel><NativeSelect id="account-role" value={role} onChange={(event) => setRole(event.target.value as "admin" | "user")} containerClassName="h-10 w-full bg-card px-0" className="px-3 text-sm"><option value="user">{t("accounts.roleUser")}</option><option value="admin">{t("accounts.roleAdmin")}</option></NativeSelect></Field>}
 			<AccountAliases domains={domains} domainId={domainId} username={username} useAllDomains={useAllDomains} onUseAllDomainsChange={setUseAllDomains} aliases={aliases} onAliasesChange={setAliases} />
 			{message && <p role="alert" className="text-sm text-red-600">{message}</p>}<Button type="submit" disabled={saving || !domainId}>{saving ? t("accounts.creating") : t("accounts.create")}</Button>
-		</fieldset></form></DialogContent></Dialog>
+		</FieldSet></form></DialogContent></Dialog>
 	</div>;
 }

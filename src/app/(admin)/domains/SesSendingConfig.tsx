@@ -69,10 +69,10 @@ export default function SesSendingConfig({ domainId, onStatus }: { domainId: str
 		: t("resend.btn.checkStatus");
 
 	return (
-		<div className="space-y-2">
+		<div className="flex flex-col gap-2">
 			<AwsCredentialsPanel need="sending" onChanged={onCredentials} />
 			{credentials && (
-				<ul className="space-y-2">
+				<ul className="flex flex-col gap-2">
 					<StatusRow
 						ok={!!view?.verified}
 						title={t("resend.domain")}
@@ -97,7 +97,7 @@ export default function SesSendingConfig({ domainId, onStatus }: { domainId: str
 			{view && view.registered && !view.verified && !view.dnsManaged && <p className="text-xs text-muted-foreground">{t("ses.addCnames")}</p>}
 			{view && view.registered && !view.verified && view.dnsManaged && view.missingDns === 0 && <p className="text-xs text-muted-foreground">{t("resend.propagate")}</p>}
 			{view && view.registered && !view.verified && view.records.length > 0 && (
-				<ul className="space-y-1 text-xs text-muted-foreground">
+				<ul className="flex flex-col gap-1 text-xs text-muted-foreground">
 					{view.records.map((record) => (
 						<li key={record.name} className="grid gap-1 rounded-lg bg-card px-3 py-2 sm:grid-cols-[4rem_minmax(8rem,18rem)_minmax(0,1fr)]">
 							<span className="font-medium">{record.type}</span>

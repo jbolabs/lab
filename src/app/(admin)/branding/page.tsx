@@ -1,4 +1,5 @@
 "use client";
+import { Field, FieldLabel } from "@/components/ui/field";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -8,7 +9,6 @@ import { useBranding } from "@/components/branding-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { BRANDING_ICON_ACCEPT, saveBranding } from "./utils";
 
 export default function BrandingPage() {
@@ -27,14 +27,14 @@ export default function BrandingPage() {
 
 	if (!branding.canCustomizeBranding) {
 		return (
-			<div className="space-y-6">
+			<div className="flex flex-col gap-6">
 				<div>
 					<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("branding.title")}</h1>
 					<p className="mt-2 text-sm text-muted-foreground">{t("branding.proOnly")}</p>
 				</div>
-				<Card className="rounded-3xl border-0 bg-card p-6">
+				<Card className="rounded-lg border-0 bg-card p-6">
 					<CardHeader className="py-0">
-						<CardTitle className="flex items-center gap-2"><LockKeyhole className="h-5 w-5" />{t("branding.licenseRequired")}</CardTitle>
+						<CardTitle className="flex items-center gap-2"><LockKeyhole className="size-5" />{t("branding.licenseRequired")}</CardTitle>
 						<CardDescription>{t("branding.originalNote")}</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-col gap-3 pt-6 sm:flex-row">
@@ -70,30 +70,30 @@ export default function BrandingPage() {
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="flex flex-col gap-6">
 			<div>
 				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("branding.title")}</h1>
 				<p className="mt-2 text-sm text-muted-foreground">{t("branding.description")}</p>
 			</div>
-			<Card className="rounded-3xl border-0 bg-card p-6">
+			<Card className="rounded-lg border-0 bg-card p-6">
 				<CardHeader className="py-0">
-					<CardTitle className="flex items-center gap-2"><Palette className="h-5 w-5" />{t("branding.identity")}</CardTitle>
+					<CardTitle className="flex items-center gap-2"><Palette className="size-5" />{t("branding.identity")}</CardTitle>
 					<CardDescription>{t("branding.faviconNote")}</CardDescription>
 				</CardHeader>
 				<CardContent className="pt-6">
-					<form onSubmit={submit} className="space-y-6">
-						<div className="space-y-2">
-							<Label htmlFor="appName">{t("branding.appName")}</Label>
+					<form onSubmit={submit} className="flex flex-col gap-6">
+						<Field className="flex flex-col gap-2">
+							<FieldLabel htmlFor="appName">{t("branding.appName")}</FieldLabel>
 							<Input id="appName" value={appName} maxLength={60} onChange={(event) => setAppName(event.target.value)} required />
-						</div>
-						<div className="space-y-2">
-							<Label>{t("branding.appIcon")}</Label>
+						</Field>
+						<Field className="flex flex-col gap-2">
+							<FieldLabel>{t("branding.appIcon")}</FieldLabel>
 							<Input ref={inputRef} type="file" accept={BRANDING_ICON_ACCEPT} className="hidden" onChange={(event) => pickIcon(event.target.files?.[0] ?? null)} />
-							<button type="button" onClick={() => inputRef.current?.click()} className="flex items-center gap-4 rounded-2xl border border-dashed border-input p-4 text-left hover:bg-accent/60">
-								<img src={preview ?? branding.iconUrl} alt={t("branding.iconPreview")} className="h-16 w-16 rounded-2xl object-cover" />
-								<span className="text-sm text-muted-foreground"><ImagePlus className="mb-1 h-5 w-5" />{t("branding.chooseImage")}<br /><span className="text-xs text-muted-foreground">{t("branding.maxSize")}</span></span>
+							<button type="button" onClick={() => inputRef.current?.click()} className="flex items-center gap-4 rounded-lg border border-dashed border-input p-4 text-left hover:bg-accent/60">
+								<img src={preview ?? branding.iconUrl} alt={t("branding.iconPreview")} className="size-16 rounded-lg object-cover" />
+								<span className="text-sm text-muted-foreground"><ImagePlus className="mb-1 size-5" />{t("branding.chooseImage")}<br /><span className="text-xs text-muted-foreground">{t("branding.maxSize")}</span></span>
 							</button>
-						</div>
+						</Field>
 						{status && <p role="status" className="text-sm text-muted-foreground">{status}</p>}
 						<Button type="submit" disabled={saving || !appName.trim()}>{saving ? t("common.saving") : t("branding.save")}</Button>
 					</form>

@@ -1,4 +1,5 @@
 "use client";
+import { useAdminConfirmation } from "../admin-confirmation-provider";
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useLanguage } from "@/components/language-provider";
@@ -29,6 +30,7 @@ type Props = {
 
 export default function ReceivingSetupSection({ domain, onChange, busy, message, cloudflareConfig, cloudflareOk }: Props) {
 	const { t } = useLanguage();
+	const confirm = useAdminConfirmation();
 	const [present, setPresent] = useState<Present>({ cloudflare: null, resend: null, ses: null });
 	const [ready, setReady] = useState<Record<"resend" | "ses", boolean | null>>({ resend: null, ses: null });
 	const [reload, setReload] = useState(0);
@@ -44,7 +46,7 @@ export default function ReceivingSetupSection({ domain, onChange, busy, message,
 	}, [domain.id, domain.receivingProvider, reload]);
 
 	async function cleanUp(option: Option, title: string) {
-		if (!window.confirm(t("domains.removeReceivingConfirm", { title, host: domain.hostname }))) return;
+		if (!await confirm(t("domains.removeReceivingConfirm", { title, host: domain.hostname }))) return;
 		setRemoving(option);
 		setError("");
 		try {
@@ -61,7 +63,7 @@ export default function ReceivingSetupSection({ domain, onChange, busy, message,
 			<p className="mt-0.5 text-sm text-muted-foreground">
 				{t("domains.setupReceivingDescription")}
 			</p>
-			<ul className="mt-3 space-y-2">
+			<ul className="mt-3 flex flex-col gap-2">
 				{OPTIONS.map((option) => {
 					const selected = domain.receivingProvider === option.id;
 					const ok = !selected ? null : option.id === "cloudflare" ? cloudflareOk : ready[option.id];

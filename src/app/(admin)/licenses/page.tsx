@@ -15,7 +15,7 @@ import { LICENSE_PLANS } from "./utils";
 export default async function LicensesPage() {
   const t = await getServerTranslator();
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("licenses.title")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -29,12 +29,12 @@ export default async function LicensesPage() {
           return (
             <Card
               key={plan.name}
-              className="rounded-3xl border-0 bg-card p-6 flex flex-col"
+              className="rounded-lg border-0 bg-card p-6 flex flex-col"
             >
-              <CardHeader className="space-y-4 py-0">
+              <CardHeader className="flex flex-col gap-4 py-0">
                 <div className="flex items-center justify-between">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-signal-soft text-signal">
-                    <Icon className="h-5 w-5" />
+                  <span className="flex size-10 items-center justify-center rounded-full bg-signal-soft text-signal">
+                    <Icon className="size-5" />
                   </span>
                 </div>
                 <div className="relative">
@@ -51,13 +51,13 @@ export default async function LicensesPage() {
                 </div>
                 <CardDescription>{t(plan.descriptionKey)}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3 pt-6 flex flex-col flex-1 min-h-0">
+              <CardContent className="flex flex-col gap-3 pt-6 flex flex-col flex-1 min-h-0">
                 {plan.featureKeys.map((feature) => (
                   <p
                     key={feature}
                     className="flex gap-2 text-sm text-muted-foreground"
                   >
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                    <Check className="mt-0.5 size-4 shrink-0 text-green-600" />
                     {t(feature)}
                   </p>
                 ))}
@@ -69,7 +69,7 @@ export default async function LicensesPage() {
                     rel="noopener noreferrer"
                   >
                     {t("licenses.get", { plan: plan.name })}
-                    <ExternalLink className="h-4 w-4" />
+                    <ExternalLink className="size-4" />
                   </a>
                 </Button>
               </CardContent>

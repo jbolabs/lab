@@ -1,3 +1,4 @@
+import { DnsValue } from "./dns-value";
 "use client";
 
 import { useEffect, useState } from "react";
@@ -98,8 +99,8 @@ export default function ResendDomainSection({ domainId, onStatus }: { domainId: 
 						: t("resend.btn.checkStatus");
 
 	return (
-		<div className="space-y-2">
-			<ul className="space-y-2">
+		<div className="flex flex-col gap-2">
+			<ul className="flex flex-col gap-2">
 				<ResendKeyRow
 					configured={keyConfigured}
 					onChanged={(configured) => { setKeyConfigured(configured); if (!configured) setView(null); setLoading(true); setReload((value) => value + 1); }}
@@ -136,12 +137,12 @@ export default function ResendDomainSection({ domainId, onStatus }: { domainId: 
 			{view && view.registered && !verified && view.dnsManaged && view.missingDns === 0 && <p className="text-xs text-muted-foreground">{t("resend.propagate")}</p>}
 
 			{view && view.records.length > 0 && !verified && (
-				<ul className="space-y-1 text-xs text-muted-foreground">
+				<ul className="flex flex-col gap-1 text-xs text-muted-foreground">
 					{view.records.map((record) => (
 						<li key={`${record.type}-${record.name}-${record.value}`} className="grid gap-1 rounded-lg bg-card px-3 py-2 sm:grid-cols-[4rem_minmax(8rem,14rem)_minmax(0,1fr)_auto]">
 							<span className="font-medium">{record.type}</span>
 							<span className="break-all">{record.name}</span>
-							<span className="break-all">{record.priority !== null ? `${record.priority} ` : ""}{record.value}</span>
+							<DnsValue value={`${record.priority !== null ? `${record.priority} ` : ""}${record.value}`} />
 							<span className="uppercase text-muted-foreground">{record.status.replace(/_/g, " ")}</span>
 						</li>
 					))}

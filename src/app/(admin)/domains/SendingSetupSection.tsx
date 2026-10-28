@@ -1,4 +1,5 @@
 "use client";
+import { useAdminConfirmation } from "../admin-confirmation-provider";
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useLanguage } from "@/components/language-provider";
@@ -33,6 +34,7 @@ type PresenceResponse = Partial<Present> & { resendStatus?: string | null; sesVe
 
 export default function SendingSetupSection({ domain, onChange, busy, message, cloudflareConfig, cloudflareOk }: Props) {
 	const { t } = useLanguage();
+	const confirm = useAdminConfirmation();
 	const [present, setPresent] = useState<Present>({ cloudflare: null, resend: null, ses: null });
 	const [resendStatus, setResendStatus] = useState<string | null>(null);
 	const [sesStatus, setSesStatus] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export default function SendingSetupSection({ domain, onChange, busy, message, c
 	}, [domain.id, domain.sendingProvider, reload]);
 
 	async function cleanUp(option: Option, title: string) {
-		if (!window.confirm(t("domains.removeSendingConfirm", { title, host: domain.hostname }))) return;
+		if (!await confirm(t("domains.removeSendingConfirm", { title, host: domain.hostname }))) return;
 		setRemoving(option);
 		setError("");
 		try {
@@ -77,7 +79,7 @@ export default function SendingSetupSection({ domain, onChange, busy, message, c
 			<p className="mt-0.5 text-sm text-muted-foreground">
 				{domain.sendingProvider === "none" ? t("domains.sendingNone") : t("domains.sendingChoose")}
 			</p>
-			<ul className="mt-3 space-y-2">
+			<ul className="mt-3 flex flex-col gap-2">
 				{OPTIONS.map((option) => {
 					const selected = domain.sendingProvider === option.id;
 					return (

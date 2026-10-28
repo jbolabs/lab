@@ -1,4 +1,5 @@
 "use client";
+import { FieldLabel, Field, FieldGroup } from "@/components/ui/field";
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -8,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
-import { Label } from "@/components/ui/label";
 import type { ManagedAccount } from "./types";
 import {
 	fetchManagedAccount,
@@ -59,44 +59,44 @@ export default function AccountDetailsPage() {
 	if (!account) return <p className="text-sm text-muted-foreground">{message ?? t("account.loadingAccount")}</p>;
 
 	return (
-		<div className="space-y-6">
+		<div className="flex flex-col gap-6">
 			<div>
 				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("account.detailsTitle")}</h1>
 				<p className="mt-2 text-sm text-muted-foreground">{t("account.detailsDescription")}</p>
 			</div>
-			<section className="space-y-5 rounded-3xl bg-card p-6">
+			<section className="flex flex-col gap-5 rounded-lg bg-card p-6">
 				{!account.editable && (
-					<p className="rounded-2xl bg-muted/60 p-4 text-sm text-muted-foreground">
+					<p className="rounded-lg bg-muted/60 p-4 text-sm text-muted-foreground">
 						{t("account.noPermission")}
 					</p>
 				)}
 				<div className="flex items-center gap-4">
-					<span className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-signal-soft text-xl font-semibold text-signal">
+					<span className="relative flex size-16 items-center justify-center overflow-hidden rounded-full bg-signal-soft text-xl font-semibold text-signal">
 						{account.name.charAt(0).toUpperCase()}
 						{account.hasAvatar && (
 							<ProgressiveAvatarImage src={getManagedAccountAvatarUrl(id, avatarVersion)} alt="" className="absolute inset-0 h-full w-full object-cover" />
 						)}
 					</span>
 					{account.editable && (
-						<Label className="cursor-pointer">
+						<FieldLabel className="cursor-pointer">
 							<span className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm">
-								<Upload className="h-4 w-4" />
+								<Upload className="size-4" />
 								{t("account.changeAvatar")}
 							</span>
 							<Input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={(event) => void uploadAvatar(event.target.files?.[0])} />
-						</Label>
+						</FieldLabel>
 					)}
 				</div>
-				<div className="space-y-2">
-					<Label htmlFor="account-email">{t("auth.email")}</Label>
+				<Field className="flex flex-col gap-2">
+					<FieldLabel htmlFor="account-email">{t("auth.email")}</FieldLabel>
 					<Input id="account-email" value={account.email} readOnly className="bg-muted/60 text-muted-foreground" />
-				</div>
-				<div className="space-y-2">
-					<Label htmlFor="account-name">{t("common.name")}</Label>
+				</Field>
+				<Field className="flex flex-col gap-2">
+					<FieldLabel htmlFor="account-name">{t("common.name")}</FieldLabel>
 					<Input id="account-name" value={account.name} disabled={!account.editable} onChange={(event) => setAccount({ ...account, name: event.target.value })} />
-				</div>
-				{account.canForwardEmail && <div className="space-y-2">
-					<Label htmlFor="forwarding-email">{t("account.forwardingOptional")}</Label>
+				</Field>
+				{account.canForwardEmail && <Field className="flex flex-col gap-2">
+					<FieldLabel htmlFor="forwarding-email">{t("account.forwardingOptional")}</FieldLabel>
 					<Input
 						id="forwarding-email"
 						type="email"
@@ -108,14 +108,14 @@ export default function AccountDetailsPage() {
 					<p className="text-xs leading-5 text-muted-foreground">
 						{t("settings.forwarding.hint")}
 					</p>
-				</div>}
-				<div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-muted/60 p-4">
-					<div className="space-y-1">
-						<Label htmlFor="account-enabled" className="font-semibold text-foreground">{t("account.enabled")}</Label>
+				</Field>}
+				<FieldGroup className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/60 p-4">
+					<Field className="flex flex-col gap-1">
+						<FieldLabel htmlFor="account-enabled" className="font-semibold text-foreground">{t("account.enabled")}</FieldLabel>
 						<p id="account-enabled-description" className="text-xs leading-5 text-muted-foreground">
 							{account.isPrimaryAdmin ? t("account.primaryAlwaysEnabled") : t("account.allowSignIn")}
 						</p>
-					</div>
+					</Field>
 					<Switch
 						id="account-enabled"
 						aria-describedby="account-enabled-description"
@@ -123,7 +123,7 @@ export default function AccountDetailsPage() {
 						disabled={saving || !account.editable || account.isPrimaryAdmin}
 						onCheckedChange={(enabled) => setAccount({ ...account, disabled: !enabled })}
 					/>
-				</div>
+				</FieldGroup>
 				{account.editable && (
 					<Button onClick={() => void saveDetails()} disabled={saving || !account.name.trim()}>
 						{saving ? t("common.saving") : t("account.saveDetails")}

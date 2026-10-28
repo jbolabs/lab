@@ -8,7 +8,7 @@ export function UsageChart({ daily, timeZone = getUserTimeZone() }: UsageChartPr
 	const days = daily.length ? daily : fillDailyUsage([], timeZone);
 	const maxTokens = Math.max(0, ...days.map((day) => day.inputTokens + day.outputTokens));
 
-	return <section className="rounded-2xl bg-card p-5">
+	return <section className="rounded-lg bg-card p-5">
 		<div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-base font-semibold text-foreground">{t("aiUsage.byDay")}</h2><p className="mt-1 text-xs text-muted-foreground">{t("aiUsage.chartHint", { zone: timeZone })}</p></div><div className="flex items-center gap-4 text-xs text-muted-foreground"><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-primary" /> {t("aiUsage.legendInput")}</span><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-sky-300" /> {t("aiUsage.legendOutput")}</span></div></div>
 		<div className="mt-5 flex gap-3" role="img" aria-label={t("aiUsage.chartLabel")}>
 			<div className="flex h-48 flex-col justify-between pb-5 text-right text-[10px] text-muted-foreground"><span>{formatTokenCount(maxTokens)}</span><span>0</span></div>
