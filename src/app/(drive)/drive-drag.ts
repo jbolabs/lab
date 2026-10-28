@@ -1,7 +1,7 @@
 "use client";
 
 import type { DragEvent } from "react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import type { Translator } from "@/lib/i18n/utils";
 import type { DriveItemDto } from "@/lib/drive/types";
 import { canEditDrive } from "@/lib/drive/utils";

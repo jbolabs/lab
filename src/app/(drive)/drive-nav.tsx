@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import clsx from "clsx";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import toast from "react-hot-toast";
+import { cn as clsx } from "@/lib/utils";
+import * as DropdownMenu from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 import { ChevronRight, FilePlus2, Folder, FolderPlus, HardDrive, Paperclip, Plus, Trash2, UploadCloud, UsersRound } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
@@ -139,22 +139,22 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
 			<div className="min-h-0 flex-1 overflow-y-auto px-3 pt-1">
-				<DropdownMenu.Root>
-					<DropdownMenu.Trigger asChild>
-						<button type="button" aria-label={t("drive.new")} className={clsx("mb-4 flex h-14 items-center gap-3 rounded-2xl bg-card text-sm font-medium text-foreground shadow-md transition-shadow hover:shadow-lg", compact ? "w-14 justify-center" : "w-fit px-5")}>
-							<Plus size={22} />{!compact && t("drive.new")}
-						</button>
-					</DropdownMenu.Trigger>
-					<DropdownMenu.Portal>
-						<DropdownMenu.Content align="start" sideOffset={6} className="z-[200] min-w-52 rounded-xl border border-border bg-card p-1.5 shadow-xl">
-							<DropdownMenu.Item className={itemClass} onSelect={() => { window.dispatchEvent(new Event(DRIVE_NEW_FOLDER_EVENT)); onNavigate?.(); }}><FolderPlus size={18} />{t("drive.newFolder")}</DropdownMenu.Item>
-							{canCreateDocument ? <DropdownMenu.Item asChild className={itemClass}><Link href={`/drive/document${newDocumentParent ? `?parent=${encodeURIComponent(newDocumentParent)}` : ""}`} onClick={() => onNavigate?.()}><FilePlus2 size={18} />{t("docs.create")}</Link></DropdownMenu.Item> : <DropdownMenu.Item disabled className={`${itemClass} opacity-50`}><FilePlus2 size={18} />{t("docs.create")}</DropdownMenu.Item>}
-							<DropdownMenu.Separator className="my-1 h-px bg-muted" />
-							<DropdownMenu.Item className={itemClass} onSelect={() => { window.dispatchEvent(new Event(DRIVE_UPLOAD_EVENT)); onNavigate?.(); }}><UploadCloud size={18} />{t("drive.fileUpload")}</DropdownMenu.Item>
-						</DropdownMenu.Content>
-					</DropdownMenu.Portal>
-				</DropdownMenu.Root>
-				<nav aria-label={t("drive.sections")} className="space-y-0.5">
+				<DropdownMenu.DropdownMenu>
+					<DropdownMenu.DropdownMenuTrigger asChild>
+						<Button variant="ghost" type="button" aria-label={t("drive.new")} className={clsx("mb-4 flex h-14 items-center gap-3 rounded-2xl bg-card text-sm font-medium text-foreground shadow-md transition-shadow hover:shadow-lg", compact ? "w-14 justify-center" : "w-fit px-5")}>
+							<Plus data-icon="inline-start" />{!compact && t("drive.new")}
+						</Button>
+					</DropdownMenu.DropdownMenuTrigger>
+					<DropdownMenu.DropdownMenuPortal>
+						<DropdownMenu.DropdownMenuContent align="start" sideOffset={6}><DropdownMenu.DropdownMenuGroup>
+							<DropdownMenu.DropdownMenuItem className={itemClass} onSelect={() => { window.dispatchEvent(new Event(DRIVE_NEW_FOLDER_EVENT)); onNavigate?.(); }}><FolderPlus size={18} />{t("drive.newFolder")}</DropdownMenu.DropdownMenuItem>
+							{canCreateDocument ? <DropdownMenu.DropdownMenuItem asChild className={itemClass}><Link href={`/drive/document${newDocumentParent ? `?parent=${encodeURIComponent(newDocumentParent)}` : ""}`} onClick={() => onNavigate?.()}><FilePlus2 size={18} />{t("docs.create")}</Link></DropdownMenu.DropdownMenuItem> : <DropdownMenu.DropdownMenuItem disabled className={`${itemClass} opacity-50`}><FilePlus2 size={18} />{t("docs.create")}</DropdownMenu.DropdownMenuItem>}
+							<DropdownMenu.DropdownMenuSeparator />
+							<DropdownMenu.DropdownMenuItem className={itemClass} onSelect={() => { window.dispatchEvent(new Event(DRIVE_UPLOAD_EVENT)); onNavigate?.(); }}><UploadCloud size={18} />{t("drive.fileUpload")}</DropdownMenu.DropdownMenuItem>
+						</DropdownMenu.DropdownMenuGroup></DropdownMenu.DropdownMenuContent>
+					</DropdownMenu.DropdownMenuPortal>
+				</DropdownMenu.DropdownMenu>
+				<nav aria-label={t("drive.sections")} className="flex flex-col gap-0.5">
 					{links.map(({ key, href, label, icon: Icon }) => {
 						const active = pathname === "/drive" && view === key && !activeFolder;
 						// My Drive takes items to its root (restoring them from the trash), Trash trashes them, and
@@ -170,13 +170,13 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 				{!compact && (
 					<div className="mt-3">
 						<div className="flex items-center gap-1">
-							<button type="button" onClick={toggleFolders} aria-expanded={foldersOpen} aria-label={t("drive.foldersToggle")} className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-full px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:bg-accent/60">
-								<ChevronRight size={14} className={clsx("transition-transform", foldersOpen && "rotate-90")} />{t("drive.folders")}
-							</button>
-							<button type="button" onClick={() => { setFolderName(""); setCreating(true); }} aria-label={t("drive.newFolder")} title={t("drive.newFolder")} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-accent/60 hover:text-foreground"><Plus size={16} /></button>
+							<Button variant="ghost" type="button" onClick={toggleFolders} aria-expanded={foldersOpen} aria-label={t("drive.foldersToggle")} className= "flex h-9 min-w-0 flex-1 items-center gap-2 px-4 text-xs font-semibold uppercase tracking-wide [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11">
+								<ChevronRight data-icon="inline-start" className={clsx("transition-transform", foldersOpen && "rotate-90")} />{t("drive.folders")}
+							</Button>
+							<Button variant="ghost" type="button" onClick={() => { setFolderName(""); setCreating(true); }} aria-label={t("drive.newFolder")} title={t("drive.newFolder")} className= "flex size-8 shrink-0 items-center justify-center [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"><Plus data-icon="inline-start" /></Button>
 						</div>
 						{foldersOpen && (
-							<ul className="mt-0.5 space-y-0.5">
+							<ul className="mt-0.5 flex flex-col gap-0.5">
 								{rows.length === 0 && <li className="px-4 py-1.5 text-xs text-muted-foreground">{t("drive.noFolders")}</li>}
 								{rows.map((folder) => (
 									<li key={folder.id}>
@@ -196,7 +196,7 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 						storage.limit ? (
 							<div className="mb-2">
 								<div role="progressbar" aria-label={t("drive.storageBar")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} className="mb-1.5 h-1.5 overflow-hidden rounded-full bg-accent">
-									<div className={clsx("h-full rounded-full transition-[width]", percent >= 90 ? "bg-red-500" : "bg-primary")} style={{ width: `${percent}%` }} />
+									<div className={clsx("h-full rounded-full transition-[width]", percent >= 90 ? "bg-destructive/100" : "bg-primary")} style={{ width: `${percent}%` }} />
 								</div>
 								<p className="text-xs text-muted-foreground">{t("drive.storageOf", { used: formatDriveSize(storage.used), total: formatDriveSize(storage.limit) })}</p>
 							</div>
@@ -208,7 +208,7 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 			<Dialog open={creating} onOpenChange={(open) => { if (!saving) setCreating(open); }}>
 				<DialogContent>
 					<DialogHeader><DialogTitle>{t("drive.newFolder")}</DialogTitle></DialogHeader>
-					<form onSubmit={(event) => void createFolder(event)} className="space-y-5">
+					<form onSubmit={(event) => void createFolder(event)} className="flex flex-col gap-5">
 						<Input autoFocus value={folderName} onChange={(event) => setFolderName(event.target.value)} placeholder={t("drive.folderName")} aria-label={t("drive.folderName")} maxLength={255} />
 						<div className="flex justify-end gap-2">
 							<Button type="button" variant="ghost" onClick={() => setCreating(false)} disabled={saving}>{t("common.cancel")}</Button>

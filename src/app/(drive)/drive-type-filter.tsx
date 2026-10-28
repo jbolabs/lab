@@ -1,8 +1,9 @@
 "use client";
+import { Button } from "@/components/ui/button";
 
 import { useEffect, useState } from "react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import clsx from "clsx";
+import * as DropdownMenu from "@/components/ui/dropdown-menu";
+import { cn as clsx } from "@/lib/utils";
 import { Check, ListFilter } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { DRIVE_CATEGORIES } from "@/lib/drive/category-names";
@@ -19,34 +20,34 @@ export function DriveTypeFilter({ value: applied, onChange }: { value: DriveCate
 	const labels: Record<DriveCategory, string> = { photos: t("drive.photos"), videos: t("drive.videos"), documents: t("drive.documents"), others: t("drive.others") };
 	const active = value.length > 0;
 	return (
-		<DropdownMenu.Root>
-			<DropdownMenu.Trigger asChild>
-				<button type="button" aria-label={t("drive.typeFilter")} className={clsx("flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 text-sm", active ? "border-signal/30 bg-signal-soft text-signal-soft-foreground" : "border-border text-foreground/80 hover:bg-accent")}>
-					<ListFilter size={16} />{t("drive.typeFilter")}{active && <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{value.length}</span>}
-				</button>
-			</DropdownMenu.Trigger>
-			<DropdownMenu.Portal>
-				<DropdownMenu.Content align="end" sideOffset={6} className="z-[200] min-w-48 rounded-xl border border-border bg-card p-1.5 shadow-xl">
+		<DropdownMenu.DropdownMenu>
+			<DropdownMenu.DropdownMenuTrigger asChild>
+				<Button variant="ghost" type="button" aria-label={t("drive.typeFilter")} className={clsx("flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 text-sm", active ? "border-signal/30 bg-signal-soft text-signal-soft-foreground" : "border-border text-foreground/80 hover:bg-accent")}>
+					<ListFilter data-icon="inline-start" />{t("drive.typeFilter")}{active && <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{value.length}</span>}
+				</Button>
+			</DropdownMenu.DropdownMenuTrigger>
+			<DropdownMenu.DropdownMenuPortal>
+				<DropdownMenu.DropdownMenuContent align="end" sideOffset={6}><DropdownMenu.DropdownMenuGroup>
 					{DRIVE_CATEGORIES.map((category) => (
-						<DropdownMenu.CheckboxItem
+						<DropdownMenu.DropdownMenuCheckboxItem
 							key={category}
 							checked={value.includes(category)}
 							onCheckedChange={(checked) => update(checked ? [...value, category] : value.filter((entry) => entry !== category))}
 							onSelect={(event) => event.preventDefault()}
 							className="relative flex cursor-pointer items-center rounded-lg py-2 pl-8 pr-3 text-sm text-foreground/80 outline-none data-[highlighted]:bg-accent"
 						>
-							<DropdownMenu.ItemIndicator className="absolute left-2.5"><Check size={14} className="text-signal" /></DropdownMenu.ItemIndicator>
+
 							{labels[category]}
-						</DropdownMenu.CheckboxItem>
+						</DropdownMenu.DropdownMenuCheckboxItem>
 					))}
 					{active && (
 						<>
-							<DropdownMenu.Separator className="my-1 h-px bg-muted" />
-							<DropdownMenu.Item onSelect={() => update([])} className="cursor-pointer rounded-lg px-3 py-2 text-sm text-foreground/80 outline-none data-[highlighted]:bg-accent">{t("drive.clearFilter")}</DropdownMenu.Item>
+							<DropdownMenu.DropdownMenuSeparator />
+							<DropdownMenu.DropdownMenuItem onSelect={() => update([])} className="cursor-pointer rounded-lg px-3 py-2 text-sm text-foreground/80 outline-none data-[highlighted]:bg-accent">{t("drive.clearFilter")}</DropdownMenu.DropdownMenuItem>
 						</>
 					)}
-				</DropdownMenu.Content>
-			</DropdownMenu.Portal>
-		</DropdownMenu.Root>
+				</DropdownMenu.DropdownMenuGroup></DropdownMenu.DropdownMenuContent>
+			</DropdownMenu.DropdownMenuPortal>
+		</DropdownMenu.DropdownMenu>
 	);
 }
