@@ -1998,7 +1998,7 @@
 	"oauth.deny": "Deny",
 	"oauth.connecting": "Connecting…",
 	"oauth.connections": "Connected apps",
-	"oauth.connectionsDescription": "Connect an assistant using your Mailflare URL followed by /mcp and choose OAuth. Connections expire after 30 days; disconnecting removes access immediately.",
+	"oauth.connectionsDescription": "Connect an assistant using your Mailflare URL followed by /mcp and choose OAuth. New connections can last up to 1 year; disconnecting removes access immediately.",
 	"oauth.connectionError": "Could not update connected apps. Reload this page and try again.",
 	"oauth.empty": "No apps connected.",
 	"oauth.disconnect": "Disconnect",
@@ -2014,6 +2014,6 @@
 	"oauth.scope.accounts": "Manage accounts",
 	"oauth.scope.mailboxes": "Manage mailbox configuration",
 	"oauth.scope.storage": "Inspect and test storage",
-	"oauth.scope.offline_access": "Keep access when you are away (up to 30 days)",
+	"oauth.scope.offline_access": "Keep access when you are away (up to 1 year)",
 	"oauth.revokeHint": "You can disconnect this app at any time in Settings → API keys → Connected apps. Without offline access, access expires after 15 minutes."
 }

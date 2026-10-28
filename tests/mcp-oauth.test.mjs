@@ -427,3 +427,41 @@ test('ordinarily uploaded Markdown saves with the real Node filesystem bucket',a
  assert.equal((await readDocument(f.env,'user','uploaded')).content,'Edited upload');
  assert.equal(await f.env.BUCKET.get(key),null);
 });
+
+test('offline access survives 90 days and refresh cannot extend the one-year approval',async t=>{
+ t.mock.timers.enable({apis:['Date'],now:Date.UTC(2027,0,1)});
+ const f=fixture(),id=await client(f),{code}=await authorize(f,id),first=await exchangeCode(f,id,code);
+ assert.equal(first.status,200);assert.equal(first.body.expires_in,900);
+ const expiry=Date.UTC(2028,0,1)/1000;
+ assert.equal(f.db.prepare('SELECT expires_at FROM oauth_grants').get().expires_at,expiry);
+ assert.equal(f.db.prepare('SELECT refresh_expires_at FROM oauth_tokens').get().refresh_expires_at,expiry);
+ t.mock.timers.setTime(Date.UTC(2027,3,1));
+ const at90=await refresh(f,id,first.body.refresh_token);assert.equal(at90.status,200,JSON.stringify(at90.body));
+ assert.equal((await principal(f,at90.body.access_token)).user.id,'user');
+ t.mock.timers.setTime(Date.UTC(2027,11,31,23,59,59));
+ const last=await refresh(f,id,at90.body.refresh_token);assert.equal(last.status,200,JSON.stringify(last.body));
+ assert.equal(f.db.prepare('SELECT refresh_expires_at FROM oauth_tokens WHERE consumed_at IS NULL').get().refresh_expires_at,expiry);
+ assert.equal(f.db.prepare('SELECT expires_at FROM oauth_grants').get().expires_at,expiry);
+ t.mock.timers.setTime(Date.UTC(2028,0,1));
+ assert.equal(await principal(f,last.body.access_token),null);
+ assert.equal((await refresh(f,id,last.body.refresh_token)).body.error,'invalid_grant');
+});
+test('refreshing an existing 30-day connection preserves its approved expiry',async t=>{
+ t.mock.timers.enable({apis:['Date'],now:Date.UTC(2027,0,1)});
+ const f=fixture(),id=await client(f),{code}=await authorize(f,id),first=await exchangeCode(f,id,code);
+ const expiry=Date.UTC(2027,0,31)/1000;
+ f.db.prepare('UPDATE oauth_grants SET expires_at=?').run(expiry);
+ f.db.prepare('UPDATE oauth_tokens SET refresh_expires_at=?').run(expiry);
+ t.mock.timers.setTime(Date.UTC(2027,0,30));
+ const next=await refresh(f,id,first.body.refresh_token);assert.equal(next.status,200);
+ assert.equal(f.db.prepare('SELECT expires_at FROM oauth_grants').get().expires_at,expiry);
+ assert.equal(f.db.prepare('SELECT refresh_expires_at FROM oauth_tokens WHERE consumed_at IS NULL').get().refresh_expires_at,expiry);
+ t.mock.timers.setTime(Date.UTC(2027,0,31));
+ assert.equal(await principal(f,next.body.access_token),null);
+ assert.equal((await refresh(f,id,next.body.refresh_token)).body.error,'invalid_grant');
+});
+test('consent clearly offers up to one year of offline access',()=>{
+ const html=renderConsent(defaultScopes);
+ assert.match(html,/Keep access when you are away \(up to 1 year\)/);
+ assert.doesNotMatch(html,/up to 30 days/);
+});
