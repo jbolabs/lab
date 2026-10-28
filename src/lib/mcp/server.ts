@@ -27,6 +27,7 @@ export function createMailflareMcpHandler(env: CloudflareEnv, principal: McpPrin
 		const server = new McpServer({ name: "mailflare", version: "0.1.0" });
 		if (principal.scopes.some((scope) => scope.startsWith("mcp:"))) {
 		for (const name of CALENDAR_TOOL_NAMES) {
+			if (!principal.scopes.includes(calendarToolScope(name))) continue;
 			server.registerTool(name, { description: calendarToolDescriptions[name], inputSchema: calendarToolSchemas[name] }, async (args) => {
 				if (!principal.scopes.includes(calendarToolScope(name))) return output({ error: "Permission denied" }, true);
 				try { return output(await runCalendarTool({ env, user: principal.user }, name, args)); }

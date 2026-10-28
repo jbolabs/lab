@@ -203,8 +203,8 @@ test('declining requested offline access does not silently grant it',async()=>{
  assert.equal(r.status,200);assert.equal(r.body.refresh_token,undefined);assert.equal(r.body.scope,'mcp:read');
 });
 
-const defaultScopes = ['mcp:read', 'mcp:draft', 'mcp:organize', 'mcp:request-send', 'mcp:send', 'mcp:calendar-read', 'mcp:calendar-write', 'offline_access'];
-test('scope-less clients receive mail/calendar consent and renewable access, without admin privileges', async () => {
+const defaultScopes = ['mcp:read', 'mcp:draft', 'mcp:organize', 'mcp:request-send', 'mcp:send', 'offline_access'];
+test('scope-less clients receive email-only consent and renewable access, without admin privileges', async () => {
  const f=fixture(), id=await client(f);
  const url=new URL(authUrl(id)); url.searchParams.delete('scope');
  const validated=await validateAuthorization(f.env,new Request(url));
@@ -219,7 +219,7 @@ test('scope-less clients receive mail/calendar consent and renewable access, wit
  assert.deepEqual((await principal(f,next.body.access_token)).scopes,defaultScopes.slice(0,-1));
 });
 
-test('MCP challenge negotiates renewable mail/calendar access and the token can call calendar tools', async () => {
+test('MCP challenge negotiates renewable email-only access and the token can read mailboxes', async () => {
  const f=fixture(); globalThis.__mailflareNodeEnv=f.env;
  try {
   const denied=await mcpRequest(new Request(resource,{method:'POST'}));
@@ -228,23 +228,24 @@ test('MCP challenge negotiates renewable mail/calendar access and the token can 
   assert.deepEqual(scope.split(' '),defaultScopes);
   const id=await client(f),{code}=await authorize(f,id,{scope}),result=await exchangeCode(f,id,code);
   assert.equal(result.status,200);
-  const response=await mcpRequest(new Request(resource,{method:'POST',headers:{Authorization:`Bearer ${result.body.access_token}`,'Content-Type':'application/json',Accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'get_calendars',arguments:{}}})}));
+  const response=await mcpRequest(new Request(resource,{method:'POST',headers:{Authorization:`Bearer ${result.body.access_token}`,'Content-Type':'application/json',Accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'list_mailboxes',arguments:{}}})}));
   assert.equal(response.status,200);
   const text=await response.text();
   const rpc=JSON.parse(response.headers.get('Content-Type').includes('text/event-stream') ? text.split('\n').find(line=>line.startsWith('data: ')).slice(6) : text);
   assert.equal(rpc.error,undefined,JSON.stringify(rpc));
   assert.equal(rpc.result.isError,false,JSON.stringify(rpc));
-  assert.deepEqual(JSON.parse(rpc.result.content[0].text),{calendars:[{id:'personal',name:'Personal calendar',timeZone:'UTC',writable:true}]});
+  assert.deepEqual(JSON.parse(rpc.result.content[0].text),[{id:'inbox',address:'jake@example.com',displayName:null}]);
  } finally { delete globalThis.__mailflareNodeEnv; }
 });
 
-async function callMcp(f, token, name, args) {
+async function requestMcp(f, token, method, params) {
  globalThis.__mailflareNodeEnv=f.env;
- const response=await mcpRequest(new Request(resource,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json',Accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}})}));
+ const response=await mcpRequest(new Request(resource,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json',Accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})}));
  assert.equal(response.status,200);
  const text=await response.text();
  return JSON.parse(response.headers.get('Content-Type').includes('text/event-stream') ? text.split('\n').find(line=>line.startsWith('data: ')).slice(6) : text);
 }
+const callMcp=(f,token,name,args)=>requestMcp(f,token,'tools/call',{name,arguments:args});
 async function sendFixture(t) {
  const f=fixture(), deliveries=[], queued=[];
  t.after(()=>{delete globalThis.__mailflareNodeEnv;});
@@ -317,4 +318,21 @@ test('rendered consent explicitly discloses sending without review',()=>{
  assert.match(html,/If you allow direct sending, this app can send email without your review/);
  assert.match(html,/value="mcp:send"/);
  assert.doesNotMatch(renderConsent(['mcp:read']),/value="mcp:send"/);
+});
+
+test('email-only connections expose no calendar tools; calendar access requires an explicit grant',async t=>{
+ const f=await sendFixture(t);
+ const listed=await requestMcp(f,f.token,'tools/list',{});
+ const names=listed.result.tools.map(tool=>tool.name);
+ assert.ok(names.includes('send_draft'));
+ for(const name of ['get_schedule','search_events','get_event','create_event','update_events','delete_events','find_free_time','get_calendars']) assert.equal(names.includes(name),false,name);
+ const denied=await callMcp(f,f.token,'get_calendars',{});
+ assert.ok(denied.error || denied.result.isError);
+ const id=await client(f),{code}=await authorize(f,id,{scope:'mcp:calendar-read'}),granted=await exchangeCode(f,id,code);
+ const calendarTools=await requestMcp(f,granted.body.access_token,'tools/list',{});
+ assert.ok(calendarTools.result.tools.some(tool=>tool.name==='get_calendars'));
+ assert.equal(calendarTools.result.tools.some(tool=>tool.name==='create_event'),false);
+ const calendar=await callMcp(f,granted.body.access_token,'get_calendars',{});
+ assert.equal(calendar.result.isError,false);
+ assert.deepEqual(JSON.parse(calendar.result.content[0].text),{calendars:[{id:'personal',name:'Personal calendar',timeZone:'UTC',writable:true}]});
 });
