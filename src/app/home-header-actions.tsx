@@ -16,7 +16,13 @@ export function HomeHeaderActions() {
 	return (
 		<div className="hidden items-center gap-1 sm:flex">
 			{getHomeActions(false).map((action) => (
-				<Button key={action.href} variant={action.variant} size="sm" asChild className="rounded-full px-4">
+				<Button
+					key={action.href}
+					variant={action.variant}
+					size="sm"
+					asChild
+					className="px-4"
+				>
 					<Link href={action.href}>{t(action.labelKey)}</Link>
 				</Button>
 			))}
