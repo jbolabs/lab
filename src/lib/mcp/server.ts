@@ -1,3 +1,4 @@
+import { registerDriveTools } from "./drive-tools";
 import { eq } from "drizzle-orm";
 import { createMcpHandler, McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
@@ -25,6 +26,7 @@ function output(value: unknown, isError = false) {
 export function createMailflareMcpHandler(env: CloudflareEnv, principal: McpPrincipal, baseUrl: string, authorization: string) {
 	return createMcpHandler(() => {
 		const server = new McpServer({ name: "mailflare", version: "0.1.0" });
+		registerDriveTools(server, env, principal);
 		if (principal.scopes.some((scope) => scope.startsWith("mcp:"))) {
 		for (const name of CALENDAR_TOOL_NAMES) {
 			if (!principal.scopes.includes(calendarToolScope(name))) continue;

@@ -3,7 +3,7 @@ import { getMailboxAccessLevel } from "@/lib/mailboxes/access";
 import type { SessionUser } from "@/lib/auth/types";
 import { generateApiKey } from "@/lib/api-keys";
 import { ADMIN_API_KEY_SCOPES } from "@/lib/api/scopes";
-import { GRANT_SECONDS, hash, MAIL_SCOPES, now, OAuthFailure, parseScope, secret } from "./config";
+import { GRANT_SECONDS, hash, EMAIL_SCOPES, MAIL_SCOPES, now, OAuthFailure, parseScope, secret } from "./config";
 import { OAuthStore, type Pending } from "./store";
 
 export async function consentDetails(env: CloudflareEnv, pending: Pending, user: SessionUser) {
@@ -35,7 +35,7 @@ export async function completeConsent(env: CloudflareEnv, user: SessionUser, tic
 	if (scopes.some((scope) => !requested.includes(scope)) || !scopes.some((scope) => scope !== "offline_access")) throw new OAuthFailure("invalid_scope", "Choose at least one requested permission");
 	const permissions = scopes.filter((scope) => scope !== "offline_access");
 	const ids = [...new Set(mailboxIds)];
-	if (ids.length > 30 || (permissions.some((scope) => MAIL_SCOPES.includes(scope) && !scope.startsWith("mcp:calendar-")) && !ids.length)) throw new OAuthFailure("invalid_request", "Choose at least one mailbox for mail access");
+	if (ids.length > 30 || (permissions.some((scope) => EMAIL_SCOPES.includes(scope)) && !ids.length)) throw new OAuthFailure("invalid_request", "Choose at least one mailbox for mail access");
 	if (!permissions.some((scope) => MAIL_SCOPES.includes(scope)) && ids.length) throw new OAuthFailure("invalid_request", "Admin connections cannot read mailboxes");
 	for (const id of ids) if (!(await getMailboxAccessLevel(getDb(env), user, id))?.canRead) throw new OAuthFailure("access_denied", "Mailbox access has changed", 403);
 	if (!await store.consumePending(ticket, user.id)) throw new OAuthFailure("invalid_request", "Request already completed");
