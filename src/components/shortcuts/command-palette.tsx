@@ -74,19 +74,19 @@ function CommandPaletteDialog({
   }, [activeIndex, listboxId]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-neutral-900/40 backdrop-blur-xs animate-in fade-in duration-100">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-100">
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={t("palette.placeholder")}
-        className="relative w-full max-w-xl bg-white border border-neutral-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10"
+        className="relative w-full max-w-xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10"
         onKeyDown={handleKeyDown}
       >
         {/* Search header */}
-        <div className="flex items-center px-4 py-3.5 border-b border-neutral-100 gap-3">
-          <Search className="w-5 h-5 text-neutral-400" />
+        <div className="flex items-center px-4 py-3.5 border-b border-border gap-3">
+          <Search className="w-5 h-5 text-muted-foreground/70" />
           <input
             ref={inputRef}
             type="text"
@@ -102,9 +102,9 @@ function CommandPaletteDialog({
             aria-autocomplete="list"
             aria-activedescendant={filteredCommands.length ? optionId(activeIndex) : undefined}
             aria-label={t("palette.placeholder")}
-            className="w-full bg-transparent text-neutral-900 placeholder-neutral-400 text-[15px] focus:outline-none"
+            className="w-full bg-transparent text-foreground placeholder-muted-foreground text-[15px] focus:outline-none"
           />
-          <kbd className="px-2 py-0.5 text-xs font-semibold text-neutral-500 bg-neutral-100 border border-neutral-200 rounded-md shadow-2xs">
+          <kbd className="px-2 py-0.5 text-xs font-semibold text-muted-foreground bg-muted border border-border rounded-md shadow-2xs">
             ESC
           </kbd>
         </div>
@@ -112,13 +112,13 @@ function CommandPaletteDialog({
         {/* Results */}
         <div id={listboxId} role="listbox" aria-label={t("palette.placeholder")} className="max-h-80 overflow-y-auto p-2">
           {filteredCommands.length === 0 ? (
-            <div role="status" className="p-8 text-center text-sm text-neutral-500">
+            <div role="status" className="p-8 text-center text-sm text-muted-foreground">
               {t("palette.noMatch", { query })}
             </div>
           ) : (
             Object.entries(grouped).map(([category, items]) => (
               <div key={category} role="group" aria-label={t(`shortcut.category.${category}` as TranslationKey)} className="mb-2 last:mb-0">
-                <div aria-hidden="true" className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                <div aria-hidden="true" className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {t(`shortcut.category.${category}` as TranslationKey)}
                 </div>
                 {items.map((item) => {
@@ -146,10 +146,10 @@ function CommandPaletteDialog({
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2.5 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
+        <div className="px-4 py-2.5 bg-muted/60 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-3">
             <span>
-              <kbd className="px-1.5 py-0.5 bg-neutral-200 rounded mr-1 text-[10px]">
+              <kbd className="px-1.5 py-0.5 bg-accent rounded mr-1 text-[10px]">
                 ↑↓
               </kbd>
               {t("palette.navigate")}

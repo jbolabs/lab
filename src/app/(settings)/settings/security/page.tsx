@@ -8,27 +8,27 @@ export default async function SecuritySettingsPage() {
 	return <div className="space-y-8 py-4">
 		<section className="space-y-4">
 			<div>
-				<h1 className="text-xl font-semibold text-neutral-900">{t("settingsPage.security.title")}</h1>
-				<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.security.description")}</p>
+				<h1 className="text-xl font-semibold text-foreground">{t("settingsPage.security.title")}</h1>
+				<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.security.description")}</p>
 			</div>
-			<div className="space-y-4 rounded-3xl bg-white p-6">
+			<div className="space-y-4 rounded-3xl bg-card p-6">
 				<div>
-					<h2 className="text-lg font-semibold text-neutral-900">{t("settingsPage.security.changePassword")}</h2>
-					<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.security.changePasswordDescription")}</p>
+					<h2 className="text-lg font-semibold text-foreground">{t("settingsPage.security.changePassword")}</h2>
+					<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.security.changePasswordDescription")}</p>
 				</div>
 				<ChangePasswordForm />
 			</div>
-			<div className="space-y-4 rounded-3xl bg-white p-6">
+			<div className="space-y-4 rounded-3xl bg-card p-6">
 				<div>
-					<h2 className="text-lg font-semibold text-neutral-900">{t("settingsPage.security.mfa")}</h2>
-					<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.security.mfaDescription")}</p>
+					<h2 className="text-lg font-semibold text-foreground">{t("settingsPage.security.mfa")}</h2>
+					<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.security.mfaDescription")}</p>
 				</div>
 				<MfaSettings />
 			</div>
-			<div className="space-y-4 rounded-3xl bg-white p-6">
+			<div className="space-y-4 rounded-3xl bg-card p-6">
 				<div>
-					<h2 className="text-lg font-semibold text-neutral-900">{t("settingsPage.security.devices")}</h2>
-					<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.security.devicesDescription")}</p>
+					<h2 className="text-lg font-semibold text-foreground">{t("settingsPage.security.devices")}</h2>
+					<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.security.devicesDescription")}</p>
 				</div>
 				<DeviceSettings />
 			</div>

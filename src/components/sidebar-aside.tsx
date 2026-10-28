@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { useSidebar } from "./sidebar-state";
 import { useLanguage } from "./language-provider";
-import { useBranding } from "./branding-provider";
+import { BrandMark } from "./brand";
 
 export function SidebarAside({ children, className }: { children: ReactNode; className?: string }) {
 	const { mobile, mobileOpen, toggle } = useSidebar();
@@ -35,7 +35,7 @@ export function SidebarAside({ children, className }: { children: ReactNode; cla
 				aria-hidden={hidden}
 				inert={hidden}
 				className={clsx(
-					"fixed inset-y-0 left-0 z-[110] w-[min(85vw,300px)] min-h-0 min-w-0 bg-[#f6f8fc] transition-transform duration-200 ease-out motion-reduce:transition-none",
+					"fixed inset-y-0 left-0 z-[110] w-[min(85vw,300px)] min-h-0 min-w-0 bg-sidebar transition-transform duration-200 ease-out motion-reduce:transition-none",
 					"md:relative md:z-30 md:w-[var(--sidebar-width)] md:translate-x-0 md:shadow-none",
 					mobileOpen ? "translate-x-0 shadow-xl" : "-translate-x-full",
 					className,
@@ -49,16 +49,15 @@ export function SidebarAside({ children, className }: { children: ReactNode; cla
 
 export function MobileMenuButton({ className }: { className?: string }) {
 	const { t } = useLanguage();
-	const branding = useBranding();
 	const { mobile, mobileOpen, toggle } = useSidebar();
 	if (!mobile) return null;
 	return (
 		<>
-			<button type="button" data-mobile-menu onClick={toggle} aria-label={t("navigation.openMenu")} aria-expanded={mobileOpen} className={clsx("flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-600 hover:bg-neutral-200 md:hidden", className)}>
+			<button type="button" data-mobile-menu onClick={toggle} aria-label={t("navigation.openMenu")} aria-expanded={mobileOpen} className={clsx("flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-accent md:hidden", className)}>
 				<Menu size={20} />
 			</button>
-			<Link href="/inbox" aria-label={t("navigation.inbox")} className="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-neutral-200 md:hidden">
-				<img src={branding.iconUrl} height={28} width={28} alt="" />
+			<Link href="/inbox" aria-label={t("navigation.inbox")} className="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-accent md:hidden">
+				<BrandMark size={28} />
 			</Link>
 		</>
 	);
@@ -69,7 +68,7 @@ export function MobileTopBar({ title }: { title?: string }) {
 	return (
 		<div className="flex h-16 shrink-0 items-center gap-2 pl-2 md:hidden">
 			<MobileMenuButton />
-			{title && <p aria-hidden="true" className="min-w-0 max-w-[40vw] truncate text-base font-medium text-neutral-900">{title}</p>}
+			{title && <p aria-hidden="true" className="min-w-0 max-w-[40vw] truncate text-base font-medium text-foreground">{title}</p>}
 		</div>
 	);
 }

@@ -102,7 +102,7 @@ export function ProfileAvatarForm({
 				type="button"
 				onClick={() => inputRef.current?.click()}
 				disabled={busy}
-				className="group relative h-24 w-24 overflow-hidden rounded-full border border-neutral-200 bg-blue-600 text-white shadow-sm outline-none ring-blue-500 transition focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait"
+				className="group relative h-24 w-24 overflow-hidden rounded-full border border-border bg-primary text-primary-foreground shadow-sm outline-none ring-ring transition focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait"
 				style={getAvatarColorStyle(colorSeed ?? mailboxId ?? name)}
 				aria-label={hasAvatar ? t("avatar.change", { name }) : t("avatar.upload", { name })}
 			>
@@ -118,7 +118,7 @@ export function ProfileAvatarForm({
 						<User className="h-9 w-9" />
 					</span>
 				)}
-				<span className="absolute inset-0 flex items-center justify-center bg-neutral-950/55 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+				<span className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
 					{busy ? (
 						<LoaderCircle className="h-6 w-6 animate-spin" />
 					) : (

@@ -20,8 +20,8 @@ export function driveIconFor(item: Pick<DriveItemDto, "kind" | "contentType" | "
 	if (PRESENTATION.test(type) || ["ppt", "pptx", "odp", "key"].includes(extension)) return { Icon: Presentation, className: "text-orange-600" };
 	if (ARCHIVE.test(type) || ["zip", "rar", "7z", "tar", "gz"].includes(extension)) return { Icon: FileArchive, className: "text-yellow-700" };
 	if (CODE_EXTENSIONS.has(extension) || type === "application/json" || type.includes("javascript") || type.includes("xml")) return { Icon: FileCode, className: "text-teal-500" };
-	if (type.startsWith("text/") || type.includes("word") || type.includes("opendocument.text") || ["doc", "docx", "odt", "rtf", "txt", "md", "pages"].includes(extension)) return { Icon: FileText, className: "text-blue-500" };
-	return { Icon: FileIcon, className: "text-neutral-500" };
+	if (type.startsWith("text/") || type.includes("word") || type.includes("opendocument.text") || ["doc", "docx", "odt", "rtf", "txt", "md", "pages"].includes(extension)) return { Icon: FileText, className: "text-signal" };
+	return { Icon: FileIcon, className: "text-muted-foreground" };
 }
 
 export type DriveSortKey = "name" | "owner" | "updatedAt" | "size";

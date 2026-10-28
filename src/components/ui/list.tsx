@@ -22,7 +22,7 @@ export function ListRow({ className, asChild = false, ...props }: ListRowProps) 
 	const Comp: React.ElementType = asChild ? Slot : "div";
 	return (
 		<Comp
-			className={cn("flex items-center gap-4 rounded-lg bg-white p-5", className)}
+			className={cn("flex items-center gap-4 rounded-lg bg-card p-5", className)}
 			{...props}
 		/>
 	);

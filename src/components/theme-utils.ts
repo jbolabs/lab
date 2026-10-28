@@ -2,6 +2,8 @@ export type ThemePreference = "light" | "dark" | "system";
 
 export const THEME_STORAGE_KEY = "mailflare-theme";
 export const THEME_CHANGED_EVENT = "mailflare:theme-changed";
+/** Browser chrome and status bar colours: the app shell's sidebar surface in each theme (globals.css `--sidebar`). */
+export const THEME_COLORS = { light: "#f8f9fa", dark: "#0e0f13" } as const;
 
 // Runs in <head> before paint, so the first frame already has the right theme (same approach as the
 // sidebar width). Keep it in sync with resolveTheme/applyTheme below.
@@ -12,6 +14,9 @@ export const themeBootstrapScript = `(() => {
 		const dark = preference === "dark" || (preference === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
 		document.documentElement.classList.toggle("dark", dark);
 		document.documentElement.classList.toggle("light", !dark);
+		addEventListener("DOMContentLoaded", () => {
+			for (const meta of document.querySelectorAll('meta[name="theme-color"]')) { meta.removeAttribute("media"); meta.setAttribute("content", dark ? "${THEME_COLORS.dark}" : "${THEME_COLORS.light}"); }
+		}, { once: true });
 	} catch {}
 })();`;
 
@@ -40,6 +45,11 @@ export function applyTheme(preference: ThemePreference): void {
 	const dark = resolveTheme(preference) === "dark";
 	document.documentElement.classList.toggle("dark", dark);
 	document.documentElement.classList.toggle("light", !dark);
+	// The class, not the OS setting, picks the theme, so the status bar colour follows it here.
+	for (const meta of document.querySelectorAll('meta[name="theme-color"]')) {
+		meta.removeAttribute("media");
+		meta.setAttribute("content", dark ? THEME_COLORS.dark : THEME_COLORS.light);
+	}
 }
 
 export function saveThemePreference(preference: ThemePreference): void {

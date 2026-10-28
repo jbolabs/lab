@@ -43,8 +43,8 @@ export function MailboxSignatureForm() {
 		}
 	}
 
-	if (isLoading) return <p className="text-sm text-neutral-500">{t("settings.signature.loadingInbox")}</p>;
-	if (!selectedMailbox) return <p className="text-sm text-neutral-500">{t("settings.signature.selectInbox")}</p>;
+	if (isLoading) return <p className="text-sm text-muted-foreground">{t("settings.signature.loadingInbox")}</p>;
+	if (!selectedMailbox) return <p className="text-sm text-muted-foreground">{t("settings.signature.selectInbox")}</p>;
 
 	const address = `${selectedMailbox.localPart}@${selectedMailbox.hostname}`;
 	const canManage = selectedMailbox.permission === "full_access";
@@ -61,15 +61,15 @@ export function MailboxSignatureForm() {
 					rows={6}
 					disabled={!canManage || saving}
 				/>
-				<p className="text-xs leading-5 text-neutral-500">
+				<p className="text-xs leading-5 text-muted-foreground">
 					{t("settings.signature.hint")}
 				</p>
 			</div>
 			{isHtmlSignature(signature) && (
 				<div className="space-y-2">
-					<p className="text-xs font-medium text-neutral-500">{t("settings.signature.preview")}</p>
+					<p className="text-xs font-medium text-muted-foreground">{t("settings.signature.preview")}</p>
 					<EmailHtmlRenderer
-						className="rounded-md border border-neutral-200 bg-white p-4 text-sm text-neutral-900"
+						className="rounded-md border border-border bg-card p-4 text-sm text-foreground"
 						html={signature}
 					/>
 				</div>
@@ -78,8 +78,8 @@ export function MailboxSignatureForm() {
 				<Button type="submit" disabled={!canManage || saving || signature.trim() === savedSignature}>
 					{saving ? t("common.saving") : t("settings.signature.save")}
 				</Button>
-				{!canManage && <p className="text-sm text-neutral-500">{t("settings.signature.needFullAccess")}</p>}
-				{status && <p role="status" className="text-sm text-neutral-500">{status}</p>}
+				{!canManage && <p className="text-sm text-muted-foreground">{t("settings.signature.needFullAccess")}</p>}
+				{status && <p role="status" className="text-sm text-muted-foreground">{status}</p>}
 			</div>
 		</form>
 	);

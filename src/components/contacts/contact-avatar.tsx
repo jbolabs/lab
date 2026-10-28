@@ -60,7 +60,7 @@ export function ContactAvatar({
 
 	return (
 		<span
-			className={cn("relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-sm font-semibold text-neutral-700", className)}
+			className={cn("relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-foreground/80", className)}
 			style={getAvatarColorStyle(normalizeEmailAddress(address) || name)}
 			aria-hidden
 		>

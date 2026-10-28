@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/language-provider";
 import type { TranslationKey } from "@/lib/i18n/types";
-import { Select } from "@/components/ui/select";
+import { NativeSelect } from "@/components/ui/native-select";
 import {
 	isThemePreference,
 	readThemePreference,
@@ -30,17 +30,17 @@ export function AppearanceSettings() {
 	}, []);
 
 	return (
-		<label className="flex items-start gap-3 rounded-xl bg-neutral-50 p-4">
+		<label className="flex items-start gap-3 rounded-xl bg-muted/60 p-4">
 			<span className="flex-1">
-				<span className="block text-sm font-medium text-neutral-900">{t("settings.theme.label")}</span>
-				<span className="mt-1 block text-sm text-neutral-500">
+				<span className="block text-sm font-medium text-foreground">{t("settings.theme.label")}</span>
+				<span className="mt-1 block text-sm text-muted-foreground">
 					{t("settings.theme.description")}
 				</span>
 			</span>
-			<Select
+			<NativeSelect
 				value={preference}
 				aria-label={t("settings.theme.label")}
-				className="py-1.5 text-sm text-neutral-900"
+				className="py-1.5 text-sm text-foreground"
 				onChange={(event) => {
 					const next = event.target.value;
 					if (!isThemePreference(next)) return;
@@ -53,7 +53,7 @@ export function AppearanceSettings() {
 						{t(option.labelKey)}
 					</option>
 				))}
-			</Select>
+			</NativeSelect>
 		</label>
 	);
 }

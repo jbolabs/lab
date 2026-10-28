@@ -23,7 +23,7 @@ export function getAttachmentVisual(
 	if (previewKind === "image") {
 		return {
 			icon: Image,
-			iconClassName: "bg-blue-50 text-blue-700",
+			iconClassName: "bg-signal-soft text-signal",
 			labelKey: "attachment.image",
 			thumbnail: "image",
 		};
@@ -115,7 +115,7 @@ export function getAttachmentVisual(
 
 	return {
 		icon: FileText,
-		iconClassName: "bg-neutral-100 text-neutral-600",
+		iconClassName: "bg-muted text-muted-foreground",
 		labelKey: "attachment.file",
 		thumbnail: null,
 	};

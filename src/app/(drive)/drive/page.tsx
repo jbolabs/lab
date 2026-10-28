@@ -37,7 +37,7 @@ import type { DriveListing } from "../drive-cache";
 import { Skeleton } from "@/components/ui/skeleton";
 import { canDropDrive, driveDropHandlers, endDriveDrag, isDriveDraggable, startDriveDrag } from "../drive-drag";
 
-const menuItemClass = "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-neutral-700 outline-none data-[highlighted]:bg-neutral-100";
+const menuItemClass = "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground/80 outline-none data-[highlighted]:bg-accent";
 const dateFormat = new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric" });
 
 export default function DrivePage() {
@@ -63,7 +63,6 @@ export default function DrivePage() {
 	const [sharing, setSharing] = useState<DriveItemDto | null>(null);
 	const [naming, setNaming] = useState<{ mode: "create" | "rename"; item?: DriveItemDto; value: string } | null>(null);
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-	const selectAllRef = useRef<HTMLInputElement | null>(null);
 	const fileInput = useRef<HTMLInputElement | null>(null);
 	const dragDepth = useRef(0);
 	// Rows being dragged to another folder or the trash, and the folder row under the pointer.
@@ -228,7 +227,6 @@ export default function DrivePage() {
 	const selectable = sorted.filter((item) => (item.source ? item.source.canDelete : canEditDrive(item.role)));
 	const selectedItems = selectable.filter((item) => selectedIds.has(item.id));
 	const allSelected = selectable.length > 0 && selectedItems.length === selectable.length;
-	useEffect(() => { if (selectAllRef.current) selectAllRef.current.indeterminate = selectedItems.length > 0 && !allSelected; }, [selectedItems.length, allSelected]);
 	const toggleItem = (id: string) => setSelectedIds((current) => { const next = new Set(current); if (!next.delete(id)) next.add(id); return next; });
 	const attachmentsView = view === "attachments" && !folder;
 	const title = view === "attachments" ? t("drive.attachments") : view === "trash" ? t("drive.trash") : view === "shared" ? t("drive.sharedWithMe") : query ? t("drive.search") : t("drive.myDrive");
@@ -241,7 +239,7 @@ export default function DrivePage() {
 	}
 	const SortIcon = ascending ? ArrowUp : ArrowDown;
 	const headerButton = (key: DriveSortKey, label: string) => (
-		<button type="button" onClick={() => toggleSort(key)} className="flex min-w-0 items-center gap-1 font-medium text-neutral-600 hover:text-neutral-900"><span className="truncate">{label}</span>{sortKey === key && <SortIcon size={12} className="shrink-0" />}</button>
+		<button type="button" onClick={() => toggleSort(key)} className="flex min-w-0 items-center gap-1 font-medium text-muted-foreground hover:text-foreground"><span className="truncate">{label}</span>{sortKey === key && <SortIcon size={12} className="shrink-0" />}</button>
 	);
 	const gridStyle = { "--drive-columns": columns.template } as React.CSSProperties;
 
@@ -254,25 +252,25 @@ export default function DrivePage() {
 				headerTarget,
 			)}
 			<input ref={fileInput} type="file" multiple hidden onChange={(event) => { void upload([...(event.target.files ?? [])]); event.target.value = ""; }} />
-			<div className="flex min-h-0 flex-1 flex-col rounded-t-3xl bg-white">
-				<div className="flex min-h-[4.25rem] shrink-0 items-center justify-between gap-3 border-b border-neutral-200 px-5 py-3">
+			<div className="flex min-h-0 flex-1 flex-col rounded-t-3xl bg-card">
+				<div className="flex min-h-[4.25rem] shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-3">
 				<div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
-					<nav aria-label={title} className="flex min-w-0 flex-wrap items-center gap-1 text-xl text-neutral-800 max-md:text-lg">
+					<nav aria-label={title} className="flex min-w-0 flex-wrap items-center gap-1 text-xl text-foreground max-md:text-lg">
 					{loading && folder ? <Skeleton className="h-7 w-48" /> : path.length === 0 ? <h1 className="font-normal">{title}</h1> : (
 						<>
-							<button type="button" onClick={() => router.push(rootHref)} className="rounded-full px-2 py-1 hover:bg-neutral-100">{view === "shared" || role !== "owner" ? t("drive.sharedWithMe") : t("drive.myDrive")}</button>
+							<button type="button" onClick={() => router.push(rootHref)} className="rounded-full px-2 py-1 hover:bg-accent">{view === "shared" || role !== "owner" ? t("drive.sharedWithMe") : t("drive.myDrive")}</button>
 							{path.map((crumb, index) => (
 								<span key={crumb.id} className="flex items-center gap-1">
-									<ChevronRight size={18} className="text-neutral-500" />
-									{index === path.length - 1 ? <h1 className="px-2 py-1 font-normal">{crumb.name}</h1> : <button type="button" onClick={() => router.push(`/drive?folder=${encodeURIComponent(crumb.id)}${view === "shared" ? "&view=shared" : ""}`)} className="rounded-full px-2 py-1 hover:bg-neutral-100">{crumb.name}</button>}
+									<ChevronRight size={18} className="text-muted-foreground" />
+									{index === path.length - 1 ? <h1 className="px-2 py-1 font-normal">{crumb.name}</h1> : <button type="button" onClick={() => router.push(`/drive?folder=${encodeURIComponent(crumb.id)}${view === "shared" ? "&view=shared" : ""}`)} className="rounded-full px-2 py-1 hover:bg-accent">{crumb.name}</button>}
 								</span>
 							))}
 						</>
 					)}
 				</nav>
 					{selectedItems.length > 0 && (
-						<span className="flex shrink-0 items-center gap-1 text-sm text-neutral-600">
-							<button type="button" onClick={() => setSelectedIds(new Set())} aria-label={t("navigation.close")} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-neutral-100"><X size={16} /></button>
+						<span className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground">
+							<button type="button" onClick={() => setSelectedIds(new Set())} aria-label={t("navigation.close")} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-accent"><X size={16} /></button>
 							{t("drive.selected", { count: selectedItems.length })}
 						</span>
 					)}
@@ -282,9 +280,9 @@ export default function DrivePage() {
 						<DriveTypeFilter value={types} onChange={setTypes} />
 					</div>
 				</div>
-				{view === "trash" && !folder && <p className="shrink-0 border-b border-neutral-200 bg-neutral-50 px-5 py-2 text-xs text-neutral-600">{t("drive.trashNotice", { days: 30 })}</p>}
-				<div style={gridStyle} className="grid shrink-0 grid-cols-[2rem_minmax(0,1fr)_2.5rem] items-center gap-x-4 border-b border-neutral-200 px-5 py-2 text-sm md:grid-cols-[var(--drive-columns)]">
-					<Checkbox ref={selectAllRef} checked={allSelected} onChange={() => setSelectedIds(allSelected ? new Set() : new Set(selectable.map((item) => item.id)))} disabled={selectable.length === 0} aria-label={t("drive.selectAll")} className="ml-1" />
+				{view === "trash" && !folder && <p className="shrink-0 border-b border-border bg-muted/60 px-5 py-2 text-xs text-muted-foreground">{t("drive.trashNotice", { days: 30 })}</p>}
+				<div style={gridStyle} className="grid shrink-0 grid-cols-[2rem_minmax(0,1fr)_2.5rem] items-center gap-x-4 border-b border-border px-5 py-2 text-sm md:grid-cols-[var(--drive-columns)]">
+					<Checkbox checked={allSelected ? true : selectedItems.length > 0 ? "indeterminate" : false} onCheckedChange={() => setSelectedIds(allSelected ? new Set() : new Set(selectable.map((item) => item.id)))} disabled={selectable.length === 0} aria-label={t("drive.selectAll")} className="ml-1" />
 					<span className="min-w-0 pl-7">{headerButton("name", t("drive.name"))}</span>
 					<span className="relative hidden min-w-0 md:block">{headerButton("owner", attachmentsView ? t("drive.from") : t("drive.owner"))}<ColumnResizeHandle column="owner" width={columns.widths.owner} onResize={columns.resize} label={t("drive.owner")} /></span>
 					<span className="relative hidden min-w-0 md:block">{headerButton("updatedAt", t("drive.modified"))}<ColumnResizeHandle column="updatedAt" width={columns.widths.updatedAt} onResize={columns.resize} label={t("drive.modified")} /></span>
@@ -292,7 +290,7 @@ export default function DrivePage() {
 					<span />
 				</div>
 				<div role={!failed && !loading && sorted.length > 0 ? "list" : undefined} aria-label={!failed && !loading && sorted.length > 0 ? t("drive.title") : undefined} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 space-y-px pt-px">
-					{failed ? <p className="p-8 text-center text-sm text-neutral-500">{t("drive.loadFailed")}</p>
+					{failed ? <p className="p-8 text-center text-sm text-muted-foreground">{t("drive.loadFailed")}</p>
 						: loading ? Array.from({ length: 8 }, (_, index) => (
 							<div key={index} aria-hidden="true" style={gridStyle} className="grid grid-cols-[2rem_minmax(0,1fr)_2.5rem] items-center gap-x-4 px-3 py-3.5 md:grid-cols-[var(--drive-columns)]">
 								<Skeleton className="ml-1 h-4 w-4" />
@@ -303,7 +301,7 @@ export default function DrivePage() {
 								<span />
 							</div>
 						))
-						: sorted.length === 0 ? <p className="p-12 text-center text-sm text-neutral-500">{emptyText}</p>
+						: sorted.length === 0 ? <p className="p-12 text-center text-sm text-muted-foreground">{emptyText}</p>
 						: sorted.map((item) => {
 							const { Icon, className } = driveIconFor(item);
 							// Only the owner's own folders take drops, matching what the move endpoint allows.
@@ -311,22 +309,22 @@ export default function DrivePage() {
 								? driveDropHandlers({ kind: "folder", id: item.id }, () => canDropDrive({ kind: "folder", id: item.id }), t, (over) => setDropFolder((current) => (over ? item.id : current === item.id ? null : current)))
 								: {};
 							return (
-								<div key={item.id} role="listitem" style={gridStyle} draggable={isDriveDraggable(item)} onDragStart={(event) => onItemDragStart(event, item)} onDragEnd={onItemDragEnd} {...dropTarget} className={clsx("group grid grid-cols-[2rem_minmax(0,1fr)_2.5rem] items-center gap-x-4 rounded-lg px-3 text-sm md:grid-cols-[var(--drive-columns)]", dropFolder === item.id ? "bg-blue-100 ring-2 ring-inset ring-blue-500" : selectedIds.has(item.id) ? "bg-blue-50" : "hover:bg-neutral-50", movingIds.has(item.id) && "opacity-50")}>
-									<Checkbox checked={selectedIds.has(item.id)} onChange={() => toggleItem(item.id)} disabled={!selectable.includes(item)} aria-label={t("drive.selectItem", { name: item.name })} className={clsx("ml-1", !selectable.includes(item) && "invisible")} />
+								<div key={item.id} role="listitem" style={gridStyle} draggable={isDriveDraggable(item)} onDragStart={(event) => onItemDragStart(event, item)} onDragEnd={onItemDragEnd} {...dropTarget} className={clsx("group grid grid-cols-[2rem_minmax(0,1fr)_2.5rem] items-center gap-x-4 rounded-lg px-3 text-sm md:grid-cols-[var(--drive-columns)]", dropFolder === item.id ? "bg-signal-soft ring-2 ring-inset ring-ring" : selectedIds.has(item.id) ? "bg-signal-soft" : "hover:bg-accent/60", movingIds.has(item.id) && "opacity-50")}>
+									<Checkbox checked={selectedIds.has(item.id)} onCheckedChange={() => toggleItem(item.id)} disabled={!selectable.includes(item)} aria-label={t("drive.selectItem", { name: item.name })} className={clsx("ml-1", !selectable.includes(item) && "invisible")} />
 									<button type="button" onClick={() => open(item)} aria-disabled={item.trashedAt ? true : undefined} className="flex min-w-0 items-center gap-3 py-3 text-left aria-disabled:cursor-default">
 										<Icon size={16} className={clsx("shrink-0", className)} fill={item.kind === "folder" ? "currentColor" : "none"} />
-										<span className="truncate text-neutral-900">{item.name}</span>
-										{item.shared && item.role === "owner" && <Share2 size={12} className="shrink-0 text-neutral-500" aria-label={t("drive.share")} />}
+										<span className="truncate text-foreground">{item.name}</span>
+										{item.shared && item.role === "owner" && <Share2 size={12} className="shrink-0 text-muted-foreground" aria-label={t("drive.share")} />}
 									</button>
 									<span className="hidden md:block"><DriveOwnerAvatar item={item} /></span>
-									<span className="hidden text-neutral-600 md:block">{dateFormat.format(new Date(item.updatedAt))}</span>
-									<span className="hidden text-neutral-600 md:block">{item.kind === "file" ? formatDriveSize(item.size) : "—"}</span>
+									<span className="hidden text-muted-foreground md:block">{dateFormat.format(new Date(item.updatedAt))}</span>
+									<span className="hidden text-muted-foreground md:block">{item.kind === "file" ? formatDriveSize(item.size) : "—"}</span>
 									<DropdownMenu.Root>
 										<DropdownMenu.Trigger asChild>
-											<button type="button" aria-label={t("drive.actions")} className="flex h-9 w-9 items-center justify-center rounded-full text-neutral-600 hover:bg-neutral-200"><MoreVertical size={16} /></button>
+											<button type="button" aria-label={t("drive.actions")} className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent"><MoreVertical size={16} /></button>
 										</DropdownMenu.Trigger>
 										<DropdownMenu.Portal>
-											<DropdownMenu.Content align="end" sideOffset={4} className="z-[200] min-w-52 rounded-xl border border-neutral-200 bg-white p-1.5 shadow-xl">
+											<DropdownMenu.Content align="end" sideOffset={4} className="z-[200] min-w-52 rounded-xl border border-border bg-card p-1.5 shadow-xl">
 												{!item.trashedAt && <DropdownMenu.Item className={menuItemClass} onSelect={() => open(item)}>{t("drive.open")}</DropdownMenu.Item>}
 												{item.kind === "file" && !(item.source && item.trashedAt) && <DropdownMenu.Item asChild className={menuItemClass}><a href={driveFileUrl(item, true)}><Download size={16} />{t("drive.download")}</a></DropdownMenu.Item>}
 												{item.source && !item.trashedAt && <DropdownMenu.Item asChild className={menuItemClass}><a href={emailUrl(item.source)} target="_blank" rel="noopener noreferrer"><Mail size={16} />{t("drive.openEmail")}<span className="sr-only"> ({t("common.opensInNewTab")})</span></a></DropdownMenu.Item>}
@@ -344,7 +342,7 @@ export default function DrivePage() {
 						})}
 				</div>
 			</div>
-			{dragging && <div className="pointer-events-none absolute inset-2 z-20 flex items-center justify-center rounded-2xl border-2 border-dashed border-blue-500 bg-blue-50/80 text-blue-700"><UploadCloud size={28} /><span className="ml-3 text-base font-medium">{t("drive.fileUpload")}</span></div>}
+			{dragging && <div className="pointer-events-none absolute inset-2 z-20 flex items-center justify-center rounded-2xl border-2 border-dashed border-ring bg-signal-soft/80 text-signal"><UploadCloud size={28} /><span className="ml-3 text-base font-medium">{t("drive.fileUpload")}</span></div>}
 
 			<Dialog open={!!naming} onOpenChange={(openState) => { if (!openState) setNaming(null); }}>
 				<DialogContent>

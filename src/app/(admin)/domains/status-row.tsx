@@ -12,8 +12,8 @@ export function StatusBadge({ ok, tone = "red" }: { ok: boolean; tone?: "red" | 
 		);
 	}
 	return (
-		<span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/70">
-			<AlertTriangle className={`h-4 w-4 ${tone === "red" ? "text-red-600" : "text-neutral-400"}`} />
+		<span className="flex h-7 w-7 items-center justify-center rounded-full bg-background/70">
+			<AlertTriangle className={`h-4 w-4 ${tone === "red" ? "text-red-600" : "text-muted-foreground/70"}`} />
 		</span>
 	);
 }
@@ -24,10 +24,10 @@ export function StatusRow({ ok, title, hint, children, action }: { ok: boolean; 
 		<li className={`${ROW_GRID} ${ok ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
 			<StatusBadge ok={ok} />
 			<span className="min-w-0">
-				<span className="block font-medium text-neutral-900">{title}</span>
-				<span className="block text-xs text-neutral-500">{hint}</span>
+				<span className="block font-medium text-foreground">{title}</span>
+				<span className="block text-xs text-muted-foreground">{hint}</span>
 			</span>
-			<span className="min-w-0 break-words text-neutral-500">{children}</span>
+			<span className="min-w-0 break-words text-muted-foreground">{children}</span>
 			{action && <span className="flex flex-wrap items-center gap-2">{action}</span>}
 		</li>
 	);

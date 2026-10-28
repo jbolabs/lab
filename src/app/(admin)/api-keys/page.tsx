@@ -94,7 +94,7 @@ export default function ApiKeysPage() {
 							<Label htmlFor="admin-key-name">{t("apiKeys.keyName")}</Label>
 							<Input id="admin-key-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} placeholder={t("adminKeys.namePlaceholder")} />
 						</div>
-						<label className="flex items-start gap-3 text-sm"><Checkbox checked={mcpAllowed} onChange={(event) => setMcpAllowed(event.target.checked)} /><span><strong>{t("apiKeys.allowMcp")}</strong><span className="mt-1 block text-neutral-500">{t("adminKeys.allowMcpHint")}</span></span></label>
+						<label className="flex items-start gap-3 text-sm"><Checkbox checked={mcpAllowed} onCheckedChange={(checked) => setMcpAllowed((checked === true))} /><span><strong>{t("apiKeys.allowMcp")}</strong><span className="mt-1 block text-muted-foreground">{t("adminKeys.allowMcpHint")}</span></span></label>
 						<fieldset className="space-y-2">
 							<legend className="text-sm font-medium">{t("apiKeys.permissions")}</legend>
 							<div className="space-y-2">
@@ -103,15 +103,14 @@ export default function ApiKeysPage() {
 										<Checkbox
 											checked={scopes.includes(scope.value)}
 											className="mt-1"
-											onChange={(event) =>
-												setScopes((current) =>
-													event.target.checked
+											onCheckedChange={(checked) => setScopes((current) =>
+													(checked === true)
 														? [...current, scope.value]
 														: current.filter((item) => item !== scope.value),
 												)
 											}
 										/>
-										<span><strong>{t(scope.labelKey)}</strong><span className="block text-neutral-500">{t(scope.descriptionKey)}</span></span>
+										<span><strong>{t(scope.labelKey)}</strong><span className="block text-muted-foreground">{t(scope.descriptionKey)}</span></span>
 									</label>
 								))}
 							</div>
@@ -126,7 +125,7 @@ export default function ApiKeysPage() {
 							{create.isPending ? t("accounts.creating") : t("adminKeys.createKey")}
 						</Button>
 						</div>}
-						{newKey && <div className="space-y-3 rounded-xl border border-blue-200 bg-blue-50 p-4"><code className="block break-all rounded bg-white p-2 text-xs">{newKey}</code>{createdMcpAllowed && <McpAgentInstructions mode="admin" apiKey={newKey} />}<div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => void navigator.clipboard.writeText(newKey).then(() => setCopied(true))}><Copy className="h-4 w-4" />{copied ? t("common.copied") : t("apiKeys.copyKey")}</Button><Button type="button" size="sm" variant="ghost" onClick={() => { setCreateOpen(false); setNewKey(null); setCopied(false); }}>{t("common.done")}</Button></div></div>}
+						{newKey && <div className="space-y-3 rounded-xl border border-signal/30 bg-signal-soft p-4"><code className="block break-all rounded bg-card p-2 text-xs">{newKey}</code>{createdMcpAllowed && <McpAgentInstructions mode="admin" apiKey={newKey} />}<div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => void navigator.clipboard.writeText(newKey).then(() => setCopied(true))}><Copy className="h-4 w-4" />{copied ? t("common.copied") : t("apiKeys.copyKey")}</Button><Button type="button" size="sm" variant="ghost" onClick={() => { setCreateOpen(false); setNewKey(null); setCopied(false); }}>{t("common.done")}</Button></div></div>}
 					</DialogContent>
 				</Dialog>
 			</div>
@@ -136,7 +135,7 @@ export default function ApiKeysPage() {
 					<SectionRowSkeleton />
 				)}
 				{!isLoading && (data?.apiKeys ?? []).length === 0 && (
-					<p className="rounded-2xl bg-white px-5 py-4 text-sm text-neutral-500">
+					<p className="rounded-2xl bg-card px-5 py-4 text-sm text-muted-foreground">
 						{t("apiKeys.none")}
 					</p>
 				)}
@@ -146,12 +145,12 @@ export default function ApiKeysPage() {
 							key={key.id}
 							className="px-5 py-4"
 						>
-							<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+							<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-signal-soft text-signal">
 								<KeyRound className="h-5 w-5" />
 							</span>
 							<span className="min-w-0 flex-1 space-y-2">
-								<span className="flex min-w-0 flex-wrap items-center gap-2"><strong className="truncate text-sm font-semibold text-neutral-900">{key.name}</strong>{key.kind === "mcp" && <Badge variant="outline">MCP</Badge>}</span>
-								<span className="block truncate no-font-mono text-sm text-neutral-500">{key.prefix}...</span>
+								<span className="flex min-w-0 flex-wrap items-center gap-2"><strong className="truncate text-sm font-semibold text-foreground">{key.name}</strong>{key.kind === "mcp" && <Badge variant="outline">MCP</Badge>}</span>
+								<span className="block truncate no-font-mono text-sm text-muted-foreground">{key.prefix}...</span>
 								<span className="flex flex-wrap gap-1">
 									{parseApiKeyScopes(key.scopes).map((scope) => (
 										<Badge key={scope} variant="outline">

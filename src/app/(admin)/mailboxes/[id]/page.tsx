@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   createMailboxAlias,
@@ -121,11 +121,11 @@ export default function MailboxSettingsPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="truncate text-2xl md:text-3xl font-medium text-neutral-900">
+          <h1 className="truncate text-2xl md:text-3xl font-medium text-foreground">
             {t("mailbox.title")}
           </h1>
           {address ? (
-            <p className="mt-1 truncate no-font-mono text-sm text-neutral-500">
+            <p className="mt-1 truncate no-font-mono text-sm text-muted-foreground">
               {address}
             </p>
           ) : (
@@ -150,7 +150,7 @@ export default function MailboxSettingsPage() {
         </p>
       )}
 
-      <Card className="rounded-3xl border-0 bg-white p-6">
+      <Card className="rounded-3xl border-0 bg-card p-6">
         <CardHeader className="py-0">
           <CardTitle>{t("mailbox.account")}</CardTitle>
         </CardHeader>
@@ -175,15 +175,15 @@ export default function MailboxSettingsPage() {
               disabled={mailbox.isLoading || updateName.isPending}
             />
           </div>
-          <label className="flex items-start gap-3 rounded-xl bg-neutral-50 p-4">
+          <label className="flex items-start gap-3 rounded-xl bg-muted/60 p-4">
             <Checkbox
               checked={useAllDomains}
-              onChange={(event) => setUseAllDomains(event.target.checked)}
+              onCheckedChange={(checked) => setUseAllDomains((checked === true))}
               disabled={mailbox.isLoading || updateName.isPending}
             />
             <span>
-              <span className="block text-sm font-medium text-neutral-900">{t("aliases.useAll")}</span>
-              <span className="mt-1 block text-sm text-neutral-500">
+              <span className="block text-sm font-medium text-foreground">{t("aliases.useAll")}</span>
+              <span className="mt-1 block text-sm text-muted-foreground">
                 {t("mailbox.useAllHint")}
               </span>
             </span>
@@ -208,7 +208,7 @@ export default function MailboxSettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-3xl border-0 bg-white p-6">
+      <Card className="rounded-3xl border-0 bg-card p-6">
         <CardHeader className="py-0">
           <CardTitle>{t("mailbox.aliases")}</CardTitle>
           <CardDescription>
@@ -220,11 +220,11 @@ export default function MailboxSettingsPage() {
           {(aliases.data?.aliases ?? []).map((alias) => (
             <div
               key={alias.id}
-              className="flex items-center justify-between gap-3 rounded-2xl bg-neutral-50 px-4 py-3"
+              className="flex items-center justify-between gap-3 rounded-2xl bg-muted/60 px-4 py-3"
             >
               <div className="flex min-w-0 items-center gap-2">
-                <AtSign className="h-4 w-4 shrink-0 text-neutral-400" />
-                <p className="truncate no-font-mono text-sm font-medium text-neutral-900">
+                <AtSign className="h-4 w-4 shrink-0 text-muted-foreground/70" />
+                <p className="truncate no-font-mono text-sm font-medium text-foreground">
                   {alias.localPart}@{alias.hostname}
                 </p>
               </div>
@@ -241,7 +241,7 @@ export default function MailboxSettingsPage() {
             </div>
           ))}
           {aliases.data && aliases.data.aliases.length === 0 && (
-            <p className="rounded-2xl bg-neutral-50 px-4 py-3 text-sm text-neutral-500">
+            <p className="rounded-2xl bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
               {t("mailbox.noAliases")}
             </p>
           )}
@@ -260,7 +260,7 @@ export default function MailboxSettingsPage() {
               className="min-w-0 flex-1"
               disabled={addAlias.isPending}
             />
-            <Select
+            <NativeSelect
               value={aliasDomainId}
               onChange={(event) => setAliasDomainId(event.target.value)}
               className="h-10 min-w-0 flex-1 text-sm"
@@ -271,7 +271,7 @@ export default function MailboxSettingsPage() {
                   @{domain.hostname}
                 </option>
               ))}
-            </Select>
+            </NativeSelect>
             <Button
               type="button"
               disabled={!aliasLocalPart.trim() || !aliasDomainId || addAlias.isPending}
@@ -297,7 +297,7 @@ export default function MailboxSettingsPage() {
       </Card>
 
       {mailbox.data?.type === "shared" && (
-        <Card className="rounded-3xl border-0 bg-white p-6">
+        <Card className="rounded-3xl border-0 bg-card p-6">
           <CardHeader className="py-0">
             <CardTitle>{t("mailbox.sharedAccess")}</CardTitle>
             <CardDescription>
@@ -309,13 +309,13 @@ export default function MailboxSettingsPage() {
             {(sharedAccess.data?.members ?? []).map((member) => (
               <div
                 key={member.userId}
-                className="flex items-center justify-between gap-3 rounded-2xl bg-neutral-50 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-2xl bg-muted/60 px-4 py-3"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-neutral-900">
+                  <p className="truncate text-sm font-semibold text-foreground">
                     {member.userName}
                   </p>
-                  <p className="truncate text-xs text-neutral-500">{member.userEmail}</p>
+                  <p className="truncate text-xs text-muted-foreground">{member.userEmail}</p>
                 </div>
                 <Button
                   type="button"
@@ -330,7 +330,7 @@ export default function MailboxSettingsPage() {
               </div>
             ))}
             {sharedAccess.data && sharedAccess.data.members.length === 0 && (
-              <p className="rounded-2xl bg-neutral-50 px-4 py-3 text-sm text-neutral-500">
+              <p className="rounded-2xl bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
                 {t("mailbox.noMembers")}
               </p>
             )}
@@ -342,7 +342,7 @@ export default function MailboxSettingsPage() {
               </p>
             )}
             <div className="flex gap-2">
-              <Select
+              <NativeSelect
                 value={selectedUserId}
                 onChange={(event) => setSelectedUserId(event.target.value)}
                 className="h-10 min-w-0 flex-1 text-sm"
@@ -358,7 +358,7 @@ export default function MailboxSettingsPage() {
                       {account.name} ({account.email})
                     </option>
                   ))}
-              </Select>
+              </NativeSelect>
               <Button
                 type="button"
                 disabled={!selectedUserId || addMember.isPending}
@@ -376,7 +376,7 @@ export default function MailboxSettingsPage() {
           </CardContent>
         </Card>
       )}
-      <Card className="rounded-3xl border-0 bg-white p-6">
+      <Card className="rounded-3xl border-0 bg-card p-6">
         <CardHeader className="py-0">
           <CardTitle className="text-red-700">{t("mailbox.dangerZone")}</CardTitle>
           <CardDescription>
@@ -412,7 +412,7 @@ export default function MailboxSettingsPage() {
       </Card>
 
 {/* 
-      <Card className="rounded-3xl border-0 bg-white p-6">
+      <Card className="rounded-3xl border-0 bg-card p-6">
         <CardHeader className="py-0">
           <CardTitle>Address</CardTitle>
           <CardDescription>
@@ -422,35 +422,35 @@ export default function MailboxSettingsPage() {
         </CardHeader>
         <CardContent className="grid gap-4 pt-5">
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Email
             </p>
-            <p className="truncate no-font-mono text-sm text-neutral-900">
+            <p className="truncate no-font-mono text-sm text-foreground">
               {address || "-"}
             </p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Username
             </p>
-            <p className="truncate no-font-mono text-sm text-neutral-900">
+            <p className="truncate no-font-mono text-sm text-foreground">
               {mailbox.data?.localPart ?? "-"}
             </p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Domain
             </p>
-            <p className="truncate no-font-mono text-sm text-neutral-900">
+            <p className="truncate no-font-mono text-sm text-foreground">
               {mailbox.data?.hostname ?? "-"}
             </p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Routing
             </p>
-            <p className="flex items-center gap-2 text-sm text-neutral-900">
-              <Mail className="h-4 w-4 text-neutral-400" />
+            <p className="flex items-center gap-2 text-sm text-foreground">
+              <Mail className="h-4 w-4 text-muted-foreground/70" />
               Cloudflare Email Routing
             </p>
           </div>

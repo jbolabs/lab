@@ -23,13 +23,13 @@ export function AuthShell({
   }, [branding.iconUrl]);
 
   return (
-    <div className="min-h-dvh bg-[#f1f4fa] text-neutral-900 sm:px-6 sm:py-6 lg:flex lg:items-center lg:px-10 lg:py-10">
-      <main className="mx-auto grid min-h-dvh w-full max-w-4xl grid-rows-[auto_1fr] overflow-hidden bg-white sm:min-h-0 sm:grid-rows-none sm:rounded-4xl lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+    <div className="min-h-dvh bg-sidebar text-foreground sm:px-6 sm:py-6 lg:flex lg:items-center lg:px-10 lg:py-10">
+      <main className="mx-auto grid min-h-dvh w-full max-w-4xl grid-rows-[auto_1fr] overflow-hidden bg-card sm:min-h-0 sm:grid-rows-none sm:rounded-4xl lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
         <section className="flex flex-col p-7 sm:p-10 lg:p-14">
           <div className="flex items-center gap-2">
             <span className="flex items-center justify-center overflow-hidden">
               {iconFailed ? (
-                <Icon className="h-8 w-8 text-blue-600" />
+                <Icon className="h-8 w-8 text-signal" />
               ) : (
                 <img
                   src={iconUrl}
@@ -42,17 +42,17 @@ export function AuthShell({
                 />
               )}
             </span>
-            <span className="truncate text-md font-semibold text-neutral-800">
+            <span className="truncate text-md font-semibold text-foreground">
               {branding.appName}
             </span>
           </div>
 
           <div className="mt-10 sm:mt-6 lg:mt-8">
-            <h1 className="max-w-md text-3xl font-medium leading-tight tracking-tight text-neutral-950 sm:text-4xl">
+            <h1 className="max-w-md text-3xl font-medium leading-tight tracking-tight text-foreground sm:text-4xl">
               {title}
             </h1>
             {description && (
-              <p className="mt-5 max-w-md text-base leading-7 text-neutral-600">
+              <p className="mt-5 max-w-md text-base leading-7 text-muted-foreground">
                 {description}
               </p>
             )}
@@ -70,13 +70,13 @@ export function AuthShell({
                 <span key={step.label} className="flex items-center gap-2">
                   <span
                     className={
-                      step.active ? "text-blue-700" : "text-neutral-500"
+                      step.active ? "text-signal" : "text-muted-foreground"
                     }
                   >
                     {index + 1} {step.label}
                   </span>
                   {index < steps.length - 1 && (
-                    <span className="text-neutral-300">/</span>
+                    <span className="text-muted-foreground/50">/</span>
                   )}
                 </span>
               ))}
@@ -84,7 +84,7 @@ export function AuthShell({
           )}
           <div className="w-full">{children}</div>
           {footer && (
-            <div className="mt-8 text-sm font-medium text-blue-700">
+            <div className="mt-8 text-sm font-medium text-signal">
               {footer}
             </div>
           )}

@@ -12,7 +12,7 @@ import { MessageSnoozeDialog } from "./message-snooze-dialog";
 import { useIsMobile } from "@/components/sidebar-mobile-utils";
 import { useHotkeys, useShortcuts } from "@/components/shortcuts";
 import { Button } from "@/components/ui/button";
-import { Tooltip } from "@/components/ui/tooltip";
+import { HintTooltip } from "@/components/hint-tooltip";
 import type { BulkMessageAction } from "@/app/api/messages/bulk/types";
 import type { MessageActionsProps, ReplyMode } from "./types";
 import { getPermanentDeleteConfirmText, PartialDeleteError, supportsPermanentDelete } from "@/lib/messages/permanent-delete-utils";
@@ -257,7 +257,7 @@ export function MessageActions({
 	const moveActions = getMoveMessageActions(status, direction);
 
 	return (
-		<div className="flex flex-wrap items-center gap-3 text-neutral-600 flex-1 min-w-0">
+		<div className="flex flex-wrap items-center gap-3 text-muted-foreground flex-1 min-w-0">
 			{error && <span role="alert" className="text-xs text-red-600">{error}</span>}
 
 			{isMobile && (
@@ -284,7 +284,7 @@ export function MessageActions({
 			)}
 			{!isMobile && (
 				<>
-			<Tooltip label={shortcutsEnabled ? t("actions.archiveHint") : t("common.archive")}>
+			<HintTooltip label={shortcutsEnabled ? t("actions.archiveHint") : t("common.archive")}>
 				<Button
 					variant="ghost"
 					size="roundedSM"
@@ -294,8 +294,8 @@ export function MessageActions({
 				>
 					<Archive size={iconSize} />
 				</Button>
-			</Tooltip>
-			<Tooltip label={shortcutsEnabled ? t("actions.reportSpamHint") : t("common.reportSpam")}>
+			</HintTooltip>
+			<HintTooltip label={shortcutsEnabled ? t("actions.reportSpamHint") : t("common.reportSpam")}>
 				<Button
 					variant="ghost"
 					size="roundedSM"
@@ -305,8 +305,8 @@ export function MessageActions({
 				>
 					<ShieldAlert size={iconSize} />
 				</Button>
-			</Tooltip>
-			<Tooltip label={canDeleteForever ? t("common.deleteForever") : shortcutsEnabled ? t("actions.deleteHint") : t("common.delete")}>
+			</HintTooltip>
+			<HintTooltip label={canDeleteForever ? t("common.deleteForever") : shortcutsEnabled ? t("actions.deleteHint") : t("common.delete")}>
 				<Button
 					variant="ghost"
 					size="roundedSM"
@@ -317,11 +317,11 @@ export function MessageActions({
 				>
 					<Trash2 size={iconSize} />
 				</Button>
-			</Tooltip>
-			<span className="h-5 mx-2 bg-gray-200 w-px inline-block" />
+			</HintTooltip>
+			<span className="h-5 mx-2 bg-accent w-px inline-block" />
 
 
-			<Tooltip label={shortcutsEnabled ? t("actions.replyHint") : t("message.reply")}>
+			<HintTooltip label={shortcutsEnabled ? t("actions.replyHint") : t("message.reply")}>
 				<Button
 					type="button"
 					variant="ghost"
@@ -332,9 +332,9 @@ export function MessageActions({
 				>
 					<Reply size={iconSize} />
 				</Button>
-			</Tooltip>
+			</HintTooltip>
 			{canReplyAll && (
-				<Tooltip label={t("message.replyAll")}>
+				<HintTooltip label={t("message.replyAll")}>
 					<Button
 						type="button"
 						variant="ghost"
@@ -345,10 +345,10 @@ export function MessageActions({
 					>
 						<ReplyAll size={iconSize} />
 					</Button>
-				</Tooltip>
+				</HintTooltip>
 			)}
 			{message && messageMeta && (
-				<Tooltip label={t("message.forward")}>
+				<HintTooltip label={t("message.forward")}>
 					<Button
 						type="button"
 						variant="ghost"
@@ -359,10 +359,10 @@ export function MessageActions({
 					>
 						<Forward size={iconSize} />
 					</Button>
-				</Tooltip>
+				</HintTooltip>
 			)}
 
-			<Tooltip label={read ? t("common.markUnread") : t("common.markRead")}>
+			<HintTooltip label={read ? t("common.markUnread") : t("common.markRead")}>
 				<Button
 					variant="ghost"
 					size="roundedSM"
@@ -372,11 +372,11 @@ export function MessageActions({
 				>
 					{read ? <Mail size={iconSize} /> : <MailOpen size={iconSize} />}
 				</Button>
-			</Tooltip>
+			</HintTooltip>
 				</>
 			)}
 			<div ref={moreRef} className="relative">
-				<Tooltip label={t("common.moreActions")}>
+				<HintTooltip label={t("common.moreActions")}>
 					<Button
 						type="button"
 						variant="ghost"
@@ -388,44 +388,44 @@ export function MessageActions({
 					>
 						<MoreVertical size={iconSize} />
 					</Button>
-				</Tooltip>
+				</HintTooltip>
 
 
 				{moreOpen && (
-					<div className="absolute right-0 top-8 z-20 w-54 rounded-xl border border-neutral-200 bg-white p-2 shadow-lg">
+					<div className="absolute right-0 top-8 z-20 w-54 rounded-xl border border-border bg-card p-2 shadow-lg">
 						{isMobile && (
 							<>
-								<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 disabled:text-neutral-400" disabled={status === "archived"} onClick={() => void runAction("archive")}>
+								<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent disabled:text-muted-foreground/70" disabled={status === "archived"} onClick={() => void runAction("archive")}>
 									<Archive className="h-4 w-4" />
 									{t("common.archive")}
 								</button>
-								<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 disabled:text-neutral-400" onClick={() => { setMoreOpen(false); void handleReply("reply"); }}>
+								<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent disabled:text-muted-foreground/70" onClick={() => { setMoreOpen(false); void handleReply("reply"); }}>
 									<Reply className="h-4 w-4" />
 									{t("message.reply")}
 								</button>
 								{canReplyAll && (
-									<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 disabled:text-neutral-400" onClick={() => { setMoreOpen(false); void handleReply("replyAll"); }}>
+									<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent disabled:text-muted-foreground/70" onClick={() => { setMoreOpen(false); void handleReply("replyAll"); }}>
 										<ReplyAll className="h-4 w-4" />
 										{t("message.replyAll")}
 									</button>
 								)}
 								{message && messageMeta && (
-									<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 disabled:text-neutral-400" onClick={() => { setMoreOpen(false); void handleForward(); }}>
+									<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent disabled:text-muted-foreground/70" onClick={() => { setMoreOpen(false); void handleForward(); }}>
 										<Forward className="h-4 w-4" />
 										{t("message.forward")}
 									</button>
 								)}
-								<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 disabled:text-neutral-400" onClick={() => void runAction(markAction)}>
+								<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent disabled:text-muted-foreground/70" onClick={() => void runAction(markAction)}>
 									{read ? <Mail className="h-4 w-4" /> : <MailOpen className="h-4 w-4" />}
 									{read ? t("common.markUnread") : t("common.markRead")}
 								</button>
-								<hr className="my-1 border-neutral-100" />
+								<hr className="my-1 border-border" />
 							</>
 						)}
 						{direction === "inbound" && status === "received" && (
 							<button
 								type="button"
-								className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100"
+								className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent"
 								onClick={() => { setMoreOpen(false); setSnoozeOpen(true); }}
 							>
 								<Clock className="h-4 w-4" />
@@ -436,7 +436,7 @@ export function MessageActions({
 							<>
 								<button
 									type="button"
-									className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-400"
+									className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent disabled:cursor-not-allowed disabled:text-muted-foreground/70"
 									disabled={!unsubscribeUrl && status === "trash"}
 									onClick={() => void onUnsubscribe()}
 								>
@@ -445,32 +445,32 @@ export function MessageActions({
 								</button>
 								<button
 									type="button"
-									className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100"
+									className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent"
 									onClick={() => void onBlockContact()}
 								>
 									<Ban className="h-4 w-4" />
 									{t("message.blockContact")}
 								</button>
-								<hr className="my-1 border-neutral-100" />
+								<hr className="my-1 border-border" />
 							</>
 						)}
 						<button
 							type="button"
-							className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100"
+							className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent"
 							onClick={() => { setMoreOpen(false); setSourceOpen(true); }}
 						>
 							<FileCode2 className="h-4 w-4" />
 							{t("message.showOriginal")}
 						</button>
-						<hr className="my-1 border-neutral-100" />
-						<p className="mt-1 px-3 pb-1 pt-2 text-sm font-medium text-neutral-500">
+						<hr className="my-1 border-border" />
+						<p className="mt-1 px-3 pb-1 pt-2 text-sm font-medium text-muted-foreground">
 							{t("common.moveTo")}
 						</p>
 						{moveActions.map((item) => (
 							<button
 								key={item.action}
 								type="button"
-								className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100"
+								className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent"
 								onClick={() => void runAction(item.action)}
 							>
 								{createElement(item.icon, { size: 16 })}

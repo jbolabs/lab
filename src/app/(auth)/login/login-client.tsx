@@ -112,7 +112,7 @@ export function LoginClient({ adding = false, returnTo }: { adding?: boolean; re
           </Button>
           <button
             type="button"
-            className="w-full text-center text-sm text-neutral-500 hover:text-neutral-800"
+            className="w-full text-center text-sm text-muted-foreground hover:text-foreground"
             onClick={() => {
               setChallengeToken(null);
               setCode("");
@@ -152,7 +152,7 @@ export function LoginClient({ adding = false, returnTo }: { adding?: boolean; re
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">{t("auth.password")}</Label>
-            <Link href="/forgot-password" className="text-xs font-medium text-blue-600 hover:underline">
+            <Link href="/forgot-password" className="text-xs font-medium text-signal hover:underline">
               {t("auth.forgotPassword")}
             </Link>
           </div>

@@ -8,8 +8,8 @@ import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { Tooltip } from "@/components/ui/tooltip";
+import { NativeSelect } from "@/components/ui/native-select";
+import { HintTooltip } from "@/components/hint-tooltip";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { authFetch } from "@/lib/auth/client";
 import { formatEmailAddress, getEmailAddress } from "@/lib/email/address";
@@ -579,16 +579,16 @@ export function ComposeForm({
 			{storedAttachments.map((attachment) => (
 				<div
 					key={attachment.id}
-					className="flex max-w-full shrink-0 items-center gap-2 rounded-lg bg-neutral-100 px-2 py-1 text-xs"
+					className="flex max-w-full shrink-0 items-center gap-2 rounded-lg bg-muted px-2 py-1 text-xs"
 					title={t("compose.carriedOver")}
 				>
-					<FileText className="h-4 w-4 shrink-0 text-neutral-500" />
+					<FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
 					<span className="max-w-48 truncate">{attachment.filename}</span>
-					<span className="text-xs text-neutral-500">{formatAttachmentSize(attachment.size)}</span>
+					<span className="text-xs text-muted-foreground">{formatAttachmentSize(attachment.size)}</span>
 					<button
 						type="button"
 						onClick={() => void removeStoredAttachment(attachment.id)}
-						className="rounded-full p-1 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
+						className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground/80"
 					>
 						<X className="h-3.5 w-3.5" />
 						<span className="sr-only">{t("compose.removeAttachment")}</span>
@@ -598,11 +598,11 @@ export function ComposeForm({
 			{attachments.map((attachment) => (
 				<div
 					key={attachment.id}
-					className="flex max-w-full shrink-0 items-center gap-2 rounded-lg bg-neutral-100 px-2 py-1 text-xs"
+					className="flex max-w-full shrink-0 items-center gap-2 rounded-lg bg-muted px-2 py-1 text-xs"
 				>
-					<FileText className="h-4 w-4 shrink-0 text-neutral-500" />
+					<FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
 					<span className="max-w-48 truncate font-medium">{attachment.file.name}</span>
-					<span className="text-xs text-neutral-500">
+					<span className="text-xs text-muted-foreground">
 						{formatAttachmentSize(attachment.file.size)}
 					</span>
 					<button
@@ -612,7 +612,7 @@ export function ComposeForm({
 								current.filter((item) => item.id !== attachment.id),
 							)
 						}
-						className="rounded-full p-1 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
+						className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground/80"
 					>
 						<X className="h-3.5 w-3.5" />
 						<span className="sr-only">{t("compose.removeAttachment")}</span>
@@ -629,16 +629,16 @@ export function ComposeForm({
 	const frameClass =
 		mode === "popup"
 			? minimized
-				? cn("fixed bottom-0 right-8 z-40 flex h-9 w-[min(260px,calc(100vw-32px))] flex-col overflow-hidden rounded-t-lg border border-neutral-200 bg-white shadow-2xl", sheetClass)
+				? cn("fixed bottom-0 right-8 z-40 flex h-9 w-[min(260px,calc(100vw-32px))] flex-col overflow-hidden rounded-t-lg border border-border bg-card shadow-2xl", sheetClass)
 				: modalMode
-				? cn("fixed left-1/2 top-1/2 z-50 flex h-[86vh] w-[min(860px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg bg-white shadow-2xl", sheetClass)
-				: cn("fixed bottom-0 right-8 z-40 flex h-[min(520px,calc(100vh-88px))] w-[min(560px,calc(100vw-32px))] flex-col overflow-hidden rounded-t-lg border border-neutral-200 bg-white shadow-2xl", sheetClass)
-			: "relative flex h-full min-h-[720px] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm";
+				? cn("fixed left-1/2 top-1/2 z-50 flex h-[86vh] w-[min(860px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg bg-card shadow-2xl", sheetClass)
+				: cn("fixed bottom-0 right-8 z-40 flex h-[min(520px,calc(100vh-88px))] w-[min(560px,calc(100vw-32px))] flex-col overflow-hidden rounded-t-lg border border-border bg-card shadow-2xl", sheetClass)
+			: "relative flex h-full min-h-[720px] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm";
 
 	return (
 		<>
 			{agentReview && <SendReview approvalId={agentReview.approvalId} snapshot={agentReview.snapshot} onClose={() => setAgentReview(null)} onSent={() => { setAgentReview(null); if (onClose) dismiss(); else router.push("/sent"); }} />}
-			{mode === "popup" && modalMode && !minimized && <div className="fixed inset-0 z-40 bg-neutral-950/65" aria-hidden="true" />}
+			{mode === "popup" && modalMode && !minimized && <div className="fixed inset-0 z-40 bg-black/65" aria-hidden="true" />}
 			{toast && (
 				<div
 					role={toast.type === "error" ? "alert" : "status"}
@@ -652,14 +652,14 @@ export function ComposeForm({
 			)}
 			<form onSubmit={onSubmit} className={cn(frameClass, closing && "compose-sheet-closing")} style={dragY ? { transform: `translateY(${dragY}px)`, transition: "none" } : undefined} ref={formRef} role={modalMode && !minimized ? "dialog" : mode === "popup" ? "region" : undefined} aria-modal={modalMode && !minimized || undefined} aria-label={mode === "popup" ? t("compose.dialogLabel") : undefined} onKeyDown={(event) => { if (modalMode && !minimized && event.key === "Escape") { event.preventDefault(); setModalMode(false); } }} onDragEnterCapture={minimized ? undefined : onFileDragEnter} onDragOverCapture={minimized ? undefined : onFileDragOver} onDragLeaveCapture={minimized ? undefined : onFileDragLeave} onDropCapture={minimized ? undefined : onFileDrop}>
 				{draggingFiles && !minimized && (
-					<div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center border-2 border-dashed border-blue-400 bg-blue-50/90 text-sm font-medium text-blue-700" aria-hidden="true">
+					<div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center border-2 border-dashed border-ring bg-signal-soft/90 text-sm font-medium text-signal" aria-hidden="true">
 						{t("compose.dropFiles")}
 					</div>
 				)}
-				<div {...sheetDrag} className="flex h-9 shrink-0 items-center justify-between max-md:h-12 max-md:touch-none bg-neutral-800 text-white dark:bg-neutral-100 px-4 text-sm font-medium">
-					<span className="flex min-w-0 items-center gap-2 truncate  dark:text-neutral-900">
-						{threading?.inReplyTo && <Reply className="h-3.5 w-3.5 text-neutral-300" />}
-						{!threading?.inReplyTo && /^fwd?:/i.test(subject) && <Forward className="h-3.5 w-3.5 text-neutral-300" />}
+				<div {...sheetDrag} className="flex h-9 shrink-0 items-center justify-between max-md:h-12 max-md:touch-none bg-primary text-primary-foreground px-4 text-sm font-medium">
+					<span className="flex min-w-0 items-center gap-2 truncate ">
+						{threading?.inReplyTo && <Reply className="h-3.5 w-3.5 text-muted-foreground/50" />}
+						{!threading?.inReplyTo && /^fwd?:/i.test(subject) && <Forward className="h-3.5 w-3.5 text-muted-foreground/50" />}
 						{loadingDraft
 							? t("compose.title.loading")
 							: threading?.inReplyTo
@@ -671,23 +671,23 @@ export function ComposeForm({
 										: t("compose.title.new")}
 					</span>
 					{mode === "popup" && (
-						<div className="flex shrink-0 items-center gap-3 text-neutral-300">
-							<button type="button" onClick={() => { setMinimized((current) => !current); setDraggingFiles(false); }} aria-label={minimized ? t("compose.restore") : t("compose.minimize")} title={minimized ? t("compose.restore") : t("compose.minimize")} className="max-md:hidden rounded p-1 hover:bg-neutral-700 dark:hover:bg-neutral-200 hover:text-white">
+						<div className="flex shrink-0 items-center gap-3 text-muted-foreground/50">
+							<button type="button" onClick={() => { setMinimized((current) => !current); setDraggingFiles(false); }} aria-label={minimized ? t("compose.restore") : t("compose.minimize")} title={minimized ? t("compose.restore") : t("compose.minimize")} className="max-md:hidden rounded p-1 hover:bg-primary/90 hover:text-white">
 								{minimized ? <ChevronUp className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
 							</button>
-							<button type="button" onClick={() => { if (minimized) setMinimized(false); setModalMode((current) => !current); }} aria-label={modalMode ? t("compose.restoreFloating") : t("compose.openModal")} title={modalMode ? t("compose.restoreFloating") : t("compose.openModal")} className="max-md:hidden rounded p-1 dark:hover:bg-neutral-200 hover:bg-neutral-700 hover:text-white">
+							<button type="button" onClick={() => { if (minimized) setMinimized(false); setModalMode((current) => !current); }} aria-label={modalMode ? t("compose.restoreFloating") : t("compose.openModal")} title={modalMode ? t("compose.restoreFloating") : t("compose.openModal")} className="max-md:hidden rounded p-1 hover:bg-primary/90 hover:text-white">
 								{modalMode ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
 							</button>
-							<button type="button" onClick={dismiss} aria-label={t("compose.close")} className="rounded p-1 max-md:-m-2 max-md:p-3 hover:bg-neutral-700 dark:hover:bg-neutral-200 hover:text-white">
+							<button type="button" onClick={dismiss} aria-label={t("compose.close")} className="rounded p-1 max-md:-m-2 max-md:p-3 hover:bg-primary/90 hover:text-white">
 								<X className="h-4 w-4" />
 							</button>
 						</div>
 					)}
 				</div>
 				<div className={cn("flex min-h-0 flex-1 flex-col", minimized && "hidden")}>
-				<div className="border-b border-neutral-100 px-4 py-1 flex flex-row items-center">
-					<Label htmlFor={`${mode}-from`} className="text-sm text-neutral-500">{t("compose.from")}</Label>
-					<Select
+				<div className="border-b border-border px-4 py-1 flex flex-row items-center">
+					<Label htmlFor={`${mode}-from`} className="text-sm text-muted-foreground">{t("compose.from")}</Label>
+					<NativeSelect
 						id={`${mode}-from`}
 						value={selectedMailbox && selectedFrom ? `${selectedMailbox.id}|${selectedFrom}` : ""}
 						onChange={(event) => selectSender(event.target.value)}
@@ -701,7 +701,7 @@ export function ComposeForm({
 						{senderOptions.map(({ mailbox, address }) => (
 							<option key={`${mailbox.id}|${address}`} value={`${mailbox.id}|${address}`}>{address}</option>
 						))}
-					</Select>
+					</NativeSelect>
 				</div>
 				<RecipientInput
 					id={`${mode}-to`}
@@ -715,12 +715,12 @@ export function ComposeForm({
 					trailing={
 						<>
 							{!showCc && (
-								<button type="button" className="rounded px-1 hover:text-neutral-800" onClick={() => setShowCc(true)}>
+								<button type="button" className="rounded px-1 hover:text-foreground" onClick={() => setShowCc(true)}>
 									{t("compose.cc")}
 								</button>
 							)}
 							{!showBcc && (
-								<button type="button" className="rounded px-1 hover:text-neutral-800" onClick={() => setShowBcc(true)}>
+								<button type="button" className="rounded px-1 hover:text-foreground" onClick={() => setShowBcc(true)}>
 									{t("compose.bcc")}
 								</button>
 							)}
@@ -749,7 +749,7 @@ export function ComposeForm({
 						autoFocus={!loadingDraft && bcc.length === 0}
 					/>
 				)}
-				<div className="border-b border-neutral-100 px-4 py-1">
+				<div className="border-b border-border px-4 py-1">
 					<Label htmlFor={`${mode}-subject`} className="sr-only">{t("compose.subject")}</Label>
 					<Input
 						id={`${mode}-subject`}
@@ -800,7 +800,7 @@ export function ComposeForm({
 					}
 					toolbarEnd={
 						<>
-							{/* <span className="mx-1 h-5 w-px bg-neutral-200" /> */}
+							{/* <span className="mx-1 h-5 w-px bg-accent" /> */}
 							<Input
 								ref={attachmentInput}
 								type="file"
@@ -808,29 +808,29 @@ export function ComposeForm({
 								className="hidden"
 								onChange={(event) => addAttachments(event.target.files)}
 							/>
-							<Tooltip label={t("compose.attachTooltip", { max: attachmentPolicy.maxMb })}>
+							<HintTooltip label={t("compose.attachTooltip", { max: attachmentPolicy.maxMb })}>
 								<button
 									type="button"
 									aria-label={t("compose.attachFiles")}
 									onClick={() => attachmentInput.current?.click()}
 									disabled={loading || loadingDraft}
-									className="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 disabled:pointer-events-none disabled:opacity-50 max-md:px-2"
+									className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-50 max-md:px-2"
 								>
 									<Paperclip className="h-4 w-4" />
 								</button>
-							</Tooltip>
+							</HintTooltip>
 							<span className="flex-1 max-md:hidden" />
-							<Tooltip label={t("compose.deleteDraft")}>
+							<HintTooltip label={t("compose.deleteDraft")}>
 								<button
 									type="button"
 									aria-label={t("compose.deleteDraft")}
 									onClick={() => void deleteDraftAndClose()}
 									disabled={loading || loadingDraft || deletingDraft}
-									className="rounded-md p-1.5 text-neutral-500 hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-50 max-md:px-2"
+									className="rounded-md p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-50 max-md:px-2"
 								>
 									<Trash2 className="h-4 w-4" />
 								</button>
-							</Tooltip>
+							</HintTooltip>
 						</>
 					}
 				/>

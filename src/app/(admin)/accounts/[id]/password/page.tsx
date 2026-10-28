@@ -27,15 +27,15 @@ export default function AccountPasswordPage() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-2xl md:text-3xl font-medium text-neutral-900">{t("account.password.title")}</h1>
-				<p className="mt-2 text-sm text-neutral-500">{t("account.password.resetFor", { name: account?.name ?? t("account.password.thisAccount") })}</p>
+				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("account.password.title")}</h1>
+				<p className="mt-2 text-sm text-muted-foreground">{t("account.password.resetFor", { name: account?.name ?? t("account.password.thisAccount") })}</p>
 			</div>
 			<form
 				onSubmit={(event) => void saveAccountPassword({ event, account, password, setPassword, setSaving, setMessage, t })}
-				className="space-y-5 rounded-3xl bg-white p-6"
+				className="space-y-5 rounded-3xl bg-card p-6"
 			>
 				{account && !account.editable ? (
-					<p className="text-sm text-neutral-500">{t("account.password.onlyPrimary")}</p>
+					<p className="text-sm text-muted-foreground">{t("account.password.onlyPrimary")}</p>
 				) : (
 					<>
 						<div className="space-y-2">
@@ -52,7 +52,7 @@ export default function AccountPasswordPage() {
 								onChange={(event) => setPassword(event.target.value)}
 								placeholder={t("account.password.placeholder")}
 							/>
-							<p className="text-xs leading-5 text-neutral-500">
+							<p className="text-xs leading-5 text-muted-foreground">
 								{t("account.password.hint")}
 							</p>
 						</div>
@@ -62,7 +62,7 @@ export default function AccountPasswordPage() {
 					</>
 				)}
 			</form>
-			{message && <p role="status" className="text-sm text-neutral-500">{message}</p>}
+			{message && <p role="status" className="text-sm text-muted-foreground">{message}</p>}
 		</div>
 	);
 }

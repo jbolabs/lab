@@ -284,7 +284,7 @@ export default function DomainsPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-medium">{t("domains.title")}</h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {managesDns
               ? t("domains.descriptionManaged")
               : t("domains.descriptionManual")}
@@ -320,10 +320,10 @@ export default function DomainsPage() {
                   placeholder="example.com"
                 />
               </div>
-              <div className="flex items-center justify-between gap-4 rounded-xl bg-neutral-50 px-4 py-3">
+              <div className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3">
                 <div>
                   <Label htmlFor="skip-dns">{t("setup.skipDns")}</Label>
-                  <p className="mt-1 text-xs leading-5 text-neutral-500">
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
                     {skipDns ? t("setup.skipDnsOn") : t("setup.skipDnsHint")}
                   </p>
                 </div>
@@ -338,10 +338,10 @@ export default function DomainsPage() {
               </div>
               {!skipDns && (
                 <>
-              <div className="flex items-center justify-between gap-4 rounded-xl bg-neutral-50 px-4 py-3">
+              <div className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3">
                 <div>
                   <Label htmlFor="receiving-provider">{t("domains.receiveWith")}</Label>
-                  <p className="mt-1 text-xs leading-5 text-neutral-500">
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
                     {receivingProvider === "cloudflare"
                       ? t("domains.receiveHintCloudflare")
                       : receivingProvider === "none"
@@ -353,7 +353,7 @@ export default function DomainsPage() {
                   id="receiving-provider"
                   value={receivingProvider}
                   onChange={(e) => setReceivingProvider(e.target.value as ReceivingProvider)}
-                  className="h-9 shrink-0 rounded-md border border-neutral-200 bg-white px-3 text-sm"
+                  className="h-9 shrink-0 rounded-md border border-border bg-card px-3 text-sm"
                 >
                   <option value="cloudflare">{t("domains.cloudflareRouting")}</option>
                   <option value="resend">Resend</option>
@@ -361,10 +361,10 @@ export default function DomainsPage() {
                   <option value="none">{t("domains.notSelected")}</option>
                 </select>
               </div>
-              <div className="flex items-center justify-between gap-4 rounded-xl bg-neutral-50 px-4 py-3">
+              <div className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3">
                 <div>
                   <Label htmlFor="sending-provider">{t("domains.sendWith")}</Label>
-                  <p className="mt-1 text-xs leading-5 text-neutral-500">
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
                     {domainChecking
                       ? t("setup.checkingCloudflare")
                       : sendingProvider === "cloudflare"
@@ -374,12 +374,12 @@ export default function DomainsPage() {
                           : t("domains.providerHintLater")}
                   </p>
                 </div>
-                {domainChecking && <LoaderCircle className="h-4 w-4 shrink-0 animate-spin text-neutral-500" />}
+                {domainChecking && <LoaderCircle className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />}
                 <select
                   id="sending-provider"
                   value={sendingProvider}
                   onChange={(e) => setSendingProvider(e.target.value as SendingProvider)}
-                  className="h-9 shrink-0 rounded-md border border-neutral-200 bg-white px-3 text-sm"
+                  className="h-9 shrink-0 rounded-md border border-border bg-card px-3 text-sm"
                 >
                   <option value="cloudflare">{t("domains.cloudflareSending")}</option>
                   <option value="resend">Resend</option>
@@ -430,13 +430,13 @@ export default function DomainsPage() {
       </div>
       <section className="space-y-3">
         {/* <div className="flex items-center justify-between">
-					<span className="text-sm text-neutral-500">{(data?.domains ?? []).length} total</span>
+					<span className="text-sm text-muted-foreground">{(data?.domains ?? []).length} total</span>
 				</div> */}
         {isLoading && (
           <SectionRowSkeleton />
         )}
         {!isLoading && (data?.domains ?? []).length === 0 && (
-          <p className="rounded-2xl bg-white px-5 py-4 text-sm text-neutral-500">
+          <p className="rounded-2xl bg-card px-5 py-4 text-sm text-muted-foreground">
             {t("domains.none")}
           </p>
         )}

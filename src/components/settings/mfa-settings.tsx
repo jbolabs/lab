@@ -32,21 +32,21 @@ export function MfaSettings() {
 		setStatus(await loadMfaStatus());
 	}
 
-	if (!status) return <p className="text-sm text-neutral-500">{error ?? t("mfa.loading")}</p>;
+	if (!status) return <p className="text-sm text-muted-foreground">{error ?? t("mfa.loading")}</p>;
 
 	return (
 		<div className="space-y-4">
-			<div className="flex items-start gap-3 rounded-2xl bg-neutral-50 p-4">
+			<div className="flex items-start gap-3 rounded-2xl bg-muted/60 p-4">
 				{status.enabled ? (
 					<ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
 				) : (
-					<ShieldOff className="mt-0.5 h-5 w-5 shrink-0 text-neutral-400" />
+					<ShieldOff className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground/70" />
 				)}
 				<div className="min-w-0 flex-1">
-					<p className="text-sm font-medium text-neutral-900">
+					<p className="text-sm font-medium text-foreground">
 						{status.enabled ? t("mfa.on") : t("mfa.off")}
 					</p>
-					<p className="mt-1 text-sm text-neutral-500">
+					<p className="mt-1 text-sm text-muted-foreground">
 						{status.enabled
 							? t("mfa.onDescription", { count: status.recoveryCodesLeft })
 							: t("mfa.offDescription")}
@@ -80,7 +80,7 @@ function RecoveryCodesList({ codes }: { codes: string[] }) {
 	const [copied, setCopied] = useState(false);
 	return (
 		<div className="space-y-3">
-			<ul className="grid grid-cols-2 gap-2 rounded-xl bg-neutral-50 p-4 font-mono text-sm text-neutral-800">
+			<ul className="grid grid-cols-2 gap-2 rounded-xl bg-muted/60 p-4 font-mono text-sm text-foreground">
 				{codes.map((code) => (
 					<li key={code}>{code}</li>
 				))}
@@ -96,7 +96,7 @@ function RecoveryCodesList({ codes }: { codes: string[] }) {
 				<Copy className="h-4 w-4" />
 				{copied ? t("common.copied") : t("mfa.copyCodes")}
 			</Button>
-			<p className="text-xs text-neutral-500">
+			<p className="text-xs text-muted-foreground">
 				{t("mfa.codesHint")}
 			</p>
 		</div>
@@ -184,10 +184,10 @@ function EnrollDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
 							<DialogTitle>{t("mfa.scanTitle")}</DialogTitle>
 							<DialogDescription>{t("mfa.scanDescription")}</DialogDescription>
 						</DialogHeader>
-						<div role="img" aria-label={t("mfa.scanTitle")} className="mx-auto w-48 rounded-xl border border-neutral-200 bg-white p-2" dangerouslySetInnerHTML={{ __html: qrSvg }} />
-						<details className="text-xs text-neutral-500">
+						<div role="img" aria-label={t("mfa.scanTitle")} className="mx-auto w-48 rounded-xl border border-border bg-card p-2" dangerouslySetInnerHTML={{ __html: qrSvg }} />
+						<details className="text-xs text-muted-foreground">
 							<summary className="cursor-pointer">{t("mfa.cantScan")}</summary>
-							<code className="mt-2 block break-all rounded-md bg-neutral-50 p-2 font-mono text-neutral-800">{secret}</code>
+							<code className="mt-2 block break-all rounded-md bg-muted/60 p-2 font-mono text-foreground">{secret}</code>
 						</details>
 						<div className="space-y-2">
 							<Label htmlFor="mfa-code">{t("mfa.sixDigitCode")}</Label>

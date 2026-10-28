@@ -18,49 +18,49 @@ export default async function SettingsInboxPage() {
 			<h1 className="sr-only">{t("settings.nav.inbox")}</h1>
 			<section className="space-y-4">
 				<div>
-					<h2 className="text-xl font-semibold text-neutral-900">{t("settingsPage.inbox.experience")}</h2>
-					<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.inbox.experienceDescription")}</p>
+					<h2 className="text-xl font-semibold text-foreground">{t("settingsPage.inbox.experience")}</h2>
+					<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.experienceDescription")}</p>
 				</div>
-				<div className="divide-y divide-neutral-100 rounded-3xl bg-white p-6">
+				<div className="divide-y divide-border rounded-3xl bg-card p-6">
 					<div className="py-6 first:pt-0 last:pb-0">
 						<div className="mb-4">
-							<h3 className="text-base font-semibold text-neutral-900">{t("settingsPage.inbox.appearance")}</h3>
-							<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.inbox.appearanceDescription")}</p>
+							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.appearance")}</h3>
+							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.appearanceDescription")}</p>
 						</div>
 						<AppearanceSettings />
 					</div>
 					<div className="py-6 first:pt-0 last:pb-0">
 						<div className="mb-4">
-							<h3 className="text-base font-semibold text-neutral-900">{t("settingsPage.inbox.readingLayout")}</h3>
-							<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.inbox.readingLayoutDescription")}</p>
+							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.readingLayout")}</h3>
+							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.readingLayoutDescription")}</p>
 						</div>
 						<InboxReadingLayoutSettings />
 					</div>
 					<div className="py-6 first:pt-0 last:pb-0">
 						<div className="mb-4">
-							<h3 className="text-base font-semibold text-neutral-900">{t("settingsPage.inbox.threading")}</h3>
-							<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.inbox.threadingDescription")}</p>
+							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.threading")}</h3>
+							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.threadingDescription")}</p>
 						</div>
 						<InboxThreadingSettings />
 					</div>
 					<div className="py-6 first:pt-0 last:pb-0">
 						<div className="mb-4">
-							<h3 className="text-base font-semibold text-neutral-900">{t("settingsPage.inbox.addresses")}</h3>
-							<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.inbox.addressesDescription")}</p>
+							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.addresses")}</h3>
+							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.addressesDescription")}</p>
 						</div>
 						<RecipientAddressSettings />
 					</div>
 					<div className="py-6 first:pt-0 last:pb-0">
 						<div className="mb-4">
-							<h3 className="text-base font-semibold text-neutral-900">{t("settingsPage.inbox.shortcuts")}</h3>
-							<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.inbox.shortcutsDescription")}</p>
+							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.shortcuts")}</h3>
+							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.shortcutsDescription")}</p>
 						</div>
 						<InboxShortcutsSettings />
 					</div>
 					<div className="py-6 first:pt-0 last:pb-0">
 						<div className="mb-4">
-							<h3 className="text-base font-semibold text-neutral-900">{t("settingsPage.inbox.notifications")}</h3>
-							<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.inbox.notificationsDescription")}</p>
+							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.notifications")}</h3>
+							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.notificationsDescription")}</p>
 						</div>
 						<BrowserNotificationSettings />
 						<div className="mt-4">
@@ -71,35 +71,35 @@ export default async function SettingsInboxPage() {
 			</section>
 			<section className="space-y-4">
 				<div>
-					<h2 className="text-xl font-semibold text-neutral-900">{t("settingsPage.inbox.handling")}</h2>
-					<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.inbox.handlingDescription")}</p>
+					<h2 className="text-xl font-semibold text-foreground">{t("settingsPage.inbox.handling")}</h2>
+					<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.handlingDescription")}</p>
 				</div>
-				<div className="divide-y divide-neutral-100 rounded-3xl bg-white p-6">
+				<div className="divide-y divide-border rounded-3xl bg-card p-6">
 					<div className="py-6 first:pt-0 last:pb-0">
 						<div className="mb-4">
-							<h3 className="text-base font-semibold text-neutral-900">{t("settingsPage.inbox.spamProtection")}</h3>
-							<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.inbox.spamProtectionDescription")}</p>
+							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.spamProtection")}</h3>
+							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.spamProtectionDescription")}</p>
 						</div>
 						<SpamFilterSettings />
 					</div>
 					<div className="py-6 first:pt-0 last:pb-0">
 						<div className="mb-4">
-							<h3 className="text-base font-semibold text-neutral-900">{t("settingsPage.inbox.remoteContent")}</h3>
-							<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.inbox.remoteContentDescription")}</p>
+							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.remoteContent")}</h3>
+							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.remoteContentDescription")}</p>
 						</div>
 						<RemoteContentSettings />
 					</div>
 					<div className="py-6 first:pt-0 last:pb-0">
 						<div className="mb-4">
-							<h3 className="text-base font-semibold text-neutral-900">{t("settingsPage.inbox.cleanup")}</h3>
-							<p className="mt-1 text-sm text-neutral-500">{t("settingsPage.inbox.cleanupDescription")}</p>
+							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.cleanup")}</h3>
+							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.cleanupDescription")}</p>
 						</div>
 						<TrashRetentionSettings />
 					</div>
 					<div className="py-6 first:pt-0 last:pb-0">
 						<div className="mb-4">
-							<h3 className="text-base font-semibold text-neutral-900">{t("settingsPage.inbox.autoReply")}</h3>
-							<p className="mt-1 text-sm text-neutral-500">
+							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.autoReply")}</h3>
+							<p className="mt-1 text-sm text-muted-foreground">
 								{t("settingsPage.inbox.autoReplyDescription")}
 							</p>
 						</div>

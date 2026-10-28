@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RoutingRuleSelect } from "./routing-rule-select";
 import { Switch } from "@/components/ui/switch";
-import { Tooltip } from "@/components/ui/tooltip";
+import { HintTooltip } from "@/components/hint-tooltip";
 import { CardGridSkeleton } from "@/components/page-skeletons";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -119,13 +119,13 @@ export function DomainRouting({ domain }: DomainRoutingProps = {}) {
 				<div>
 					<div className="flex items-center gap-2">
 						<h2 className="text-2xl font-semibold">{t("routing.title")}</h2>
-						<Tooltip label={t("routing.about")}>
-							<button type="button" aria-label={t("routing.aboutLabel")} className="text-neutral-400 hover:text-neutral-700">
+						<HintTooltip label={t("routing.about")}>
+							<button type="button" aria-label={t("routing.aboutLabel")} className="text-muted-foreground/70 hover:text-foreground/80">
 								<Info className="h-4 w-4" />
 							</button>
-						</Tooltip>
+						</HintTooltip>
 					</div>
-					<p className="mt-1 text-sm text-neutral-500">{t("routing.rulesFor", { host: hostname || t("routing.selectInbox") })}</p>
+					<p className="mt-1 text-sm text-muted-foreground">{t("routing.rulesFor", { host: hostname || t("routing.selectInbox") })}</p>
 				</div>
 				<div className="flex items-end gap-2">
 					<Button onClick={openCreate} disabled={!domainId}>
@@ -138,7 +138,7 @@ export function DomainRouting({ domain }: DomainRoutingProps = {}) {
 				<CardGridSkeleton />
 			) : !domain && !mailboxId ? (
 				<Card>
-					<CardContent className="pt-6 text-sm text-neutral-500">
+					<CardContent className="pt-6 text-sm text-muted-foreground">
 						{t("routing.selectInboxFirst")}
 					</CardContent>
 				</Card>
@@ -255,9 +255,9 @@ export function DomainRouting({ domain }: DomainRoutingProps = {}) {
 							<div className="grid min-w-0 gap-2">
 								<div className="flex items-center gap-2">
 									<Label htmlFor="rule-value">{t("routing.matchValue")}</Label>
-									<Tooltip label={t("routing.matchAllHint")}>
-										<button type="button" aria-label={t("routing.matchAllHint")} className="text-neutral-500"><Info className="h-4 w-4" /></button>
-									</Tooltip>
+									<HintTooltip label={t("routing.matchAllHint")}>
+										<button type="button" aria-label={t("routing.matchAllHint")} className="text-muted-foreground"><Info className="h-4 w-4" /></button>
+									</HintTooltip>
 								</div>
 								<Input
 									id="rule-value"
@@ -270,9 +270,9 @@ export function DomainRouting({ domain }: DomainRoutingProps = {}) {
 							<div className="grid min-w-0 gap-2">
 								<div className="flex items-center gap-2">
 									<Label htmlFor="rule-priority">{t("routing.priority")}</Label>
-									<Tooltip label={t("routing.priorityHint")}>
-										<button type="button" aria-label={t("routing.priorityHint")} className="text-neutral-500"><Info className="h-4 w-4" /></button>
-									</Tooltip>
+									<HintTooltip label={t("routing.priorityHint")}>
+										<button type="button" aria-label={t("routing.priorityHint")} className="text-muted-foreground"><Info className="h-4 w-4" /></button>
+									</HintTooltip>
 								</div>
 								<Input
 									id="rule-priority"
@@ -321,13 +321,13 @@ export function DomainRouting({ domain }: DomainRoutingProps = {}) {
 						)}
 
 						{form.action === "forward" && (
-							<div className="flex items-center justify-between rounded-lg border border-neutral-200 px-3 py-2">
+							<div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
 								<div>
 									<div className="flex items-center gap-2">
 										<p className="text-sm font-medium">{t("routing.keepCopy")}</p>
-										<Tooltip label={t("routing.keepCopyHint")}>
-											<button type="button" aria-label={t("routing.keepCopyHint")} className="text-neutral-500"><Info className="h-4 w-4" /></button>
-										</Tooltip>
+										<HintTooltip label={t("routing.keepCopyHint")}>
+											<button type="button" aria-label={t("routing.keepCopyHint")} className="text-muted-foreground"><Info className="h-4 w-4" /></button>
+										</HintTooltip>
 									</div>
 								</div>
 								<Switch
@@ -352,7 +352,7 @@ export function DomainRouting({ domain }: DomainRoutingProps = {}) {
 
 						{error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 
-						<div className="flex justify-end gap-2 border-t border-neutral-200 pt-4">
+						<div className="flex justify-end gap-2 border-t border-border pt-4">
 							<Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
 								{t("common.cancel")}
 							</Button>
@@ -390,18 +390,18 @@ function RuleSection({
 }) {
 	const { t } = useLanguage();
 	return (
-		<Card className={`${className} border-0 bg-white px-6`}>
+		<Card className={`${className} border-0 bg-card px-6`}>
 			<CardHeader>
 				<div className="flex items-center gap-2">
 					<CardTitle className="text-xs uppercase">{title}</CardTitle>
-					<Tooltip label={description}>
-						<button type="button" aria-label={description} className="text-neutral-500"><Info className="h-4 w-4" /></button>
-					</Tooltip>
+					<HintTooltip label={description}>
+						<button type="button" aria-label={description} className="text-muted-foreground"><Info className="h-4 w-4" /></button>
+					</HintTooltip>
 				</div>
 			</CardHeader>
 			<CardContent className="space-y-2 pb-5">
 				{rules.length === 0 ? (
-					<p className="text-sm text-neutral-500">{t("routing.noRules")}</p>
+					<p className="text-sm text-muted-foreground">{t("routing.noRules")}</p>
 				) : (
 					rules.map((rule) => {
 						const Icon = ACTION_ICONS[rule.action];
@@ -409,9 +409,9 @@ function RuleSection({
 						return (
 							<div
 								key={rule.id}
-								className="flex flex-wrap items-center gap-3 rounded-xl border border-neutral-200 px-3 py-2"
+								className="flex flex-wrap items-center gap-3 rounded-xl border border-border px-3 py-2"
 							>
-								<Icon className="h-4 w-4 shrink-0 text-neutral-500" />
+								<Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
 								<div className="min-w-0 flex-1">
 									<div className="flex items-center gap-2">
 										<p className="truncate text-sm font-medium">
@@ -420,11 +420,11 @@ function RuleSection({
 										{!rule.enabled && <Badge variant="secondary">{t("routing.disabled")}</Badge>}
 									</div>
 									{rule.name && (
-										<p className="truncate text-xs text-neutral-500">
+										<p className="truncate text-xs text-muted-foreground">
 											{describeRule(rule, mailboxes, hostname, t)}
 										</p>
 									)}
-									<p className="text-xs text-neutral-500">
+									<p className="text-xs text-muted-foreground">
 										{t("routing.stats", { priority: rule.priority, count: rule.matchCount, last: formatLastMatched(rule.lastMatchedAt, t) })}
 									</p>
 								</div>

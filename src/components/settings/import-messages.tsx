@@ -59,9 +59,9 @@ export function ImportMessages({ destination, sourceLabel }: ImportMessagesProps
 							accept=".eml,.mbox,.mbx,message/rfc822,application/mbox"
 							multiple
 							onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
-							className="block w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm shadow-neutral-200/50 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-sm file:font-medium"
+							className="block w-full rounded-md border border-border bg-card px-3 py-2 text-sm shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
 						/>
-						<p className="text-xs leading-5 text-neutral-500">
+						<p className="text-xs leading-5 text-muted-foreground">
 							{t("import.limits")}
 						</p>
 					</div>

@@ -19,7 +19,7 @@ function withKey(text: string, key: string) {
   return (
     <>
       {before}
-      <kbd className="px-1.5 py-0.5 bg-neutral-200 text-neutral-700 rounded font-mono">{key}</kbd>
+      <kbd className="px-1.5 py-0.5 bg-accent text-foreground/80 rounded font-mono">{key}</kbd>
       {after}
     </>
   );
@@ -61,7 +61,7 @@ function ShortcutsHelpDialogContent({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/40 backdrop-blur-xs animate-in fade-in duration-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-100">
       <div
         className="fixed inset-0"
         onClick={onClose}
@@ -77,19 +77,19 @@ function ShortcutsHelpDialogContent({
           event.stopPropagation();
           onClose();
         }}
-        className="relative w-full max-w-2xl bg-white border border-neutral-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10 max-h-[85vh]"
+        className="relative w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10 max-h-[85vh]"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+            <div className="p-1.5 bg-signal-soft text-signal rounded-lg">
               <Keyboard className="w-5 h-5" />
             </div>
             <div>
-              <h2 id={titleId} className="text-base font-semibold text-neutral-900">
+              <h2 id={titleId} className="text-base font-semibold text-foreground">
                 {t("shortcutsHelp.title")}
               </h2>
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-muted-foreground">
                 {t("shortcutsHelp.subtitle")}
               </p>
             </div>
@@ -99,7 +99,7 @@ function ShortcutsHelpDialogContent({
             type="button"
             onClick={onClose}
             aria-label={t("shortcutsHelp.close")}
-            className="text-neutral-400 hover:text-neutral-700 p-1.5 rounded-lg hover:bg-neutral-100 transition-colors"
+            className="text-muted-foreground/70 hover:text-foreground/80 p-1.5 rounded-lg hover:bg-accent transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -109,7 +109,7 @@ function ShortcutsHelpDialogContent({
         <div className="overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
           {Object.entries(grouped).map(([category, items]) => (
             <div key={category} className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 border-b border-neutral-100 pb-1.5">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border pb-1.5">
                 {t(`shortcut.category.${category}` as TranslationKey)}
               </h3>
               <div className="space-y-2">
@@ -118,10 +118,10 @@ function ShortcutsHelpDialogContent({
                     key={idx}
                     className="flex items-center justify-between text-sm"
                   >
-                    <span className="text-neutral-700">
+                    <span className="text-foreground/80">
                       {item.label}
                     </span>
-                    <kbd className="px-2 py-0.5 text-xs font-mono font-medium text-neutral-600 bg-neutral-100 border border-neutral-200 rounded-md shadow-2xs">
+                    <kbd className="px-2 py-0.5 text-xs font-mono font-medium text-muted-foreground bg-muted border border-border rounded-md shadow-2xs">
                       {formatKey(item)}
                     </kbd>
                   </div>
@@ -132,7 +132,7 @@ function ShortcutsHelpDialogContent({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
+        <div className="px-6 py-3 bg-muted/60 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
           <span>{withKey(t("shortcutsHelp.pressToToggle", { key: "{key}" }), "?")}</span>
           <span>{withKey(t("shortcutsHelp.pressToClose", { key: "{key}" }), "ESC")}</span>
         </div>

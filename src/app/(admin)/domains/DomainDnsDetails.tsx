@@ -48,16 +48,16 @@ export default function DomainDnsDetails({
 			<li key={record} className={`${ROW_GRID} ${getDnsAuthItemClass(item.status)}`}>
 				<StatusBadge ok={ok} tone={item.status === "missing" ? "red" : "neutral"} />
 				<span className="min-w-0">
-					<span className="block font-medium text-neutral-900">{t("domains.recordLabel", { label: item.label })}</span>
-					<span className="block text-xs text-neutral-500">{t(dnsAuthDescriptions[record])}</span>
+					<span className="block font-medium text-foreground">{t("domains.recordLabel", { label: item.label })}</span>
+					<span className="block text-xs text-muted-foreground">{t(dnsAuthDescriptions[record])}</span>
 				</span>
 				{ok ? (
-					<span className="min-w-0 break-all text-neutral-500">{item.found.length > 0 ? item.found.join(", ") : item.name}</span>
+					<span className="min-w-0 break-all text-muted-foreground">{item.found.length > 0 ? item.found.join(", ") : item.name}</span>
 				) : (
 					<Button
 						variant="outline"
 						size="sm"
-						className="shrink-0 bg-white"
+						className="shrink-0 bg-card"
 						disabled={manual || setupRecord === record}
 						title={manual ? t("domains.manualDns") : t("domains.createRecord", { label: item.label })}
 						onClick={() => onSetup?.(record)}
@@ -84,15 +84,15 @@ export default function DomainDnsDetails({
 		<div className="px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
 			{audit && (
 				<section>
-					<h2 className="text-base font-semibold text-neutral-900">{t("domains.setupTitle")}</h2>
-					<p className="mt-0.5 text-sm text-neutral-500">
+					<h2 className="text-base font-semibold text-foreground">{t("domains.setupTitle")}</h2>
+					<p className="mt-0.5 text-sm text-muted-foreground">
 						{t("domains.setupDescription")}
 					</p>
 					<ul className="mt-3 space-y-2">
 						{(["mx", "spf", "dmarc"] as DnsAuthRecord[]).map(auditRow)}
 					</ul>
 					{manual && (
-						<p className="text-xs text-neutral-500">
+						<p className="text-xs text-muted-foreground">
 							{t("domains.manualDnsNote")}
 						</p>
 					)}

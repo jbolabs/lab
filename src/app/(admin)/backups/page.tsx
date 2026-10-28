@@ -28,7 +28,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { BACKUP_TABLE_GROUPS } from "@/lib/backups/table-groups";
@@ -118,10 +118,10 @@ export default function BackupsPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-medium text-neutral-900">
+          <h1 className="text-2xl md:text-3xl font-medium text-foreground">
             {t("backups.title")}
           </h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {t("backups.description")}
           </p>
         </div>
@@ -149,12 +149,12 @@ export default function BackupsPage() {
               </Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
-              <DropdownMenu.Content align="end" sideOffset={6} className="z-50 min-w-48 rounded-lg border border-neutral-200 bg-white p-1 text-sm shadow-lg">
-                <DropdownMenu.Item disabled={restore.isPending} onSelect={() => restoreInput.current?.click()} className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-neutral-900 outline-none hover:bg-neutral-100 focus:bg-neutral-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+              <DropdownMenu.Content align="end" sideOffset={6} className="z-50 min-w-48 rounded-lg border border-border bg-card p-1 text-sm shadow-lg">
+                <DropdownMenu.Item disabled={restore.isPending} onSelect={() => restoreInput.current?.click()} className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-foreground outline-none hover:bg-accent focus:bg-accent data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
                   <Upload className="h-4 w-4" />
                   {restore.isPending ? t("backups.restoring") : t("backups.restore")}
                 </DropdownMenu.Item>
-                <DropdownMenu.Item disabled={!settings || autoSaveSettings.isPending} onSelect={() => setSettingsOpen(true)} className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-neutral-900 outline-none hover:bg-neutral-100 focus:bg-neutral-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                <DropdownMenu.Item disabled={!settings || autoSaveSettings.isPending} onSelect={() => setSettingsOpen(true)} className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-foreground outline-none hover:bg-accent focus:bg-accent data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
                   <Settings className="h-4 w-4" />
                   {t("backups.settings")}
                 </DropdownMenu.Item>
@@ -171,12 +171,12 @@ export default function BackupsPage() {
             <DialogDescription>{t("backups.tablesDescription")}</DialogDescription>
           </DialogHeader>
           {settings && <div className="space-y-5">
-            <div className="divide-y divide-neutral-100">
+            <div className="divide-y divide-border">
               {BACKUP_TABLE_GROUPS.map((group) => {
                 const enabled = !settings.excludedTableGroups.includes(group.id);
                 const lastEnabled = enabled && settings.excludedTableGroups.length === BACKUP_TABLE_GROUPS.length - 1;
                 return <div key={group.id} className="flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0">
-                  <div className="min-w-0"><p className="text-sm font-medium text-neutral-900">{group.label}</p><p className="mt-1 break-words text-xs text-neutral-500">{t("backups.tables", { list: group.tables.join(", ") })}</p></div>
+                  <div className="min-w-0"><p className="text-sm font-medium text-foreground">{group.label}</p><p className="mt-1 break-words text-xs text-muted-foreground">{t("backups.tables", { list: group.tables.join(", ") })}</p></div>
                   <Switch checked={enabled} disabled={lastEnabled} onCheckedChange={(checked) => setSettings({ ...settings, excludedTableGroups: checked ? settings.excludedTableGroups.filter((id) => id !== group.id) : [...settings.excludedTableGroups, group.id] })} aria-label={t("backups.backUpGroup", { group: group.label })} />
                 </div>;
               })}
@@ -214,7 +214,7 @@ export default function BackupsPage() {
                 <Badge
                   key={item}
                   variant="outline"
-                  className="border-amber-300 bg-white/70 text-amber-900"
+                  className="border-amber-300 bg-background/70 text-amber-900"
                 >
                   {item}
                 </Badge>
@@ -223,7 +223,7 @@ export default function BackupsPage() {
                 type="button"
                 size="sm"
                 variant="outline"
-                className="ml-auto border-amber-300 bg-white/70"
+                className="ml-auto border-amber-300 bg-background/70"
                 disabled={backups.isFetching}
                 onClick={() => void backups.refetch()}
               >
@@ -237,7 +237,7 @@ export default function BackupsPage() {
         </Card>
       )}
 
-      <Card className="rounded-3xl border-0 bg-white p-6">
+      <Card className="rounded-3xl border-0 bg-card p-6">
         <CardHeader className="py-0">
           <CardTitle>{t("backups.automatic")}</CardTitle>
           <CardDescription>
@@ -247,7 +247,7 @@ export default function BackupsPage() {
         <CardContent className="space-y-5 pt-5">
           {settings && (
             <>
-              <div className="flex items-center justify-between gap-4 border-t border-neutral-100 pt-5">
+              <div className="flex items-center justify-between gap-4 border-t border-border pt-5">
                 <Label htmlFor="automatic-backup-switch">{t("backups.enableAutomatic")}</Label>
                 <Switch
                   id="automatic-backup-switch"
@@ -261,7 +261,7 @@ export default function BackupsPage() {
                   <div className="grid gap-4">
                     <div className="flex items-center justify-between gap-4">
                       <Label htmlFor="schedule-type" className="flex-1">{t("backups.frequency")}</Label>
-                      <Select
+                      <NativeSelect
                         id="schedule-type"
                         value={settings.scheduleType}
                         containerClassName="w-1/2 max-w-52 shrink-0 text-sm"
@@ -285,13 +285,13 @@ export default function BackupsPage() {
                         <option value="daily">{t("backups.daily")}</option>
                         <option value="weekly">{t("backups.weekly")}</option>
                         <option value="monthly">{t("backups.monthly")}</option>
-                      </Select>
+                      </NativeSelect>
                     </div>
 
                     {settings.scheduleType === "weekly" && (
                       <div className="flex items-center justify-between gap-4">
                         <Label htmlFor="weekday">{t("backups.dayOfWeek")}</Label>
-                        <Select
+                        <NativeSelect
                           id="weekday"
                           value={settings.scheduleValue ?? 1}
                           containerClassName="w-1/2 max-w-52 shrink-0"
@@ -310,7 +310,7 @@ export default function BackupsPage() {
                               {t(day.labelKey)}
                             </option>
                           ))}
-                        </Select>
+                        </NativeSelect>
                       </div>
                     )}
 
@@ -340,7 +340,7 @@ export default function BackupsPage() {
                     )}
                   </div>
 
-                  <div className="grid gap-4 border-t border-neutral-100 pt-5">
+                  <div className="grid gap-4 border-t border-border pt-5">
                     <div className="flex items-center justify-between gap-4">
                       <Label htmlFor="retention-switch">{t("backups.deleteOld")}</Label>
                       <Switch
@@ -380,7 +380,7 @@ export default function BackupsPage() {
                             else setSettings({ ...settings, retentionDays: savedSettings.current?.retentionDays ?? 30 });
                           }}
                         />
-                        <span className="text-sm text-neutral-500 absolute z-10 right-6">{t("backups.days")}</span>
+                        <span className="text-sm text-muted-foreground absolute z-10 right-6">{t("backups.days")}</span>
                       </div>
                     </div>
                   </div>
@@ -391,12 +391,12 @@ export default function BackupsPage() {
         </CardContent>
       </Card>
 
-      <section className="overflow-hidden rounded-3xl bg-white">
-        <div className="flex items-center gap-3 border-b border-neutral-100 px-4 py-4">
-          <DatabaseBackup className="h-5 w-5 text-neutral-500" />
-          <h2 className="font-semibold text-neutral-900">{t("backups.history")}</h2>
+      <section className="overflow-hidden rounded-3xl bg-card">
+        <div className="flex items-center gap-3 border-b border-border px-4 py-4">
+          <DatabaseBackup className="h-5 w-5 text-muted-foreground" />
+          <h2 className="font-semibold text-foreground">{t("backups.history")}</h2>
         </div>
-        <div className="grid grid-cols-[1fr_110px_110px_170px_120px] gap-4 border-b border-neutral-100 bg-neutral-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        <div className="grid grid-cols-[1fr_110px_110px_170px_120px] gap-4 border-b border-border bg-muted/60 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <span>{t("backups.col.file")}</span>
           <span>{t("backups.col.status")}</span>
           <span>{t("backups.col.size")}</span>
@@ -405,18 +405,18 @@ export default function BackupsPage() {
         </div>
         {backups.isLoading && <SkeletonRows count={5} />}
         {!backups.isLoading && (backups.data?.backups ?? []).length === 0 && (
-          <p className="px-4 py-6 text-sm text-neutral-500">{t("backups.none")}</p>
+          <p className="px-4 py-6 text-sm text-muted-foreground">{t("backups.none")}</p>
         )}
         {(backups.data?.backups ?? []).map((backup: BackupItem) => (
           <div
             key={backup.id}
-            className="grid grid-cols-[1fr_110px_110px_170px_120px] items-center gap-4 border-b border-neutral-100 px-4 py-3 last:border-b-0"
+            className="grid grid-cols-[1fr_110px_110px_170px_120px] items-center gap-4 border-b border-border px-4 py-3 last:border-b-0"
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-neutral-900">
+              <p className="truncate text-sm font-medium text-foreground">
                 {backup.filename ?? backup.id}
               </p>
-              <p className="truncate text-xs text-neutral-500">
+              <p className="truncate text-xs text-muted-foreground">
                 {backup.trigger === "manual" ? t("backups.manual") : t("backups.scheduled")}
                 {backup.error ? `: ${backup.error}` : ""}
               </p>
@@ -424,10 +424,10 @@ export default function BackupsPage() {
             <Badge variant="outline" className={getStatusClass(backup.status)}>
               {t(`backups.status.${backup.status}` as TranslationKey)}
             </Badge>
-            <span className="text-sm text-neutral-600">
+            <span className="text-sm text-muted-foreground">
               {formatBackupSize(backup.size)}
             </span>
-            <span className="text-sm text-neutral-600">
+            <span className="text-sm text-muted-foreground">
               {formatBackupDate(backup.createdAt)}
             </span>
             <div className="flex gap-1">

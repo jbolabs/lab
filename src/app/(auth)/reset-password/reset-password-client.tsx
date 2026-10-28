@@ -45,7 +45,7 @@ export function ResetPasswordClient() {
 	if (!token) {
 		return (
 			<AuthShell icon={LockKeyhole} title={t("auth.reset.linkMissing")} description={t("auth.reset.linkMissingDescription")}>
-				<Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+				<Link href="/forgot-password" className="text-sm text-signal hover:underline">
 					{t("auth.reset.requestNew")}
 				</Link>
 			</AuthShell>
@@ -63,7 +63,7 @@ export function ResetPasswordClient() {
 			}
 			footer={
 				done ? (
-					<Link href="/login" className="text-sm font-medium text-blue-600 hover:underline">
+					<Link href="/login" className="text-sm font-medium text-signal hover:underline">
 						{t("auth.reset.goToSignIn")}
 					</Link>
 				) : undefined

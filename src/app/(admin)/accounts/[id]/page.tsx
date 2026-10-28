@@ -56,22 +56,22 @@ export default function AccountDetailsPage() {
 		}
 	}
 
-	if (!account) return <p className="text-sm text-neutral-500">{message ?? t("account.loadingAccount")}</p>;
+	if (!account) return <p className="text-sm text-muted-foreground">{message ?? t("account.loadingAccount")}</p>;
 
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-2xl md:text-3xl font-medium text-neutral-900">{t("account.detailsTitle")}</h1>
-				<p className="mt-2 text-sm text-neutral-500">{t("account.detailsDescription")}</p>
+				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("account.detailsTitle")}</h1>
+				<p className="mt-2 text-sm text-muted-foreground">{t("account.detailsDescription")}</p>
 			</div>
-			<section className="space-y-5 rounded-3xl bg-white p-6">
+			<section className="space-y-5 rounded-3xl bg-card p-6">
 				{!account.editable && (
-					<p className="rounded-2xl bg-neutral-50 p-4 text-sm text-neutral-500">
+					<p className="rounded-2xl bg-muted/60 p-4 text-sm text-muted-foreground">
 						{t("account.noPermission")}
 					</p>
 				)}
 				<div className="flex items-center gap-4">
-					<span className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-xl font-semibold text-blue-700">
+					<span className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-signal-soft text-xl font-semibold text-signal">
 						{account.name.charAt(0).toUpperCase()}
 						{account.hasAvatar && (
 							<ProgressiveAvatarImage src={getManagedAccountAvatarUrl(id, avatarVersion)} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -79,7 +79,7 @@ export default function AccountDetailsPage() {
 					</span>
 					{account.editable && (
 						<Label className="cursor-pointer">
-							<span className="inline-flex h-9 items-center gap-2 rounded-md border border-neutral-200 px-3 text-sm">
+							<span className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm">
 								<Upload className="h-4 w-4" />
 								{t("account.changeAvatar")}
 							</span>
@@ -89,7 +89,7 @@ export default function AccountDetailsPage() {
 				</div>
 				<div className="space-y-2">
 					<Label htmlFor="account-email">{t("auth.email")}</Label>
-					<Input id="account-email" value={account.email} readOnly className="bg-neutral-50 text-neutral-500" />
+					<Input id="account-email" value={account.email} readOnly className="bg-muted/60 text-muted-foreground" />
 				</div>
 				<div className="space-y-2">
 					<Label htmlFor="account-name">{t("common.name")}</Label>
@@ -105,14 +105,14 @@ export default function AccountDetailsPage() {
 						onChange={(event) => setAccount({ ...account, forwardingEmail: event.target.value || null })}
 						placeholder="destination@example.com"
 					/>
-					<p className="text-xs leading-5 text-neutral-500">
+					<p className="text-xs leading-5 text-muted-foreground">
 						{t("settings.forwarding.hint")}
 					</p>
 				</div>}
-				<div className="flex items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+				<div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-muted/60 p-4">
 					<div className="space-y-1">
-						<Label htmlFor="account-enabled" className="font-semibold text-neutral-900">{t("account.enabled")}</Label>
-						<p id="account-enabled-description" className="text-xs leading-5 text-neutral-500">
+						<Label htmlFor="account-enabled" className="font-semibold text-foreground">{t("account.enabled")}</Label>
+						<p id="account-enabled-description" className="text-xs leading-5 text-muted-foreground">
 							{account.isPrimaryAdmin ? t("account.primaryAlwaysEnabled") : t("account.allowSignIn")}
 						</p>
 					</div>
@@ -130,7 +130,7 @@ export default function AccountDetailsPage() {
 					</Button>
 				)}
 			</section>
-			{message && <p role="status" className="text-sm text-neutral-500">{message}</p>}
+			{message && <p role="status" className="text-sm text-muted-foreground">{message}</p>}
 		</div>
 	);
 }

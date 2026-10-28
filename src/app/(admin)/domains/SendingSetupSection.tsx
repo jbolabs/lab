@@ -73,8 +73,8 @@ export default function SendingSetupSection({ domain, onChange, busy, message, c
 
 	return (
 		<section className="mt-6">
-			<h2 className="text-base font-semibold text-neutral-900">{t("domains.setupSending")}</h2>
-			<p className="mt-0.5 text-sm text-neutral-500">
+			<h2 className="text-base font-semibold text-foreground">{t("domains.setupSending")}</h2>
+			<p className="mt-0.5 text-sm text-muted-foreground">
 				{domain.sendingProvider === "none" ? t("domains.sendingNone") : t("domains.sendingChoose")}
 			</p>
 			<ul className="mt-3 space-y-2">

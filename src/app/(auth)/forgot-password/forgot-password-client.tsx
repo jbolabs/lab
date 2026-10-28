@@ -48,7 +48,7 @@ export function ForgotPasswordClient() {
 					: t("auth.forgot.description")
 			}
 			footer={
-				<Link href="/login" className="text-sm text-neutral-500 hover:text-neutral-800">
+				<Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
 					{t("auth.backToSignIn")}
 				</Link>
 			}

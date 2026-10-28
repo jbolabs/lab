@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { authFetch } from "@/lib/auth/client";
 import type { DriveItemDto, DriveShareDto, DriveShareRole } from "@/lib/drive/types";
 
-const selectClass = "h-10 rounded-md border border-neutral-200 bg-white px-2 text-sm";
+const selectClass = "h-10 rounded-md border border-border bg-card px-2 text-sm";
 
 export function DriveShareDialog({ item, onClose, onChanged }: { item: DriveItemDto | null; onClose: () => void; onChanged: () => void }) {
 	const { t } = useLanguage();
@@ -79,22 +79,22 @@ export function DriveShareDialog({ item, onClose, onChanged }: { item: DriveItem
 					</select>
 					<Button type="submit" disabled={busy || !email.trim()}>{t("drive.shareAdd")}</Button>
 				</form>
-				<h3 className="mb-2 mt-6 text-sm font-medium text-neutral-900">{t("drive.peopleWithAccess")}</h3>
-				{shares.length === 0 ? <p className="text-sm text-neutral-500">{t("drive.noPeople")}</p> : (
+				<h3 className="mb-2 mt-6 text-sm font-medium text-foreground">{t("drive.peopleWithAccess")}</h3>
+				{shares.length === 0 ? <p className="text-sm text-muted-foreground">{t("drive.noPeople")}</p> : (
 					<ul className="space-y-1">
 						{shares.map((share) => (
-							<li key={share.id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-neutral-50">
-								<span className="min-w-0 flex-1"><span className="block truncate text-neutral-900">{share.name}</span><span className="block truncate text-xs text-neutral-500">{share.email}</span></span>
-								<span className="shrink-0 text-xs text-neutral-500">{share.role === "edit" ? t("drive.canEdit") : t("drive.canView")}</span>
-								<button type="button" onClick={() => void removePerson(share.id)} disabled={busy} aria-label={t("drive.remove")} className="rounded-full p-1 text-neutral-500 hover:bg-neutral-200"><X size={14} /></button>
+							<li key={share.id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-accent/60">
+								<span className="min-w-0 flex-1"><span className="block truncate text-foreground">{share.name}</span><span className="block truncate text-xs text-muted-foreground">{share.email}</span></span>
+								<span className="shrink-0 text-xs text-muted-foreground">{share.role === "edit" ? t("drive.canEdit") : t("drive.canView")}</span>
+								<button type="button" onClick={() => void removePerson(share.id)} disabled={busy} aria-label={t("drive.remove")} className="rounded-full p-1 text-muted-foreground hover:bg-accent"><X size={14} /></button>
 							</li>
 						))}
 					</ul>
 				)}
-				<h3 className="mb-2 mt-6 text-sm font-medium text-neutral-900">{t("drive.generalAccess")}</h3>
-				<div className="flex items-center gap-3 rounded-lg border border-neutral-200 p-3 text-sm">
-					<Link2 size={18} className="shrink-0 text-neutral-500" />
-					<span className="min-w-0 flex-1 text-neutral-700">{linkToken ? t("drive.linkOn") : t("drive.linkOff")}</span>
+				<h3 className="mb-2 mt-6 text-sm font-medium text-foreground">{t("drive.generalAccess")}</h3>
+				<div className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm">
+					<Link2 size={18} className="shrink-0 text-muted-foreground" />
+					<span className="min-w-0 flex-1 text-foreground/80">{linkToken ? t("drive.linkOn") : t("drive.linkOff")}</span>
 					<Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void toggleLink()}>{linkToken ? t("drive.linkDisable") : t("drive.linkEnable")}</Button>
 				</div>
 				{linkToken && (

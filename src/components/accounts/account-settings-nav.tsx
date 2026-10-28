@@ -21,7 +21,7 @@ export function AccountSettingsNav() {
 	return (
 		<SectionNavSheet title={t("accountSettings.menu")} label={currentLabel} className="w-full shrink-0 px-4 py-4 md:w-48 md:px-0 md:py-0">
 			<div className="sticky top-6 space-y-3">
-				<h2 className="px-4 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+				<h2 className="px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
 					{t("accountSettings.title")}
 				</h2>
 				<nav className="space-y-1">
@@ -34,8 +34,8 @@ export function AccountSettingsNav() {
 								className={cn(
 									"block rounded-full px-4 py-2.5 text-sm font-medium transition-colors",
 									isActiveAccountSettingsPath(pathname, href)
-										? "bg-blue-100 text-blue-900"
-										: "text-neutral-600 hover:bg-white/70 hover:text-neutral-900",
+										? "bg-signal-soft text-signal-soft-foreground"
+										: "text-muted-foreground hover:bg-background/70 hover:text-foreground",
 								)}
 							>
 								{t(item.labelKey)}

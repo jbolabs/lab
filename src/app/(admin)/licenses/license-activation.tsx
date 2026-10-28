@@ -74,21 +74,21 @@ export function LicenseActivation({ children }: { children?: ReactNode }) {
 	if (license?.active) {
 		return (
 			<>
-			<Card className="rounded-3xl border-0 bg-white px-6">
+			<Card className="rounded-3xl border-0 bg-card px-6">
 				<CardContent className="flex items-start gap-4 py-8">
 					<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
 						<CheckCircle2 className="h-6 w-6" />
 					</span>
 					<div className="min-w-0 flex-1">
 						<CardTitle>{t("licenses.activated")}</CardTitle>
-						<p className="mt-2 text-sm leading-6 text-neutral-600">
+						<p className="mt-2 text-sm leading-6 text-muted-foreground">
 							{t("licenses.activatedBody", { plan: formatLicensePlan(license.plan, t) })}
 						</p>
-						<p className="mt-1 text-sm text-neutral-500">{license.seatLimit === null ? t("licenses.seatsUnlimited") : t("licenses.seats", { limit: license.seatLimit })}</p>
+						<p className="mt-1 text-sm text-muted-foreground">{license.seatLimit === null ? t("licenses.seatsUnlimited") : t("licenses.seats", { limit: license.seatLimit })}</p>
 						<Button type="button" variant="outline" className="mt-5" onClick={() => void submit("deactivate")} disabled={action !== null}>
 							{action === "deactivate" ? t("licenses.deactivating") : t("licenses.deactivate")}
 						</Button>
-						{status && <p role="status" className="mt-3 text-sm text-neutral-500">{status}</p>}
+						{status && <p role="status" className="mt-3 text-sm text-muted-foreground">{status}</p>}
 					</div>
 				</CardContent>
 			</Card>
@@ -100,7 +100,7 @@ export function LicenseActivation({ children }: { children?: ReactNode }) {
 	return (
 		<>
 		{children}
-		<Card className="rounded-3xl border-0 bg-white px-6">
+		<Card className="rounded-3xl border-0 bg-card px-6">
 			<CardContent className="space-y-5 pb-6">
 				{hasActivation && license && (
 					<p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -119,12 +119,12 @@ export function LicenseActivation({ children }: { children?: ReactNode }) {
 								disabled={action !== null}
 								className={`rounded-2xl border px-4 py-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer ${
 									selectedPlan === "pro"
-										? "border-blue-600 bg-neutral-50 ring-1 ring-blue-700"
-										: "border-neutral-200 bg-white hover:border-neutral-400"
+										? "border-ring bg-muted/60 ring-1 ring-ring"
+										: "border-border bg-card hover:border-input"
 								}`}
 							>
 								<span className="block text-xl font-semibold">Pro</span>
-								<span className="mt-1 block text-xs text-neutral-500">{t("licenses.proTag")}</span>
+								<span className="mt-1 block text-xs text-muted-foreground">{t("licenses.proTag")}</span>
 							</button>
 							<button
 								type="button"
@@ -134,12 +134,12 @@ export function LicenseActivation({ children }: { children?: ReactNode }) {
 								disabled={action !== null}
 								className={`rounded-2xl border px-4 py-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer ${
 									selectedPlan === "team"
-										? "border-blue-600 bg-neutral-50 ring-1 ring-blue-700"
-										: "border-neutral-200 bg-white hover:border-neutral-400"
+										? "border-ring bg-muted/60 ring-1 ring-ring"
+										: "border-border bg-card hover:border-input"
 								}`}
 							>
-								<span className="block text-xl font-semibold text-neutral-900">Team</span>
-								<span className="mt-1 block text-xs text-neutral-500">{t("licenses.teamTag")}</span>
+								<span className="block text-xl font-semibold text-foreground">Team</span>
+								<span className="mt-1 block text-xs text-muted-foreground">{t("licenses.teamTag")}</span>
 							</button>
 						</div>
 					</div>
@@ -171,7 +171,7 @@ export function LicenseActivation({ children }: { children?: ReactNode }) {
 							{action === "activate" ? t("licenses.activating") : t("licenses.activate")}
 						</Button>
 					)}
-					{status && <p role="status" className="text-sm text-neutral-500">{status}</p>}
+					{status && <p role="status" className="text-sm text-muted-foreground">{status}</p>}
 				</div>
 			</CardContent>
 		</Card>

@@ -48,9 +48,9 @@ export default function DomainItemCard({
   const auth = dns?.auth;
 
   return (
-    <ListRow className="group relative flex-col items-stretch gap-3 max-md:rounded-none max-md:border-b max-md:border-neutral-100 max-md:px-0 max-md:py-4 max-md:last:border-b-0">
+    <ListRow className="group relative flex-col items-stretch gap-3 max-md:rounded-none max-md:border-b max-md:border-border max-md:px-0 max-md:py-4 max-md:last:border-b-0">
       <div className="flex flex-col items-start gap-3 md:flex-row md:gap-4">
-        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-neutral-100 text-neutral-600">
+        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-muted-foreground">
           <Globe2 className="h-5 w-5" />
           <img
             src={`https://${item.hostname}/favicon.ico`}
@@ -61,7 +61,7 @@ export default function DomainItemCard({
         </span>
 
         <div className="flex w-full min-w-0 flex-1 flex-col gap-2">
-          <span className="min-w-0 truncate pr-10 text-sm font-semibold text-neutral-900">
+          <span className="min-w-0 truncate pr-10 text-sm font-semibold text-foreground">
             {item.hostname}
           </span>
 
@@ -114,9 +114,9 @@ export default function DomainItemCard({
             {auth &&
               dnsAuthRecords.map((record, index) => (
                 <Fragment key={record}>
-                  {index > 0 && <span className="text-neutral-300">|</span>}
+                  {index > 0 && <span className="text-muted-foreground/50">|</span>}
                   <span
-                    className="flex items-center gap-1 text-neutral-500"
+                    className="flex items-center gap-1 text-muted-foreground"
                     title={`${record.toUpperCase()} · ${getDnsAuthStatusLabel(auth[record], t)}`}
                   >
                     <span className="uppercase">{record}</span>
@@ -130,7 +130,7 @@ export default function DomainItemCard({
             <span className="flex-1" />
             <button
               onClick={() => onToggleDns(item.id)}
-              className="flex cursor-pointer items-center gap-0.5 text-xs text-blue-600 hover:text-blue-800"
+              className="flex cursor-pointer items-center gap-0.5 text-xs text-signal hover:text-signal-soft-foreground"
             >
               {expanded ? (
                 <>
@@ -186,7 +186,7 @@ export default function DomainItemCard({
           <DropdownMenu.Content
             align="end"
             sideOffset={6}
-            className="z-50 min-w-40 rounded-lg border border-neutral-200 bg-white p-1 text-sm shadow-lg"
+            className="z-50 min-w-40 rounded-lg border border-border bg-card p-1 text-sm shadow-lg"
           >
             <DropdownMenu.Item
               disabled={remove.isPending}

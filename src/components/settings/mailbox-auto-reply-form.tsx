@@ -73,10 +73,10 @@ export function MailboxAutoReplyForm() {
   }
 
   if (isLoading)
-    return <p className="text-sm text-neutral-500">{t("settings.signature.loadingInbox")}</p>;
+    return <p className="text-sm text-muted-foreground">{t("settings.signature.loadingInbox")}</p>;
   if (!selectedMailbox)
     return (
-      <p className="text-sm text-neutral-500">
+      <p className="text-sm text-muted-foreground">
         {t("settings.autoReply.selectInbox")}
       </p>
     );
@@ -87,12 +87,12 @@ export function MailboxAutoReplyForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <label className="flex items-start gap-3 rounded-xl bg-neutral-50 p-4">
+      <label className="flex items-start gap-3 rounded-xl bg-muted/60 p-4">
         <span className="flex-1">
-          <span className="block text-sm font-medium text-neutral-900">
+          <span className="block text-sm font-medium text-foreground">
             {t("settings.autoReply.enableFor", { address })}
           </span>
-          <span className="mt-1 block text-sm text-neutral-500">
+          <span className="mt-1 block text-sm text-muted-foreground">
             {t("settings.autoReply.limit")}
           </span>
         </span>
@@ -135,11 +135,11 @@ export function MailboxAutoReplyForm() {
               {saving ? t("common.saving") : t("settings.autoReply.save")}
             </Button>
             {!canManage && (
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-muted-foreground">
                 {t("settings.autoReply.needFullAccess")}
               </p>
             )}
-            {status && <p role="status" className="text-sm text-neutral-500">{status}</p>}
+            {status && <p role="status" className="text-sm text-muted-foreground">{status}</p>}
           </div>
         </>
       )}

@@ -8,8 +8,8 @@ export default function ComposePage() {
 	return (
 		<div className="h-full overflow-auto p-8">
 			<div className="mb-6">
-				<h1 className="text-2xl font-normal text-neutral-900">{t("compose.pageTitle")}</h1>
-				<p className="mt-1 text-sm text-neutral-500">{t("compose.pageDescription")}</p>
+				<h1 className="text-2xl font-normal text-foreground">{t("compose.pageTitle")}</h1>
+				<p className="mt-1 text-sm text-muted-foreground">{t("compose.pageDescription")}</p>
 			</div>
 			<ComposeForm mode="page" />
 		</div>

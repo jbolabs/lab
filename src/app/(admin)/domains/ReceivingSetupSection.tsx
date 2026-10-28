@@ -57,8 +57,8 @@ export default function ReceivingSetupSection({ domain, onChange, busy, message,
 
 	return (
 		<section className="mt-6">
-			<h2 className="text-base font-semibold text-neutral-900">{t("domains.setupReceiving")}</h2>
-			<p className="mt-0.5 text-sm text-neutral-500">
+			<h2 className="text-base font-semibold text-foreground">{t("domains.setupReceiving")}</h2>
+			<p className="mt-0.5 text-sm text-muted-foreground">
 				{t("domains.setupReceivingDescription")}
 			</p>
 			<ul className="mt-3 space-y-2">
@@ -83,7 +83,7 @@ export default function ReceivingSetupSection({ domain, onChange, busy, message,
 					);
 				})}
 			</ul>
-			{domain.receivingProvider === "none" && <p className="mt-2 text-xs text-neutral-500">{t("domains.noReceiving")}</p>}
+			{domain.receivingProvider === "none" && <p className="mt-2 text-xs text-muted-foreground">{t("domains.noReceiving")}</p>}
 			{message && <p role="alert" className="mt-2 text-xs text-red-600">{message}</p>}
 			{error && <p role="alert" className="mt-2 text-xs text-red-600">{error}</p>}
 		</section>

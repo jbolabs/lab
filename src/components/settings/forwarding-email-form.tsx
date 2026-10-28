@@ -43,7 +43,7 @@ export function ForwardingEmailForm({ initialForwardingEmail }: ForwardingEmailF
 					autoComplete="email"
 					placeholder="destination@example.com"
 				/>
-				<p className="text-xs leading-5 text-neutral-500">
+				<p className="text-xs leading-5 text-muted-foreground">
 					{t("settings.forwarding.hint")}
 				</p>
 			</div>
@@ -51,7 +51,7 @@ export function ForwardingEmailForm({ initialForwardingEmail }: ForwardingEmailF
 				<Button type="submit" disabled={saving || forwardingEmail.trim() === savedForwardingEmail}>
 					{saving ? t("common.saving") : t("settings.forwarding.save")}
 				</Button>
-				{status && <p role="status" className="text-sm text-neutral-500">{status}</p>}
+				{status && <p role="status" className="text-sm text-muted-foreground">{status}</p>}
 			</div>
 		</form>
 	);

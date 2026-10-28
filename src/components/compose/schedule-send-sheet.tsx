@@ -18,7 +18,7 @@ const PAGES: Page[] = ["root", "date", "templates"];
 
 const pageClass = "flex max-h-[calc(85dvh-3.5rem)] w-full shrink-0 flex-col px-2 pb-3";
 
-const rowClass = "flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-base text-neutral-900 active:bg-neutral-100";
+const rowClass = "flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-base text-foreground active:bg-accent";
 
 /** Phone version of the Send options menu: a bottom sheet whose pages slide in (root → date, templates). */
 export function ScheduleSendSheet({ open, onOpenChange, value, onChange, onApplyTemplate, onNewTemplate }: ScheduleSendSheetProps) {
@@ -70,17 +70,17 @@ export function ScheduleSendSheet({ open, onOpenChange, value, onChange, onApply
 				<DialogPrimitive.Content
 					aria-label={t("schedule.optionsLabel")}
 					aria-describedby={undefined}
-					className="slide-sheet fixed inset-x-0 bottom-0 z-[70] max-h-[85dvh] overflow-hidden rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl outline-none"
+					className="slide-sheet fixed inset-x-0 bottom-0 z-[70] max-h-[85dvh] overflow-hidden rounded-t-3xl bg-card pb-[env(safe-area-inset-bottom)] shadow-2xl outline-none"
 				>
 					<div className="flex h-14 items-center gap-1 px-2">
 						{page === "root" ? <span className="w-10" /> : (
-							<button type="button" onClick={() => setPage("root")} className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-700 active:bg-neutral-100">
+							<button type="button" onClick={() => setPage("root")} className="flex h-10 w-10 items-center justify-center rounded-full text-foreground/80 active:bg-accent">
 								<ChevronLeft className="h-6 w-6" />
 								<span className="sr-only">{t("schedule.heading")}</span>
 							</button>
 						)}
-						<DialogPrimitive.Title className="flex-1 truncate text-center text-base font-semibold text-neutral-900">{title}</DialogPrimitive.Title>
-						<DialogPrimitive.Close className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-700 active:bg-neutral-100">
+						<DialogPrimitive.Title className="flex-1 truncate text-center text-base font-semibold text-foreground">{title}</DialogPrimitive.Title>
+						<DialogPrimitive.Close className="flex h-10 w-10 items-center justify-center rounded-full text-foreground/80 active:bg-accent">
 							<X className="h-5 w-5" />
 							<span className="sr-only">{t("navigation.close")}</span>
 						</DialogPrimitive.Close>
@@ -91,25 +91,25 @@ export function ScheduleSendSheet({ open, onOpenChange, value, onChange, onApply
 								<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
 									{value && (
 										<button type="button" onClick={() => choose(null)} className={rowClass}>
-											<X className="h-5 w-5 text-neutral-500" />
+											<X className="h-5 w-5 text-muted-foreground" />
 											{t("schedule.clear")}
 										</button>
 									)}
 									{options.map((option) => (
 										<button key={option.labelKey} type="button" onClick={() => choose(option.value)} className={cn(rowClass, "justify-between")}>
 											<span>{t(option.labelKey)}</span>
-											<span className="text-sm text-neutral-500">{option.value && formatScheduledSend(option.value)}</span>
+											<span className="text-sm text-muted-foreground">{option.value && formatScheduledSend(option.value)}</span>
 										</button>
 									))}
 								</div>
 								<div className="shrink-0 pt-2">
 									<button type="button" onClick={() => setPage("date")} className={cn(rowClass, "justify-between")}>
-										<span className="flex items-center gap-3"><CalendarClock className="h-5 w-5 text-neutral-500" />{t("schedule.pick", { timeZone: getUserTimeZone() })}</span>
-										<ChevronRight className="h-5 w-5 text-neutral-400" />
+										<span className="flex items-center gap-3"><CalendarClock className="h-5 w-5 text-muted-foreground" />{t("schedule.pick", { timeZone: getUserTimeZone() })}</span>
+										<ChevronRight className="h-5 w-5 text-muted-foreground/70" />
 									</button>
 									<button type="button" onClick={() => setPage("templates")} className={cn(rowClass, "justify-between")}>
-										<span className="flex items-center gap-3"><FileText className="h-5 w-5 text-neutral-500" />{t("template.menu")}</span>
-										<ChevronRight className="h-5 w-5 text-neutral-400" />
+										<span className="flex items-center gap-3"><FileText className="h-5 w-5 text-muted-foreground" />{t("template.menu")}</span>
+										<ChevronRight className="h-5 w-5 text-muted-foreground/70" />
 									</button>
 								</div>
 							</div>
@@ -123,7 +123,7 @@ export function ScheduleSendSheet({ open, onOpenChange, value, onChange, onApply
 										aria-label={t("schedule.pick", { timeZone: getUserTimeZone() })}
 										aria-invalid={pastDate}
 										aria-describedby={pastDate ? "schedule-past-time" : undefined}
-										className="h-12 w-full rounded-xl border border-neutral-200 px-3 text-base outline-none focus:border-blue-400"
+										className="h-12 w-full rounded-xl border border-border px-3 text-base outline-none focus:border-ring"
 									/>
 									{pastDate && <p id="schedule-past-time" role="alert" className="mt-2 text-sm text-red-600">{t("schedule.pastTime")}</p>}
 								</div>
@@ -135,7 +135,7 @@ export function ScheduleSendSheet({ open, onOpenChange, value, onChange, onApply
 							</div>
 							<div ref={(node) => { pageRefs.current.templates = node; }} className={pageClass} inert={page !== "templates"}>
 								<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-									{templates.length === 0 && <p className="px-3 py-3 text-sm text-neutral-500">{t("template.none")}</p>}
+									{templates.length === 0 && <p className="px-3 py-3 text-sm text-muted-foreground">{t("template.none")}</p>}
 									{templates.map((template) => (
 										<button
 											key={template.id}
@@ -151,7 +151,7 @@ export function ScheduleSendSheet({ open, onOpenChange, value, onChange, onApply
 									))}
 								</div>
 								<div className="shrink-0 pt-2">
-									<button type="button" onClick={() => { onOpenChange(false); onNewTemplate(); }} className={cn(rowClass, "text-blue-600")}>
+									<button type="button" onClick={() => { onOpenChange(false); onNewTemplate(); }} className={cn(rowClass, "text-signal")}>
 										<Plus className="h-5 w-5" />{t("template.new")}
 									</button>
 								</div>

@@ -20,7 +20,7 @@ const STATUS_STYLES: Record<WebhookDelivery["status"], string> = {
 	failed: "bg-red-600/10 text-red-700",
 	exhausted: "bg-red-600/10 text-red-700",
 	retrying: "bg-amber-500/10 text-amber-700",
-	pending: "bg-neutral-200 text-neutral-700",
+	pending: "bg-accent text-foreground/80",
 };
 
 export function WebhookDeliveries({ webhookId }: { webhookId: string }) {
@@ -42,17 +42,17 @@ export function WebhookDeliveries({ webhookId }: { webhookId: string }) {
 	});
 
 	if (deliveries.isLoading) {
-		return <p className="text-sm text-neutral-500">{t("webhooks.loadingDeliveries")}</p>;
+		return <p className="text-sm text-muted-foreground">{t("webhooks.loadingDeliveries")}</p>;
 	}
 
 	if (!deliveries.data?.length) {
-		return <p className="text-sm text-neutral-500">{t("webhooks.noDeliveries")}</p>;
+		return <p className="text-sm text-muted-foreground">{t("webhooks.noDeliveries")}</p>;
 	}
 
 	return (
-		<div role="region" tabIndex={0} aria-label={t("webhooks.stat.deliveries")} className="overflow-x-auto rounded-xl border border-neutral-200">
+		<div role="region" tabIndex={0} aria-label={t("webhooks.stat.deliveries")} className="overflow-x-auto rounded-xl border border-border">
 			<table className="w-full min-w-[820px] text-left text-sm">
-				<thead className="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
+				<thead className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
 					<tr>
 						<th scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.event")}</th>
 						<th scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.status")}</th>
@@ -65,10 +65,10 @@ export function WebhookDeliveries({ webhookId }: { webhookId: string }) {
 				</thead>
 				<tbody>
 					{deliveries.data.map((delivery) => (
-						<tr key={delivery.id} className="border-t border-neutral-100 align-top">
+						<tr key={delivery.id} className="border-t border-border align-top">
 							<td className="px-3 py-2">
 								<span className="block">{delivery.eventType}</span>
-								<span className="block text-xs text-neutral-500">
+								<span className="block text-xs text-muted-foreground">
 									{formatTimestamp(delivery.createdAt)}
 								</span>
 							</td>
@@ -86,7 +86,7 @@ export function WebhookDeliveries({ webhookId }: { webhookId: string }) {
 									{delivery.responseStatus ?? "—"}
 									{delivery.durationMs !== null && (
 										// An explicit separator: "200" next to "6ms" otherwise reads as "2006ms".
-										<span className="ml-1 text-xs text-neutral-500">
+										<span className="ml-1 text-xs text-muted-foreground">
 											· {formatDuration(delivery.durationMs)}
 										</span>
 									)}
@@ -97,10 +97,10 @@ export function WebhookDeliveries({ webhookId }: { webhookId: string }) {
 									</span>
 								)}
 							</td>
-							<td className="px-3 py-2 whitespace-nowrap text-neutral-600">
+							<td className="px-3 py-2 whitespace-nowrap text-muted-foreground">
 								{formatTimestamp(delivery.lastAttemptAt)}
 							</td>
-							<td className="px-3 py-2 whitespace-nowrap text-neutral-600">
+							<td className="px-3 py-2 whitespace-nowrap text-muted-foreground">
 								{formatTimestamp(delivery.nextRetryAt)}
 							</td>
 							<td className="px-3 py-2">

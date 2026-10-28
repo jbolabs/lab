@@ -28,12 +28,12 @@ export function OAuthConnections() {
 			setConnections((items) => items?.filter((item) => item.id !== id) ?? []);
 		} catch { setError(true); } finally { setBusy(null); }
 	}
-	return <section className="space-y-4 border-t border-neutral-200 pt-6" aria-labelledby="oauth-connections-title">
+	return <section className="space-y-4 border-t border-border pt-6" aria-labelledby="oauth-connections-title">
 		<h2 id="oauth-connections-title" className="text-xl font-medium">{t("oauth.connections")}</h2>
-		<p className="text-sm text-neutral-600">{t("oauth.connectionsDescription")}</p>
+		<p className="text-sm text-muted-foreground">{t("oauth.connectionsDescription")}</p>
 		{error && <p role="alert" className="text-sm text-red-700">{t("oauth.connectionError")}</p>}
-		{connections === null && !error && <p role="status" className="text-sm text-neutral-600">{t("common.loading")}</p>}
-		{connections?.length === 0 && <p className="text-sm text-neutral-600">{t("oauth.empty")}</p>}
-		<ul className="divide-y divide-neutral-200">{connections?.map((connection) => <li key={connection.id} className="flex flex-wrap items-start justify-between gap-4 py-4"><div className="min-w-0 flex-1"><h3 className="break-words text-sm font-semibold">{connection.name}</h3><p className="mt-1 text-sm text-neutral-600">{(JSON.parse(connection.scopes) as string[]).map((scope) => t(`oauth.scope.${scope}` as Parameters<typeof t>[0])).join(", ")}</p></div><Button variant="outline" type="button" disabled={busy !== null} onClick={() => void disconnect(connection.id)}>{busy === connection.id ? t("oauth.disconnecting") : t("oauth.disconnect")}</Button></li>)}</ul>
+		{connections === null && !error && <p role="status" className="text-sm text-muted-foreground">{t("common.loading")}</p>}
+		{connections?.length === 0 && <p className="text-sm text-muted-foreground">{t("oauth.empty")}</p>}
+		<ul className="divide-y divide-border">{connections?.map((connection) => <li key={connection.id} className="flex flex-wrap items-start justify-between gap-4 py-4"><div className="min-w-0 flex-1"><h3 className="break-words text-sm font-semibold">{connection.name}</h3><p className="mt-1 text-sm text-muted-foreground">{(JSON.parse(connection.scopes) as string[]).map((scope) => t(`oauth.scope.${scope}` as Parameters<typeof t>[0])).join(", ")}</p></div><Button variant="outline" type="button" disabled={busy !== null} onClick={() => void disconnect(connection.id)}>{busy === connection.id ? t("oauth.disconnecting") : t("oauth.disconnect")}</Button></li>)}</ul>
 	</section>;
 }

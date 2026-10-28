@@ -31,8 +31,8 @@ export function CommandPaletteItem({
       onMouseEnter={onHover}
       className={`w-full text-left px-3 py-2.5 rounded-xl flex items-center justify-between transition-colors ${
         isActive
-          ? "bg-blue-600 text-white"
-          : "text-neutral-800 hover:bg-neutral-100"
+          ? "bg-primary text-primary-foreground"
+          : "text-foreground hover:bg-accent"
       }`}
     >
       <div className="flex items-center gap-3 min-w-0">
@@ -41,7 +41,7 @@ export function CommandPaletteItem({
             className={`w-4 h-4 shrink-0 ${
               isActive
                 ? "text-white"
-                : "text-neutral-500"
+                : "text-muted-foreground"
             }`}
           />
         )}
@@ -52,7 +52,7 @@ export function CommandPaletteItem({
               className={`ml-2 text-xs truncate ${
                 isActive
                   ? "text-white"
-                  : "text-neutral-500"
+                  : "text-muted-foreground"
               }`}
             >
               {item.subtitle}
@@ -64,8 +64,8 @@ export function CommandPaletteItem({
         <kbd
           className={`text-xs px-2 py-0.5 rounded-md font-mono font-medium shrink-0 ${
             isActive
-              ? "bg-blue-700 text-white"
-              : "bg-neutral-100 text-neutral-500 border border-neutral-200"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground border border-border"
           }`}
         >
           {item.shortcut}

@@ -89,7 +89,7 @@ function NavToggle({ expanded, onClick, collapsedLabel, expandedLabel }: { expan
       type="button"
       onClick={onClick}
       aria-expanded={expanded}
-      className="flex h-9 w-full items-center rounded-r-full pl-[52px] text-left text-sm text-neutral-700 transition-colors hover:bg-stone-200/60 max-md:min-h-11 max-md:pl-14 max-md:text-base"
+      className="flex h-9 w-full items-center rounded-r-full pl-[52px] text-left text-sm text-foreground/80 transition-colors hover:bg-accent/60 max-md:min-h-11 max-md:pl-14 max-md:text-base"
     >
       {expanded ? (expandedLabel ?? t("navigation.less")) : (collapsedLabel ?? t("navigation.more"))}
     </button>
@@ -239,7 +239,7 @@ export function DashboardNav({ className }: { className?: string }) {
   return (
     <SidebarScaffold className={className} header={<SidebarHeader href="/inbox" />} footer={<SidebarFooter />}>
       {composeLink && !mobile && <NavItem labelClassName="font-medium" link={composeLink} />}
-      {minimal && <hr className="mx-6 my-2 border-neutral-200/70" />}
+      {minimal && <hr className="mx-6 my-2 border-border/70" />}
       <ReorderableList
         storageKey="mailflare:nav:layout"
         enabled={!minimal}
@@ -253,7 +253,7 @@ export function DashboardNav({ className }: { className?: string }) {
           },
         ]}
       />
-      {minimal && <hr className="mx-6 my-2 border-neutral-200/70" />}
+      {minimal && <hr className="mx-6 my-2 border-border/70" />}
       {!minimal && (
         <NavSectionHeader label={t("navigation.folders")} open={foldersSectionOpen} onToggle={toggleFoldersSection}>
           {selectedMailbox && (
@@ -261,7 +261,7 @@ export function DashboardNav({ className }: { className?: string }) {
               <DialogTrigger asChild>
                 <button
                   type="button"
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-500 hover:bg-blue-50 hover:text-blue-700"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-signal-soft hover:text-signal"
                   aria-label={t("navigation.createFolder")}
                 >
                   <Plus className="h-4 w-4" />
@@ -303,7 +303,7 @@ export function DashboardNav({ className }: { className?: string }) {
                           onClick={() => setNewFolderColor(option.value)}
                           className={`h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 ${
                             newFolderColor === option.value
-                              ? "border-neutral-900 ring-2 ring-neutral-300 ring-offset-2"
+                              ? "border-primary ring-2 ring-border ring-offset-2"
                               : "border-transparent"
                           }`}
                           style={{ backgroundColor: option.value }}
@@ -325,7 +325,7 @@ export function DashboardNav({ className }: { className?: string }) {
       )}
       
       {!minimal && foldersSectionOpen && folders.length === 0 && (
-        <div className="px-4 py-1.5 text-xs text-neutral-500">
+        <div className="px-4 py-1.5 text-xs text-muted-foreground">
           {t("navigation.noFolders")}
         </div>
       )}

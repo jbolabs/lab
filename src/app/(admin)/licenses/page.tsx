@@ -17,8 +17,8 @@ export default async function LicensesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl md:text-3xl font-medium text-neutral-900">{t("licenses.title")}</h1>
-        <p className="mt-2 text-sm text-neutral-500">
+        <h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("licenses.title")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           {t("licenses.description")}
         </p>
       </div>
@@ -29,17 +29,17 @@ export default async function LicensesPage() {
           return (
             <Card
               key={plan.name}
-              className="rounded-3xl border-0 bg-white p-6 flex flex-col"
+              className="rounded-3xl border-0 bg-card p-6 flex flex-col"
             >
               <CardHeader className="space-y-4 py-0">
                 <div className="flex items-center justify-between">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-signal-soft text-signal">
                     <Icon className="h-5 w-5" />
                   </span>
                 </div>
                 <div className="relative">
                   <CardTitle>{plan.name}</CardTitle>
-                  <p className="mt-2 text-6xl text-neutral-950 flex">
+                  <p className="mt-2 text-6xl text-foreground flex">
                     <span className="text-[12px] mt-2">$</span>
                     <b>{plan.price}</b>
                     {plan.originalPrice && (
@@ -55,7 +55,7 @@ export default async function LicensesPage() {
                 {plan.featureKeys.map((feature) => (
                   <p
                     key={feature}
-                    className="flex gap-2 text-sm text-neutral-600"
+                    className="flex gap-2 text-sm text-muted-foreground"
                   >
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
                     {t(feature)}

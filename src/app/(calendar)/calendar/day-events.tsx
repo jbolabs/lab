@@ -55,7 +55,7 @@ function DayEventsImpl({ day, events, currentTime, busy, activeEventId, onEdit, 
 								onPointerUp={onResizeEnd}
 								onPointerCancel={onResizeCancel}
 								onClick={(clickEvent) => clickEvent.stopPropagation()}
-								className={clsx("absolute left-1 right-1 z-20 cursor-ns-resize touch-none bg-transparent focus-visible:outline-2 focus-visible:outline-blue-500")}
+								className={clsx("absolute left-1 right-1 z-20 cursor-ns-resize touch-none bg-transparent focus-visible:outline-2 focus-visible:outline-ring")}
 								style={{ height: handleHeight, top: edge === "start" ? position.top : position.top + position.height - handleHeight }} />
 						))}
 					</Fragment>

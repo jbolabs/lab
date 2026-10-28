@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
-import { Tooltip } from "@/components/ui/tooltip";
+import { HintTooltip } from "@/components/hint-tooltip";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { authFetch } from "@/lib/auth/client";
 import type { MessageNavigationResponse } from "@/app/api/messages/navigation/types";
@@ -75,22 +75,22 @@ export function MessageDetailNavigation({ messageId, unread }: MessageDetailNavi
 	const { previousId, nextId, unreadOrder, totalUnread } = getMessageDetailNavigationState(context.entries, messageId);
 
 	return (
-		<div className="ml-auto flex shrink-0 items-center gap-2 text-neutral-500">
+		<div className="ml-auto flex shrink-0 items-center gap-2 text-muted-foreground">
 			{totalUnread > 0 && (
 			<span className="mr-2 whitespace-nowrap text-xs" aria-live="polite">
 				{t("message.nav.unreadPosition", { position: unreadOrder, total: totalUnread })}
 			</span>
 			)}
-			<Tooltip label={t("message.nav.newer")}>
+			<HintTooltip label={t("message.nav.newer")}>
 				<Button type="button" variant="ghost" size="roundedSM" aria-label={t("message.nav.newer")} disabled={!previousId} onClick={() => previousId && router.push(`${context.hrefPrefix}/${previousId}`)}>
 					<ChevronLeft size={18} />
 				</Button>
-			</Tooltip>
-			<Tooltip label={t("message.nav.older")}>
+			</HintTooltip>
+			<HintTooltip label={t("message.nav.older")}>
 				<Button type="button" variant="ghost" size="roundedSM" aria-label={t("message.nav.older")} disabled={!nextId} onClick={() => nextId && router.push(`${context.hrefPrefix}/${nextId}`)}>
 					<ChevronRight size={18} />
 				</Button>
-			</Tooltip>
+			</HintTooltip>
 		</div>
 	);
 }

@@ -93,8 +93,8 @@ export default function AdminSettingsPage() {
 	return (
 		<div>
 			<div className="mb-8">
-				<h1 className="text-2xl md:text-3xl font-medium text-neutral-900">{t("admin.title")}</h1>
-				<p className="mt-2 text-sm text-neutral-500">
+				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("admin.title")}</h1>
+				<p className="mt-2 text-sm text-muted-foreground">
 					{t("admin.description")}
 				</p>
 			</div>
@@ -104,15 +104,15 @@ export default function AdminSettingsPage() {
 
 					return (
 						<Link key={section.href} href={section.href}>
-							<Card className="h-full rounded-3xl border-0 bg-white p-6 transition-colors hover:bg-blue-50/60">
+							<Card className="h-full rounded-3xl border-0 bg-card p-6 transition-colors hover:bg-signal-soft/60">
 								<CardHeader className="flex-row items-center gap-4 space-y-0 py-0">
-									<div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+									<div className="flex h-10 w-10 items-center justify-center rounded-full bg-signal-soft text-signal">
 										<Icon className="h-5 w-5" />
 									</div>
 									<h2 className="text-base font-semibold leading-none">{t(section.titleKey)}</h2>
 								</CardHeader>
 								<CardContent className="pt-4">
-									<p className="text-sm text-neutral-500">{t(section.descriptionKey)}</p>
+									<p className="text-sm text-muted-foreground">{t(section.descriptionKey)}</p>
 								</CardContent>
 							</Card>
 						</Link>

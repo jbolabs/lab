@@ -229,7 +229,7 @@ export function RegisterClient() {
         }
       >
         <div className="space-y-5">
-          <p className="text-sm leading-6 text-neutral-600">
+          <p className="text-sm leading-6 text-muted-foreground">
             {t("setup.alreadyHasAccount", { domain: primaryDomain ?? t("setup.thisWorkspace") })}
           </p>
           <Button
@@ -263,26 +263,26 @@ export function RegisterClient() {
     >
       {step === 1 ? (
         <div className="space-y-5">
-          <p className="text-sm leading-6 text-neutral-600">
+          <p className="text-sm leading-6 text-muted-foreground">
             {t("setup.prepareIntro")}
           </p>
           <div className="space-y-2">
             {loading && checks.length === 0 && (
-              <div className="flex items-center gap-3 rounded-2xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
+              <div className="flex items-center gap-3 rounded-2xl bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
                 <LoaderCircle className="h-4 w-4 animate-spin" />
                 {t("setup.checking")}
               </div>
             )}
             {checks.map((check) => (
-              <div key={check.key} className="flex items-start gap-3 rounded-2xl bg-neutral-50 px-4 py-3">
+              <div key={check.key} className="flex items-start gap-3 rounded-2xl bg-muted/60 px-4 py-3">
                 {check.configured ? (
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
                 ) : (
                   <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
                 )}
                 <div>
-                  <p className="text-sm font-medium text-neutral-800">{check.key}</p>
-                  {!check.configured && <p className="mt-1 text-xs leading-5 text-neutral-500">{check.message}</p>}
+                  <p className="text-sm font-medium text-foreground">{check.key}</p>
+                  {!check.configured && <p className="mt-1 text-xs leading-5 text-muted-foreground">{check.message}</p>}
                 </div>
               </div>
             ))}
@@ -336,14 +336,14 @@ export function RegisterClient() {
                 }
               }}
             />
-            <p className="text-xs leading-5 text-neutral-500">
+            <p className="text-xs leading-5 text-muted-foreground">
               {t("setup.zoneHint")}
             </p>
           </div>
-          <div className="flex items-center justify-between gap-4 rounded-2xl bg-neutral-50 px-4 py-3">
+          <div className="flex items-center justify-between gap-4 rounded-2xl bg-muted/60 px-4 py-3">
             <div>
               <Label htmlFor="setup-skip-dns">{t("setup.skipDns")}</Label>
-              <p className="mt-1 text-xs leading-5 text-neutral-500">
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
                 {skipDns ? t("setup.skipDnsOn") : t("setup.skipDnsHint")}
               </p>
             </div>
@@ -357,10 +357,10 @@ export function RegisterClient() {
             />
           </div>
           {!skipDns && (
-          <div className="flex items-center justify-between gap-4 rounded-2xl bg-neutral-50 px-4 py-3">
+          <div className="flex items-center justify-between gap-4 rounded-2xl bg-muted/60 px-4 py-3">
             <div>
               <Label htmlFor="setup-enable-sending">{t("setup.enableSending")}</Label>
-              <p className="mt-1 text-xs leading-5 text-neutral-500">
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
                 {domainChecking
                   ? t("setup.checkingCloudflare")
                   : domainCheck
@@ -400,7 +400,7 @@ export function RegisterClient() {
       ) : (
         <form method="post" onSubmit={onSubmit} className="space-y-5">
 					{mxChecking && (
-						<div className="flex items-center gap-3 rounded-2xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
+						<div className="flex items-center gap-3 rounded-2xl bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
 							<LoaderCircle className="h-4 w-4 animate-spin" />
 							{t("setup.checkingMx")}
 						</div>
@@ -415,7 +415,7 @@ export function RegisterClient() {
 						<label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-amber-900">
 							<Checkbox
 								checked={replaceMxRecords}
-								onChange={(event) => setReplaceMxRecords(event.target.checked)}
+								onCheckedChange={(checked) => setReplaceMxRecords((checked === true))}
 								className="mt-1"
 							/>
 							<span>
@@ -440,7 +440,7 @@ export function RegisterClient() {
                 required
 								className="pr-34"
               />
-              <span className="max-w-36 truncate text-sm font-medium text-neutral-500 absolute top-2.5 right-5">
+              <span className="max-w-36 truncate text-sm font-medium text-muted-foreground absolute top-2.5 right-5">
                 @{accountDomain ?? t("setup.domainFallback")}
               </span>
             </div>
@@ -467,7 +467,7 @@ export function RegisterClient() {
               placeholder="you@gmail.com"
               required
             />
-            {/* <p className="text-xs leading-5 text-neutral-500">Used later for password reset.</p> */}
+            {/* <p className="text-xs leading-5 text-muted-foreground">Used later for password reset.</p> */}
           </div>
 
           {error && (

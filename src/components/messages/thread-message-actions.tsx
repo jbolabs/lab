@@ -8,7 +8,7 @@ import { useDismissible } from "@/components/use-dismissible";
 import { getOwnAddressForMessage } from "@/app/(dashboard)/inbox/[messageId]/utils";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
-import { Tooltip } from "@/components/ui/tooltip";
+import { HintTooltip } from "@/components/hint-tooltip";
 import {
 	blockMessageContact,
 	createForwardDraft,
@@ -137,7 +137,7 @@ export function ThreadMessageActions({
 	return (
 		<div className="flex items-center gap-0.5">
 			{error && <span role="alert" className="mr-1 max-w-32 truncate text-xs text-red-600" title={error}>{error}</span>}
-			<Tooltip label={starred ? t("message.removeStar") : t("message.star")}>
+			<HintTooltip label={starred ? t("message.removeStar") : t("message.star")}>
 				<Button
 					type="button"
 					variant="ghost"
@@ -150,10 +150,10 @@ export function ThreadMessageActions({
 				>
 					<Star className={starred ? "h-4 w-4 fill-amber-400 text-amber-400" : "h-4 w-4"} />
 				</Button>
-			</Tooltip>
+			</HintTooltip>
 			{!starOnly && (
 				<>
-			<Tooltip label={t("message.reply")}>
+			<HintTooltip label={t("message.reply")}>
 				<Button
 					type="button"
 					variant="ghost"
@@ -165,9 +165,9 @@ export function ThreadMessageActions({
 				>
 					<Reply className="h-4 w-4" />
 				</Button>
-			</Tooltip>
+			</HintTooltip>
 			<div ref={moreRef} className="relative">
-				<Tooltip label={t("common.moreActions")}>
+				<HintTooltip label={t("common.moreActions")}>
 					<Button
 						type="button"
 						variant="ghost"
@@ -180,37 +180,37 @@ export function ThreadMessageActions({
 					>
 						<MoreVertical className="h-4 w-4" />
 					</Button>
-				</Tooltip>
+				</HintTooltip>
 				{moreOpen && (
-					<div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-neutral-200 bg-white p-2 text-neutral-700 shadow-lg">
-						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onReply("reply")}>
+					<div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-border bg-card p-2 text-foreground/80 shadow-lg">
+						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => void onReply("reply")}>
 							<Reply className="h-4 w-4" /> {t("message.reply")}
 						</button>
 						{canReplyAll && (
-							<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onReply("replyAll")}>
+							<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => void onReply("replyAll")}>
 								<ReplyAll className="h-4 w-4" /> {t("message.replyAll")}
 							</button>
 						)}
-						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onForward()}>
+						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => void onForward()}>
 							<Forward className="h-4 w-4" /> {t("message.forward")}
 						</button>
-						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => { setMoreOpen(false); setSourceOpen(true); }}>
+						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => { setMoreOpen(false); setSourceOpen(true); }}>
 							<FileCode2 className="h-4 w-4" /> {t("message.showOriginal")}
 						</button>
-						<hr className="my-1 border-neutral-100" />
-						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onMessageAction(message.read ? "unread" : "read")}>
+						<hr className="my-1 border-border" />
+						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => void onMessageAction(message.read ? "unread" : "read")}>
 							{message.read ? <Mail className="h-4 w-4" /> : <MailOpen className="h-4 w-4" />}
 							{message.read ? t("common.markUnread") : t("common.markRead")}
 						</button>
 						{moveActions.map((item) => (
-							<button key={item.action} type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onMessageAction(item.action)}>
+							<button key={item.action} type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => void onMessageAction(item.action)}>
 								{createElement(item.icon, { size: 16 })} {t(item.labelKey)}
 							</button>
 						))}
 						{message.direction === "inbound" && mailboxId && (
 							<>
-								<hr className="my-1 border-neutral-100" />
-								<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onBlock()}>
+								<hr className="my-1 border-border" />
+								<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => void onBlock()}>
 									<Ban className="h-4 w-4" /> {t("message.blockContact")}
 								</button>
 							</>

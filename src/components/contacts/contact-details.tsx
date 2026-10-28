@@ -93,7 +93,7 @@ export function ContactDetailsTrigger({
 			<button
 				type="button"
 				onClick={() => handleOpenChange(true)}
-				className={`${className ?? ""} rounded-sm text-left hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200`}
+				className={`${className ?? ""} rounded-sm text-left hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
 			>
 				{shownName}
 			</button>
@@ -130,14 +130,14 @@ export function ContactDetailsTrigger({
 								disabled
 							/>
 						</div>
-						<div className="grid gap-3 rounded-lg bg-neutral-50 p-3 text-sm sm:grid-cols-2">
+						<div className="grid gap-3 rounded-lg bg-muted/60 p-3 text-sm sm:grid-cols-2">
 							<div>
-								<p className="text-xs font-medium uppercase text-neutral-500">{t("contact.source")}</p>
-								<p className="mt-1 capitalize text-neutral-700">{contact?.source ?? t("contact.sourceEmail")}</p>
+								<p className="text-xs font-medium uppercase text-muted-foreground">{t("contact.source")}</p>
+								<p className="mt-1 capitalize text-foreground/80">{contact?.source ?? t("contact.sourceEmail")}</p>
 							</div>
 							<div>
-								<p className="text-xs font-medium uppercase text-neutral-500">{t("contact.lastSeen")}</p>
-								<p className="mt-1 text-neutral-700">
+								<p className="text-xs font-medium uppercase text-muted-foreground">{t("contact.lastSeen")}</p>
+								<p className="mt-1 text-foreground/80">
 									{contact?.lastSeenAt ? formatUserDate(contact.lastSeenAt, { month: "short", day: "2-digit", year: "numeric" }) : t("contact.unknown")}
 								</p>
 							</div>

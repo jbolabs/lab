@@ -29,20 +29,20 @@ export default function SettingsExportPage() {
 		<div className="space-y-6">
 			<h1 className="sr-only">{t("settings.nav.export")}</h1>
 			{/* <div>
-				<h1 className="text-2xl md:text-3xl font-medium text-neutral-900">Export</h1>
-				<p className="mt-1 text-sm text-neutral-500">
+				<h1 className="text-2xl md:text-3xl font-medium text-foreground">Export</h1>
+				<p className="mt-1 text-sm text-muted-foreground">
 					Download mail from the currently selected mailbox.
 				</p>
 			</div> */}
 
 			<section className="space-y-4">
 				<div>
-					<h2 className="text-xl font-semibold text-neutral-900">{t("export.title")}</h2>
-					<p className="mt-1 text-sm text-neutral-500">
+					<h2 className="text-xl font-semibold text-foreground">{t("export.title")}</h2>
+					<p className="mt-1 text-sm text-muted-foreground">
 						{t("export.description")}
 					</p>
 				</div>
-				<div className="space-y-3 rounded-3xl bg-white p-6">
+				<div className="space-y-3 rounded-3xl bg-card p-6">
 					<Button type="button" variant="outline" disabled={!selectedMailbox || exportState.loading} onClick={onExport}>
 						{exportState.loading ? t("export.preparing") : t("export.download")}
 					</Button>

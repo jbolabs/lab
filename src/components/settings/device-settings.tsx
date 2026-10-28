@@ -36,22 +36,22 @@ export function DeviceSettings() {
 		}
 	}
 
-	if (!devices) return <p className="text-sm text-neutral-500">{error ?? t("devices.loading")}</p>;
-	if (devices.length === 0) return <p className="text-sm text-neutral-500">{t("devices.empty")}</p>;
+	if (!devices) return <p className="text-sm text-muted-foreground">{error ?? t("devices.loading")}</p>;
+	if (devices.length === 0) return <p className="text-sm text-muted-foreground">{t("devices.empty")}</p>;
 
 	return (
 		<div className="space-y-3">
 			{error ? <p className="text-sm text-red-600">{error}</p> : null}
-			<ul className="divide-y divide-neutral-100 rounded-2xl bg-neutral-50">
+			<ul className="divide-y divide-border rounded-2xl bg-muted/60">
 				{devices.map((device) => (
 					<li key={device.id} className="flex items-center gap-3 p-4">
-						<Smartphone className="h-5 w-5 shrink-0 text-neutral-500" />
+						<Smartphone className="h-5 w-5 shrink-0 text-muted-foreground" />
 						<div className="min-w-0 flex-1">
-							<p className="flex items-center gap-2 truncate text-sm font-medium text-neutral-900">
+							<p className="flex items-center gap-2 truncate text-sm font-medium text-foreground">
 								{device.name}
-								{device.pushEnabled ? <Bell className="h-3.5 w-3.5 text-neutral-400" aria-label={t("devices.push")} /> : null}
+								{device.pushEnabled ? <Bell className="h-3.5 w-3.5 text-muted-foreground/70" aria-label={t("devices.push")} /> : null}
 							</p>
-							<p className="truncate text-sm text-neutral-500">
+							<p className="truncate text-sm text-muted-foreground">
 								{t("devices.signedIn", { date: formatUserDate(device.createdAt, { dateStyle: "short" }) })} ·{" "}
 								{device.lastUsedAt ? t("apiKeys.lastUsed", { date: formatUserDate(device.lastUsedAt, { dateStyle: "short" }) }) : t("apiKeys.neverUsed")}
 							</p>

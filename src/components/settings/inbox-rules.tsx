@@ -133,10 +133,10 @@ export function InboxRules() {
     <section className="space-y-4">
       <div className="flex flex-row items-center">
         <header className="flex-1">
-          <h2 className="text-2xl font-semibold text-neutral-900">
+          <h2 className="text-2xl font-semibold text-foreground">
             {t("rules.mailboxTitle")}
           </h2>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {t("rules.appliedAfterDelivery")}
           </p>
         </header>
@@ -146,9 +146,9 @@ export function InboxRules() {
           {t("rules.new")}
         </Button>
       </div>
-      <div className="rounded-3xl bg-white p-6">
+      <div className="rounded-3xl bg-card p-6">
         {(rules.data?.rules ?? []).length === 0 && (
-          <p className="text-sm text-neutral-500">{t("rules.none")}</p>
+          <p className="text-sm text-muted-foreground">{t("rules.none")}</p>
         )}
         <div className="space-y-1">
           {(rules.data?.rules ?? []).map((rule) => (
@@ -158,9 +158,9 @@ export function InboxRules() {
               tabIndex={0}
               onClick={() => openEditDialog(rule)}
               onKeyDown={(event) => onRuleKeyDown(event, rule)}
-              className="group flex cursor-pointer items-center gap-3 rounded-xl bg-neutral-50 px-3 py-3 outline-none transition-colors hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-blue-200"
+              className="group flex cursor-pointer items-center gap-3 rounded-xl bg-muted/60 px-3 py-3 outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-signal-soft text-signal">
                 {rule.action === "spam" ? (
                   <ShieldAlert className="h-4 w-4" />
                 ) : rule.action === "trash" ? (
@@ -170,12 +170,12 @@ export function InboxRules() {
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-neutral-900">
+                <p className="truncate text-sm font-medium text-foreground">
                   {getRuleFieldLabel(rule.matchField, t)}{" "}
                   {getRuleOperatorLabel(rule.matchOperator, t)}{" "}
                   {rule.matchValue || rule.pattern}
                 </p>
-                <p className="truncate text-xs text-neutral-500">
+                <p className="truncate text-xs text-muted-foreground">
                   {getRuleDestinationLabel(rule)}
                 </p>
               </div>
@@ -274,7 +274,7 @@ export function InboxRules() {
             {save.isError && (
               <p role="alert" className="text-sm text-red-600">{save.error.message}</p>
             )}
-            <div className="flex justify-end gap-2 border-t border-neutral-200 pt-4">
+            <div className="flex justify-end gap-2 border-t border-border pt-4">
               <Button
                 type="button"
                 variant="outline"

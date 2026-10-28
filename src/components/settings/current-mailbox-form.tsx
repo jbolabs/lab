@@ -51,7 +51,7 @@ export function CurrentMailboxForm() {
 		return (
 			<div className="space-y-6">
 				<Skeleton className="h-8 w-32" />
-				<Card className="rounded-3xl border-0 bg-white p-6">
+				<Card className="rounded-3xl border-0 bg-card p-6">
 					<CardContent className="space-y-4 p-6">
 						<Skeleton className="h-4 w-24" />
 						<Skeleton className="h-10 w-full" />
@@ -65,9 +65,9 @@ export function CurrentMailboxForm() {
 	if (!selectedMailbox) {
 		return (
 			<div className="space-y-6">
-				<h1 className="text-2xl md:text-3xl font-medium text-neutral-900">{t("settings.mailbox.title")}</h1>
-				<Card className="rounded-3xl border-0 bg-white p-6">
-					<CardContent className="p-6 text-sm text-neutral-500">
+				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("settings.mailbox.title")}</h1>
+				<Card className="rounded-3xl border-0 bg-card p-6">
+					<CardContent className="p-6 text-sm text-muted-foreground">
 						{t("settings.mailbox.selectToView")}
 					</CardContent>
 				</Card>
@@ -81,11 +81,11 @@ export function CurrentMailboxForm() {
 	return (
 		<div className="space-y-8">
 			<div>
-				<h1 className="text-2xl md:text-3xl font-medium text-neutral-900">{t("settings.mailbox.title")}</h1>
-				<p className="mt-1 text-sm text-neutral-500">{address}</p>
+				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("settings.mailbox.title")}</h1>
+				<p className="mt-1 text-sm text-muted-foreground">{address}</p>
 			</div>
 
-				<CardContent className="space-y-6 rounded-3xl bg-white p-6">
+				<CardContent className="space-y-6 rounded-3xl bg-card p-6">
 					<ProfileAvatarForm
 						mailboxId={selectedMailbox.id}
 						initialHasAvatar={!!selectedMailbox.hasAvatar}
@@ -108,7 +108,7 @@ export function CurrentMailboxForm() {
 								<Save className="h-4 w-4" />
 								{saving ? t("common.saving") : t("settings.mailbox.saveChanges")}
 							</Button>
-							{status && <p role="status" className="text-sm text-neutral-500">{status}</p>}
+							{status && <p role="status" className="text-sm text-muted-foreground">{status}</p>}
 						</div>
 					</form>
 				</CardContent>

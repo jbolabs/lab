@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { importMessageFiles } from "@/components/settings/import-messages-utils";
 import type {
   ImapFormState,
@@ -226,8 +226,8 @@ export default function SettingsImportPage() {
     <div className="space-y-6">
       <h1 className="sr-only">{t("settings.nav.import")}</h1>
       {/* <div>
-        <h1 className="text-2xl md:text-3xl font-medium text-neutral-900">Import</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h1 className="text-2xl md:text-3xl font-medium text-foreground">Import</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Move mail from selected source sections into the matching sections of
           the current mailbox.
         </p>
@@ -235,29 +235,29 @@ export default function SettingsImportPage() {
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900">
+          <h2 className="text-xl font-semibold text-foreground">
             {t("importPage.title")}
           </h2>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {t("importPage.description")}
           </p>
         </div>
         <div className="space-y-1 overflow-hidden rounded-3xl">
-          <CardContent className="space-y-6 rounded-b-lg rounded-t-3xl bg-white p-6">
+          <CardContent className="space-y-6 rounded-b-lg rounded-t-3xl bg-card p-6">
             <div className="flex flex-col gap-2">
               <Label htmlFor="import-source">{t("importPage.source")}</Label>
-              <Select
+              <NativeSelect
                 id="import-source"
                 value={activeTab}
                 onChange={(event) =>
                   setActiveTab(event.target.value as ImportTab)
                 }
                 className="text-sm w-full py-2"
-                // className="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-neutral-900 shadow-sm shadow-neutral-200/50 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                // className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground shadow-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring"
               >
                 <option value="file">{t("importPage.backupFile")}</option>
                 <option value="imap">{t("importPage.imap")}</option>
-              </Select>
+              </NativeSelect>
             </div>
             <div className="space-y-2">
               <Label>{t("importPage.chooseSections")}</Label>
@@ -266,23 +266,22 @@ export default function SettingsImportPage() {
                 <button
                   type="button"
                   onClick={() => setSourceDropdownOpen((open) => !open)}
-                  className="flex w-full items-center justify-between rounded-md border border-neutral-200 bg-white px-3 py-2 text-left text-sm shadow-sm shadow-neutral-200/50"
+                  className="flex w-full items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-left text-sm shadow-sm "
                 >
                   <label className="flex-1">{t("importPage.selected")}</label>
                   <span className="truncate">{sourceSummary}</span>
-                  <span className="text-neutral-500 px-2">▾</span>
+                  <span className="text-muted-foreground px-2">▾</span>
                 </button>
                 {sourceDropdownOpen && (
-                  <div className="absolute z-20 mt-2 w-full rounded-xl border border-neutral-200 bg-white p-2 shadow-lg">
+                  <div className="absolute z-20 mt-2 w-full rounded-xl border border-border bg-card p-2 shadow-lg">
                     {importSourceOptions.map((option) => (
                       <label
                         key={option.value}
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground/80 hover:bg-accent/60"
                       >
                         <Checkbox
                           checked={selectedSections.includes(option.value)}
-                          onChange={(event) =>
-                            toggleSection(option.value, event.target.checked)
+                          onCheckedChange={(checked) => toggleSection(option.value, (checked === true))
                           }
                         />
                         {t(SECTION_LABEL_KEYS[option.value])}
@@ -291,7 +290,7 @@ export default function SettingsImportPage() {
                   </div>
                 )}
               </div>
-              {/* <p className="text-xs leading-5 text-neutral-500">
+              {/* <p className="text-xs leading-5 text-muted-foreground">
             Select Folders to import every source IMAP folder into matching
             Lab folders.
           </p> */}
@@ -310,9 +309,9 @@ export default function SettingsImportPage() {
                       onChange={(event) =>
                         setFiles(Array.from(event.target.files ?? []))
                       }
-                      className="block w-full rounded-md border border-neutral-200 bg-white px-3 py-1 text-sm shadow-sm shadow-neutral-200/50 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-sm file:font-medium"
+                      className="block w-full rounded-md border border-border bg-card px-3 py-1 text-sm shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
                     />
-                    <p className="text-xs leading-5 text-neutral-500">
+                    <p className="text-xs leading-5 text-muted-foreground">
                       {t("importPage.fileHint", { section: sourceLabel(fileImportSource) })}
                     </p>
                   </div>
@@ -334,16 +333,16 @@ export default function SettingsImportPage() {
                   </Button>
                   {fileProgress && (
                     <div
-                      className="space-y-1 text-xs text-neutral-500"
+                      className="space-y-1 text-xs text-muted-foreground"
                       aria-live="polite"
                     >
                       <div className="flex justify-between">
                         <span>{fileProgress.label}</span>
                         <span>{fileProgress.completed}%</span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                         <div
-                          className="h-full bg-blue-600 transition-[width]"
+                          className="h-full bg-primary transition-[width]"
                           style={{ width: `${fileProgress.completed}%` }}
                         />
                       </div>
@@ -442,32 +441,30 @@ export default function SettingsImportPage() {
                         }
                       />
                     </div>
-                    <label className="flex items-end gap-2 pb-2 text-sm text-neutral-700">
+                    <label className="flex items-end gap-2 pb-2 text-sm text-foreground/80">
                       <Checkbox
                         checked={imapForm.importAll}
-                        onChange={(event) =>
-                          setImapForm({
+                        onCheckedChange={(checked) => setImapForm({
                             ...imapForm,
-                            importAll: event.target.checked,
+                            importAll: (checked === true),
                           })
                         }
                       />
                       {t("importPage.importAll")}
                     </label>
-                    <label className="flex items-end gap-2 pb-2 text-sm text-neutral-700">
+                    <label className="flex items-end gap-2 pb-2 text-sm text-foreground/80">
                       <Checkbox
                         checked={imapForm.secure}
-                        onChange={(event) =>
-                          setImapForm({
+                        onCheckedChange={(checked) => setImapForm({
                             ...imapForm,
-                            secure: event.target.checked,
+                            secure: (checked === true),
                           })
                         }
                       />
                       {t("importPage.useTls")}
                     </label>
                   </div>
-                  <p className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-xs leading-5 text-neutral-500">
+                  <p className="rounded-lg border border-border bg-muted/60 px-4 py-3 text-xs leading-5 text-muted-foreground">
                     {t("importPage.imapNote")}
                   </p>
                   <Button
@@ -486,7 +483,7 @@ export default function SettingsImportPage() {
                   </Button>
                   {imapProgress && (
                     <div
-                      className="space-y-1 text-xs text-neutral-500"
+                      className="space-y-1 text-xs text-muted-foreground"
                       aria-live="polite"
                     >
                       <div className="flex justify-between">
@@ -495,9 +492,9 @@ export default function SettingsImportPage() {
                           {imapProgress.completed}/{imapProgress.total}
                         </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                         <div
-                          className="h-full bg-blue-600 transition-[width]"
+                          className="h-full bg-primary transition-[width]"
                           style={{
                             width: `${Math.round((imapProgress.completed / imapProgress.total) * 100)}%`,
                           }}

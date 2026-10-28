@@ -14,12 +14,12 @@ export function HomeHeaderActions() {
 	if (user) return <HomeAccountMenu user={user} />;
 
 	return (
-		<>
+		<div className="hidden items-center gap-1 sm:flex">
 			{getHomeActions(false).map((action) => (
-				<Button key={action.href} variant={action.variant} asChild>
+				<Button key={action.href} variant={action.variant} size="sm" asChild className="rounded-full px-4">
 					<Link href={action.href}>{t(action.labelKey)}</Link>
 				</Button>
 			))}
-		</>
+		</div>
 	);
 }

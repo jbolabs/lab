@@ -7,8 +7,8 @@ export default function SettingsRulesPage() {
 		<div className="space-y-8">
 			<PageHeading labelKey="settings.nav.rules" />
 			{/* <div>
-				<h1 className="text-2xl md:text-3xl font-medium text-neutral-900">Rules</h1>
-				<p className="mt-1 text-sm text-neutral-500">
+				<h1 className="text-2xl md:text-3xl font-medium text-foreground">Rules</h1>
+				<p className="mt-1 text-sm text-muted-foreground">
 					Rules for the selected inbox.
 				</p>
 			</div> */}

@@ -52,10 +52,10 @@ export function TrashRetentionSettings() {
 
 	return (
 		<div>
-			<label className="flex items-start gap-3 rounded-xl bg-neutral-50 p-4">
+			<label className="flex items-start gap-3 rounded-xl bg-muted/60 p-4">
 				<span className="flex-1">
-					<span className="block text-sm font-medium text-neutral-900">{t("settings.trash.title")}</span>
-					<span className="mt-1 block text-sm text-neutral-500">
+					<span className="block text-sm font-medium text-foreground">{t("settings.trash.title")}</span>
+					<span className="mt-1 block text-sm text-muted-foreground">
 						{t("settings.trash.description")}
 					</span>
 				</span>
@@ -63,7 +63,7 @@ export function TrashRetentionSettings() {
 					value={days ?? ""}
 					disabled={loading}
 					onChange={(event) => void updateDays(event.target.value ? Number(event.target.value) : null)}
-					className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-800 disabled:opacity-60"
+					className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-foreground disabled:opacity-60"
 					aria-label={t("settings.trash.title")}
 				>
 					<option value="">{describeTrashRetention(null, t)}</option>

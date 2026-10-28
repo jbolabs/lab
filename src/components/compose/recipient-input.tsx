@@ -52,10 +52,10 @@ export function RecipientInput({
 
 	return (
 		<div
-			className="flex min-h-9 items-center gap-2 border-b border-neutral-100 px-4 py-1"
+			className="flex min-h-9 items-center gap-2 border-b border-border px-4 py-1"
 			onClick={() => inputRef.current?.focus()}
 		>
-			<Label htmlFor={id} className="w-8 shrink-0 text-sm text-neutral-500">
+			<Label htmlFor={id} className="w-8 shrink-0 text-sm text-muted-foreground">
 				{label}
 			</Label>
 			<div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
@@ -68,7 +68,7 @@ export function RecipientInput({
 							className={cn(
 								"inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs",
 								valid
-									? "border-neutral-200 bg-neutral-50 text-neutral-800"
+									? "border-border bg-muted/60 text-foreground"
 									: "border-red-200 bg-red-50 text-red-700",
 							)}
 						>
@@ -77,7 +77,7 @@ export function RecipientInput({
 								<button
 									type="button"
 									aria-label={t("recipient.remove", { address: getEmailAddress(entry) })}
-									className="rounded-full p-0.5 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
+									className="rounded-full p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground/80"
 									onClick={(event) => {
 										event.stopPropagation();
 										onChange(value.filter((item) => item !== entry));
@@ -111,13 +111,13 @@ export function RecipientInput({
 					disabled={disabled}
 					// Native `required` would block submit while chips exist; the form checks itself.
 					aria-required={required}
-					className="h-7 min-w-32 flex-1 border-0 bg-transparent p-0 text-sm outline-none placeholder:text-neutral-400 disabled:cursor-not-allowed"
+					className="h-7 min-w-32 flex-1 border-0 bg-transparent p-0 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
 				/>
 			</div>
 			{trailing && (
 				// Toggles live inside the clickable row; keep their clicks from refocusing this field.
 				<div
-					className="flex shrink-0 items-center gap-1 text-xs text-neutral-500"
+					className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground"
 					onClick={(event) => event.stopPropagation()}
 				>
 					{trailing}

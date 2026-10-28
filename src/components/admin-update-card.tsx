@@ -88,14 +88,14 @@ export function AdminUpdateCard() {
 	}
 
 	return (
-		<Card className="rounded-3xl border-0 bg-white p-6">
+		<Card className="rounded-3xl border-0 bg-card p-6">
 			<CardHeader className="flex-row items-center gap-4 space-y-0 py-0">
-				<div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+				<div className="flex h-10 w-10 items-center justify-center rounded-full bg-signal-soft text-signal">
 					<RefreshCw className="h-5 w-5" />
 				</div>
 				<div>
 					<CardTitle className="text-base">{t("update.title")}</CardTitle>
-					<p className="mt-1 text-sm text-neutral-500">
+					<p className="mt-1 text-sm text-muted-foreground">
 						{t("update.description")}
 					</p>
 				</div>
@@ -105,11 +105,11 @@ export function AdminUpdateCard() {
 
 				{!isChecking && status?.configured === false && (
 					<div className="space-y-3">
-						<p className="text-sm text-neutral-600">
+						<p className="text-sm text-muted-foreground">
 							{status.configuration?.length ? t("update.completeConfig") : t("update.selfHosted")}
 						</p>
 						{!!status.configuration?.length && (
-							<ul className="divide-y divide-neutral-100 overflow-hidden rounded-2xl border border-neutral-100">
+							<ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
 								{status.configuration.map((item) => (
 									<li key={item.name} className="flex items-center gap-3 px-4 py-3 text-sm">
 										{item.configured ? (
@@ -117,7 +117,7 @@ export function AdminUpdateCard() {
 										) : (
 											<CircleX className="h-4 w-4 shrink-0 text-red-600" />
 										)}
-										<code className="text-xs font-medium text-neutral-800">{item.name}</code>
+										<code className="text-xs font-medium text-foreground">{item.name}</code>
 										<span className={`ml-auto text-xs font-medium ${item.configured ? "text-green-700" : "text-red-600"}`}>
 											{item.configured ? t("update.configured") : t("update.missing")}
 										</span>
@@ -129,14 +129,14 @@ export function AdminUpdateCard() {
 				)}
 
 				{!isChecking && status?.configured && (
-					<div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl border border-neutral-100">
+					<div className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
 						<div className="flex items-center gap-3 px-4 py-4">
 							{status.available ? (
-								<RefreshCw className={`h-4 w-4 shrink-0 text-blue-600 ${isPending ? "animate-spin" : ""}`} />
+								<RefreshCw className={`h-4 w-4 shrink-0 text-signal ${isPending ? "animate-spin" : ""}`} />
 							) : (
 								<CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
 							)}
-							<p className="min-w-0 text-sm text-neutral-700">
+							<p className="min-w-0 text-sm text-foreground/80">
 								{status.available
 									? t("update.available", { target: status.targetVersion, current: status.currentVersion })
 									: t("update.upToDate", { current: status.currentVersion })}
@@ -146,7 +146,7 @@ export function AdminUpdateCard() {
 									type="button"
 									onClick={handleUpdate}
 									disabled={isPending}
-									className="ml-auto shrink-0 text-sm font-medium text-blue-700 hover:underline disabled:pointer-events-none disabled:opacity-50"
+									className="ml-auto shrink-0 text-sm font-medium text-signal hover:underline disabled:pointer-events-none disabled:opacity-50"
 								>
 									{isPending ? t("update.starting") : t("update.updateButton")}
 								</button>
@@ -156,7 +156,7 @@ export function AdminUpdateCard() {
 				)}
 
 				{(isCheckingMigrations || migrationStatus) && (
-					<div className="divide-y divide-neutral-100 overflow-hidden rounded-2xl border border-neutral-100">
+					<div className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
 						{isCheckingMigrations && (
 							<div className="flex items-center gap-3 px-4 py-4">
 								<Skeleton className="h-4 w-4 rounded-full" />
@@ -167,14 +167,14 @@ export function AdminUpdateCard() {
 						{!isCheckingMigrations && !!migrationStatus?.pending.length && !migrationStatus.unknown.length && (
 							<div className="flex items-center gap-3 px-4 py-4">
 								<Database className={`h-4 w-4 shrink-0 text-amber-600 ${isMigrating ? "animate-pulse" : ""}`} />
-								<p className="text-sm text-neutral-700">
+								<p className="text-sm text-foreground/80">
 									{t("update.pendingMigrations", { count: migrationStatus.pending.length })}
 								</p>
 								<button
 									type="button"
 									onClick={handleMigrate}
 									disabled={isMigrating}
-									className="ml-auto shrink-0 text-sm font-medium text-blue-700 hover:underline disabled:pointer-events-none disabled:opacity-50"
+									className="ml-auto shrink-0 text-sm font-medium text-signal hover:underline disabled:pointer-events-none disabled:opacity-50"
 								>
 									{isMigrating ? t("update.updatingDatabase") : t("update.updateDatabase")}
 								</button>
@@ -191,7 +191,7 @@ export function AdminUpdateCard() {
 						{!isCheckingMigrations && migrationStatus?.ready && (
 							<div className="flex items-center gap-3 px-4 py-4">
 								<CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
-								<p className="text-sm text-neutral-700">{t("update.databaseUpToDate")}</p>
+								<p className="text-sm text-foreground/80">{t("update.databaseUpToDate")}</p>
 							</div>
 						)}
 					</div>

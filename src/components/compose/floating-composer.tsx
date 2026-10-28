@@ -21,7 +21,7 @@ export function FloatingComposer({ showButton = false }: { showButton?: boolean 
 					type="button"
 					onClick={openComposer}
 					aria-label={t("navigation.compose")}
-					className="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 flex h-12 items-center gap-3 rounded-2xl bg-blue-100 px-5 text-base font-medium text-blue-950 shadow-sm transition-colors hover:bg-blue-200 active:bg-blue-200 md:hidden"
+					className="fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 flex h-12 items-center gap-3 rounded-2xl bg-signal-soft px-5 text-base font-medium text-signal-soft-foreground shadow-sm transition-colors hover:bg-signal-soft active:bg-signal-soft md:hidden"
 				>
 					<MailPlus size={19} />
 					{t("navigation.compose")}
@@ -31,7 +31,7 @@ export function FloatingComposer({ showButton = false }: { showButton?: boolean 
 				<div role="status" className="fixed right-6 top-6 z-[60] flex items-center gap-4 rounded-lg bg-green-600 px-4 py-3 text-sm font-medium text-white shadow-lg">
 					{notice.message}
 					{notice.action && (
-						<button type="button" onClick={notice.action.onClick} className="rounded-md bg-white/20 px-2.5 py-1 font-semibold hover:bg-white/30">
+						<button type="button" onClick={notice.action.onClick} className="rounded-md bg-background/20 px-2.5 py-1 font-semibold hover:bg-background/30">
 							{notice.action.label}
 						</button>
 					)}

@@ -129,7 +129,7 @@ export function OnboardingClient() {
 				{ label: t("onboarding.stepMailbox"), active: step === 2 },
 			]}
 			footer={
-				<span className="inline-flex items-center gap-2 text-neutral-500">
+				<span className="inline-flex items-center gap-2 text-muted-foreground">
 					{t("onboarding.completesInInbox")}
 					<ArrowRight className="h-4 w-4" />
 				</span>
@@ -138,8 +138,8 @@ export function OnboardingClient() {
 			<div className="space-y-5">
 				{step === 1 && (
 					<>
-						<p className="rounded-2xl bg-[#eaf1fb] px-4 py-3 text-sm leading-6 text-neutral-700">
-							{t("onboarding.cloudflareDns", { token: "\u0001" }).split("\u0001").flatMap((part, index) => index === 0 ? [part] : [<code key={index} className="no-font-mono text-xs font-semibold text-blue-800">CF_TOKEN</code>, part])}
+						<p className="rounded-2xl bg-signal-soft px-4 py-3 text-sm leading-6 text-foreground/80">
+							{t("onboarding.cloudflareDns", { token: "\u0001" }).split("\u0001").flatMap((part, index) => index === 0 ? [part] : [<code key={index} className="no-font-mono text-xs font-semibold text-signal-soft-foreground">CF_TOKEN</code>, part])}
 						</p>
 						<div className="space-y-2">
 							<Label htmlFor="domain">{t("onboarding.domain")}</Label>
@@ -158,10 +158,10 @@ export function OnboardingClient() {
 								placeholder="example.com"
 							/>
 						</div>
-						<div className="flex items-center justify-between gap-4 rounded-2xl bg-neutral-50 px-4 py-3">
+						<div className="flex items-center justify-between gap-4 rounded-2xl bg-muted/60 px-4 py-3">
 							<div>
 								<Label htmlFor="onboarding-skip-dns">{t("setup.skipDns")}</Label>
-								<p className="mt-1 text-xs leading-5 text-neutral-500">
+								<p className="mt-1 text-xs leading-5 text-muted-foreground">
 									{skipDns ? t("setup.skipDnsOn") : t("setup.skipDnsHint")}
 								</p>
 							</div>
@@ -176,10 +176,10 @@ export function OnboardingClient() {
 							/>
 						</div>
 						{!skipDns && (
-						<div className="flex items-center justify-between gap-4 rounded-2xl bg-neutral-50 px-4 py-3">
+						<div className="flex items-center justify-between gap-4 rounded-2xl bg-muted/60 px-4 py-3">
 							<div>
 								<Label htmlFor="onboarding-enable-sending">{t("setup.enableSending")}</Label>
-								<p className="mt-1 text-xs leading-5 text-neutral-500">
+								<p className="mt-1 text-xs leading-5 text-muted-foreground">
 									{domainChecking
 										? t("setup.checkingCloudflare")
 										: domainCheck
@@ -190,7 +190,7 @@ export function OnboardingClient() {
 								</p>
 							</div>
 							{domainChecking ? (
-								<LoaderCircle className="h-4 w-4 animate-spin text-neutral-500" />
+								<LoaderCircle className="h-4 w-4 animate-spin text-muted-foreground" />
 							) : (
 								<Switch
 									id="onboarding-enable-sending"
@@ -246,7 +246,7 @@ export function OnboardingClient() {
 									onChange={(e) => setLocalPart(e.target.value)}
 									className="min-w-0"
 								/>
-								<span className="max-w-36 truncate text-sm font-medium text-neutral-500">@{hostname}</span>
+								<span className="max-w-36 truncate text-sm font-medium text-muted-foreground">@{hostname}</span>
 							</div>
 						</div>
 						<Button

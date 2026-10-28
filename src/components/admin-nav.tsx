@@ -79,7 +79,7 @@ function AdminSection({ id, label, links, showDivider, minimal }: { id?: string;
   const expanded = minimal || !label || open;
   return (
     <section>
-      {showDivider && <hr className="mx-6 mb-3 border-neutral-200/70" />}
+      {showDivider && <hr className="mx-6 mb-3 border-border/70" />}
       {!minimal && label && <NavSectionHeader label={label} open={open} onToggle={toggle} />}
       {expanded && (
         <div className="space-y-px">

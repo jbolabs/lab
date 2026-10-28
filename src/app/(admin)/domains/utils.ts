@@ -30,7 +30,7 @@ export function getDnsAuthItemClass(status: DnsAuthStatus): string {
 		case "missing":
 			return "bg-red-50 text-red-800";
 		default:
-			return "bg-neutral-100 text-neutral-600";
+			return "bg-muted text-muted-foreground";
 	}
 }
 

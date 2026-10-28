@@ -1,73 +1,60 @@
-"use client";
+"use client"
 
-import { cn } from "@/lib/utils";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import type { TooltipPosition, TooltipProps } from "./tooltip-types";
-import { getTooltipPosition } from "./tooltip-utils";
+import * as React from "react"
+import { cn } from "@/lib/utils"
+import { Tooltip as TooltipPrimitive } from "radix-ui"
 
-export function Tooltip({ label, children, className, placement = "auto" }: TooltipProps) {
-	const [open, setOpen] = useState(false);
-	const [position, setPosition] = useState<TooltipPosition | null>(null);
-	const triggerRef = useRef<HTMLSpanElement>(null);
-	const tooltipRef = useRef<HTMLSpanElement>(null);
-
-	useEffect(() => {
-		if (!open) return;
-		function onKeyDown(event: KeyboardEvent) {
-			if (event.key === "Escape") setOpen(false);
-		}
-		document.addEventListener("keydown", onKeyDown);
-		return () => document.removeEventListener("keydown", onKeyDown);
-	}, [open]);
-
-	useLayoutEffect(() => {
-		if (!open) return;
-
-		function updatePosition() {
-			if (!triggerRef.current || !tooltipRef.current) return;
-			setPosition(getTooltipPosition(triggerRef.current, tooltipRef.current, placement));
-		}
-
-		updatePosition();
-		window.addEventListener("resize", updatePosition);
-		window.addEventListener("scroll", updatePosition, true);
-
-		return () => {
-			window.removeEventListener("resize", updatePosition);
-			window.removeEventListener("scroll", updatePosition, true);
-		};
-	}, [label, open, placement]);
-
-	if (!label) return children
-
-	return (
-		<span
-			ref={triggerRef}
-			className={cn("inline-flex", className)}
-			onFocusCapture={() => setOpen(true)}
-			onBlurCapture={() => setOpen(false)}
-			onMouseEnter={() => setOpen(true)}
-			onMouseLeave={() => setOpen(false)}
-			onClickCapture={() => setOpen(false)}
-		>
-			{children}
-			{open && typeof document !== "undefined" &&
-				createPortal(
-					<span
-						ref={tooltipRef}
-						role="tooltip"
-						className="pointer-events-none fixed z-[100] max-w-[min(20rem,calc(100vw-1rem))] rounded-md bg-neutral-900 px-2 py-1 text-center text-xs font-medium text-white shadow-lg"
-						style={{
-							left: position?.left ?? 0,
-							top: position?.top ?? 0,
-							visibility: position ? "visible" : "hidden",
-						}}
-					>
-						{label}
-					</span>,
-					document.body,
-				)}
-		</span>
-	);
+function TooltipProvider({
+  delayDuration = 400,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
+  return (
+    <TooltipPrimitive.Provider
+      data-slot="tooltip-provider"
+      delayDuration={delayDuration}
+      {...props}
+    />
+  )
 }
+
+function Tooltip({
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+  return (
+    <TooltipProvider>
+      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+    </TooltipProvider>
+  )
+}
+
+function TooltipTrigger({
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
+  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
+}
+
+function TooltipContent({
+  className,
+  sideOffset = 0,
+  children,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+  return (
+    <TooltipPrimitive.Portal>
+      <TooltipPrimitive.Content
+        data-slot="tooltip-content"
+        sideOffset={sideOffset}
+        className={cn(
+          "z-50 w-fit origin-(--radix-tooltip-content-transform-origin) animate-in rounded-md bg-foreground px-3 py-1.5 text-xs text-balance text-background fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px] bg-foreground fill-foreground" />
+      </TooltipPrimitive.Content>
+    </TooltipPrimitive.Portal>
+  )
+}
+
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }

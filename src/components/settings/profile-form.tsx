@@ -94,15 +94,15 @@ export function ProfileForm({
     <>
       <form
         onSubmit={onProfileSubmit}
-        className="space-y-6 rounded-b-lg rounded-t-3xl bg-white p-6"
+        className="space-y-6 rounded-b-lg rounded-t-3xl bg-card p-6"
       >
         <div className="flex items-center gap-4">
           <ProfileAvatarForm name={name} colorSeed={email} />
           <div>
-            <p className="text-sm font-medium text-neutral-900">
+            <p className="text-sm font-medium text-foreground">
               {t("settings.profile.pictureTitle")}
             </p>
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               {t("settings.profile.pictureDescription")}
             </p>
           </div>
@@ -127,7 +127,7 @@ export function ProfileForm({
             type="email"
             readOnly
             aria-readonly="true"
-            className="bg-neutral-50"
+            className="bg-muted/60"
           />
         </div>
 
@@ -139,20 +139,20 @@ export function ProfileForm({
             {savingProfile ? t("common.saving") : t("settings.profile.save")}
           </Button>
           {profileStatus && (
-            <p className="text-sm text-neutral-500">{profileStatus}</p>
+            <p className="text-sm text-muted-foreground">{profileStatus}</p>
           )}
         </div>
       </form>
 
       <form
         onSubmit={onRecoverySubmit}
-        className="space-y-4 rounded-lg bg-white p-6"
+        className="space-y-4 rounded-lg bg-card p-6"
       >
         <div>
-          <h3 className="text-lg font-semibold text-neutral-900">
+          <h3 className="text-lg font-semibold text-foreground">
             {t("settings.profile.recoveryTitle")}
           </h3>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {t("settings.profile.recoveryDescription")}
           </p>
         </div>
@@ -175,7 +175,7 @@ export function ProfileForm({
             {savingRecovery ? t("common.saving") : t("settings.profile.saveRecovery")}
           </Button>
           {recoveryStatus && (
-            <p className="text-sm text-neutral-500">{recoveryStatus}</p>
+            <p className="text-sm text-muted-foreground">{recoveryStatus}</p>
           )}
         </div>
       </form>

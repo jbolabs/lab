@@ -22,11 +22,6 @@ export type HomeAction = {
 	variant: ButtonProps["variant"];
 };
 
-export type LandingNavItem = {
-	href: string;
-	label: string;
-};
-
 export type SidebarItem = {
 	labelKey: TranslationKey;
 	icon: LucideIcon;
@@ -35,14 +30,9 @@ export type SidebarItem = {
 };
 
 export type MailPreview = {
-	icon: LucideIcon;
 	sender: string;
-	subjectKey: TranslationKey;
-	previewKey: TranslationKey;
-	badgeKey: TranslationKey;
-};
-
-export type LandingStat = {
-	value: string;
-	label: string;
+	subject: string;
+	preview: string;
+	time: string;
+	unread?: boolean;
 };

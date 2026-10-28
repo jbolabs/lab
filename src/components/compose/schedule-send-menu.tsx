@@ -38,7 +38,7 @@ export function ScheduleSendMenu({ disabled, value, onChange, mailboxId, from, o
 	if (isPhone) {
 		return (
 			<>
-				<button type="button" disabled={disabled} aria-label={t("schedule.optionsLabel")} onClick={() => setSheetOpen(true)} className="inline-flex h-8 items-center justify-center rounded-r-lg border-l border-blue-500 bg-blue-600 px-2 text-white max-md:h-10 max-md:px-2.5 transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50">
+				<button type="button" disabled={disabled} aria-label={t("schedule.optionsLabel")} onClick={() => setSheetOpen(true)} className="inline-flex h-8 items-center justify-center rounded-r-lg border-l border-ring bg-primary px-2 text-primary-foreground max-md:h-10 max-md:px-2.5 transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50">
 					<ChevronDown className="h-4 w-4" />
 				</button>
 				<ScheduleSendSheet open={sheetOpen} onOpenChange={setSheetOpen} value={value} onChange={onChange} onApplyTemplate={onApplyTemplate} onNewTemplate={() => setNewTemplateOpen(true)} />
@@ -54,7 +54,7 @@ export function ScheduleSendMenu({ disabled, value, onChange, mailboxId, from, o
 				type="button"
 				disabled={disabled}
 				aria-label={t("schedule.optionsLabel")}
-				className="inline-flex h-8 items-center justify-center rounded-r-lg border-l border-blue-500 bg-blue-600 px-2 text-white max-md:h-10 max-md:px-2.5 transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+				className="inline-flex h-8 items-center justify-center rounded-r-lg border-l border-ring bg-primary px-2 text-primary-foreground max-md:h-10 max-md:px-2.5 transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
 			>
 				<ChevronDown className="h-4 w-4" />
 			</DropdownMenu.Trigger>
@@ -62,37 +62,37 @@ export function ScheduleSendMenu({ disabled, value, onChange, mailboxId, from, o
 				<DropdownMenu.Content
 					align="start"
 					sideOffset={6}
-					className="z-50 min-w-56 rounded-lg border border-neutral-200 bg-white p-1 text-sm shadow-lg"
+					className="z-50 min-w-56 rounded-lg border border-border bg-card p-1 text-sm shadow-lg"
 				>
 					<TemplateMenu onApply={onApplyTemplate} onNew={() => setNewTemplateOpen(true)} />
-					<DropdownMenu.Separator className="my-1 h-px bg-neutral-100" />
-					<DropdownMenu.Label className="px-3 pb-1 pt-2 text-xs font-medium text-neutral-500">{t("schedule.heading")}</DropdownMenu.Label>
+					<DropdownMenu.Separator className="my-1 h-px bg-muted" />
+					<DropdownMenu.Label className="px-3 pb-1 pt-2 text-xs font-medium text-muted-foreground">{t("schedule.heading")}</DropdownMenu.Label>
 					{value && (
 						<>
 							<DropdownMenu.Item
 								onSelect={() => onChange(null)}
-								className="flex cursor-pointer items-center rounded-md px-3 py-2 outline-none hover:bg-neutral-100 focus:bg-neutral-100"
+								className="flex cursor-pointer items-center rounded-md px-3 py-2 outline-none hover:bg-accent focus:bg-accent"
 							>
 								<X className="mr-2 h-4 w-4" />
 								{t("schedule.clear")}
 							</DropdownMenu.Item>
-							<DropdownMenu.Separator className="my-1 h-px bg-neutral-100" />
+							<DropdownMenu.Separator className="my-1 h-px bg-muted" />
 						</>
 					)}
 					{options.map((option) => (
 						<DropdownMenu.Item
 							key={option.labelKey}
 							onSelect={() => onChange(option.value)}
-							className="cursor-pointer rounded-md px-3 py-2 outline-none hover:bg-neutral-100 focus:bg-neutral-100"
+							className="cursor-pointer rounded-md px-3 py-2 outline-none hover:bg-accent focus:bg-accent"
 						>
 							{t(option.labelKey)}
-							<span className="ml-2 text-xs text-neutral-500">
+							<span className="ml-2 text-xs text-muted-foreground">
 								{option.value && formatScheduledSend(option.value)}
 							</span>
 						</DropdownMenu.Item>
 					))}
-					<DropdownMenu.Separator className="my-1 h-px bg-neutral-100" />
-					<DropdownMenu.Label className="px-3 pb-1 pt-2 text-xs font-medium text-neutral-500">
+					<DropdownMenu.Separator className="my-1 h-px bg-muted" />
+					<DropdownMenu.Label className="px-3 pb-1 pt-2 text-xs font-medium text-muted-foreground">
 						{t("schedule.pick", { timeZone: getUserTimeZone() })}
 					</DropdownMenu.Label>
 					<input
@@ -103,7 +103,7 @@ export function ScheduleSendMenu({ disabled, value, onChange, mailboxId, from, o
 						onKeyDown={(event) => event.stopPropagation()}
 						aria-invalid={pastPicked}
 						aria-describedby={pastPicked ? "schedule-past-time" : undefined}
-						className="mx-2 mb-2 h-9 rounded-md border border-neutral-200 px-2 text-sm outline-none focus:border-blue-400"
+						className="mx-2 mb-2 h-9 rounded-md border border-border px-2 text-sm outline-none focus:border-ring"
 					/>
 					{pastPicked && <p id="schedule-past-time" role="alert" className="mx-2 mb-2 text-xs text-red-600">{t("schedule.pastTime")}</p>}
 				</DropdownMenu.Content>

@@ -12,9 +12,9 @@ export function NewMessagePopup({
 }: NewMessagePopupProps) {
 	const { t } = useLanguage();
 	return (
-		<div className="fixed right-5 top-5 z-[100] w-[min(380px,calc(100vw-40px))] rounded-xl bg-white p-4 shadow-xl">
+		<div className="fixed right-5 top-5 z-[100] w-[min(380px,calc(100vw-40px))] rounded-xl bg-card p-4 shadow-xl">
 			<div className="flex items-start gap-3">
-				<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+				<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-signal-soft text-signal">
 					<Mail className="h-5 w-5" />
 				</div>
 				<Link
@@ -22,20 +22,20 @@ export function NewMessagePopup({
 					onClick={onDismiss}
 					className="min-w-0 flex-1"
 				>
-					<p className="text-sm font-semibold text-neutral-900">
+					<p className="text-sm font-semibold text-foreground">
 						{t("notification.newEmail")}
 					</p>
-					<p className="mt-0.5 truncate text-sm text-neutral-800">
+					<p className="mt-0.5 truncate text-sm text-foreground">
 						{notification.subject || t("list.noSubject")}
 					</p>
-					<p className="mt-1 truncate text-xs text-neutral-500">
+					<p className="mt-1 truncate text-xs text-muted-foreground">
 						{t("notification.from", { sender: notification.fromName ?? getEmailDisplayName(notification.from) })}
 					</p>
 				</Link>
 				<button
 					type="button"
 					onClick={onDismiss}
-					className="rounded-full p-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700"
+					className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground/80"
 				>
 					<X className="h-4 w-4" />
 					<span className="sr-only">{t("notification.dismiss")}</span>

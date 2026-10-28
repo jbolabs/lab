@@ -72,7 +72,7 @@ export function ContactAvatarForm({
 					type="button"
 					onClick={() => inputRef.current?.click()}
 					disabled={busy}
-					className="group relative h-14 w-14 overflow-hidden rounded-full outline-none ring-blue-500 focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait"
+					className="group relative h-14 w-14 overflow-hidden rounded-full outline-none ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait"
 					aria-label={hasAvatar ? t("avatar.change", { name }) : t("avatar.upload", { name })}
 				>
 					<ContactAvatar
@@ -82,15 +82,15 @@ export function ContactAvatarForm({
 						hasManagedAvatar={hasAvatar}
 						className="h-14 w-14 text-lg"
 					/>
-					<span className="absolute inset-0 flex items-center justify-center bg-neutral-950/55 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+					<span className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
 						{busy ? <LoaderCircle className="h-5 w-5 animate-spin text-white" /> : <Camera className="h-5 w-5 text-white" />}
 					</span>
 				</button>
 				<div>
-					<p className="text-sm font-medium text-neutral-900">{t("avatar.title")}</p>
-					<p className="text-xs text-neutral-500">{t("avatar.contactHint")}</p>
+					<p className="text-sm font-medium text-foreground">{t("avatar.title")}</p>
+					<p className="text-xs text-muted-foreground">{t("avatar.contactHint")}</p>
 					{hasAvatar && (
-						<button type="button" onClick={() => void onRemove()} disabled={busy} className="mt-1 text-xs font-medium text-blue-600 hover:underline disabled:text-neutral-400">
+						<button type="button" onClick={() => void onRemove()} disabled={busy} className="mt-1 text-xs font-medium text-signal hover:underline disabled:text-muted-foreground/70">
 							{t("avatar.remove")}
 						</button>
 					)}

@@ -85,7 +85,7 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 
 	return (
 		<PageLoadingContext.Provider value={loadingContext}>
-			<div className="relative min-h-dvh bg-[#f6f8fc]">
+			<div className="relative min-h-dvh bg-sidebar">
 				{showTopLoadingBar && <RouteLoadingBar />}
 				{ready && (
 					<div
@@ -96,7 +96,7 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 				)}
 				<div
 					role="status"
-					className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#f6f8fc] transition-opacity duration-300 ${
+					className={`fixed inset-0 z-[100] flex items-center justify-center bg-sidebar transition-opacity duration-300 ${
 						loaderVisible ? "opacity-100" : "pointer-events-none opacity-0"
 					}`}
 				>
@@ -109,9 +109,9 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 							className="h-20 w-20 rounded-2xl object-contain"
 						/>
 						<div className="w-full">
-							<div className="h-1.5 overflow-hidden rounded-full bg-blue-100">
+							<div className="h-1.5 overflow-hidden rounded-full bg-signal-soft">
 								<div
-									className="h-full rounded-full bg-blue-600 transition-[width] duration-200 ease-out"
+									className="h-full rounded-full bg-primary transition-[width] duration-200 ease-out"
 									style={{ width: `${progress}%` }}
 								/>
 							</div>

@@ -14,11 +14,11 @@ export function McpAgentInstructions(props: McpAgentInstructionsProps) {
 	useEffect(() => setOrigin(window.location.origin), []);
 	const prompt = buildMcpAgentPrompt(origin, props);
 
-	return <div className="space-y-2 rounded-lg border border-neutral-200 p-3">
+	return <div className="space-y-2 rounded-lg border border-border p-3">
 		<div className="flex items-center justify-between gap-3">
 			<strong className="text-sm">{t("mcp.instructions")}</strong>
 			<Button type="button" size="sm" variant="outline" onClick={() => void navigator.clipboard.writeText(prompt).then(() => setCopied(true))}><Copy className="h-4 w-4" />{copied ? t("common.copied") : t("mcp.copyPrompt")}</Button>
 		</div>
-		<pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-neutral-50 p-3 text-xs text-neutral-700">{prompt}</pre>
+		<pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted/60 p-3 text-xs text-foreground/80">{prompt}</pre>
 	</div>;
 }

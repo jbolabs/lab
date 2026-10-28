@@ -49,14 +49,14 @@ export function AccountSettings() {
 		<div className="space-y-8 py-4">
 			<h1 className="sr-only">{t("settings.nav.account")}</h1>
 			{/* <div>
-				<h1 className="text-2xl md:text-3xl font-medium text-neutral-900">Account</h1>
-				<p className="mt-1 text-sm text-neutral-500">Manage your account details and sign-in password.</p>
+				<h1 className="text-2xl md:text-3xl font-medium text-foreground">Account</h1>
+				<p className="mt-1 text-sm text-muted-foreground">Manage your account details and sign-in password.</p>
 			</div> */}
 
 			<section className="space-y-4">
 				<div>
-					<h2 className="text-xl font-semibold text-neutral-900">{t("settings.account.detailsTitle")}</h2>
-					<p className="mt-1 text-sm text-neutral-500">{t("settings.account.detailsDescription")}</p>
+					<h2 className="text-xl font-semibold text-foreground">{t("settings.account.detailsTitle")}</h2>
+					<p className="mt-1 text-sm text-muted-foreground">{t("settings.account.detailsDescription")}</p>
 				</div>
 				<div className="space-y-1 overflow-hidden rounded-3xl">
 					<ProfileForm
@@ -66,19 +66,19 @@ export function AccountSettings() {
 					/>
 
 					{user.canForwardEmail && (
-						<div className="space-y-4 rounded-lg bg-white p-6">
+						<div className="space-y-4 rounded-lg bg-card p-6">
 							<div>
-								<h3 className="text-lg font-semibold text-neutral-900">{t("settings.account.forwardingTitle")}</h3>
-								<p className="mt-1 text-sm text-neutral-500">{t("settings.account.forwardingDescription")}</p>
+								<h3 className="text-lg font-semibold text-foreground">{t("settings.account.forwardingTitle")}</h3>
+								<p className="mt-1 text-sm text-muted-foreground">{t("settings.account.forwardingDescription")}</p>
 							</div>
 						<ForwardingEmailForm initialForwardingEmail={user.forwardingEmail ?? ""} />
 						</div>
 					)}
 
-					<div className="space-y-4 rounded-b-3xl rounded-t-lg bg-white p-6">
+					<div className="space-y-4 rounded-b-3xl rounded-t-lg bg-card p-6">
 						<div>
-							<h3 className="text-lg font-semibold text-neutral-900">{t("settings.account.signatureTitle")}</h3>
-							<p className="mt-1 text-sm text-neutral-500">{t("settings.account.signatureDescription")}</p>
+							<h3 className="text-lg font-semibold text-foreground">{t("settings.account.signatureTitle")}</h3>
+							<p className="mt-1 text-sm text-muted-foreground">{t("settings.account.signatureDescription")}</p>
 						</div>
 					<MailboxSignatureForm />
 					</div>
@@ -87,12 +87,12 @@ export function AccountSettings() {
 
 			<section className="space-y-4">
 				<div>
-					<h2 className="text-xl font-semibold text-neutral-900">{t("settings.account.generalTitle")}</h2>
-					<p className="mt-1 text-sm text-neutral-500">{t("settings.account.generalDescription")}</p>
+					<h2 className="text-xl font-semibold text-foreground">{t("settings.account.generalTitle")}</h2>
+					<p className="mt-1 text-sm text-muted-foreground">{t("settings.account.generalDescription")}</p>
 				</div>
 				<div className="space-y-1 overflow-hidden rounded-3xl">
-					<div className="rounded-t-3xl rounded-b-lg bg-white p-6">
-						<h3 className="mb-3 text-lg font-semibold text-neutral-900">{t("language.label")}</h3>
+					<div className="rounded-t-3xl rounded-b-lg bg-card p-6">
+						<h3 className="mb-3 text-lg font-semibold text-foreground">{t("language.label")}</h3>
 						<div className="max-w-xs [&>div]:px-0 [&_label]:sr-only"><LanguageSelector /></div>
 					</div>
 					<TimeZoneForm userId={user.id} initialTimeZone={user.timeZone} />

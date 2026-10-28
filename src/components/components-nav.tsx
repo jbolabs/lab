@@ -8,7 +8,7 @@ import { getMessageDragData } from "@/lib/messages/drag-utils";
 import { useSelectedMailbox } from "./mailbox-provider";
 import { useSidebar } from "./sidebar-state";
 import { useCompose } from "./compose/compose-context";
-import { Tooltip } from "./ui/tooltip";
+import { HintTooltip } from "@/components/hint-tooltip";
 import {
   preloadMailboxPage,
   waitForNavigationProgress,
@@ -47,12 +47,12 @@ export function NavItem({ link, iconClassName, labelClassName, wrap }: Props) {
   if (!Icon) return null;
   const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
   const classes = cn(
-    "flex h-9 items-center gap-3 rounded-r-full text-sm text-neutral-700 transition-colors max-md:min-h-11 max-md:text-base",
+    "flex h-9 items-center gap-3 rounded-r-full text-sm text-foreground/80 transition-colors max-md:min-h-11 max-md:text-base",
     minimal && "relative mx-auto w-10 justify-center rounded-full px-0",
-    active ? "bg-blue-100 text-blue-900 font-semibold" : "hover:bg-neutral-200/60",
-    dragOver && "bg-blue-50 text-blue-900 ring-1 ring-blue-200",
+    active ? "bg-signal-soft text-signal-soft-foreground font-semibold" : "hover:bg-accent/60",
+    dragOver && "bg-signal-soft text-signal-soft-foreground ring-1 ring-ring",
     link.primary &&
-    "mb-3 h-12 w-fit rounded-2xl bg-blue-100 px-5 text-blue-950 shadow-sm hover:bg-blue-200",
+    "mb-3 h-12 w-fit rounded-2xl bg-signal-soft px-5 text-signal-soft-foreground shadow-sm hover:bg-signal-soft",
     link.count && "font-semibold",
     link.primary && minimal && "h-11 w-11 rounded-2xl px-0",
     wrap && !minimal && "h-auto min-h-9 items-start py-2",
@@ -91,18 +91,18 @@ export function NavItem({ link, iconClassName, labelClassName, wrap }: Props) {
         />
         {!minimal && <span className={cn("flex-1", typeof link.count === "number" && link.count > 0 && "font-semibold")}>{link.label}</span>}
         {!minimal && typeof link.count === "number" && link.count > 0 && (
-          <span className="ml-auto mr-3 rounded-full px-2 py-0.5 text-sm font-semibold text-neutral-700">
+          <span className="ml-auto mr-3 rounded-full px-2 py-0.5 text-sm font-semibold text-foreground/80">
             {link.count > 99 ? "99+" : link.count}
           </span>
         )}
         {minimal && typeof link.count === "number" && link.count > 0 && (
-          <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-blue-600 px-1 text-center text-[10px] font-semibold leading-4 text-white">
+          <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] font-semibold leading-4 text-primary-foreground">
             {link.count > 99 ? "99+" : link.count}
           </span>
         )}
       </button>
     );
-    return minimal && link.label ? <Tooltip label={link.label} placement="right" className="mx-auto">{composeButton}</Tooltip> : composeButton;
+    return minimal && link.label ? <HintTooltip label={link.label} side="right" className="mx-auto">{composeButton}</HintTooltip> : composeButton;
   }
 
   async function navigate(event: MouseEvent<HTMLAnchorElement>) {
@@ -154,12 +154,12 @@ export function NavItem({ link, iconClassName, labelClassName, wrap }: Props) {
       />
       {!minimal && <span className={cn("flex-1", wrap && "min-w-0 break-words leading-5 max-md:leading-6", labelClassName, typeof link.count === "number" && link.count > 0 && "font-semibold")}>{link.label}</span>}
       {!minimal && typeof link.count === "number" && link.count > 0 && (
-        <span className={cn("ml-auto mr-3 rounded-full px-2 py-0.5 text-sm font-semibold text-neutral-700", wrap && "shrink-0 py-0 leading-5")}>
+        <span className={cn("ml-auto mr-3 rounded-full px-2 py-0.5 text-sm font-semibold text-foreground/80", wrap && "shrink-0 py-0 leading-5")}>
           {link.count > 99 ? "99+" : link.count}
         </span>
       )}
       {minimal && typeof link.count === "number" && link.count > 0 && (
-        <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-blue-600 px-1 text-center text-[10px] font-semibold leading-4 text-white">
+        <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] font-semibold leading-4 text-primary-foreground">
           {link.count > 99 ? "99+" : link.count}
         </span>
       )}
@@ -169,14 +169,14 @@ export function NavItem({ link, iconClassName, labelClassName, wrap }: Props) {
   return (
     <>
       {navigationProgress !== null && (
-        <div className="fixed inset-x-0 top-0 z-[120] h-1 bg-blue-100">
+        <div className="fixed inset-x-0 top-0 z-[120] h-1 bg-signal-soft">
           <div
-            className="h-full bg-blue-600 transition-[width] duration-100 ease-out"
+            className="h-full bg-primary transition-[width] duration-100 ease-out"
             style={{ width: `${navigationProgress}%` }}
           />
         </div>
       )}
-      {minimal && link.label ? <Tooltip label={link.label} placement="right" className="mx-auto">{navLink}</Tooltip> : navLink}
+      {minimal && link.label ? <HintTooltip label={link.label} side="right" className="mx-auto">{navLink}</HintTooltip> : navLink}
     </>
   );
 }

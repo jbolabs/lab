@@ -112,7 +112,7 @@ export default function MessageDetailPage() {
 
   if (!data?.message) {
     return (
-      <p className="px-6 py-4 text-sm text-neutral-500">
+      <p className="px-6 py-4 text-sm text-muted-foreground">
         {data?.error ?? t("message.notFound")}
       </p>
     );
@@ -164,13 +164,13 @@ export default function MessageDetailPage() {
       : { month: "short", day: "2-digit", year: "numeric" });
   return (<>
 
-    <div className={clsx("flex py-2 h-12 items-center px-2 border-b sticky top-0 bg-white z-40 gap-3", scrolled ? "border-neutral-200" : "border-transparent")}>
+    <div className={clsx("flex py-2 h-12 items-center px-2 border-b sticky top-0 bg-card z-40 gap-3", scrolled ? "border-border" : "border-transparent")}>
       <MessageReadingHeaderButton assistantVisible={assistantVisible} />
       {/* <div className="min-w-0 flex-1" /> */}
       {/* <div className="flex items-center flex-row gap-6">
 					<Link
 						href={getMessageBackHref(message.direction, message.status)}
-						className="rounded-full p-2 text-neutral-600 hover:bg-neutral-100"
+						className="rounded-full p-2 text-muted-foreground hover:bg-accent"
 					>
 						<ArrowLeft className="h-5 w-5" />
 					</Link>
@@ -197,7 +197,7 @@ export default function MessageDetailPage() {
     <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto overscroll-contain scrollbar-gutter-stable flex-1 min-h-0">
       {!message.read && <MarkAsRead messageId={message.id} />}
 
-      <h1 className={clsx(!isAnyPanelVisible ? "sm:pl-16" : "sm:pl-10", "px-4 pb-2 pt-2 text-2xl text-neutral-900 sm:pr-6")} title={message.subject ?? t("list.noSubject")}>
+      <h1 className={clsx(!isAnyPanelVisible ? "sm:pl-16" : "sm:pl-10", "px-4 pb-2 pt-2 text-2xl text-foreground sm:pr-6")} title={message.subject ?? t("list.noSubject")}>
         {message.subject ?? t("list.noSubject")}
       </h1>
       {/* <div className="px-6">
@@ -238,7 +238,7 @@ export default function MessageDetailPage() {
                 className="mt-2"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-neutral-900 mt-1.25 flex flex-row items-center gap-1 w-full  overflow-hidden">
+                <p className="text-sm text-foreground mt-1.25 flex flex-row items-center gap-1 w-full overflow-hidden">
                   <b className="whitespace-nowrap">
                     {message.direction === "inbound" ? (
                       <ContactDetailsTrigger
@@ -250,9 +250,9 @@ export default function MessageDetailPage() {
                       fromName
                     )}
                   </b>{" "}
-                  <span className="hidden sm:block text-neutral-500 text-xs flex-1 overflow-hidden text-ellipsis min-w-0">&lt;{fromAddress}&gt;</span>
+                  <span className="hidden sm:block text-muted-foreground text-xs flex-1 overflow-hidden text-ellipsis min-w-0">&lt;{fromAddress}&gt;</span>
                 </p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-muted-foreground">
                   {t("source.to").toLowerCase()}{" "}
                   <RecipientList
                     entries={toEntries}
@@ -260,19 +260,19 @@ export default function MessageDetailPage() {
                     style={showFullRecipientAddresses ? "full" : "address"}
                   />
                 </p>
-                <div className="sm:hidden flex items-center gap-2 text-xs text-neutral-500">
+                <div className="sm:hidden flex items-center gap-2 text-xs text-muted-foreground">
                   <span>{messageDate(false)}</span>
-                  <button type="button" className="text-blue-600 hover:underline" aria-expanded={detailsOpen} onClick={() => setDetailsOpen((open) => !open)}>
+                  <button type="button" className="text-signal hover:underline" aria-expanded={detailsOpen} onClick={() => setDetailsOpen((open) => !open)}>
                     {t("message.details")}
                   </button>
                 </div>
                 {ccEntries.length > 0 && (
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted-foreground">
                     {t("message.cc")} <RecipientList entries={ccEntries} mailboxId={message.mailboxId} style={showFullRecipientAddresses ? "full" : "address"} />
                   </p>
                 )}
                 {bccEntries.length > 0 && (
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted-foreground">
                     {t("message.bcc")} <RecipientList entries={bccEntries} mailboxId={message.mailboxId} style={showFullRecipientAddresses ? "full" : "address"} />
                   </p>
                 )}
@@ -289,7 +289,7 @@ export default function MessageDetailPage() {
               />
             </div>
             {detailsOpen && (
-              <dl className="sm:hidden w-full space-y-0.5 break-words pt-2 text-xs text-neutral-500">
+              <dl className="sm:hidden w-full space-y-0.5 break-words pt-2 text-xs text-muted-foreground">
                 <div><dt className="inline font-medium">{t("source.from")}:</dt> <dd className="inline">{fromName} &lt;{fromAddress}&gt;</dd></div>
                 <div><dt className="inline font-medium">{t("source.to")}:</dt> <dd className="inline">{toEntries.join(", ")}</dd></div>
                 <div><dt className="inline font-medium">{t("message.date")}:</dt> <dd className="inline">{messageDate(true)}</dd></div>
@@ -297,7 +297,7 @@ export default function MessageDetailPage() {
             )}
           </div>
           {scheduledAt && <div className="px-4 sm:px-0 sm:pl-10"><ScheduledSendBanner messageId={message.id} scheduledAt={scheduledAt} /></div>}
-          <div className="prose max-w-none px-4 text-neutral-900 sm:px-0 sm:pl-16">
+          <div className="prose max-w-none px-4 text-foreground sm:px-0 sm:pl-16">
             {htmlBody ? (
               <EmailHtmlRenderer key={message.id} className="mx-auto" html={htmlBody} autoAllowRemote={remote.autoAllow} onAllowRemote={remote.allowSender} />
             ) : (
@@ -314,8 +314,8 @@ export default function MessageDetailPage() {
             ))}
           </div>
           {cloudAttachmentResult.attachments.length > 0 && (
-            <section className="mt-8 border-t border-neutral-100 px-4 py-6 sm:px-0 sm:pl-16">
-              <h2 className="mb-3 text-sm font-semibold text-neutral-900">
+            <section className="mt-8 border-t border-border px-4 py-6 sm:px-0 sm:pl-16">
+              <h2 className="mb-3 text-sm font-semibold text-foreground">
                 {t("message.cloudFiles", { count: cloudAttachmentResult.attachments.length })}
               </h2>
               <div className="grid gap-2 sm:grid-cols-2">
@@ -325,18 +325,18 @@ export default function MessageDetailPage() {
                     href={attachment.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-3 rounded-lg border border-neutral-200 p-3 text-left hover:border-blue-200 hover:bg-blue-50/40"
+                    className="flex items-center gap-3 rounded-lg border border-border p-3 text-left hover:border-signal/30 hover:bg-signal-soft/40"
                   >
-                    <Cloud className="h-5 w-5 shrink-0 text-blue-600" />
+                    <Cloud className="h-5 w-5 shrink-0 text-signal" />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium text-neutral-900">
+                      <span className="block truncate text-sm font-medium text-foreground">
                         {attachment.filename}
                       </span>
-                      <span className="block text-xs text-neutral-500">
+                      <span className="block text-xs text-muted-foreground">
                         {t("message.openFrom", { provider: attachment.provider })}
                       </span>
                     </span>
-                    <ExternalLink className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden="true" />
+                    <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground/70" aria-hidden="true" />
                     <span className="sr-only"> ({t("common.opensInNewTab")})</span>
                   </a>
                 ))}
@@ -344,8 +344,8 @@ export default function MessageDetailPage() {
             </section>
           )}
           {attachments.length > 0 && (
-            <section className="mt-8 border-t border-neutral-100 px-4 py-6 sm:px-0 sm:pl-16">
-              <h2 className="mb-3 text-sm font-semibold text-neutral-900">
+            <section className="mt-8 border-t border-border px-4 py-6 sm:px-0 sm:pl-16">
+              <h2 className="mb-3 text-sm font-semibold text-foreground">
                 {t("message.attachments", { count: attachments.length })}
               </h2>
               <div className="grid gap-2 sm:grid-cols-2">

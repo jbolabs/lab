@@ -7,7 +7,7 @@ export function PwaServiceWorker() {
 	useEffect(() => {
 		if (!("serviceWorker" in navigator)) return;
 		void registerMailflareServiceWorker().catch((error) => {
-			console.warn("Mailflare service worker registration failed", error);
+			console.warn("Lab service worker registration failed", error);
 		});
 	}, []);
 
