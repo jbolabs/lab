@@ -6,7 +6,7 @@ import { agentSendApprovals, messages } from "@/db/schema";
 import { listAccessibleMailboxes } from "@/lib/mailboxes/access";
 import { runEmailTool, EMAIL_TOOL_NAMES, emailToolDescriptions, emailToolSchemas } from "@/lib/agent/tools";
 import { editAgentDraft } from "@/lib/agent/edit-draft";
-import { requestAgentSend, getAgentSendRequest } from "@/lib/agent/approvals/utils";
+import { requestAgentSend, getAgentSendRequest, sendAgentDraft } from "@/lib/agent/approvals/utils";
 import { cancelScheduledSend, getScheduledTime } from "@/lib/email/scheduled";
 import type { EmailToolName } from "@/lib/agent/types";
 import type { McpPrincipal } from "./types";
@@ -27,6 +27,7 @@ export function createMailflareMcpHandler(env: CloudflareEnv, principal: McpPrin
 		const server = new McpServer({ name: "mailflare", version: "0.1.0" });
 		if (principal.scopes.some((scope) => scope.startsWith("mcp:"))) {
 		for (const name of CALENDAR_TOOL_NAMES) {
+			if (!principal.scopes.includes(calendarToolScope(name))) continue;
 			server.registerTool(name, { description: calendarToolDescriptions[name], inputSchema: calendarToolSchemas[name] }, async (args) => {
 				if (!principal.scopes.includes(calendarToolScope(name))) return output({ error: "Permission denied" }, true);
 				try { return output(await runCalendarTool({ env, user: principal.user }, name, args)); }
@@ -51,6 +52,13 @@ export function createMailflareMcpHandler(env: CloudflareEnv, principal: McpPrin
 			if (!principal.scopes.includes("mcp:draft") || !principal.mailboxIds.includes(mailboxId)) return output({ error: "Permission denied" }, true);
 			try { return output(await editAgentDraft({ env, user: principal.user, mailboxId, origin: "mcp" }, args)); }
 			catch (error) { return output({ error: error instanceof Error ? error.message : "Draft update failed" }, true); }
+		});
+		if (principal.scopes.includes("mcp:send")) server.registerTool("send_draft", { description: "Send an agent-created draft immediately, or queue its requested send time, without human review. Read the draft first and pass its current revision. Repeating the same draft/revision does not send twice.", inputSchema: z.object({ mailboxId: z.string(), draftId: z.string(), expectedRevision: z.number().int().positive() }) }, async ({ mailboxId, draftId, expectedRevision }) => {
+			if (!principal.mailboxIds.includes(mailboxId)) return output({ error: "Permission denied" }, true);
+			const [draft] = await getDb(env).select({ mailboxId: messages.mailboxId }).from(messages).where(eq(messages.id, draftId)).limit(1);
+			if (draft?.mailboxId !== mailboxId) return output({ error: "Draft not found" }, true);
+			try { return output(await sendAgentDraft(env, principal.user, draftId, expectedRevision, principal.keyId, baseUrl)); }
+			catch (error) { return output({ error: error instanceof Error ? error.message : "Send failed" }, true); }
 		});
 		server.registerTool("request_send", { description: "Request human review of a draft; this never sends", inputSchema: z.object({ mailboxId: z.string(), draftId: z.string(), expectedRevision: z.number().int().positive() }) }, async ({ mailboxId, draftId, expectedRevision }) => {
 			if (!principal.scopes.includes("mcp:request-send") || !principal.mailboxIds.includes(mailboxId)) return output({ error: "Permission denied" }, true);

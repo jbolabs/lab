@@ -43,16 +43,15 @@ async function snapshot(env: CloudflareEnv, draft: typeof messages.$inferSelect,
 	return { payload, hash: await sha256(JSON.stringify(payload)) };
 }
 
-export async function requestAgentSend(env: CloudflareEnv, user: SessionUser, draftId: string, expectedRevision: number, requestKeyId?: string) {
+export async function requestAgentSend(env: CloudflareEnv, user: SessionUser, draftId: string, expectedRevision: number, requestKeyId?: string, id = newId("approval")) {
 	const { draft, metadata } = await currentDraft(env, user, draftId);
 	if (metadata.revision !== expectedRevision) throw new Error("Draft changed; reopen it for review");
 	if (metadata.scheduledAt && metadata.scheduledAt.getTime() <= Date.now()) throw new Error("Scheduled time has passed; update the draft before review");
 	const [existing] = await getDb(env).select({ id: agentSendApprovals.id }).from(agentSendApprovals).where(and(eq(agentSendApprovals.draftId, draftId), inArray(agentSendApprovals.status, ["claimed", "sent", "unknown"]))).limit(1);
 	if (existing) throw new Error("This draft has a delivery already in progress or awaiting reconciliation");
 	const { payload, hash } = await snapshot(env, draft, metadata.scheduledAt);
-	const id = newId("approval");
 	const expiresAt = new Date(Date.now() + 15 * 60_000);
-	await getDb(env).insert(agentSendApprovals).values({ id, draftId, mailboxId: draft.mailboxId!, userId: user.id, requestKeyId: requestKeyId ?? null, revision: expectedRevision, payloadHash: hash, expiresAt });
+	await getDb(env).insert(agentSendApprovals).values({ id, draftId, mailboxId: draft.mailboxId!, userId: user.id, requestKeyId: requestKeyId ?? null, revision: expectedRevision, payloadHash: hash, expiresAt }).onConflictDoNothing({ target: agentSendApprovals.id });
 	return { approvalId: id, status: "pending_approval", expiresAt, snapshot: payload, reviewUrl: `/agent/review/${id}` };
 }
 
@@ -104,4 +103,12 @@ export async function confirmAgentSend(env: CloudflareEnv, user: SessionUser, ap
 		await db.update(agentSendApprovals).set({ status: "unknown" }).where(eq(agentSendApprovals.id, approvalId));
 		throw new Error(`Delivery outcome needs review: ${error instanceof Error ? error.message : "provider error"}`);
 	}
+}
+
+// A stable approval identity makes concurrent calls and retries share the same delivery claim.
+export async function sendAgentDraft(env: CloudflareEnv, user: SessionUser, draftId: string, expectedRevision: number, requestKeyId: string, publicOrigin?: string) {
+	const id = `direct_${draftId}_${expectedRevision}`;
+	const [existing] = await getDb(env).select({ id: agentSendApprovals.id }).from(agentSendApprovals).where(and(eq(agentSendApprovals.id, id), eq(agentSendApprovals.userId, user.id))).limit(1);
+	if (!existing) await requestAgentSend(env, user, draftId, expectedRevision, requestKeyId, id);
+	return confirmAgentSend(env, user, id, publicOrigin);
 }
