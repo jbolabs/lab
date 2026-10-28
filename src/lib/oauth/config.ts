@@ -6,7 +6,7 @@ export const MAIL_SCOPES = [...EMAIL_SCOPES, ...DRIVE_SCOPES, "mcp:calendar-read
 export const DEFAULT_MCP_SCOPE = [...EMAIL_SCOPES, ...DRIVE_SCOPES, "offline_access"].join(" ");
 export const OAUTH_SCOPES = [...MAIL_SCOPES, ...ADMIN_API_KEY_SCOPES, "offline_access"];
 export const ACCESS_SECONDS = 15 * 60;
-export const GRANT_SECONDS = 30 * 24 * 60 * 60;
+export const GRANT_SECONDS = 365 * 24 * 60 * 60;
 export const now = () => Math.floor(Date.now() / 1000);
 export const secret = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => b.toString(16).padStart(2, "0")).join("");
 export async function hash(value: string) {
