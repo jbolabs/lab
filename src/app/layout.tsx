@@ -8,6 +8,7 @@ import { getRequestLocale, loadServerMessages } from "@/lib/i18n/server";
 import { sidebarBootstrapScript } from "@/components/sidebar-state-utils";
 import { themeBootstrapScript } from "@/components/theme-utils";
 import { getHomeBranding } from "./home-server-utils";
+import { DEFAULT_FAVICON } from "@/lib/section-icons";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 	return {
 		title: appName,
 		description: "Personal mail, calendar, and files",
-		icons: { icon: "/api/branding/icon", apple: "/icon-192.png" },
+		icons: { apple: "/icon-192.png?v=jbo" },
 		appleWebApp: {
 			capable: true,
 			title: appName,
@@ -57,7 +58,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 			<head>
 				<script dangerouslySetInnerHTML={{ __html: sidebarBootstrapScript }} />
 				<script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
-				<link rel="icon" href="/api/branding/icon"></link>
+				<link id="lab-favicon" rel="icon" href={DEFAULT_FAVICON} type="image/png" sizes="512x512" />
 			</head>
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
 				<LanguageProvider initialLocale={locale} initialMessages={messages}><Providers initialBranding={branding}>{children}</Providers></LanguageProvider>

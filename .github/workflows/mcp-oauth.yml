@@ -57,7 +57,7 @@ jobs:
       - uses: ./.github/actions/install
       - run: npm run db:bundle
       - name: OAuth, Drive editor, backup and admin integration tests
-        run: node --test tests/drive-document-editor.test.mjs tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs tests/account-alias-selection.test.mjs
+        run: node --test tests/section-favicons.test.mjs tests/route-title.test.mjs tests/drive-document-editor.test.mjs tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs tests/account-alias-selection.test.mjs
       - run: npx tsc --noEmit
 
   build:
