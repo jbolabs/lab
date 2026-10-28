@@ -1,8 +1,10 @@
-<img src="/public/icon-96.png" alt="Mailflare" width="72" />
+<img src="/public/icon-96.png" alt="Lab" width="72" />
 
-# Mailflare
+# Lab
 
-Mailflare is a self-hosted email inbox for custom domains, built on Cloudflare. Supports **Resend**, or **AWS SES**
+Lab is my personal mail, calendar, files, booking, and agent workspace at **https://lab.jbolabs.com**. It is a maintained fork of [Mailflare](https://github.com/hieunc229/mailflare), licensed under AGPLv3.
+
+For this installation, use the [Alchemy deployment guide](docs/jbo-deployment.md). The original Mailflare documentation below is retained for reference; do not use its standalone deploy instructions for the existing installation.
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/hieunc229/mailflare)
 

@@ -1,5 +1,5 @@
 /**
- * Existing inbox.jbolabs.com installation, moved from jbolabs/jbolabs.
+ * Existing mail installation, now served at lab.jbolabs.com.
  * Keep stack mail, stage prod and every resource ID unchanged: same remote state.
  * Mailflare applies D1 migrations through its existing operator-controlled UI.
  * Build first; upload the Worker byte-for-byte with bundle:false.

@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
+import { APP_NAME } from "@/lib/app-identity";
 
 export default function manifest(): MetadataRoute.Manifest {
 	return {
-		name: "Mailflare",
-		short_name: "Mailflare",
-		description: "Email, anywhere.",
+		name: APP_NAME,
+		short_name: APP_NAME,
+		description: "Personal mail, calendar, and files.",
 		start_url: "/inbox",
 		display: "standalone",
 		background_color: "#ffffff",

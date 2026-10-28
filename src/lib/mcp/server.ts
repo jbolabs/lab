@@ -25,7 +25,7 @@ function output(value: unknown, isError = false) {
 
 export function createMailflareMcpHandler(env: CloudflareEnv, principal: McpPrincipal, baseUrl: string, authorization: string) {
 	return createMcpHandler(() => {
-		const server = new McpServer({ name: "mailflare", version: "0.1.0" });
+		const server = new McpServer({ name: "lab", version: "0.1.0" });
 		registerDriveTools(server, env, principal);
 		if (principal.scopes.some((scope) => scope.startsWith("mcp:"))) {
 		for (const name of CALENDAR_TOOL_NAMES) {

@@ -1,4 +1,4 @@
-name: MCP OAuth
+name: Lab
 
 on:
   workflow_dispatch:
@@ -40,12 +40,12 @@ jobs:
 
   production:
     needs: verify
-    if: ${{ github.repository == 'jbolabs/mailflare' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.DEPLOYS_ENABLED == 'true' }}
+    if: ${{ github.repository == 'jbolabs/lab' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.DEPLOYS_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
     concurrency:
-      group: mailflare-production
+      group: lab-production
       cancel-in-progress: false
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

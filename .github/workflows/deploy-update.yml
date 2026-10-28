@@ -9,10 +9,10 @@ permissions:
 jobs:
   update:
     # The maintained fork imports upstream through reviewed merges; tree replacement would erase local features.
-    if: ${{ github.repository != 'jbolabs/mailflare' }}
+    if: ${{ github.repository != 'jbolabs/lab' }}
     runs-on: ubuntu-latest
     env:
-      UPDATE_SOURCE_REPOSITORY: ${{ vars.UPDATE_SOURCE_REPOSITORY || 'jbolabs/mailflare' }}
+      UPDATE_SOURCE_REPOSITORY: ${{ vars.UPDATE_SOURCE_REPOSITORY || 'jbolabs/lab' }}
 
     steps:
       - name: Check update token

@@ -54,9 +54,9 @@ export function PushNotificationSettings() {
 		!state.supported ||
 		(!state.configured && !state.subscribed) ||
 		(state.permission === "denied" && !state.subscribed);
-	let description = "Get new mail alerts even when Mailflare is closed.";
-	if (!state.supported) description = "This browser does not support Web Push for Mailflare.";
-	else if (!state.configured) description = "Web Push has not been configured on this Mailflare server.";
+	let description = "Get new mail alerts even when Lab is closed.";
+	if (!state.supported) description = "This browser does not support Web Push for Lab.";
+	else if (!state.configured) description = "Web Push has not been configured on this Lab server.";
 	else if (state.permission === "denied") description = "Notifications are blocked in your browser settings.";
 
 	return (

@@ -7,7 +7,7 @@ import { sharedStateContext } from "./shared-state.ts";
 import { accountId, mailDomains } from "./config.ts";
 
 const owner = "jbolabs";
-const repository = "mailflare";
+const repository = "lab";
 const generation = 1;
 const accountPermissions: Cloudflare.ApiToken.PermissionGroupRef[] = [
  "Account Settings Read", "Account Settings Write", "Workers Scripts Write", "Workers R2 Storage Write", "D1 Write", "Queues Write", "Workers Observability Write", "Secrets Store Write", "Workers AI Read", "Images Write", "Email Sending Write", "Account API Tokens Write",
