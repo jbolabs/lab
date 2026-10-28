@@ -4,10 +4,11 @@ import { apiKeys, mcpKeyMailboxes, users } from "@/db/schema";
 import { parseScopes, verifyApiKey } from "@/lib/api-keys";
 import { getMailboxAccessLevel } from "@/lib/mailboxes/access";
 import { ADMIN_API_KEY_SCOPES } from "@/lib/api/scopes";
+import { MAIL_SCOPES } from "@/lib/oauth/config";
 import { authenticateOAuth } from "@/lib/oauth/auth";
 import type { McpPrincipal } from "./types";
 
-const MCP_SCOPES = new Set(["mcp:read", "mcp:draft", "mcp:organize", "mcp:request-send", "mcp:calendar-read", "mcp:calendar-write"]);
+const MCP_SCOPES = new Set(MAIL_SCOPES);
 const ADMIN_SCOPES = new Set<string>(ADMIN_API_KEY_SCOPES);
 
 export async function authenticateMcpRequest(env: CloudflareEnv, request: Request): Promise<McpPrincipal | null> {

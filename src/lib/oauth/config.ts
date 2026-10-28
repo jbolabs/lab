@@ -1,6 +1,6 @@
 import { ADMIN_API_KEY_SCOPES } from "@/lib/api/scopes";
 
-export const MAIL_SCOPES = ["mcp:read", "mcp:draft", "mcp:organize", "mcp:request-send", "mcp:calendar-read", "mcp:calendar-write"];
+export const MAIL_SCOPES = ["mcp:read", "mcp:draft", "mcp:organize", "mcp:request-send", "mcp:send", "mcp:calendar-read", "mcp:calendar-write"];
 export const DEFAULT_MCP_SCOPE = [...MAIL_SCOPES, "offline_access"].join(" ");
 export const OAUTH_SCOPES = [...MAIL_SCOPES, ...ADMIN_API_KEY_SCOPES, "offline_access"];
 export const ACCESS_SECONDS = 15 * 60;

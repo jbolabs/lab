@@ -10,6 +10,12 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const out = mkdtempSync(join(root, "node_modules", "oauth-test-"));
 after(() => rmSync(out, { recursive: true, force: true }));
 await build({ stdin: { contents: `
+ import { createElement } from "react";
+ import { renderToStaticMarkup } from "react-dom/server";
+ import { ConsentForm } from "./src/components/settings/oauth-consent.tsx";
+ export function renderConsent(scopes) { return renderToStaticMarkup(createElement(ConsentForm, {ticket:'test',name:'Test assistant',redirectHost:'client.example',email:'jake@example.com',scopes,mailboxes:[{id:'inbox',address:'jake@example.com'}]})); }
+ export { requestAgentSend, confirmAgentSend } from "./src/lib/agent/approvals/utils.ts";
+ export { runEmailTool } from "./src/lib/agent/tools.ts";
  export { POST as mcpRequest } from "./src/app/mcp/route.ts";
  export { exportDatabaseRecords, restoreDatabaseRecords } from "./src/lib/backups/export.ts";
  export * from "./src/lib/oauth/config.ts";
@@ -20,8 +26,8 @@ await build({ stdin: { contents: `
  export * from "./src/lib/mcp/auth.ts";
  export * from "./src/lib/mcp/admin-auth.ts";
  export * from "./server/runtime/sqlite-database.ts";
-`, resolveDir: root, sourcefile: "oauth-test.ts" }, outfile: join(out, "entry.mjs"), bundle: true, platform: "node", format: "esm", packages: "external", tsconfig: join(root, "tsconfig.json"), alias: { "cloudflare:workers": "./server/runtime/cloudflare-workers.ts", "next/headers": "next/headers.js", "next/server": "next/server.js" }, logLevel: "silent" });
-const { mcpRequest, exportDatabaseRecords, restoreDatabaseRecords, SqliteDatabase, OAuthStore, registerClient, validateAuthorization, completeConsent, authenticateOAuth, authenticateMcpRequest, metadata, tokenEndpoint, revokeToken, hash, secret, now, oauthError } = await import(pathToFileURL(join(out, "entry.mjs")));
+`, resolveDir: root, sourcefile: "oauth-test.ts" }, outfile: join(out, "entry.mjs"), jsx: "automatic", bundle: true, platform: "node", format: "esm", packages: "external", tsconfig: join(root, "tsconfig.json"), alias: { "cloudflare:workers": "./server/runtime/cloudflare-workers.ts", "next/headers": "next/headers.js", "next/server": "next/server.js" }, logLevel: "silent" });
+const { renderConsent, requestAgentSend, confirmAgentSend, runEmailTool, mcpRequest, exportDatabaseRecords, restoreDatabaseRecords, SqliteDatabase, OAuthStore, registerClient, validateAuthorization, completeConsent, authenticateOAuth, authenticateMcpRequest, metadata, tokenEndpoint, revokeToken, hash, secret, now, oauthError } = await import(pathToFileURL(join(out, "entry.mjs")));
 const origin = "https://mail.example.com";
 const resource = `${origin}/mcp`;
 // RFC 7636 section 4.2 example; expected challenge is independent of the implementation.
@@ -197,7 +203,7 @@ test('declining requested offline access does not silently grant it',async()=>{
  assert.equal(r.status,200);assert.equal(r.body.refresh_token,undefined);assert.equal(r.body.scope,'mcp:read');
 });
 
-const defaultScopes = ['mcp:read', 'mcp:draft', 'mcp:organize', 'mcp:request-send', 'mcp:calendar-read', 'mcp:calendar-write', 'offline_access'];
+const defaultScopes = ['mcp:read', 'mcp:draft', 'mcp:organize', 'mcp:request-send', 'mcp:send', 'mcp:calendar-read', 'mcp:calendar-write', 'offline_access'];
 test('scope-less clients receive mail/calendar consent and renewable access, without admin privileges', async () => {
  const f=fixture(), id=await client(f);
  const url=new URL(authUrl(id)); url.searchParams.delete('scope');
@@ -230,4 +236,85 @@ test('MCP challenge negotiates renewable mail/calendar access and the token can 
   assert.equal(rpc.result.isError,false,JSON.stringify(rpc));
   assert.deepEqual(JSON.parse(rpc.result.content[0].text),{calendars:[{id:'personal',name:'Personal calendar',timeZone:'UTC',writable:true}]});
  } finally { delete globalThis.__mailflareNodeEnv; }
+});
+
+async function callMcp(f, token, name, args) {
+ globalThis.__mailflareNodeEnv=f.env;
+ const response=await mcpRequest(new Request(resource,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json',Accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}})}));
+ assert.equal(response.status,200);
+ const text=await response.text();
+ return JSON.parse(response.headers.get('Content-Type').includes('text/event-stream') ? text.split('\n').find(line=>line.startsWith('data: ')).slice(6) : text);
+}
+async function sendFixture(t) {
+ const f=fixture(), deliveries=[], queued=[];
+ t.after(()=>{delete globalThis.__mailflareNodeEnv;});
+ f.env.BUCKET={get:async()=>null};
+ f.env.EMAIL={send:async message=>{deliveries.push(message);return {messageId:'<delivered@example.com>'};}};
+ f.env.OUTBOUND_QUEUE={send:async message=>{queued.push(message);}};
+ f.db.prepare("UPDATE domains SET sending_provider='cloudflare'").run();
+ const id=await client(f), {code}=await authorize(f,id,{scope:defaultScopes.join(' ')}), token=await exchangeCode(f,id,code);
+ const draft=await runEmailTool({env:f.env,user:f.user,mailboxId:'inbox',origin:'mcp'},'draft_email',{to:'recipient@example.net',subject:'Hello',body:'A direct message.'});
+ return {...f,deliveries,queued,token:token.body.access_token,args:{mailboxId:'inbox',draftId:draft.draftId,expectedRevision:1}};
+}
+test('direct sending requires its own consented scope and the selected mailbox',async t=>{
+ const f=await sendFixture(t),id=await client(f),{code}=await authorize(f,id,{scope:'mcp:read mcp:draft mcp:request-send'}),limited=await exchangeCode(f,id,code);
+ const denied=await callMcp(f,limited.body.access_token,'send_draft',f.args);
+ assert.ok(denied.error || denied.result.isError);
+ assert.equal(f.deliveries.length,0);
+ const wrongMailbox=await callMcp(f,f.token,'send_draft',{...f.args,mailboxId:'other'});
+ assert.equal(wrongMailbox.result.isError,true);assert.equal(f.deliveries.length,0);
+ f.db.prepare('DELETE FROM mcp_key_mailboxes').run();
+ const removed=await callMcp(f,f.token,'send_draft',f.args);
+ assert.equal(removed.result.isError,true);assert.equal(f.deliveries.length,0);
+});
+test('direct sending checks revision and concurrent calls/retries deliver only once',async t=>{
+ const f=await sendFixture(t);
+ const stale=await callMcp(f,f.token,'send_draft',{...f.args,expectedRevision:2});
+ assert.equal(stale.result.isError,true);assert.equal(f.deliveries.length,0);
+ const results=await Promise.all([callMcp(f,f.token,'send_draft',f.args),callMcp(f,f.token,'send_draft',f.args)]);
+ assert.ok(results.some(r=>r.result?.isError===false));
+ assert.equal(f.deliveries.length,1);
+ assert.equal(f.deliveries[0].subject,'Hello');assert.equal(f.deliveries[0].text,'A direct message.');assert.deepEqual(f.deliveries[0].to,['recipient@example.net']);
+ const retry=await callMcp(f,f.token,'send_draft',f.args);
+ assert.equal(JSON.parse(retry.result.content[0].text).status,'sent');assert.equal(f.deliveries.length,1);
+ assert.equal(f.db.prepare('SELECT count(*) n FROM agent_send_approvals').get().n,1);
+});
+test('direct sending preserves schedules and does not resend an uncertain delivery',async t=>{
+ const f=await sendFixture(t);
+ f.db.prepare('UPDATE agent_draft_metadata SET scheduled_at=?').run(now()+3600);
+ const scheduled=await callMcp(f,f.token,'send_draft',f.args);
+ assert.equal(scheduled.result.isError,false,JSON.stringify(scheduled));
+ assert.equal(JSON.parse(scheduled.result.content[0].text).scheduled,true);assert.equal(f.queued.length,1);assert.equal(f.deliveries.length,0);
+ const g=await sendFixture(t);let attempts=0;
+ g.env.EMAIL.send=async()=>{attempts++;throw new Error('provider disconnected');};
+ const failed=await callMcp(g,g.token,'send_draft',g.args);assert.equal(failed.result.isError,true);
+ const retry=await callMcp(g,g.token,'send_draft',g.args);
+ assert.equal(JSON.parse(retry.result.content[0].text).status,'unknown');assert.equal(attempts,1);
+});
+
+test('direct sending and a browser confirmation share a single delivery per draft',async t=>{
+ const f=await sendFixture(t);
+ const review=await requestAgentSend(f.env,f.user,f.args.draftId,1);
+ let release,started;
+ const held=new Promise(resolve=>{release=resolve;});
+ const sending=new Promise(resolve=>{started=resolve;});
+ f.env.EMAIL.send=async message=>{
+  const attempt=f.deliveries.push(message);
+  if(attempt===1){started();await held;}
+  return {messageId:`<delivered-${attempt}@example.com>`};
+ };
+ const direct=callMcp(f,f.token,'send_draft',f.args);
+ await sending;
+ try { await assert.rejects(confirmAgentSend(f.env,f.user,review.approvalId)); }
+ finally {release();await direct;}
+ assert.equal(f.deliveries.length,1);
+ assert.equal(f.db.prepare("SELECT count(*) n FROM agent_send_approvals WHERE status='sent'").get().n,1);
+});
+
+test('rendered consent explicitly discloses sending without review',()=>{
+ const html=renderConsent(defaultScopes);
+ assert.match(html,/Send email directly without your review/);
+ assert.match(html,/If you allow direct sending, this app can send email without your review/);
+ assert.match(html,/value="mcp:send"/);
+ assert.doesNotMatch(renderConsent(['mcp:read']),/value="mcp:send"/);
 });
