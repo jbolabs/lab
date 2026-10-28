@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import toast from "react-hot-toast";
-import { ChevronRight, Folder, FolderPlus, HardDrive, Paperclip, Plus, Trash2, UploadCloud, UsersRound } from "lucide-react";
+import { ChevronRight, FilePlus2, Folder, FolderPlus, HardDrive, Paperclip, Plus, Trash2, UploadCloud, UsersRound } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -54,6 +54,8 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 	const [foldersOpen, setFoldersOpen] = useState(false);
 	const [folders, setFolders] = useState<FolderNode[]>([]);
 	const compact = minimal && !mobile;
+	// New documents land in the folder being viewed; the server still checks edit access on save.
+	const newDocumentParent = pathname === "/drive" && view !== "trash" ? activeFolder : null;
 	const [creating, setCreating] = useState(false);
 	const [folderName, setFolderName] = useState("");
 	const [saving, setSaving] = useState(false);
@@ -142,6 +144,7 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 					<DropdownMenu.Portal>
 						<DropdownMenu.Content align="start" sideOffset={6} className="z-[200] min-w-52 rounded-xl border border-neutral-200 bg-white p-1.5 shadow-xl">
 							<DropdownMenu.Item className={itemClass} onSelect={() => { window.dispatchEvent(new Event(DRIVE_NEW_FOLDER_EVENT)); onNavigate?.(); }}><FolderPlus size={18} />{t("drive.newFolder")}</DropdownMenu.Item>
+							<DropdownMenu.Item asChild className={itemClass}><Link href={`/drive/document${newDocumentParent ? `?parent=${encodeURIComponent(newDocumentParent)}` : ""}`} onClick={() => onNavigate?.()}><FilePlus2 size={18} />{t("docs.create")}</Link></DropdownMenu.Item>
 							<DropdownMenu.Separator className="my-1 h-px bg-neutral-100" />
 							<DropdownMenu.Item className={itemClass} onSelect={() => { window.dispatchEvent(new Event(DRIVE_UPLOAD_EVENT)); onNavigate?.(); }}><UploadCloud size={18} />{t("drive.fileUpload")}</DropdownMenu.Item>
 						</DropdownMenu.Content>

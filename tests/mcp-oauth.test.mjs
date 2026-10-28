@@ -322,6 +322,16 @@ test('rendered consent explicitly discloses sending without review',()=>{
  assert.doesNotMatch(renderConsent(['mcp:read']),/value="mcp:send"/);
 });
 
+test('rendered consent asks for mailboxes only with email access and groups Drive separately',()=>{
+ const driveOnly=renderConsent(['mcp:drive-read','mcp:drive-write','offline_access']);
+ assert.doesNotMatch(driveOnly,/name="mailbox"/);
+ assert.doesNotMatch(driveOnly,/send email without your review/);
+ assert.match(driveOnly,/id="oauth-group-drive"[^>]*>Drive</);
+ const mixed=renderConsent(['mcp:read','mcp:drive-read']);
+ assert.match(mixed,/name="mailbox" value="inbox"/);
+ assert.match(mixed,/id="oauth-group-email"[^>]*>Email</);
+});
+
 test('email-only connections expose no calendar tools; calendar access requires an explicit grant',async t=>{
  const f=await sendFixture(t);
  const listed=await requestMcp(f,f.token,'tools/list',{});

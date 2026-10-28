@@ -278,7 +278,6 @@ export default function DrivePage() {
 				</div>
 					<div className="flex items-center gap-2">
 						{selectedItems.length > 0 && <DriveBulkActions selected={selectedItems} trashView={view === "trash"} onDone={() => { setSelectedIds(new Set()); void refresh(); }} />}
-						<a hidden={!canWrite} href={`/drive/document${folder ? `?parent=${encodeURIComponent(folder)}` : ""}`} className="inline-flex min-h-11 items-center rounded-full border border-neutral-200 px-3 text-sm hover:bg-neutral-100">{t("docs.create")}</a>
 						<DriveTypeFilter value={types} onChange={setTypes} />
 					</div>
 				</div>

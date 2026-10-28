@@ -2090,5 +2090,13 @@
 	"docs.saveFailed": "Could not save. Your edits are still here.",
 	"docs.discard": "Discard your unsaved changes?",
 	"docs.reload": "Reload latest version",
-	"docs.create": "New document"
+	"docs.create": "New document",
+	"docs.view": "Document view",
+	"docs.saveShortcut": "Save (Ctrl+S or ⌘S)",
+	"docs.emptyPreview": "Nothing to preview yet.",
+	"oauth.group.email": "Email",
+	"oauth.group.drive": "Drive",
+	"oauth.group.calendar": "Calendar",
+	"oauth.group.admin": "Administration",
+	"oauth.group.access": "Access duration"
 }
