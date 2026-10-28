@@ -1,0 +1,43 @@
+name: Install dependencies
+description: Set up Node and restore node_modules from cache, running npm ci only when the lockfile changed.
+
+inputs:
+  app:
+    description: Install the root app dependencies.
+    default: "true"
+  infra:
+    description: Install the deployment/ dependencies and Bun.
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+      with:
+        node-version: 24
+
+    # Cache node_modules directly (not ~/.npm): a hit skips npm ci entirely.
+    # The key includes the Node major because better-sqlite3 builds a native addon.
+    - id: app-cache
+      if: ${{ inputs.app == 'true' }}
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: node_modules
+        key: app-node_modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}
+    - if: ${{ inputs.app == 'true' && steps.app-cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: npm ci --no-audit --no-fund
+
+    - if: ${{ inputs.infra == 'true' }}
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      with:
+        bun-version: 1.4.2
+    - id: infra-cache
+      if: ${{ inputs.infra == 'true' }}
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: deployment/node_modules
+        key: infra-node_modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('deployment/package-lock.json') }}
+    - if: ${{ inputs.infra == 'true' && steps.infra-cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: npm run infra:install

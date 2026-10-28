@@ -9,37 +9,95 @@ on:
 permissions:
   contents: read
 
+# Superseded PR runs are cancelled. Runs on main are never cancelled, so a
+# queued deploy is not interrupted by a newer push.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  verify:
+  # PRs only check the module they touch. The app and the deployment stack
+  # (deployment/) are typechecked and installed independently. Pushes to main
+  # and manual runs always check everything before production.
+  changes:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      app: ${{ github.event_name != 'pull_request' || steps.filter.outputs.app == 'true' }}
+      infra: ${{ github.event_name != 'pull_request' || steps.filter.outputs.infra == 'true' }}
+    steps:
+      - id: filter
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          # A file counts toward a filter only if it matches every pattern,
+          # so the "!" entries carve exclusions out of "**".
+          predicate-quantifier: every
+          filters: |
+            app:
+              - "**"
+              - "!deployment/**"
+              - "!docs/**"
+              - "!**/*.md"
+              - "!screenshots/**"
+              - "!sponsors/**"
+            infra:
+              - "{deployment/**,scripts/deploy-production.mjs,scripts/upload-disabled.mjs,package.json,.github/**}"
+
+  test:
+    needs: changes
+    if: ${{ needs.changes.outputs.app == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            deployment/package-lock.json
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: 1.4.2
-      - run: npm ci --no-audit --no-fund
-      - run: npm run infra:install
-      - name: Deployment types and release guards
-        run: npm run infra:check
+      - uses: ./.github/actions/install
       - run: npm run db:bundle
       - name: OAuth, Drive editor, backup and admin integration tests
         run: node --test tests/drive-document-editor.test.mjs tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs tests/account-alias-selection.test.mjs
       - run: npx tsc --noEmit
-      - name: Build Cloudflare Worker without credentials
-        run: npm run build
-      - name: Build Node runtime without credentials
-        run: npm run build:node
+
+  build:
+    needs: changes
+    if: ${{ needs.changes.outputs.app == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Cloudflare Worker
+            script: build
+          - name: Node runtime
+            script: build:node
+    name: build (${{ matrix.name }})
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/install
+      - name: Build ${{ matrix.name }} without credentials
+        run: npm run ${{ matrix.script }}
+
+  infra:
+    needs: changes
+    if: ${{ needs.changes.outputs.infra == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/install
+        with:
+          app: "false"
+          infra: "true"
+      - name: Deployment types and release guards
+        run: npm run infra:check
 
   production:
-    needs: verify
+    # On main every check above runs (changes forces all outputs true), so a
+    # skipped or failed check also skips the deploy.
+    needs: [test, build, infra]
     if: ${{ github.repository == 'jbolabs/lab' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.DEPLOYS_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -55,17 +113,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+      - uses: ./.github/actions/install
         with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            deployment/package-lock.json
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: 1.4.2
-      - run: npm ci --no-audit --no-fund
-      - run: npm run infra:install
+          infra: "true"
       - name: Build and deploy the existing mail / prod stack
         run: npm run deploy
