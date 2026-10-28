@@ -5,6 +5,7 @@ import { useIsFetching } from "@tanstack/react-query";
 import { useBranding } from "@/components/branding-provider";
 import { useLanguage } from "@/components/language-provider";
 import { PageLoadingContext } from "@/components/page-loading";
+import { Progress } from "@/components/ui/progress";
 import { RouteLoadingBar } from "@/components/route-loading-bar";
 import type { LoadingTransitionProps } from "./loading-transition-types";
 
@@ -21,7 +22,8 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 	const [progress, setProgress] = useState(8);
 	const [loaderVisible, setLoaderVisible] = useState(showInitialLoader);
 	const [contentVisible, setContentVisible] = useState(!showInitialLoader);
-	const [initialLoadComplete, setInitialLoadComplete] = useState(!showInitialLoader);
+	const [initialLoadComplete, setInitialLoadComplete] =
+		useState(!showInitialLoader);
 	const [iconUrl, setIconUrl] = useState(branding.iconUrl);
 	const [pageMounted, setPageMounted] = useState(false);
 	const [pendingLoads, setPendingLoads] = useState(0);
@@ -35,7 +37,10 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 		setPendingLoads(loadingIds.current.size);
 	}, []);
 	const loadingContext = useMemo(() => ({ reportLoading }), [reportLoading]);
-	const canComplete = ready && pageMounted && (dataWaitExpired || (pendingLoads === 0 && fetchingQueries === 0));
+	const canComplete =
+		ready &&
+		pageMounted &&
+		(dataWaitExpired || (pendingLoads === 0 && fetchingQueries === 0));
 
 	useEffect(() => {
 		setIconUrl(branding.iconUrl);
@@ -44,7 +49,9 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 	useEffect(() => {
 		if (canComplete) return;
 		const timer = window.setInterval(() => {
-			setProgress((current) => Math.min(92, current + Math.max(1, (92 - current) * 0.08)));
+			setProgress((current) =>
+				Math.min(92, current + Math.max(1, (92 - current) * 0.08)),
+			);
 		}, 90);
 		return () => window.clearInterval(timer);
 	}, [canComplete]);
@@ -57,7 +64,10 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 
 	useEffect(() => {
 		if (!ready) return;
-		const timer = window.setTimeout(() => setDataWaitExpired(true), MAXIMUM_DATA_WAIT);
+		const timer = window.setTimeout(
+			() => setDataWaitExpired(true),
+			MAXIMUM_DATA_WAIT,
+		);
 		return () => window.clearTimeout(timer);
 	}, [ready]);
 
@@ -100,22 +110,20 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 						loaderVisible ? "opacity-100" : "pointer-events-none opacity-0"
 					}`}
 				>
-					<span className="sr-only">{loaderVisible ? t("nav.loading") : ""}</span>
-					<div aria-hidden="true" className="flex w-64 flex-col items-center gap-6">
+					<span className="sr-only">
+						{loaderVisible ? t("nav.loading") : ""}
+					</span>
+					<div
+						aria-hidden="true"
+						className="flex w-64 flex-col items-center gap-6"
+					>
 						<img
 							src={iconUrl}
 							onError={() => setIconUrl("/icon-96.png")}
 							alt=""
 							className="h-20 w-20 rounded-2xl object-contain"
 						/>
-						<div className="w-full">
-							<div className="h-1.5 overflow-hidden rounded-full bg-signal-soft">
-								<div
-									className="h-full rounded-full bg-primary transition-[width] duration-200 ease-out"
-									style={{ width: `${progress}%` }}
-								/>
-							</div>
-						</div>
+						<Progress value={progress} className="h-1 w-full" />
 					</div>
 				</div>
 			</div>

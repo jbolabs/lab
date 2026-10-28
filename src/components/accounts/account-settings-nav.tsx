@@ -15,16 +15,25 @@ export function AccountSettingsNav() {
 	const { t } = useLanguage();
 	const { id } = useParams<{ id: string }>();
 	const pathname = usePathname();
-	const currentItem = accountSettingsNavItems.find((item) => isActiveAccountSettingsPath(pathname, getAccountSettingsHref(id, item.segment)));
+	const currentItem = accountSettingsNavItems.find((item) =>
+		isActiveAccountSettingsPath(
+			pathname,
+			getAccountSettingsHref(id, item.segment),
+		),
+	);
 	const currentLabel = t(currentItem?.labelKey ?? "accountSettings.title");
 
 	return (
-		<SectionNavSheet title={t("accountSettings.menu")} label={currentLabel} className="w-full shrink-0 px-4 py-4 md:w-48 md:px-0 md:py-0">
-			<div className="sticky top-6 space-y-3">
+		<SectionNavSheet
+			title={t("accountSettings.menu")}
+			label={currentLabel}
+			className="w-full shrink-0 px-4 py-4 md:w-48 md:px-0 md:py-0"
+		>
+			<div className="sticky top-6 flex flex-col gap-3">
 				<h2 className="px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
 					{t("accountSettings.title")}
 				</h2>
-				<nav className="space-y-1">
+				<nav className="flex flex-col gap-1">
 					{accountSettingsNavItems.map((item) => {
 						const href = getAccountSettingsHref(id, item.segment);
 						return (
@@ -32,7 +41,7 @@ export function AccountSettingsNav() {
 								key={item.segment || "details"}
 								href={href}
 								className={cn(
-									"block rounded-full px-4 py-2.5 text-sm font-medium transition-colors",
+									"block min-h-11 rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
 									isActiveAccountSettingsPath(pathname, href)
 										? "bg-signal-soft text-signal-soft-foreground"
 										: "text-muted-foreground hover:bg-background/70 hover:text-foreground",

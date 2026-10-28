@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Mail, X } from "lucide-react";
 import { getEmailDisplayName } from "@/lib/email/address";
@@ -12,7 +13,7 @@ export function NewMessagePopup({
 }: NewMessagePopupProps) {
 	const { t } = useLanguage();
 	return (
-		<div className="fixed right-5 top-5 z-[100] w-[min(380px,calc(100vw-40px))] rounded-xl bg-card p-4 shadow-xl">
+		<div className="fixed right-5 top-[calc(1.25rem+env(safe-area-inset-top))] z-[100] w-[min(380px,calc(100vw-40px))] rounded-lg border bg-card p-4 shadow-md">
 			<div className="flex items-start gap-3">
 				<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-signal-soft text-signal">
 					<Mail className="h-5 w-5" />
@@ -29,17 +30,22 @@ export function NewMessagePopup({
 						{notification.subject || t("list.noSubject")}
 					</p>
 					<p className="mt-1 truncate text-xs text-muted-foreground">
-						{t("notification.from", { sender: notification.fromName ?? getEmailDisplayName(notification.from) })}
+						{t("notification.from", {
+							sender:
+								notification.fromName ?? getEmailDisplayName(notification.from),
+						})}
 					</p>
 				</Link>
-				<button
+				<Button
+					variant="ghost"
+					size="icon"
 					type="button"
 					onClick={onDismiss}
-					className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground/80"
+					className="size-11 shrink-0"
 				>
-					<X className="h-4 w-4" />
+					<X />
 					<span className="sr-only">{t("notification.dismiss")}</span>
-				</button>
+				</Button>
 			</div>
 		</div>
 	);
