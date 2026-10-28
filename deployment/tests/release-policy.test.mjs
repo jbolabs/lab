@@ -7,9 +7,9 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { assertReleaseEnvironment } from "../release-policy.mjs";
 import { publishesDmarc } from "../mail-domain-flags.ts";
-import { mailDomains } from "../config.ts";
+import { mailDomains, mailflare } from "../config.ts";
 
-const release = { CI: "true", GITHUB_REPOSITORY: "jbolabs/mailflare", GITHUB_REF: "refs/heads/main", GITHUB_EVENT_NAME: "push", DEPLOYS_ENABLED: "true", CLOUDFLARE_ACCOUNT_ID: "984b82870acd18daf8bda97bad966b38", CLOUDFLARE_API_TOKEN: "fixture-not-a-credential" };
+const release = { CI: "true", GITHUB_REPOSITORY: "jbolabs/lab", GITHUB_REF: "refs/heads/main", GITHUB_EVENT_NAME: "push", DEPLOYS_ENABLED: "true", CLOUDFLARE_ACCOUNT_ID: "984b82870acd18daf8bda97bad966b38", CLOUDFLARE_API_TOKEN: "fixture-not-a-credential" };
 test("only an enabled main release with the correct production account is accepted", () => {
  assert.doesNotThrow(() => assertReleaseEnvironment(release));
  for (const change of [{ CI: "false" }, { GITHUB_REPOSITORY: "someone/fork" }, { GITHUB_REF: "refs/pull/4/merge" }, { GITHUB_EVENT_NAME: "pull_request" }, { DEPLOYS_ENABLED: "false" }, { CLOUDFLARE_ACCOUNT_ID: "another-account" }, { CLOUDFLARE_API_TOKEN: "" }]) assert.throws(() => assertReleaseEnvironment({ ...release, ...change }));
@@ -17,6 +17,11 @@ test("only an enabled main release with the correct production account is accept
 test("the actual deploy entry refuses an unconfigured shell before building or invoking Alchemy", () => {
  const result = spawnSync(process.execPath, [fileURLToPath(new URL("../../scripts/deploy-production.mjs", import.meta.url))], { env: { PATH: process.env.PATH }, encoding: "utf8" });
  assert.equal(result.status, 1); assert.match(result.stderr, /Production releases run only/);
+});
+test("Lab retains the existing delivery worker during the hostname cutover", () => {
+ assert.equal(mailflare.host, "lab.jbolabs.com");
+ assert.equal(mailflare.workerName, "mailflare");
+ assert.throws(() => assertReleaseEnvironment({ ...release, GITHUB_REPOSITORY: "jbolabs/mailflare" }));
 });
 test("the imported mail domains preserve externally owned DMARC and studio routing", () => {
  const shoulder = mailDomains.find(domain => domain.name === "shouldertap.app");

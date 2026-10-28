@@ -1,6 +1,6 @@
-# The inbox installation belongs to this repository
+# Lab deployment
 
-`inbox.jbolabs.com`, its Worker, D1, R2 bucket, queues, Durable Object, runtime token and Mailflare-specific routing/sending configuration are the existing Alchemy **`mail` / `prod`** stack, moved from `jbolabs/jbolabs:stacks/mail.ts` to `deployment/alchemy.run.ts`. Resource IDs and physical names are unchanged. The remote Cloudflare state store keys resources by stack, stage and logical resource ID, not repository path. No export/import, re-creation or cloud destroy is part of this move.
+`lab.jbolabs.com`, its Worker, D1, R2 bucket, queues, Durable Object, runtime token and Mailflare-specific routing/sending configuration are the existing Alchemy **`mail` / `prod`** stack, moved from `jbolabs/jbolabs:stacks/mail.ts` to `deployment/alchemy.run.ts`. Resource IDs and physical names are unchanged. The remote Cloudflare state store keys resources by stack, stage and logical resource ID, not repository path. No export/import, re-creation or cloud destroy is part of this move.
 
 Shared studio infrastructure stays in `jbolabs/jbolabs`: registrar/zone, `mail.jbolabs.com` site-sending subdomain, jbolabs.com Email Routing enablement and the verified forwarding destination. Mailflare keeps its catch-all and product-domain routing in the same existing stack so no resources need splitting between state owners. `shouldertap.app` retains its externally managed DMARC and its explicit support rule.
 
@@ -31,3 +31,11 @@ The production plan builds the Worker, then runs `alchemy plan --stage prod --no
 To pause releases, separately authorize rerunning the CI stack with `MAILFLARE_ENABLE_DEPLOYS=false`. Rotate its token before expiry by bumping `generation` in `deployment/github.ts` and deliberately passing the intended enablement setting. Never run `destroy` as rollback. Before cutover, reverting the parent retirement PR restores the old source entry; after cutover, first disable the fork release path and ensure only one owner can deploy, then restore the old entry against the same unchanged state.
 
 Parent pin-only PR #19 is a transitional application release; do not close or take over its owning thread automatically. Future app releases require no parent pin once this handoff is complete.
+
+## Lab rename
+
+The repository is `jbolabs/lab`; the app is Lab and the primary URL is `https://lab.jbolabs.com`. This is a hard hostname cutover: sign in, reconnect MCP/OAuth clients, and reinstall any PWA at the new origin. Old links and provider webhooks pointing to `inbox.jbolabs.com` must be updated; no compatibility hostname or OAuth alias remains. Existing OAuth grants stay in the database but are resource-bound to the old origin and cannot authenticate at the new one.
+
+Do not mechanically replace `mailflare` in physical resource names, Alchemy `mail` / `prod`, logical resource IDs, cookies/storage keys, backup format identifiers, calendar event UIDs, or email loop-prevention headers. These are persisted identifiers, not display branding. D1, R2, queues, the realtime namespace, API keys and stored records are reused in place. No database migration or data move is part of the rename. The CI stack retains its `mailflare-ci` / `ci` identity; GitHub resources follow the same repository ID after its rename.
+
+Rollback uses a reviewed revert deployed through the same stack. Never destroy/recreate the stack or restore an older database for a branding rollback; that could discard newly delivered mail. Upstream Mailflare attribution and AGPL licensing remain in this repository.

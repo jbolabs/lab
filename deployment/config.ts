@@ -11,7 +11,7 @@ export interface MailDomain {
 
 export const mailflare = {
   /** Where the web UI is served. Not `mail.`: that is the sites' sending subdomain. */
-  host: "inbox.jbolabs.com",
+  host: "lab.jbolabs.com",
   /**
    * Mailflare hardcodes this script name when it points a zone's catch-all at
    * the Worker (`getEmailWorkerName()` in `src/lib/cloudflare-api-utils.ts`),
