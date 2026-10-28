@@ -14,6 +14,8 @@ await build({ stdin: { contents: `
  import { renderToStaticMarkup } from "react-dom/server";
  import { ConsentForm } from "./src/components/settings/oauth-consent.tsx";
  export function renderConsent(scopes) { return renderToStaticMarkup(createElement(ConsentForm, {ticket:'test',name:'Test assistant',redirectHost:'client.example',email:'jake@example.com',scopes,mailboxes:[{id:'inbox',address:'jake@example.com'}]})); }
+ export * from "./src/lib/drive/documents.ts";
+ export { openFileBucket } from "./server/runtime/file-bucket.ts";
  export { requestAgentSend, confirmAgentSend } from "./src/lib/agent/approvals/utils.ts";
  export { runEmailTool } from "./src/lib/agent/tools.ts";
  export { POST as mcpRequest } from "./src/app/mcp/route.ts";
@@ -27,7 +29,7 @@ await build({ stdin: { contents: `
  export * from "./src/lib/mcp/admin-auth.ts";
  export * from "./server/runtime/sqlite-database.ts";
 `, resolveDir: root, sourcefile: "oauth-test.ts" }, outfile: join(out, "entry.mjs"), jsx: "automatic", bundle: true, platform: "node", format: "esm", packages: "external", tsconfig: join(root, "tsconfig.json"), alias: { "cloudflare:workers": "./server/runtime/cloudflare-workers.ts", "next/headers": "next/headers.js", "next/server": "next/server.js" }, logLevel: "silent" });
-const { renderConsent, requestAgentSend, confirmAgentSend, runEmailTool, mcpRequest, exportDatabaseRecords, restoreDatabaseRecords, SqliteDatabase, OAuthStore, registerClient, validateAuthorization, completeConsent, authenticateOAuth, authenticateMcpRequest, metadata, tokenEndpoint, revokeToken, hash, secret, now, oauthError } = await import(pathToFileURL(join(out, "entry.mjs")));
+const { createDriveFile, readDocument, saveDocument, openFileBucket, renderConsent, requestAgentSend, confirmAgentSend, runEmailTool, mcpRequest, exportDatabaseRecords, restoreDatabaseRecords, SqliteDatabase, OAuthStore, registerClient, validateAuthorization, completeConsent, authenticateOAuth, authenticateMcpRequest, metadata, tokenEndpoint, revokeToken, hash, secret, now, oauthError } = await import(pathToFileURL(join(out, "entry.mjs")));
 const origin = "https://mail.example.com";
 const resource = `${origin}/mcp`;
 // RFC 7636 section 4.2 example; expected challenge is independent of the implementation.
@@ -58,7 +60,7 @@ async function authorize(f, id, options = {}) {
  const validated = await validateAuthorization(f.env, new Request(authUrl(id, options)));
  const ticket = secret();
  await f.env.DB.prepare("INSERT INTO oauth_requests(hash,user_id,parameters,expires_at) VALUES (?,?,?,?)").bind(await hash(ticket), 'user', JSON.stringify(validated.parameters), now()+600).run();
- const url = await completeConsent(f.env, f.user, ticket, 'allow', validated.scopes, validated.scopes.some(s=>s.startsWith('mcp:')&&!s.startsWith('mcp:calendar-')) ? ['inbox'] : []);
+ const url = await completeConsent(f.env, f.user, ticket, 'allow', validated.scopes, validated.scopes.some(s=>['mcp:read','mcp:draft','mcp:organize','mcp:request-send','mcp:send'].includes(s)) ? ['inbox'] : []);
  assert.equal(new URL(url).searchParams.get('state'), 'my-state');
  assert.equal(new URL(url).searchParams.get('iss'), origin);
  return { code: new URL(url).searchParams.get('code'), ticket };
@@ -203,7 +205,7 @@ test('declining requested offline access does not silently grant it',async()=>{
  assert.equal(r.status,200);assert.equal(r.body.refresh_token,undefined);assert.equal(r.body.scope,'mcp:read');
 });
 
-const defaultScopes = ['mcp:read', 'mcp:draft', 'mcp:organize', 'mcp:request-send', 'mcp:send', 'offline_access'];
+const defaultScopes = ['mcp:read', 'mcp:draft', 'mcp:organize', 'mcp:request-send', 'mcp:send', 'mcp:drive-read', 'mcp:drive-write', 'offline_access'];
 test('scope-less clients receive email-only consent and renewable access, without admin privileges', async () => {
  const f=fixture(), id=await client(f);
  const url=new URL(authUrl(id)); url.searchParams.delete('scope');
@@ -335,4 +337,83 @@ test('email-only connections expose no calendar tools; calendar access requires 
  const calendar=await callMcp(f,granted.body.access_token,'get_calendars',{});
  assert.equal(calendar.result.isError,false);
  assert.deepEqual(JSON.parse(calendar.result.content[0].text),{calendars:[{id:'personal',name:'Personal calendar',timeZone:'UTC',writable:true}]});
+});
+
+async function driveFixture(t, scope = 'mcp:drive-read mcp:drive-write offline_access') {
+ const f=fixture(); const directory=mkdtempSync(join(out,'bucket-'));
+ f.env.BUCKET=openFileBucket(directory);
+ t.after(()=>{delete globalThis.__mailflareNodeEnv;rmSync(directory,{recursive:true,force:true});});
+ const id=await client(f), {code}=await authorize(f,id,{scope}), token=await exchangeCode(f,id,code);
+ return {...f,token:token.body.access_token};
+}
+const toolData = response => JSON.parse(response.result.content[0].text);
+test('Drive-only consent needs no mailbox; tools create, list, read and save documents',async t=>{
+ const f=await driveFixture(t);
+ const listed=await requestMcp(f,f.token,'tools/list',{});
+ assert.ok(listed.result.tools.some(tool=>tool.name==='save_document'));
+ assert.ok(!listed.result.tools.some(tool=>tool.name==='list_calendars'));
+ const created=toolData(await callMcp(f,f.token,'create_drive_file',{name:'Notes.md',content:'# Initial'}));
+ assert.equal(created.item.name,'Notes.md');
+ const read=toolData(await callMcp(f,f.token,'get_document',{id:created.item.id}));assert.equal(read.content,'# Initial');
+ const saved=toolData(await callMcp(f,f.token,'save_document',{id:created.item.id,content:'# Updated',expectedRevision:read.revision}));
+ assert.equal(saved.content,'# Updated');assert.notEqual(saved.revision,read.revision);
+ assert.deepEqual(toolData(await callMcp(f,f.token,'list_drive_items',{})).items.map(i=>i.name),['Notes.md']);
+ const conflict=await callMcp(f,f.token,'save_document',{id:created.item.id,content:'stale',expectedRevision:read.revision});
+ assert.equal(conflict.result.isError,true); assert.match(toolData(conflict).error,/changed/);
+ assert.equal((await readDocument(f.env,'user',created.item.id)).content,'# Updated');
+});
+test('Drive scopes hide tools and current revocation invalidates tokens',async t=>{
+ const f=await driveFixture(t,'mcp:drive-read offline_access');
+ const listed=await requestMcp(f,f.token,'tools/list',{});
+ assert.ok(!listed.result.tools.some(tool=>tool.name==='save_document'||tool.name==='create_drive_file'));
+ assert.ok((await callMcp(f,f.token,'create_drive_file',{name:'No.md',content:'denied'})).error);
+ f.db.prepare('DELETE FROM api_keys WHERE id=(SELECT key_id FROM oauth_tokens LIMIT 1)').run();
+ assert.equal(await principal(f,f.token),null);
+});
+test('documents honor inherited view/edit shares, revocation, trash and upload boundaries',async t=>{
+ const f=await driveFixture(t);
+ f.db.prepare("INSERT INTO users(id,email,name,password_hash,role,disabled,created_at) VALUES ('other','other@example.com','Other','unused','user',0,?)").run(now());
+ f.db.prepare("INSERT INTO drive_items(id,owner_id,kind,name,size,content_type,created_at,updated_at) VALUES ('folder','user','folder','Shared',0,'application/x-directory',?,?)").run(now(),now());
+ const created=await createDriveFile(f.env,'user',{name:'Shared.md',content:new TextEncoder().encode('Original'),contentType:'text/markdown',parentId:'folder'});
+ await assert.rejects(readDocument(f.env,'other',created.item.id),/not found/);
+ f.db.prepare("INSERT INTO drive_shares(id,item_id,user_id,role,created_at) VALUES ('share','folder','other','view',?)").run(now());
+ assert.equal((await readDocument(f.env,'other',created.item.id)).content,'Original');
+ await assert.rejects(saveDocument(f.env,'other',created.item.id,'No',created.revision),/not found/);
+ f.db.prepare("UPDATE drive_shares SET role='edit' WHERE id='share'").run();
+ const saved=await saveDocument(f.env,'other',created.item.id,'Edited',created.revision); assert.equal(saved.content,'Edited');
+ f.db.prepare("DELETE FROM drive_shares WHERE id='share'").run();
+ await assert.rejects(readDocument(f.env,'other',created.item.id),/not found/);
+ f.db.prepare("UPDATE drive_items SET trashed_at=? WHERE id='folder'").run(now());
+ await assert.rejects(readDocument(f.env,'user',created.item.id),/not found/);
+ f.db.prepare("UPDATE drive_items SET trashed_at=NULL WHERE id='folder'").run();
+ f.db.prepare("UPDATE drive_items SET upload_id='pending' WHERE id=?").run(created.item.id);
+ await assert.rejects(readDocument(f.env,'user',created.item.id),/not found/);
+});
+test('competing document saves commit exactly one revision',async t=>{
+ const f=await driveFixture(t); const created=await createDriveFile(f.env,'user',{name:'Race.md',content:new TextEncoder().encode('Start'),contentType:'text/markdown'});
+ const results=await Promise.allSettled([saveDocument(f.env,'user',created.item.id,'First',created.revision),saveDocument(f.env,'user',created.item.id,'Second',created.revision)]);
+ assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
+ assert.equal(results.filter(r=>r.status==='rejected').length,1);
+ const current=await readDocument(f.env,'user',created.item.id);assert.ok(['First','Second'].includes(current.content));
+});
+test('document size and owner storage quota are enforced',async t=>{
+ const f=await driveFixture(t);
+ await assert.rejects(createDriveFile(f.env,'user',{name:'Big.md',content:new Uint8Array(1048577),contentType:'text/markdown'}),/1 MiB/);
+ f.db.prepare("INSERT INTO app_settings(id,drive_storage_limit_bytes,updated_at) VALUES ('default',4,0) ON CONFLICT(id) DO UPDATE SET drive_storage_limit_bytes=4").run();
+ await assert.rejects(createDriveFile(f.env,'user',{name:'Quota.md',content:new TextEncoder().encode('12345'),contentType:'text/markdown'}),/storage/);
+ const created=await createDriveFile(f.env,'user',{name:'Quota.md',content:new TextEncoder().encode('1234'),contentType:'text/markdown'});
+ await assert.rejects(saveDocument(f.env,'user',created.item.id,'12345',created.revision),/storage/);
+ assert.equal((await readDocument(f.env,'user',created.item.id)).content,'1234');
+});
+
+test('ordinarily uploaded Markdown saves with the real Node filesystem bucket',async t=>{
+ const f=await driveFixture(t);
+ const key='drive/user/uploaded';
+ await f.env.BUCKET.put(key,new TextEncoder().encode('Uploaded'));
+ f.db.prepare("INSERT INTO drive_items(id,owner_id,kind,name,r2_key,size,content_type,created_at,updated_at) VALUES ('uploaded','user','file','Upload.md',?,8,'text/markdown',?,?)").run(key,now(),now());
+ const opened=await readDocument(f.env,'user','uploaded');assert.equal(opened.content,'Uploaded');
+ const saved=await saveDocument(f.env,'user','uploaded','Edited upload',opened.revision);
+ assert.equal(saved.content,'Edited upload');assert.notEqual(saved.revision,key);
+ assert.equal((await readDocument(f.env,'user','uploaded')).content,'Edited upload');
+ assert.equal(await f.env.BUCKET.get(key),null);
 });

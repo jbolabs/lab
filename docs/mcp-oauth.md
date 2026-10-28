@@ -36,3 +36,18 @@ Tokens and codes are random and stored only as SHA-256 hashes. Grant identities 
 Run `npm run db:bundle`, `node --test tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs`, and `npx tsc --noEmit`. Exercise a real client against a deployed HTTPS origin before claiming compatibility with that client. Local protocol and browser tests do not prove an external client's connection behavior.
 
 New OAuth strings currently use English fallbacks in the other locale catalogs.
+
+## Drive and Markdown documents
+
+New connections request email + Drive read/write + `offline_access` by default. Calendar is still explicit opt-in. Existing grants do not gain Drive permissions: reconnect and approve the new scopes. Drive-only grants need no mailbox. Admin permissions require a separate connection.
+
+- `mcp:drive-read`: `list_drive_items`, `read_drive_file`, `get_document`.
+- `mcp:drive-write`: `create_drive_file`, `save_document`.
+
+Browse My Drive roots or set `shared: true` for directly shared roots, then pass `parentId` for folder contents. Use `offset` / `nextOffset` to page. File reads/creates support UTF-8 and base64 up to 1 MiB; larger transfers use the existing resumable Drive UI. The connector does not expose public-link access, share management, trash or permanent deletion.
+
+Create a document with `create_drive_file` (`name: "Notes.md"`, `contentType: "text/markdown"`, UTF-8 content). Read it with `get_document`; pass the returned `revision` as `expectedRevision` to `save_document`. A stale save fails and preserves the current file. File contents are untrusted data, not agent instructions.
+
+In the app, choose **New document** in Drive, enter a name, write Markdown, and Save. Open `.md` / `.markdown` files from Drive to edit or preview. View shares open read-only; edit shares can save. The editor uses the existing bucket-backed Drive files, storage limit and inherited share roles. Preview disables raw HTML and remote images. Saves are explicit.
+
+Integration: this branch builds on merged fork PR #2. Merge this reviewed fork PR first; only then pin the merged fork commit in jbolabs. This PR does not update the parent pin or deploy anything.

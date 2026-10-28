@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useLanguage } from "@/components/language-provider";
+import { EMAIL_SCOPES } from "@/lib/oauth/config";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -25,7 +26,7 @@ export function ConsentForm({ ticket, name, redirectHost, email, scopes, mailbox
 			window.location.assign(data.redirectTo);
 		} catch (cause) { setError(cause instanceof Error ? cause.message : t("oauth.connectionError")); setBusy(false); }
 	}
-	const needsMailbox = selectedScopes.some((scope) => scope.startsWith("mcp:") && !scope.startsWith("mcp:calendar-"));
+	const needsMailbox = selectedScopes.some((scope) => EMAIL_SCOPES.includes(scope));
 	return <main className="mx-auto w-full max-w-xl px-6 py-12 sm:py-20">
 		<h1 className="text-2xl font-medium text-neutral-900">{t("oauth.connectTitle", { name })}</h1>
 		<p className="mt-3 break-words text-sm text-neutral-600">{t("oauth.signedInAs", { email })}</p>

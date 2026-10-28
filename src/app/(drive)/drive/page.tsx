@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { authFetch } from "@/lib/auth/client";
+import { isMarkdownFile } from "@/lib/drive/documents-client";
 import { canEditDrive, DRIVE_MAX_FILE_BYTES, formatDriveSize } from "@/lib/drive/utils";
 import type { DriveItemDto } from "@/lib/drive/types";
 import { DRIVE_FOLDERS_EVENT, DRIVE_NEW_FOLDER_EVENT, DRIVE_REFRESH_EVENT, DRIVE_STORAGE_EVENT, DRIVE_UPLOAD_EVENT } from "../drive-events";
@@ -181,6 +182,7 @@ export default function DrivePage() {
 	function open(item: DriveItemDto) {
 		if (item.trashedAt) return;
 		if (item.kind === "folder") router.push(`/drive?folder=${encodeURIComponent(item.id)}${view === "shared" ? "&view=shared" : ""}`);
+		else if (!item.source && isMarkdownFile(item)) router.push(`/drive/document?id=${encodeURIComponent(item.id)}`);
 		else setPreview(item);
 	}
 
@@ -276,6 +278,7 @@ export default function DrivePage() {
 				</div>
 					<div className="flex items-center gap-2">
 						{selectedItems.length > 0 && <DriveBulkActions selected={selectedItems} trashView={view === "trash"} onDone={() => { setSelectedIds(new Set()); void refresh(); }} />}
+						<a hidden={!canWrite} href={`/drive/document${folder ? `?parent=${encodeURIComponent(folder)}` : ""}`} className="inline-flex min-h-11 items-center rounded-full border border-neutral-200 px-3 text-sm hover:bg-neutral-100">{t("docs.create")}</a>
 						<DriveTypeFilter value={types} onChange={setTypes} />
 					</div>
 				</div>

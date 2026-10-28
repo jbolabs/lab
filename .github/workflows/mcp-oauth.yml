@@ -30,8 +30,8 @@ jobs:
       - name: Deployment types and release guards
         run: npm run infra:check
       - run: npm run db:bundle
-      - name: OAuth, backup and admin integration tests
-        run: node --test tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs tests/account-alias-selection.test.mjs
+      - name: OAuth, Drive editor, backup and admin integration tests
+        run: node --test tests/drive-document-editor.test.mjs tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs tests/account-alias-selection.test.mjs
       - run: npx tsc --noEmit
       - name: Build Cloudflare Worker without credentials
         run: npm run build
