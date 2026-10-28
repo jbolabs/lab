@@ -8,6 +8,7 @@ import type { Branding } from "@/lib/branding/types";
 import { NewMessagePopup } from "@/components/new-message-popup";
 import { PwaServiceWorker } from "@/components/pwa-service-worker";
 import { ThemeSync } from "@/components/theme-sync";
+import { SectionFavicon } from "@/components/section-favicon";
 import { useMessagePolling } from "@/hooks/use-message-polling";
 import { clearMessageClientState } from "@/hooks/utils";
 import { clearMessageDetailCache } from "@/lib/messages/detail-cache";
@@ -52,6 +53,7 @@ export function Providers({ children, initialBranding }: { children: React.React
 	return (
 		<QueryClientProvider client={client}>
 			<BrandingProvider initialBranding={initialBranding}>
+				<SectionFavicon />
 				<PwaServiceWorker />
 				{children}
 				<ThemeSync />
