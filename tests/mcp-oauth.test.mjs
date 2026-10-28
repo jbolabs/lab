@@ -10,6 +10,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const out = mkdtempSync(join(root, "node_modules", "oauth-test-"));
 after(() => rmSync(out, { recursive: true, force: true }));
 await build({ stdin: { contents: `
+ export { POST as mcpRequest } from "./src/app/mcp/route.ts";
  export { exportDatabaseRecords, restoreDatabaseRecords } from "./src/lib/backups/export.ts";
  export * from "./src/lib/oauth/config.ts";
  export * from "./src/lib/oauth/protocol.ts";
@@ -19,8 +20,8 @@ await build({ stdin: { contents: `
  export * from "./src/lib/mcp/auth.ts";
  export * from "./src/lib/mcp/admin-auth.ts";
  export * from "./server/runtime/sqlite-database.ts";
-`, resolveDir: root, sourcefile: "oauth-test.ts" }, outfile: join(out, "entry.mjs"), bundle: true, platform: "node", format: "esm", packages: "external", tsconfig: join(root, "tsconfig.json"), logLevel: "silent" });
-const { exportDatabaseRecords, restoreDatabaseRecords, SqliteDatabase, OAuthStore, registerClient, validateAuthorization, completeConsent, authenticateOAuth, authenticateMcpRequest, metadata, tokenEndpoint, revokeToken, hash, secret, now, oauthError } = await import(pathToFileURL(join(out, "entry.mjs")));
+`, resolveDir: root, sourcefile: "oauth-test.ts" }, outfile: join(out, "entry.mjs"), bundle: true, platform: "node", format: "esm", packages: "external", tsconfig: join(root, "tsconfig.json"), alias: { "cloudflare:workers": "./server/runtime/cloudflare-workers.ts", "next/headers": "next/headers.js", "next/server": "next/server.js" }, logLevel: "silent" });
+const { mcpRequest, exportDatabaseRecords, restoreDatabaseRecords, SqliteDatabase, OAuthStore, registerClient, validateAuthorization, completeConsent, authenticateOAuth, authenticateMcpRequest, metadata, tokenEndpoint, revokeToken, hash, secret, now, oauthError } = await import(pathToFileURL(join(out, "entry.mjs")));
 const origin = "https://mail.example.com";
 const resource = `${origin}/mcp`;
 // RFC 7636 section 4.2 example; expected challenge is independent of the implementation.
@@ -194,4 +195,39 @@ test('declining requested offline access does not silently grant it',async()=>{
  const callback=new URL(await completeConsent(f.env,f.user,ticket,'allow',['mcp:read'],['inbox']));
  const r=await exchangeCode(f,id,callback.searchParams.get('code'));
  assert.equal(r.status,200);assert.equal(r.body.refresh_token,undefined);assert.equal(r.body.scope,'mcp:read');
+});
+
+const defaultScopes = ['mcp:read', 'mcp:draft', 'mcp:organize', 'mcp:request-send', 'mcp:calendar-read', 'mcp:calendar-write', 'offline_access'];
+test('scope-less clients receive mail/calendar consent and renewable access, without admin privileges', async () => {
+ const f=fixture(), id=await client(f);
+ const url=new URL(authUrl(id)); url.searchParams.delete('scope');
+ const validated=await validateAuthorization(f.env,new Request(url));
+ assert.deepEqual(validated.scopes,defaultScopes);
+ const {code}=await authorize(f,id,{scope:validated.parameters.scope});
+ const result=await exchangeCode(f,id,code); assert.equal(result.status,200);
+ assert.ok(result.body.refresh_token);
+ assert.deepEqual((await principal(f,result.body.access_token)).scopes,defaultScopes.slice(0,-1));
+ f.db.prepare('UPDATE oauth_tokens SET access_expires_at=0').run();
+ assert.equal(await principal(f,result.body.access_token),null);
+ const next=await refresh(f,id,result.body.refresh_token); assert.equal(next.status,200);
+ assert.deepEqual((await principal(f,next.body.access_token)).scopes,defaultScopes.slice(0,-1));
+});
+
+test('MCP challenge negotiates renewable mail/calendar access and the token can call calendar tools', async () => {
+ const f=fixture(); globalThis.__mailflareNodeEnv=f.env;
+ try {
+  const denied=await mcpRequest(new Request(resource,{method:'POST'}));
+  assert.equal(denied.status,401);
+  const scope=/scope="([^"]+)"/.exec(denied.headers.get('WWW-Authenticate'))[1];
+  assert.deepEqual(scope.split(' '),defaultScopes);
+  const id=await client(f),{code}=await authorize(f,id,{scope}),result=await exchangeCode(f,id,code);
+  assert.equal(result.status,200);
+  const response=await mcpRequest(new Request(resource,{method:'POST',headers:{Authorization:`Bearer ${result.body.access_token}`,'Content-Type':'application/json',Accept:'application/json, text/event-stream'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'get_calendars',arguments:{}}})}));
+  assert.equal(response.status,200);
+  const text=await response.text();
+  const rpc=JSON.parse(response.headers.get('Content-Type').includes('text/event-stream') ? text.split('\n').find(line=>line.startsWith('data: ')).slice(6) : text);
+  assert.equal(rpc.error,undefined,JSON.stringify(rpc));
+  assert.equal(rpc.result.isError,false,JSON.stringify(rpc));
+  assert.deepEqual(JSON.parse(rpc.result.content[0].text),{calendars:[{id:'personal',name:'Personal calendar',timeZone:'UTC',writable:true}]});
+ } finally { delete globalThis.__mailflareNodeEnv; }
 });

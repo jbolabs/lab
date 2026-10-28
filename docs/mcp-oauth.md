@@ -4,6 +4,8 @@ Connect a remote MCP client to `https://your-mailflare-domain/mcp` and select OA
 
 OAuth uses Mailflare's existing password/MFA session for browser sign-in; no third-party identity provider or client secret is needed. Public clients register through `/oauth/register`. Client ID Metadata Documents and confidential clients are not implemented. Request mail/calendar permissions or admin permissions in separate connections. Admin permissions require an administrator and retain each tool's existing license/authorization checks.
 
+New connections are offered mail/calendar permissions and `offline_access` by default, without admin permissions. The consent screen still lets you decline permissions. Explicitly requested scopes remain unchanged. Older read-only connections must be reconnected to approve additional permissions; existing grants are never expanded.
+
 Access tokens last 15 minutes. Request and approve `offline_access` to receive a rotating refresh token; the connection expires 30 days after approval even if refreshed. Without that permission, no refresh token is issued. Disconnect in **Settings → API keys → Connected apps** to revoke all tokens and cancel pending send reviews for the connection. Revocation also occurs when a refresh token is reused. Concurrent refreshes are treated as reuse; clients must serialize refreshes and reconnect if the result is lost.
 
 Agent-originated email still requires a browser review and explicit confirmation. OAuth grants cannot call the send-approval endpoint or authorize arbitrary REST/JMAP calls. Calendar write scopes retain the existing calendar mutation behavior.

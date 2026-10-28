@@ -1,6 +1,7 @@
 import { ADMIN_API_KEY_SCOPES } from "@/lib/api/scopes";
 
 export const MAIL_SCOPES = ["mcp:read", "mcp:draft", "mcp:organize", "mcp:request-send", "mcp:calendar-read", "mcp:calendar-write"];
+export const DEFAULT_MCP_SCOPE = [...MAIL_SCOPES, "offline_access"].join(" ");
 export const OAUTH_SCOPES = [...MAIL_SCOPES, ...ADMIN_API_KEY_SCOPES, "offline_access"];
 export const ACCESS_SECONDS = 15 * 60;
 export const GRANT_SECONDS = 30 * 24 * 60 * 60;
@@ -19,7 +20,7 @@ export function canonicalOrigin(env: Pick<CloudflareEnv, "APP_URL">, request: Re
 	return url.origin;
 }
 export function parseScope(value: string | null) {
-	const scopes = [...new Set((value ?? "mcp:read").split(" ").filter(Boolean))];
+	const scopes = [...new Set((value ?? DEFAULT_MCP_SCOPE).split(" ").filter(Boolean))];
 	if (!scopes.length || scopes.some((scope) => !OAUTH_SCOPES.includes(scope))) throw new OAuthFailure("invalid_scope", "Unsupported permissions");
 	const permissions = scopes.filter((scope) => scope !== "offline_access");
 	if (!permissions.length || (permissions.some((scope) => MAIL_SCOPES.includes(scope)) && permissions.some((scope) => !MAIL_SCOPES.includes(scope)))) throw new OAuthFailure("invalid_scope", "Mail and admin permissions require separate connections");

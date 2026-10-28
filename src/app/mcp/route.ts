@@ -1,4 +1,4 @@
-import { canonicalOrigin } from "@/lib/oauth/config";
+import { canonicalOrigin, DEFAULT_MCP_SCOPE } from "@/lib/oauth/config";
 import { getEnv } from "@/lib/cloudflare";
 import { authenticateMcpRequest } from "@/lib/mcp/auth";
 import { createMailflareMcpHandler } from "@/lib/mcp/server";
@@ -11,7 +11,7 @@ async function handle(request: Request) {
 	const origin = request.headers.get("Origin");
 	if (origin && origin !== baseUrl) return new Response("Invalid origin", { status: 403 });
 	const principal = await authenticateMcpRequest(env, request);
-	if (!principal) return new Response("Unauthorized", { status: 401, headers: { "WWW-Authenticate": `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource/mcp", scope="mcp:read"` } });
+	if (!principal) return new Response("Unauthorized", { status: 401, headers: { "WWW-Authenticate": `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource/mcp", scope="${DEFAULT_MCP_SCOPE}"` } });
 	if (!await allowAgentRequest(env, `mcp:${principal.keyId}`)) return new Response("Rate limit exceeded", { status: 429 });
 	const handler = createMailflareMcpHandler(env, principal, baseUrl, request.headers.get("Authorization") ?? "");
 	try { return await handler.fetch(request); }
