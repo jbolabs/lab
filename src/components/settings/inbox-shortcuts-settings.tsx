@@ -1,10 +1,15 @@
 "use client";
-
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+	Field,
+	FieldContent,
+	FieldLabel,
+	FieldDescription,
+} from "@/components/ui/field";
 import { useState } from "react";
 import { useLanguage } from "@/components/language-provider";
 import { useShortcuts } from "@/components/shortcuts";
 import { Switch } from "@/components/ui/switch";
-
 export function InboxShortcutsSettings() {
 	const { t } = useLanguage();
 	const {
@@ -15,31 +20,40 @@ export function InboxShortcutsSettings() {
 	} = useShortcuts();
 	const [saving, setSaving] = useState(false);
 	const [saveError, setSaveError] = useState<string | null>(null);
-
 	return (
 		<div>
-			<label className="flex items-start gap-3 rounded-xl bg-muted/60 p-4">
-				<span className="flex-1">
-					<span className="block text-sm font-medium text-foreground">{t("settings.shortcuts.title")}</span>
-					<span className="mt-1 block text-sm text-muted-foreground">
+			<Field orientation="horizontal">
+				<FieldContent>
+					<FieldLabel htmlFor="inbox-shortcuts-settings-0">{t("settings.shortcuts.title")}</FieldLabel>
+					<FieldDescription>
 						{t("settings.shortcuts.description")}
-					</span>
-				</span>
-				<Switch
+					</FieldDescription>
+				</FieldContent>
+				<Switch id="inbox-shortcuts-settings-0"
 					checked={shortcutsEnabled}
 					disabled={shortcutsPreferenceLoading || saving}
 					onCheckedChange={(enabled) => {
 						setSaving(true);
 						setSaveError(null);
 						void setShortcutsEnabled(enabled)
-							.catch((error) => setSaveError(error instanceof Error ? error.message : t("settings.shortcuts.failed")))
+							.catch((error) =>
+								setSaveError(
+									error instanceof Error
+										? error.message
+										: t("settings.shortcuts.failed"),
+								),
+							)
 							.finally(() => setSaving(false));
 					}}
 					aria-label={t("settings.shortcuts.enable")}
 				/>
-			</label>
+			</Field>
 			{(saveError || shortcutsPreferenceError) && (
-				<p role="alert" className="mt-2 px-4 text-sm text-red-600">{saveError || shortcutsPreferenceError}</p>
+				<Alert variant="destructive">
+					<AlertDescription>
+						{saveError || shortcutsPreferenceError}
+					</AlertDescription>
+				</Alert>
 			)}
 		</div>
 	);

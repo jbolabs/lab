@@ -1,55 +1,63 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { Item, ItemContent, ItemTitle, ItemGroup } from "@/components/ui/item";
 import { cn } from "@/lib/utils";
-import { SectionNavSheet } from "../section-nav-sheet";
-import { isActiveSettingsPath, settingsNavSections } from "./settings-nav-utils";
-
+import {
+	isActiveSettingsPath,
+	settingsNavSections,
+} from "./settings-nav-utils";
 export function SettingsNav() {
 	const { t } = useLanguage();
 	const pathname = usePathname();
 	const user = useCurrentUser();
-	const canManageMailboxes = user?.canManageMailboxes === true;
-	const sections = settingsNavSections.map((section) => ({
-		...section,
-		items: section.items.filter((item) => !item.requiresMailboxAccess || canManageMailboxes),
-	}));
-	const currentItem = sections.flatMap((section) => section.items).find((item) => isActiveSettingsPath(pathname, item.href));
-	const currentLabel = t(currentItem?.labelKey ?? "settings.nav.settings");
-
 	return (
-		<SectionNavSheet title={t("settings.nav.menu")} label={currentLabel} className="w-full px-4 py-4 md:min-h-full md:w-64 md:border-r md:border-signal/30 md:py-10">
-			<div className="sticky top-6 space-y-7">
-				{sections.map((section) => (
-					<div key={section.labelKey} className="space-y-3">
-						<h2 className="px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-							{t(section.labelKey)}
-						</h2>
-						<nav aria-label={t(section.labelKey)} className="space-y-px">
-							{section.items.map((item) => {
+		<div className="flex flex-col gap-8 px-5 py-6 md:sticky md:top-0 md:px-4 md:py-10">
+			<h1 className="text-2xl font-semibold tracking-tight md:hidden">
+				{t("settings.nav.settings")}
+			</h1>
+			{settingsNavSections.map((section) => (
+				<nav key={section.labelKey} aria-label={t(section.labelKey)}>
+					<h2 className="mb-3 px-3 text-sm font-medium text-muted-foreground">
+						{t(section.labelKey)}
+					</h2>
+					<ItemGroup className="gap-1 max-md:divide-y max-md:rounded-lg max-md:border">
+						{section.items
+							.filter(
+								(item) =>
+									!item.requiresMailboxAccess ||
+									user?.canManageMailboxes === true,
+							)
+							.map((item) => {
 								const active = isActiveSettingsPath(pathname, item.href);
 								return (
-									<Link
+									<Item
+										asChild
 										key={item.href}
-										href={item.href}
+										size="sm"
 										className={cn(
-											"block rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-											active
-												? "bg-signal-soft text-signal-soft-foreground"
-												: "text-muted-foreground hover:bg-background/70 hover:text-foreground",
+											"min-h-11",
+											active && "bg-signal-soft text-signal-soft-foreground",
 										)}
 									>
-										{t(item.labelKey)}
-									</Link>
+										<Link
+											href={item.href}
+											aria-current={active ? "page" : undefined}
+										>
+											<ItemContent>
+												<ItemTitle>{t(item.labelKey)}</ItemTitle>
+											</ItemContent>
+											<ChevronRight className="size-4 text-muted-foreground md:hidden" />
+										</Link>
+									</Item>
 								);
 							})}
-						</nav>
-					</div>
-				))}
-			</div>
-		</SectionNavSheet>
+					</ItemGroup>
+				</nav>
+			))}
+		</div>
 	);
 }
