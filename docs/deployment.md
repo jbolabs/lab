@@ -1,3 +1,5 @@
+> JBO inbox operators: use [the Alchemy installation and ownership handoff](jbo-deployment.md) for `inbox.jbolabs.com`. This fork’s release scripts are guarded for that installation; the generic upstream Cloudflare guide below does not control it. Node self-hosting remains supported.
+
 # Deployment and configuration
 
 This guide covers Cloudflare deployment, runtime configuration, database backups, and application updates.

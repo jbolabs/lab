@@ -1,6 +1,7 @@
 name: MCP OAuth
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches: [main]
@@ -18,7 +19,16 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            deployment/package-lock.json
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
       - run: npm ci --no-audit --no-fund
+      - run: npm run infra:install
+      - name: Deployment types and release guards
+        run: npm run infra:check
       - run: npm run db:bundle
       - name: OAuth, backup and admin integration tests
         run: node --test tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs tests/account-alias-selection.test.mjs
@@ -27,3 +37,35 @@ jobs:
         run: npm run build
       - name: Build Node runtime without credentials
         run: npm run build:node
+
+  production:
+    needs: verify
+    if: ${{ github.repository == 'jbolabs/mailflare' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.DEPLOYS_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    concurrency:
+      group: mailflare-production
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      DEPLOYS_ENABLED: ${{ vars.DEPLOYS_ENABLED }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            deployment/package-lock.json
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+      - run: npm ci --no-audit --no-fund
+      - run: npm run infra:install
+      - name: Build and deploy the existing mail / prod stack
+        run: npm run deploy

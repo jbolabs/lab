@@ -1,0 +1,22 @@
+{
+  "name": "@jbolabs/mailflare-deployment",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "plan": "bun alchemy plan alchemy.run.ts --stage prod --no-input",
+    "plan:github": "bun alchemy plan github.ts --stage ci --no-input",
+    "deploy:github": "bun alchemy deploy github.ts --stage ci --no-input",
+    "deploy": "node ../scripts/deploy-production.mjs"
+  },
+  "devDependencies": {
+    "alchemy": "2.0.0-beta.82",
+    "effect": "4.0.4",
+    "@types/bun": "1.4.2",
+    "typescript": "6.0.3"
+  },
+  "overrides": {
+    "@effect/sql-d1": "4.0.2",
+    "@effect/sql-sqlite-do": "4.0.2"
+  }
+}
