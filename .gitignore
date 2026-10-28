@@ -63,3 +63,6 @@ mailflare-landing
 .agents
 skills-lock.json
 /dist/
+
+# Local Alchemy plan/session artifacts may contain installation state.
+.alchemy/
