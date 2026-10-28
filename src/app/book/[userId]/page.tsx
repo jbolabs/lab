@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Wordmark } from "@/components/brand";
 import { useParams } from "next/navigation";
 import { ArrowRight, Clock3, MapPin } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
@@ -30,11 +31,11 @@ export default function PublicBookingListPage() {
 		}).then((data) => { if (active) { setName(data.name); setEvents(data.events); } }).catch(() => { if (active) setError(t("public.listUnavailable")); }).finally(() => { if (active) setLoading(false); });
 		return () => { active = false; };
 	}, [query, t]);
-	return <main className="page-transition-enter flex min-h-dvh flex-col bg-sidebar p-4 lg:pt-12 text-foreground">
+	return <main className="page-transition-enter flex min-h-dvh flex-col bg-background p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:p-8 lg:pt-16 text-foreground">
 		{loading && <RouteLoadingBar />}
 		<div className="mx-auto flex w-full max-w-2xl flex-1 flex-col">
-			<div className="mb-7"><h1 className="text-2xl md:text-3xl font-semibold">{name ? t("public.bookMeetingWith", { name }) : t("public.bookMeeting")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("public.chooseMeeting")}</p></div>
-			{loading ? <BookingListSkeleton /> : error ? <p className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground shadow-sm">{error}</p> : events.length === 0 ? <p className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">{t("public.noMeetings")}</p> : <div className="page-transition-enter space-y-3">{events.map((event) => <Link key={event.id} href={username ? `/c/${username}/${event.slug}` : `/book/${userId}/${event.id}`} className="group flex items-center gap-4 rounded-2xl bg-card p-5 transition-colors"><div className="min-w-0 flex-1"><h2 className="font-semibold group-hover:text-signal">{event.name}</h2>{event.description && <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-muted-foreground">{event.description}</p>}<p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground"><span className="inline-flex items-center gap-1"><Clock3 className="h-4 w-4" />{t("public.minutesLong", { count: event.durationMinutes })}</span>{event.location && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{event.location}</span>}</p></div><ArrowRight className="h-5 w-5 text-muted-foreground/70 group-hover:text-signal" /></Link>)}</div>}
+			<div className="mb-8"><div className="mb-10"><Wordmark /></div><h1 className="text-2xl md:text-3xl font-semibold">{name ? t("public.bookMeetingWith", { name }) : t("public.bookMeeting")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("public.chooseMeeting")}</p></div>
+			{loading ? <BookingListSkeleton /> : error ? <p className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground shadow-sm">{error}</p> : events.length === 0 ? <p className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">{t("public.noMeetings")}</p> : <div className="page-transition-enter flex flex-col gap-3">{events.map((event) => <Link key={event.id} href={username ? `/c/${username}/${event.slug}` : `/book/${userId}/${event.id}`} className="group flex items-center gap-4 rounded-lg border bg-card p-5 hover:border-ring focus-visible:ring-2 focus-visible:ring-ring transition-colors"><div className="min-w-0 flex-1"><h2 className="font-semibold group-hover:text-signal">{event.name}</h2>{event.description && <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-muted-foreground">{event.description}</p>}<p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground"><span className="inline-flex items-center gap-1"><Clock3 className="size-4" />{t("public.minutesLong", { count: event.durationMinutes })}</span>{event.location && <span className="inline-flex items-center gap-1"><MapPin className="size-4" />{event.location}</span>}</p></div><ArrowRight className="size-5 text-muted-foreground/70 group-hover:text-signal" /></Link>)}</div>}
 			<div className="mt-auto flex min-w-0 flex-wrap items-center justify-between gap-3 pt-10 text-foreground/80">
 				<div className="w-44"><LanguageSelector /></div>
 				<img src={branding.iconUrl} width={24} height={24} alt={branding.appName || "Lab"} />

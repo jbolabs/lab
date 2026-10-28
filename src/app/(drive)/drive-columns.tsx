@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import clsx from "clsx";
+import { cn as clsx } from "@/lib/utils";
 import type { KeyboardEvent, PointerEvent } from "react";
 import { useLanguage } from "@/components/language-provider";
 

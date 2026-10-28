@@ -1,6 +1,7 @@
 "use client";
+import { Button } from "@/components/ui/button";
 
-import clsx from "clsx";
+import { cn as clsx } from "@/lib/utils";
 import { AlertCircle, CheckCircle2, X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import type { DriveUploadEntry } from "./drive-upload-types";
@@ -13,10 +14,10 @@ export function DriveUploadPanel({ uploads, onClose }: { uploads: DriveUploadEnt
 	const done = uploads.filter((entry) => entry.status === "done").length;
 
 	return (
-		<section aria-label={t("drive.uploads")} className="fixed bottom-4 right-4 z-[90] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+		<section aria-label={t("drive.uploads")} className="fixed bottom-4 right-4 z-[90] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
 			<header className="flex items-center justify-between gap-3 bg-muted/60 px-4 py-2.5 text-sm font-medium text-foreground">
 				<span aria-live="polite">{active ? t("drive.uploadingCount", { count: active }) : t("drive.uploaded", { count: done })}</span>
-				<button type="button" onClick={onClose} disabled={active > 0} aria-label={t("navigation.close")} className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-accent disabled:invisible"><X size={16} /></button>
+				<Button variant="ghost" type="button" onClick={onClose} disabled={active > 0} aria-label={t("navigation.close")} className= "flex size-8 items-center justify-center disabled:invisible [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"><X data-icon="inline-start" /></Button>
 			</header>
 			<ul className="max-h-64 divide-y divide-border overflow-y-auto">
 				{uploads.map((entry) => (
@@ -24,9 +25,9 @@ export function DriveUploadPanel({ uploads, onClose }: { uploads: DriveUploadEnt
 						<div className="flex items-center gap-2">
 							<span className="min-w-0 flex-1 truncate text-foreground" title={entry.name}>{entry.name}</span>
 							{entry.status === "done" && <CheckCircle2 size={16} className="shrink-0 text-green-600" aria-label={t("drive.uploadDone")} />}
-							{entry.status === "failed" && <AlertCircle size={16} className="shrink-0 text-red-600" aria-hidden="true" />}
+							{entry.status === "failed" && <AlertCircle size={16} className="shrink-0 text-destructive" aria-hidden="true" />}
 						</div>
-						{entry.status === "failed" ? <p className="mt-1 text-xs text-red-600">{entry.error ?? t("drive.uploadFailed", { name: entry.name })}</p> : (
+						{entry.status === "failed" ? <p className="mt-1 text-xs text-destructive">{entry.error ?? t("drive.uploadFailed", { name: entry.name })}</p> : (
 							<div className="mt-1.5 flex items-center gap-3">
 								<div role="progressbar" aria-label={entry.name} aria-valuemin={0} aria-valuemax={100} aria-valuenow={entry.percent} className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-accent">
 									<div className={clsx("h-full rounded-full transition-[width] duration-200", entry.status === "done" ? "bg-green-600" : "bg-primary")} style={{ width: `${entry.percent}%` }} />
