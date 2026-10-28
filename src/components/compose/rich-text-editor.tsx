@@ -15,19 +15,43 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { HintTooltip } from "@/components/hint-tooltip";
+import { Toggle } from "@/components/ui/toggle";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { EmailHtmlRenderer } from "@/components/messages/email-html-renderer";
 import { sanitizeEmailHtml, sanitizeEditorHtml } from "@/lib/email/html";
-import type { RichTextEditorProps, ToolbarCommand } from "./rich-text-editor-types";
+import type {
+	RichTextEditorProps,
+	ToolbarCommand,
+} from "./rich-text-editor-types";
 
 const COMMANDS: ToolbarCommand[] = [
 	{ command: "bold", labelKey: "editor.bold", icon: Bold },
 	{ command: "italic", labelKey: "editor.italic", icon: Italic },
 	{ command: "underline", labelKey: "editor.underline", icon: Underline },
-	{ command: "strikeThrough", labelKey: "editor.strikethrough", icon: Strikethrough },
-	{ command: "insertUnorderedList", labelKey: "editor.bulletedList", icon: List },
-	{ command: "insertOrderedList", labelKey: "editor.numberedList", icon: ListOrdered },
-	{ command: "formatBlock", labelKey: "editor.quote", icon: Quote, value: "blockquote" },
+	{
+		command: "strikeThrough",
+		labelKey: "editor.strikethrough",
+		icon: Strikethrough,
+	},
+	{
+		command: "insertUnorderedList",
+		labelKey: "editor.bulletedList",
+		icon: List,
+	},
+	{
+		command: "insertOrderedList",
+		labelKey: "editor.numberedList",
+		icon: ListOrdered,
+	},
+	{
+		command: "formatBlock",
+		labelKey: "editor.quote",
+		icon: Quote,
+		value: "blockquote",
+	},
 ];
 
 /**
@@ -137,55 +161,59 @@ export function RichTextEditor({
 
 	const formatButtons = (
 		<>
-		{COMMANDS.map((item) => (
-			<HintTooltip key={item.command} label={t(item.labelKey)}>
-				<button
+			{COMMANDS.map((item) => (
+				<HintTooltip key={item.command} label={t(item.labelKey)}>
+					<Toggle
+						type="button"
+						aria-label={t(item.labelKey)}
+						pressed={!!active[item.command]}
+						disabled={disabled}
+						onMouseDown={(event) => event.preventDefault()}
+						onClick={() => run(item.command, item.value)}
+						className="shrink-0 [@media(pointer:coarse)]:size-11"
+					>
+						<item.icon />
+					</Toggle>
+				</HintTooltip>
+			))}
+			<Separator orientation="vertical" className="mx-1 h-6" />
+			<HintTooltip label={t("editor.insertLinkHint")}>
+				<Button
+					variant="ghost"
+					size="icon"
 					type="button"
-					aria-label={t(item.labelKey)}
-					aria-pressed={!!active[item.command]}
+					aria-label={t("editor.insertLink")}
 					disabled={disabled}
 					onMouseDown={(event) => event.preventDefault()}
-					onClick={() => run(item.command, item.value)}
-					className={cn(
-						"rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground",
-						active[item.command] && "bg-accent text-foreground",
-					)}
+					onClick={openLink}
+					className="shrink-0 [@media(pointer:coarse)]:size-11"
 				>
-					<item.icon className="h-4 w-4" />
-				</button>
+					<Link2 data-icon="inline-start" />
+				</Button>
 			</HintTooltip>
-		))}
-		<HintTooltip label={t("editor.insertLinkHint")}>
-			<button
-				type="button"
-				aria-label={t("editor.insertLink")}
-				disabled={disabled}
-				onMouseDown={(event) => event.preventDefault()}
-				onClick={openLink}
-				className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-			>
-				<Link2 className="h-4 w-4" />
-			</button>
-		</HintTooltip>
-		<HintTooltip label={t("editor.clearFormatting")}>
-			<button
-				type="button"
-				aria-label={t("editor.clearFormatting")}
-				disabled={disabled}
-				onMouseDown={(event) => event.preventDefault()}
-				onClick={() => run("removeFormat")}
-				className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-			>
-				<RemoveFormatting className="h-4 w-4" />
-			</button>
-		</HintTooltip>
+			<HintTooltip label={t("editor.clearFormatting")}>
+				<Button
+					variant="ghost"
+					size="icon"
+					type="button"
+					aria-label={t("editor.clearFormatting")}
+					disabled={disabled}
+					onMouseDown={(event) => event.preventDefault()}
+					onClick={() => run("removeFormat")}
+					className="shrink-0 [@media(pointer:coarse)]:size-11"
+				>
+					<RemoveFormatting data-icon="inline-start" />
+				</Button>
+			</HintTooltip>
 		</>
 	);
 
 	return (
 		<div className={cn("flex min-h-0 flex-1 flex-col", className)}>
-			<div className="sticky top-0 z-10 flex shrink-0 items-center gap-0.5 overflow-x-auto bg-card px-2 py-1 md:hidden">{formatButtons}</div>
-			<div className="relative min-h-0 flex-1 overflow-y-auto">
+			<div className="sticky top-0 z-10 flex shrink-0 items-center gap-0.5 overflow-x-auto bg-card px-2 py-1 md:hidden">
+				{formatButtons}
+			</div>
+			<div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain">
 				<div
 					ref={editorRef}
 					id={id}
@@ -200,25 +228,35 @@ export function RichTextEditor({
 					onPaste={onPaste}
 					onKeyDown={onKeyDown}
 					className={cn(
-						"email-body max-w-none px-4 py-3 text-sm text-foreground outline-none",
+						"email-body max-w-none [@media(pointer:coarse)]:text-base px-4 py-3 text-sm text-foreground outline-none",
 						"min-h-32 empty:before:pointer-events-none empty:before:text-muted-foreground/70 empty:before:content-[attr(data-placeholder)]",
 						disabled && "cursor-not-allowed opacity-60",
 					)}
 				/>
 				{quotedHtml && (
 					<div className="px-4 pb-3">
-						<button
+						<Button
+							variant="ghost"
+							size="icon"
 							type="button"
 							onClick={() => setShowQuoted((open) => !open)}
 							aria-expanded={showQuoted}
-							aria-label={showQuoted ? t("editor.hideQuoted") : t("editor.showQuoted")}
+							aria-label={
+								showQuoted ? t("editor.hideQuoted") : t("editor.showQuoted")
+							}
 							className="rounded-full border border-border bg-muted px-2 text-xs leading-5 text-muted-foreground hover:bg-accent"
-							title={showQuoted ? t("editor.hideQuoted") : t("editor.showQuoted")}
+							title={
+								showQuoted ? t("editor.hideQuoted") : t("editor.showQuoted")
+							}
 						>
 							•••
-						</button>
+						</Button>
 						{showQuoted && (
-							<EmailHtmlRenderer className="mt-2" html={quotedHtml} preserveLeadingQuote />
+							<EmailHtmlRenderer
+								className="mt-2"
+								html={quotedHtml}
+								preserveLeadingQuote
+							/>
 						)}
 					</div>
 				)}
@@ -229,10 +267,10 @@ export function RichTextEditor({
 				<div className="contents max-md:hidden">{formatButtons}</div>
 				{toolbarEnd}
 				{linkOpen && (
-					<div
-						className="absolute bottom-full left-2 z-10 mb-1 flex items-center gap-2 rounded-lg border border-border bg-card p-2 shadow-lg"
-					>
-						<input
+					<div className="absolute bottom-full left-2 z-10 mb-1 flex items-center gap-2 rounded-lg border border-border bg-card p-2 shadow-lg">
+						<Input
+							inputMode="url"
+							enterKeyHint="done"
 							autoFocus
 							value={linkUrl}
 							onChange={(event) => setLinkUrl(event.target.value)}
@@ -245,11 +283,11 @@ export function RichTextEditor({
 							}}
 							placeholder="https://example.com"
 							aria-label={t("editor.insertLink")}
-							className="h-8 w-64 rounded-md border border-border px-2 text-sm outline-none focus:border-ring"
+							className="w-48 sm:w-64"
 						/>
-						<button type="button" onClick={applyLink} className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+						<Button size="sm" type="button" onClick={applyLink}>
 							{t("editor.apply")}
-						</button>
+						</Button>
 					</div>
 				)}
 			</div>

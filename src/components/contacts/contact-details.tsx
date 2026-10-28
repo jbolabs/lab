@@ -13,8 +13,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ContactAvatarForm } from "./contact-avatar-form";
-import { Label } from "@/components/ui/label";
-import type { ContactDetailsRecord, ContactDetailsTriggerProps } from "./contact-details-types";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { cn } from "@/lib/utils";
+import type {
+	ContactDetailsRecord,
+	ContactDetailsTriggerProps,
+} from "./contact-details-types";
 import {
 	fetchContactDetails,
 	updateContactName,
@@ -30,8 +34,12 @@ export function ContactDetailsTrigger({
 	const { t } = useLanguage();
 	const [open, setOpen] = useState(false);
 	const visibleLabel = label ?? name;
-	const [renamed, setRenamed] = useState<{ from: string; value: string } | null>(null);
-	const shownName = renamed?.from === visibleLabel ? renamed.value : visibleLabel;
+	const [renamed, setRenamed] = useState<{
+		from: string;
+		value: string;
+	} | null>(null);
+	const shownName =
+		renamed?.from === visibleLabel ? renamed.value : visibleLabel;
 	const [contact, setContact] = useState<ContactDetailsRecord | null>(null);
 	const [displayName, setDisplayName] = useState(name);
 	const [loading, setLoading] = useState(false);
@@ -56,7 +64,12 @@ export function ContactDetailsTrigger({
 				setDisplayName(nextContact.displayName ?? name);
 			})
 			.catch((loadError) => {
-				if (!cancelled) setError(loadError instanceof Error ? loadError.message : t("contact.loadFailed"));
+				if (!cancelled)
+					setError(
+						loadError instanceof Error
+							? loadError.message
+							: t("contact.loadFailed"),
+					);
 			})
 			.finally(() => {
 				if (!cancelled) setLoading(false);
@@ -76,11 +89,17 @@ export function ContactDetailsTrigger({
 			setContact(updated);
 			if (!label) setRenamed({ from: visibleLabel, value: nextName });
 			setOpen(false);
-			window.dispatchEvent(new CustomEvent("mailflare:contact-changed", {
-				detail: { email: updated.email, displayName: nextName },
-			}));
+			window.dispatchEvent(
+				new CustomEvent("mailflare:contact-changed", {
+					detail: { email: updated.email, displayName: nextName },
+				}),
+			);
 		} catch (saveError) {
-			setError(saveError instanceof Error ? saveError.message : t("contact.updateFailed"));
+			setError(
+				saveError instanceof Error
+					? saveError.message
+					: t("contact.updateFailed"),
+			);
 		} finally {
 			setSaving(false);
 		}
@@ -93,7 +112,10 @@ export function ContactDetailsTrigger({
 			<button
 				type="button"
 				onClick={() => handleOpenChange(true)}
-				className={`${className ?? ""} rounded-sm text-left hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+				className={cn(
+					className,
+					"rounded-sm text-left hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+				)}
 			>
 				{shownName}
 			</button>
@@ -103,49 +125,78 @@ export function ContactDetailsTrigger({
 						<DialogTitle>{t("contact.title")}</DialogTitle>
 						<DialogDescription>{t("contact.description")}</DialogDescription>
 					</DialogHeader>
-					<div className="space-y-5">
-						<div className="flex flex-col items-start gap-4">
+					<FieldGroup>
+						<Field>
 							<ContactAvatarForm
 								mailboxId={mailboxId}
 								address={address}
 								name={displayName}
 								hasAvatar={contact?.hasAvatar ?? false}
-								onAvatarChange={(hasAvatar) => setContact((current) => current ? { ...current, hasAvatar } : current)}
+								onAvatarChange={(hasAvatar) =>
+									setContact((current) =>
+										current ? { ...current, hasAvatar } : current,
+									)
+								}
 							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="contact-display-name">{t("contact.name")}</Label>
+						</Field>
+						<Field>
+							<FieldLabel htmlFor="contact-display-name">
+								{t("contact.name")}
+							</FieldLabel>
 							<Input
+								autoComplete="name"
+								enterKeyHint="done"
 								id="contact-display-name"
 								value={displayName}
 								onChange={(event) => setDisplayName(event.target.value)}
 								disabled={loading || saving}
 							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="contact-email">{t("contact.email")}</Label>
+						</Field>
+						<Field>
+							<FieldLabel htmlFor="contact-email">
+								{t("contact.email")}
+							</FieldLabel>
 							<Input
+								type="email"
 								id="contact-email"
 								value={contact?.email ?? address}
 								disabled
 							/>
-						</div>
+						</Field>
 						<div className="grid gap-3 rounded-lg bg-muted/60 p-3 text-sm sm:grid-cols-2">
 							<div>
-								<p className="text-xs font-medium uppercase text-muted-foreground">{t("contact.source")}</p>
-								<p className="mt-1 capitalize text-foreground/80">{contact?.source ?? t("contact.sourceEmail")}</p>
+								<p className="text-xs font-medium uppercase text-muted-foreground">
+									{t("contact.source")}
+								</p>
+								<p className="mt-1 capitalize text-foreground/80">
+									{contact?.source ?? t("contact.sourceEmail")}
+								</p>
 							</div>
 							<div>
-								<p className="text-xs font-medium uppercase text-muted-foreground">{t("contact.lastSeen")}</p>
+								<p className="text-xs font-medium uppercase text-muted-foreground">
+									{t("contact.lastSeen")}
+								</p>
 								<p className="mt-1 text-foreground/80">
-									{contact?.lastSeenAt ? formatUserDate(contact.lastSeenAt, { month: "short", day: "2-digit", year: "numeric" }) : t("contact.unknown")}
+									{contact?.lastSeenAt
+										? formatUserDate(contact.lastSeenAt, {
+												month: "short",
+												day: "2-digit",
+												year: "numeric",
+											})
+										: t("contact.unknown")}
 								</p>
 							</div>
 							{contact?.blocked && (
-								<p className="text-sm font-medium text-red-600">{t("contact.blocked")}</p>
+								<p className="text-sm font-medium text-destructive">
+									{t("contact.blocked")}
+								</p>
 							)}
 						</div>
-						{error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+						{error && (
+							<p role="alert" className="text-sm text-destructive">
+								{error}
+							</p>
+						)}
 						<Button
 							type="button"
 							onClick={saveContact}
@@ -153,7 +204,7 @@ export function ContactDetailsTrigger({
 						>
 							{saving ? t("contact.saving") : t("contact.save")}
 						</Button>
-					</div>
+					</FieldGroup>
 				</DialogContent>
 			</Dialog>
 		</>

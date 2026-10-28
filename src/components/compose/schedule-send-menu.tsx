@@ -1,6 +1,16 @@
 "use client";
 
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import {
+	DropdownMenu,
+	DropdownMenuTrigger,
+	DropdownMenuContent,
+	DropdownMenuLabel,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuGroup,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { ChevronDown, X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
@@ -18,7 +28,14 @@ import { useIsMobile } from "@/components/sidebar-mobile-utils";
 import { ScheduleSendSheet } from "./schedule-send-sheet";
 import { getUserTimeZone } from "@/lib/time/utils";
 
-export function ScheduleSendMenu({ disabled, value, onChange, mailboxId, from, onApplyTemplate }: ScheduleSendMenuProps) {
+export function ScheduleSendMenu({
+	disabled,
+	value,
+	onChange,
+	mailboxId,
+	from,
+	onApplyTemplate,
+}: ScheduleSendMenuProps) {
 	const { t } = useLanguage();
 	const [newTemplateOpen, setNewTemplateOpen] = useState(false);
 	const [sheetOpen, setSheetOpen] = useState(false);
@@ -38,78 +55,111 @@ export function ScheduleSendMenu({ disabled, value, onChange, mailboxId, from, o
 	if (isPhone) {
 		return (
 			<>
-				<button type="button" disabled={disabled} aria-label={t("schedule.optionsLabel")} onClick={() => setSheetOpen(true)} className="inline-flex h-8 items-center justify-center rounded-r-lg border-l border-ring bg-primary px-2 text-primary-foreground max-md:h-10 max-md:px-2.5 transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50">
-					<ChevronDown className="h-4 w-4" />
-				</button>
-				<ScheduleSendSheet open={sheetOpen} onOpenChange={setSheetOpen} value={value} onChange={onChange} onApplyTemplate={onApplyTemplate} onNewTemplate={() => setNewTemplateOpen(true)} />
-				<NewTemplateDialog open={newTemplateOpen} onOpenChange={setNewTemplateOpen} mailboxId={mailboxId} from={from} />
+				<Button
+					type="button"
+					disabled={disabled}
+					aria-label={t("schedule.optionsLabel")}
+					onClick={() => setSheetOpen(true)}
+					size="icon"
+					className="size-8 rounded-l-none border-l border-primary-foreground/20 max-md:rounded-md [@media(pointer:coarse)]:size-11"
+				>
+					<ChevronDown data-icon="inline-start" />
+				</Button>
+				<ScheduleSendSheet
+					open={sheetOpen}
+					onOpenChange={setSheetOpen}
+					value={value}
+					onChange={onChange}
+					onApplyTemplate={onApplyTemplate}
+					onNewTemplate={() => setNewTemplateOpen(true)}
+				/>
+				<NewTemplateDialog
+					open={newTemplateOpen}
+					onOpenChange={setNewTemplateOpen}
+					mailboxId={mailboxId}
+					from={from}
+				/>
 			</>
 		);
 	}
 
 	return (
 		<>
-		<DropdownMenu.Root onOpenChange={() => setPickedText(null)}>
-			<DropdownMenu.Trigger
-				type="button"
-				disabled={disabled}
-				aria-label={t("schedule.optionsLabel")}
-				className="inline-flex h-8 items-center justify-center rounded-r-lg border-l border-ring bg-primary px-2 text-primary-foreground max-md:h-10 max-md:px-2.5 transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-			>
-				<ChevronDown className="h-4 w-4" />
-			</DropdownMenu.Trigger>
-			<DropdownMenu.Portal>
-				<DropdownMenu.Content
-					align="start"
-					sideOffset={6}
-					className="z-50 min-w-56 rounded-lg border border-border bg-card p-1 text-sm shadow-lg"
-				>
-					<TemplateMenu onApply={onApplyTemplate} onNew={() => setNewTemplateOpen(true)} />
-					<DropdownMenu.Separator className="my-1 h-px bg-muted" />
-					<DropdownMenu.Label className="px-3 pb-1 pt-2 text-xs font-medium text-muted-foreground">{t("schedule.heading")}</DropdownMenu.Label>
-					{value && (
-						<>
-							<DropdownMenu.Item
-								onSelect={() => onChange(null)}
-								className="flex cursor-pointer items-center rounded-md px-3 py-2 outline-none hover:bg-accent focus:bg-accent"
+			<DropdownMenu onOpenChange={() => setPickedText(null)}>
+				<DropdownMenuTrigger asChild>
+					<Button
+						type="button"
+						disabled={disabled}
+						aria-label={t("schedule.optionsLabel")}
+						size="icon"
+						className="size-8 rounded-l-none border-l border-primary-foreground/20 max-md:rounded-md [@media(pointer:coarse)]:size-11"
+					>
+						<ChevronDown data-icon="inline-start" />
+					</Button>
+				</DropdownMenuTrigger>
+
+				<DropdownMenuContent align="start" sideOffset={6} className="min-w-64">
+					<DropdownMenuGroup>
+						<TemplateMenu
+							onApply={onApplyTemplate}
+							onNew={() => setNewTemplateOpen(true)}
+						/>
+						<DropdownMenuSeparator />
+						<DropdownMenuLabel className="px-3 pb-1 pt-2 text-xs font-medium text-muted-foreground">
+							{t("schedule.heading")}
+						</DropdownMenuLabel>
+						{value && (
+							<>
+								<DropdownMenuItem onSelect={() => onChange(null)}>
+									<X className="mr-2 h-4 w-4" />
+									{t("schedule.clear")}
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+							</>
+						)}
+						{options.map((option) => (
+							<DropdownMenuItem
+								key={option.labelKey}
+								onSelect={() => onChange(option.value)}
 							>
-								<X className="mr-2 h-4 w-4" />
-								{t("schedule.clear")}
-							</DropdownMenu.Item>
-							<DropdownMenu.Separator className="my-1 h-px bg-muted" />
-						</>
-					)}
-					{options.map((option) => (
-						<DropdownMenu.Item
-							key={option.labelKey}
-							onSelect={() => onChange(option.value)}
-							className="cursor-pointer rounded-md px-3 py-2 outline-none hover:bg-accent focus:bg-accent"
-						>
-							{t(option.labelKey)}
-							<span className="ml-2 text-xs text-muted-foreground">
-								{option.value && formatScheduledSend(option.value)}
-							</span>
-						</DropdownMenu.Item>
-					))}
-					<DropdownMenu.Separator className="my-1 h-px bg-muted" />
-					<DropdownMenu.Label className="px-3 pb-1 pt-2 text-xs font-medium text-muted-foreground">
-						{t("schedule.pick", { timeZone: getUserTimeZone() })}
-					</DropdownMenu.Label>
-					<input
-						type="datetime-local"
-						min={formatDateTimeLocal(new Date())}
-						value={pickedText ?? (value ? formatDateTimeLocal(value) : "")}
-						onChange={(event) => pick(event.target.value)}
-						onKeyDown={(event) => event.stopPropagation()}
-						aria-invalid={pastPicked}
-						aria-describedby={pastPicked ? "schedule-past-time" : undefined}
-						className="mx-2 mb-2 h-9 rounded-md border border-border px-2 text-sm outline-none focus:border-ring"
-					/>
-					{pastPicked && <p id="schedule-past-time" role="alert" className="mx-2 mb-2 text-xs text-red-600">{t("schedule.pastTime")}</p>}
-				</DropdownMenu.Content>
-			</DropdownMenu.Portal>
-		</DropdownMenu.Root>
-		<NewTemplateDialog open={newTemplateOpen} onOpenChange={setNewTemplateOpen} mailboxId={mailboxId} from={from} />
+								{t(option.labelKey)}
+								<span className="ml-2 text-xs text-muted-foreground">
+									{option.value && formatScheduledSend(option.value)}
+								</span>
+							</DropdownMenuItem>
+						))}
+						<DropdownMenuSeparator />
+						<DropdownMenuLabel className="px-3 pb-1 pt-2 text-xs font-medium text-muted-foreground">
+							{t("schedule.pick", { timeZone: getUserTimeZone() })}
+						</DropdownMenuLabel>
+						<Input
+							type="datetime-local"
+							min={formatDateTimeLocal(new Date())}
+							value={pickedText ?? (value ? formatDateTimeLocal(value) : "")}
+							onChange={(event) => pick(event.target.value)}
+							onKeyDown={(event) => event.stopPropagation()}
+							aria-invalid={pastPicked}
+							aria-describedby={pastPicked ? "schedule-past-time" : undefined}
+							className="mx-2 mb-2 h-9 rounded-md border border-border px-2 text-sm outline-none focus:border-ring"
+						/>
+						{pastPicked && (
+							<p
+								id="schedule-past-time"
+								role="alert"
+								className="mx-2 mb-2 text-xs text-destructive"
+							>
+								{t("schedule.pastTime")}
+							</p>
+						)}
+					</DropdownMenuGroup>
+				</DropdownMenuContent>
+			</DropdownMenu>
+			<NewTemplateDialog
+				open={newTemplateOpen}
+				onOpenChange={setNewTemplateOpen}
+				mailboxId={mailboxId}
+				from={from}
+			/>
 		</>
 	);
 }
