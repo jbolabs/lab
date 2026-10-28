@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
 import { CONTACT_AVATAR_CHANGED_EVENT } from "@/lib/contacts/avatar-client";
 import { normalizeEmailAddress } from "@/lib/email/address";
@@ -34,7 +35,9 @@ export function ContactAvatar({
 
 	useEffect(() => {
 		function onAvatarChanged(event: Event) {
-			const detail = (event as CustomEvent<{ email?: string; hasAvatar?: boolean }>).detail;
+			const detail = (
+				event as CustomEvent<{ email?: string; hasAvatar?: boolean }>
+			).detail;
 			if (detail?.email === normalizeEmailAddress(address)) {
 				setManagedAvatar(!!detail.hasAvatar);
 				setAvatarVersion(Date.now());
@@ -42,7 +45,8 @@ export function ContactAvatar({
 		}
 
 		window.addEventListener(CONTACT_AVATAR_CHANGED_EVENT, onAvatarChanged);
-		return () => window.removeEventListener(CONTACT_AVATAR_CHANGED_EVENT, onAvatarChanged);
+		return () =>
+			window.removeEventListener(CONTACT_AVATAR_CHANGED_EVENT, onAvatarChanged);
 	}, [address]);
 
 	useEffect(() => {
@@ -52,19 +56,28 @@ export function ContactAvatar({
 			return;
 		}
 		if (managedAvatar && mailboxId) {
-			setAvatarUrl(getManagedContactAvatarUrl(mailboxId, address, avatarVersion));
+			setAvatarUrl(
+				getManagedContactAvatarUrl(mailboxId, address, avatarVersion),
+			);
 			return;
 		}
 		setAvatarUrl(null);
 	}, [address, avatarVersion, mailboxId, managedAvatar, managedAvatarUrl]);
 
 	return (
-		<span
-			className={cn("relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-foreground/80", className)}
+		<Avatar
+			className={cn(
+				"relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-foreground/80",
+				className,
+			)}
 			style={getAvatarColorStyle(normalizeEmailAddress(address) || name)}
 			aria-hidden
 		>
-			{getContactAvatarInitial(name, address)}
+			<AvatarFallback
+				style={getAvatarColorStyle(normalizeEmailAddress(address) || name)}
+			>
+				{getContactAvatarInitial(name, address)}
+			</AvatarFallback>
 			{avatarUrl && !imageFailed && (
 				<ProgressiveAvatarImage
 					src={avatarUrl}
@@ -77,6 +90,6 @@ export function ContactAvatar({
 					}}
 				/>
 			)}
-		</span>
+		</Avatar>
 	);
 }
