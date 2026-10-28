@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "tsc --noEmit && bun node_modules/alchemy/bin/cli.js --help",
+    "check": "tsc --noEmit && bun node_modules/alchemy/bin/cli.js --help && bun check-runtime.ts",
     "plan": "bun alchemy plan alchemy.run.ts --stage prod --no-input",
     "plan:github": "bun alchemy plan github.ts --stage ci --no-input",
     "deploy:github": "bun alchemy deploy github.ts --stage ci --no-input",
@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@effect/platform-bun": "4.0.4",
+    "@effect/platform-node": "4.0.4",
     "alchemy": "2.0.0-beta.82",
     "effect": "4.0.4",
     "@types/bun": "1.4.2",
