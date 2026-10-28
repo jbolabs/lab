@@ -40,7 +40,7 @@ export function MessageSourceDialog({ messageId, open, onOpenChange }: MessageSo
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-h-[90vh] w-[min(960px,calc(100vw-32px))] overflow-y-auto">
+			<DialogContent className="max-h-[90dvh] w-[min(960px,calc(100vw-32px))] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>{t("source.title")}</DialogTitle>
 					<DialogDescription>{t("source.description")}</DialogDescription>
@@ -48,7 +48,7 @@ export function MessageSourceDialog({ messageId, open, onOpenChange }: MessageSo
 				{loading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><LoaderCircle className="h-4 w-4 animate-spin" />{t("source.loading")}</div>}
 				{error && <p className="text-sm text-muted-foreground">{error}</p>}
 				{source !== null && summary && (
-					<div className="space-y-5">
+					<div className="flex flex-col gap-5">
 						<div className="overflow-hidden rounded-lg border border-border text-sm">
 							{([
 								["messageId", summary.messageId],
@@ -76,13 +76,13 @@ export function MessageSourceDialog({ messageId, open, onOpenChange }: MessageSo
 							})}
 						</div>
 						<div className="flex flex-wrap items-center justify-between gap-3">
-							<Button type="button" variant="ghost" size="sm" className="text-signal hover:text-signal" onClick={() => downloadMessageSource(source, messageId)}><Download className="h-4 w-4" />{t("source.download")}</Button>
+							<Button type="button" variant="ghost" size="sm"  onClick={() => downloadMessageSource(source, messageId)}><Download data-icon="inline-start" />{t("source.download")}</Button>
 							<div className="flex items-center gap-2">
 								{copyError && <span role="alert" className="text-xs text-red-600">{t("source.couldNotCopy")}</span>}
-								<Button type="button" size="sm" onClick={() => { void copyMessageSource(source).then(() => { setCopied(true); setCopyError(false); }).catch(() => { setCopied(false); setCopyError(true); }); }}><Copy className="h-4 w-4" />{copied ? t("source.copied") : t("source.copy")}</Button>
+								<Button type="button" size="sm" onClick={() => { void copyMessageSource(source).then(() => { setCopied(true); setCopyError(false); }).catch(() => { setCopied(false); setCopyError(true); }); }}><Copy data-icon="inline-start" />{copied ? t("source.copied") : t("source.copy")}</Button>
 							</div>
 						</div>
-						<pre className="max-h-[40vh] overflow-auto rounded-lg border border-border bg-muted/60 p-4 font-mono text-xs leading-relaxed text-foreground/80 whitespace-pre">{source}</pre>
+						<pre className="max-h-[40dvh] overflow-auto rounded-lg border border-border bg-muted/60 p-4 font-mono text-xs leading-relaxed text-foreground/80 whitespace-pre">{source}</pre>
 					</div>
 				)}
 			</DialogContent>

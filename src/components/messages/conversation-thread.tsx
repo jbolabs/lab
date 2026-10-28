@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { formatUserDate } from "@/lib/time/utils";
 import { ChevronsUpDown, Paperclip } from "lucide-react";
-import { ContactAvatar } from "@/components/contacts/contact-avatar";
+import { Button } from "@/components/ui/button";
+import { Item } from "@/components/ui/item";
+import { MessageAvatar } from "@/components/messages/message-avatar";
 import { QuotedEmailToggle } from "@/components/messages/quoted-email-toggle";
 import { runSingleMessageAction } from "@/components/message-actions/utils";
 import { EmailHtmlRenderer } from "./email-html-renderer";
@@ -70,15 +72,15 @@ export function ConversationThread({
 					<li className="flex items-center justify-center gap-1 py-2 text-center border-y border-border h-px my-4">
 						<span className="bg-card px-6 flex flex-row items-center gap-2">
 							<span className="text-sm font-medium text-muted-foreground">{collapsedLabel}</span>
-							<button
+							<Button variant="ghost" size="icon"
 								type="button"
 								onClick={() => onExpandedAllChange(true)}
 								aria-label={t("thread.expand", { label: collapsedLabel })}
 								title={t("thread.expand", { label: collapsedLabel })}
-								className="inline-flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+								className="pointer-coarse:size-11"
 							>
 								<ChevronsUpDown className="h-4 w-4" />
-							</button>
+							</Button>
 						</span>
 					</li>
 				) : (
@@ -164,9 +166,9 @@ export function ConversationMessageCard({
 							void runSingleMessageAction(message.id, "read").catch(() => setLocallyRead(false));
 						}}
 						aria-expanded={expanded}
-						className="flex min-w-0 flex-1 basis-40 items-center gap-3 text-left cursor-pointer"
+						className="flex min-h-11 min-w-0 flex-1 basis-40 items-center gap-3 text-left cursor-pointer"
 					>
-						<ContactAvatar
+						<MessageAvatar
 							mailboxId={mailboxId}
 							address={message.fromAddr}
 							name={sender}
@@ -201,9 +203,9 @@ export function ConversationMessageCard({
 					<div className={clsx("sm:hidden flex w-full items-center gap-2 pl-12 text-xs", locallyRead ? "text-muted-foreground" : "font-semibold text-foreground/80")}>
 						{attachments.length > 0 && <Paperclip className="h-3.5 w-3.5" aria-label={t("thread.attachmentCount", { count: attachments.length })} />}
 						<span>{formatUserDate(message.createdAt, { month: "short", day: "2-digit", year: "numeric" })}</span>
-							<button type="button" className="text-signal hover:underline" aria-expanded={detailsOpen} onClick={() => setDetailsOpen((open) => !open)}>
+							<Button variant="link" size="sm" type="button" className="min-h-11" aria-expanded={detailsOpen} onClick={() => setDetailsOpen((open) => !open)}>
 							{t("message.details")}
-						</button>
+						</Button>
 					</div>
 					{detailsOpen && (
 						<dl className="sm:hidden w-full space-y-0.5 break-words pt-2 text-xs text-muted-foreground">
@@ -225,13 +227,13 @@ export function ConversationMessageCard({
 							<ul className="mt-4 flex flex-wrap gap-2">
 								{attachments.map((attachment) => (
 									<li key={attachment.id}>
-										<a
+										<Item variant="outline" size="sm" asChild><a
 											href={`/api/messages/${message.id}/attachments/${attachment.id}`}
-											className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1 text-xs text-foreground/80 hover:bg-accent/60"
+											className="min-h-11"
 										>
 											<Paperclip className="h-3 w-3" />
 											<span className="max-w-48 truncate">{attachment.filename}</span>
-										</a>
+										</a></Item>
 									</li>
 								))}
 							</ul>

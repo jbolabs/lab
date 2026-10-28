@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLanguage } from "@/components/language-provider";
 import { authFetch } from "@/lib/auth/client";
+import { SkeletonRows } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SendReview } from "@/components/agent/send-review";
 import type { AgentReviewResponse } from "@/components/agent/send-review-types";
 
@@ -22,8 +24,8 @@ export default function AgentReviewPage() {
 	}, [id, t]);
 	return <div className="p-8">
 		<h1 className="text-2xl font-semibold">{t("agent.review.title")}</h1>
-		{error && <p role="alert" className="mt-4 text-red-600">{error}</p>}
-		{!error && !request && <p className="mt-4">{t("agent.review.loading")}</p>}
+		{error && <Alert variant="destructive" className="mt-4"><AlertDescription>{error}</AlertDescription></Alert>}
+		{!error && !request && <div className="mt-4" aria-label={t("agent.review.loading")}><SkeletonRows count={3} /></div>}
 		{request && (request.status !== "pending" || request.stale || !request.snapshot) && <p className="mt-4">{request.stale ? t("agent.review.stale") : t("agent.review.status", { status: request.status })}</p>}
 		{request?.status === "pending" && !request.stale && request.snapshot && <SendReview approvalId={id} snapshot={request.snapshot} onClose={() => router.push("/drafts")} onSent={() => router.push("/sent")} />}
 	</div>;

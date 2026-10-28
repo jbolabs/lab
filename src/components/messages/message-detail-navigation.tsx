@@ -77,18 +77,18 @@ export function MessageDetailNavigation({ messageId, unread }: MessageDetailNavi
 	return (
 		<div className="ml-auto flex shrink-0 items-center gap-2 text-muted-foreground">
 			{totalUnread > 0 && (
-			<span className="mr-2 whitespace-nowrap text-xs" aria-live="polite">
+			<span className="mr-2 hidden whitespace-nowrap text-xs sm:inline" aria-live="polite">
 				{t("message.nav.unreadPosition", { position: unreadOrder, total: totalUnread })}
 			</span>
 			)}
 			<HintTooltip label={t("message.nav.newer")}>
-				<Button type="button" variant="ghost" size="roundedSM" aria-label={t("message.nav.newer")} disabled={!previousId} onClick={() => previousId && router.push(`${context.hrefPrefix}/${previousId}`)}>
-					<ChevronLeft size={18} />
+				<Button type="button" variant="ghost" size="icon" className="pointer-coarse:size-11" aria-label={t("message.nav.newer")} disabled={!previousId} onClick={() => previousId && router.push(`${context.hrefPrefix}/${previousId}`)}>
+					<ChevronLeft data-icon="inline-start" />
 				</Button>
 			</HintTooltip>
 			<HintTooltip label={t("message.nav.older")}>
-				<Button type="button" variant="ghost" size="roundedSM" aria-label={t("message.nav.older")} disabled={!nextId} onClick={() => nextId && router.push(`${context.hrefPrefix}/${nextId}`)}>
-					<ChevronRight size={18} />
+				<Button type="button" variant="ghost" size="icon" className="pointer-coarse:size-11" aria-label={t("message.nav.older")} disabled={!nextId} onClick={() => nextId && router.push(`${context.hrefPrefix}/${nextId}`)}>
+					<ChevronRight data-icon="inline-start" />
 				</Button>
 			</HintTooltip>
 		</div>
