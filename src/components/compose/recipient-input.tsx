@@ -64,7 +64,7 @@ export function RecipientInput({
 
 	return (
 		<div
-			className="flex min-h-9 items-center gap-2 border-b border-border px-4 py-1"
+			className="flex min-h-9 items-center gap-2 border-b border-border px-4 py-1 max-md:min-h-12 max-md:py-1.5"
 			onClick={() => inputRef.current?.focus()}
 		>
 			<Label
@@ -81,7 +81,7 @@ export function RecipientInput({
 							variant={valid ? "secondary" : "destructive"}
 							key={entry}
 							title={getEmailAddress(entry)}
-							className="max-w-full gap-1 rounded-full"
+							className="max-w-full gap-1 rounded-full pointer-coarse:h-7 pointer-coarse:pl-2.5 pointer-coarse:pr-1 pointer-coarse:text-[13px]"
 						>
 							<span className="truncate">{getRecipientLabel(entry)}</span>
 							{!disabled && (
@@ -92,7 +92,8 @@ export function RecipientInput({
 									aria-label={t("recipient.remove", {
 										address: getEmailAddress(entry),
 									})}
-									className="size-5 rounded-full [@media(pointer:coarse)]:size-11"
+									// The visible button stays chip-sized; the ::after inset gives touch its 44pt target.
+									className="relative size-5 rounded-full after:absolute after:-inset-3"
 									onClick={(event) => {
 										event.stopPropagation();
 										onChange(value.filter((item) => item !== entry));
@@ -104,7 +105,7 @@ export function RecipientInput({
 						</Badge>
 					);
 				})}
-				<InputGroup className="h-auto min-w-32 flex-1 border-0 bg-transparent shadow-none dark:bg-transparent has-[[data-slot=input-group-control]:focus-visible]:ring-0">
+				<InputGroup className="h-auto min-w-24 flex-1 border-0 bg-transparent shadow-none dark:bg-transparent has-[[data-slot=input-group-control]:focus-visible]:ring-0">
 					<InputGroupInput
 						ref={inputRef}
 						id={id}

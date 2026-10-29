@@ -27,7 +27,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme={theme}
       position="bottom-center"
       offset={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
-      mobileOffset={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
+      // Phones: sit above the floating Compose button (min-h-14 plus its gap) so toast actions never land on it.
+      mobileOffset={{ bottom: "calc(max(1rem, env(safe-area-inset-bottom)) + 4.5rem)" }}
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

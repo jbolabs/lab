@@ -7,13 +7,16 @@ import { useLanguage } from "@/components/language-provider";
 import { HeaderSearch } from "@/components/header-search";
 import { useMailSearch } from "./mail-search-context";
 import { useShortcuts } from "@/components/shortcuts";
+import { useIsMobile } from "@/components/sidebar-mobile-utils";
 
 export function MailSearchInput({ mobileEnd }: { mobileEnd?: boolean }) {
 	const { t } = useLanguage();
 	const { input: query, setQuery } = useMailSearch();
 	const { openCommandPalette, shortcutsEnabled, shortcutsPreferenceLoading } =
 		useShortcuts();
-	const showShortcutHints = shortcutsEnabled && !shortcutsPreferenceLoading;
+	// Keyboard hints mean nothing on a phone, and the long placeholder crowds its search bar.
+	const isMobile = useIsMobile();
+	const showShortcutHints = shortcutsEnabled && !shortcutsPreferenceLoading && !isMobile;
 
 	return (
 		<HeaderSearch

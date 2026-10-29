@@ -18,7 +18,7 @@ import { MessageDetailSkeleton } from "@/components/page-skeletons";
 import { usePageLoading } from "@/components/page-loading";
 import { PreviousMessage } from "@/components/previous-message";
 import { ConversationThread } from "@/components/messages/conversation-thread";
-import { MessageDetailNavigation } from "@/components/messages/message-detail-navigation";
+import { MessageDetailNavigation, useMessageSwipeNavigation } from "@/components/messages/message-detail-navigation";
 import { MessageReadingHeaderButton } from "@/components/messages/message-reading-header-button";
 import { ScheduledSendBanner } from "@/components/messages/scheduled-send-banner";
 import { formatScheduledSendTime } from "@/components/messages/scheduled-send-utils";
@@ -71,6 +71,7 @@ export default function MessageDetailPage() {
   const assistantVisible = useAssistantOpen();
   const isAnyPanelVisible = messageListVisible || assistantVisible;
   const { scrollRef, scrolled, handleScroll } = useMessageContentScroll(messageId, loading);
+  useMessageSwipeNavigation(scrollRef, messageId, !loading && !!data?.message);
 
   useEffect(() => {
     let cancelled = false;

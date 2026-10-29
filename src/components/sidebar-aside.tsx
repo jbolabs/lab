@@ -2,7 +2,7 @@
 
 import { Menu } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useRef, useState, type ReactNode, type TouchEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -10,6 +10,10 @@ import { useSidebar } from "./sidebar-state";
 import { useLanguage } from "./language-provider";
 import { BrandMark } from "./brand";
 import { APP_NAME } from "@/lib/app-identity";
+import { haptic } from "@/lib/haptics";
+import { EdgeSwipe } from "./edge-swipe";
+
+const DRAWER_CLOSE_DISTANCE = 64;
 
 export function SidebarAside({
 	children,
@@ -20,8 +24,35 @@ export function SidebarAside({
 }) {
 	const { mobile, mobileOpen, toggle } = useSidebar();
 	const { t } = useLanguage();
+	// The open drawer follows a leftward drag and closes past DRAWER_CLOSE_DISTANCE, like a native one.
+	const dragStart = useRef<{ x: number; y: number; horizontal: boolean | null } | null>(null);
+	const [dragX, setDragX] = useState(0);
+	const drawerDrag = {
+		onTouchStart(event: TouchEvent) {
+			dragStart.current = { x: event.touches[0].clientX, y: event.touches[0].clientY, horizontal: null };
+		},
+		onTouchMove(event: TouchEvent) {
+			const start = dragStart.current;
+			if (!start) return;
+			const dx = event.touches[0].clientX - start.x;
+			const dy = event.touches[0].clientY - start.y;
+			if (start.horizontal === null && Math.max(Math.abs(dx), Math.abs(dy)) > 8) start.horizontal = Math.abs(dx) > Math.abs(dy) && dx < 0;
+			if (start.horizontal) setDragX(Math.min(0, dx));
+		},
+		onTouchEnd() {
+			const close = dragX <= -DRAWER_CLOSE_DISTANCE;
+			dragStart.current = null;
+			setDragX(0);
+			if (close) {
+				haptic("selection");
+				toggle();
+			}
+		},
+	};
 	if (mobile)
 		return (
+			<>
+			<EdgeSwipe disabled={mobileOpen} onOpenMenu={() => { if (!mobileOpen) toggle(); }} />
 			<Sheet
 				open={mobileOpen}
 				onOpenChange={(open) => {
@@ -40,6 +71,9 @@ export function SidebarAside({
 						"w-[min(85vw,320px)] gap-0 bg-sidebar text-sidebar-foreground pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
 						className,
 					)}
+					style={dragX ? { transform: `translateX(${dragX}px)`, transition: "none" } : undefined}
+					{...drawerDrag}
+					onTouchCancel={drawerDrag.onTouchEnd}
 				>
 					<SheetTitle className="sr-only">
 						{t("navigation.openMenu")}
@@ -47,6 +81,7 @@ export function SidebarAside({
 					{children}
 				</SheetContent>
 			</Sheet>
+			</>
 		);
 	return (
 		<aside

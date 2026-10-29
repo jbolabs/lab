@@ -1,4 +1,4 @@
-import { Archive, Clock, CalendarClock, MailOpen, Send, ShieldAlert, Star, Trash2 } from "lucide-react";
+import { Archive, Clock, CalendarClock, Inbox, MailOpen, Send, ShieldAlert, Star, Trash2 } from "lucide-react";
 import type { MessageFolderConfig } from "./types";
 
 export const inboxFolderConfig: MessageFolderConfig = {
@@ -8,7 +8,7 @@ export const inboxFolderConfig: MessageFolderConfig = {
 	emptyTextKey: "folder.empty.inbox",
 	emptyText: "No emails",
 	hrefPrefix: "/inbox",
-	icon: Star,
+	icon: Inbox,
 	// headerIcons: [MailOpen, Clock],
 	showRowBadge: false,
 };

@@ -28,10 +28,12 @@ export type MessageListRowProps = {
 	currentAccountName?: string;
 	onSelectedChange: (messageId: string, selected: boolean) => void;
 	onMessageAction: (messageId: string, action: RowMessageAction) => Promise<void>;
+	// While anything is selected on a phone, tapping a row toggles it instead of opening it.
+	selectionMode?: boolean;
 	dragMessageIds: string[];
 };
 
-export type RowMessageAction = "archive" | "trash" | "read" | "unread";
+export type RowMessageAction = "archive" | "trash" | "read" | "unread" | "inbox";
 
 export type MessageListRowActionsProps = {
 	message: Message;

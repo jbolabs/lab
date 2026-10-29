@@ -53,7 +53,7 @@ export function BulkMessageToolbar({
 				</span>
 			)}
 			<span className="flex-1 md:hidden" />
-			<HintTooltip label={archive.label} className="max-md:hidden">
+			<HintTooltip label={archive.label}>
 				<Button variant="ghost" size="icon" onClick={() => onAction(archive.action as BulkMessageAction)} disabled={pending} aria-label={archive.label}>
 					<archive.Icon data-icon="inline-start" />
 				</Button>
@@ -117,18 +117,17 @@ export function BulkMessageToolbar({
 					</Group></Content>
 
 			</Root>
-			<HintTooltip label={t("common.clearSelection")} className="max-md:hidden">
-				<Button variant="ghost" size="icon" onClick={onClearSelection} disabled={pending} aria-label={t("common.clearSelection")}>
+			{/* Phones lead with it, like the close button of a native selection bar. */}
+			<HintTooltip label={t("common.clearSelection")} className="max-md:order-first">
+				<Button variant="ghost" size="icon" className="max-md:-ml-2" onClick={onClearSelection} disabled={pending} aria-label={t("common.clearSelection")}>
 					<X data-icon="inline-start" />
 				</Button>
 			</HintTooltip>
 			<div className="md:hidden"><MessageActionMenu open={moreOpen} onOpenChange={setMoreOpen} disabled={pending} actions={[
-				{ label: archive.label, icon: <archive.Icon data-icon="inline-start" />, onSelect: () => void onAction(archive.action as BulkMessageAction) },
 				{ label: spam.label, icon: <spam.Icon data-icon="inline-start" />, onSelect: () => void onAction(spam.action as BulkMessageAction) },
 				...moveOptions.map(option => ({ label: `${t("common.moveTo")} ${option.label}`, icon: <option.Icon data-icon="inline-start" />, onSelect: () => void onAction(option.value as BulkMessageAction) })),
 				...folders.map(folder => ({ label: `${t("common.moveTo")} ${folder.name}`, icon: <Folder data-icon="inline-start" />, onSelect: () => void onAction("folder", folder.id) })),
 				...(canDeleteForever ? [{ label: t("common.deleteForever"), icon: <Trash2 data-icon="inline-start" />, onSelect: () => void onAction("delete") }] : []),
-				{ label: t("common.clearSelection"), icon: <X data-icon="inline-start" />, onSelect: onClearSelection },
 			]} /></div>
 		</div>
 	);

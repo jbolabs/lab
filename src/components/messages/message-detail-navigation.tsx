@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
@@ -12,6 +12,8 @@ import type { MessageNavigationResponse } from "@/app/api/messages/navigation/ty
 import type { MessageDetailNavigationContextValue, MessageDetailNavigationProps, MessageDetailNavigationProviderProps, MessageDetailNavigationSnapshot, OpenedUnreadMessages } from "./message-detail-navigation-types";
 import { getMessageDetailNavigationState, takeOpenedUnreadMessage } from "./message-detail-navigation-utils";
 import { useConversationView } from "./use-conversation-view";
+import { haptic } from "@/lib/haptics";
+import { isEdgeSwipeStart } from "@/lib/edge-swipe-utils";
 
 const NavigationContext = createContext<MessageDetailNavigationContextValue | null>(null);
 
@@ -93,4 +95,112 @@ export function MessageDetailNavigation({ messageId, unread }: MessageDetailNavi
 			</HintTooltip>
 		</div>
 	);
+}
+
+const SWIPE_COMMIT_DISTANCE = 96;
+
+// Whether an element under the finger can still scroll horizontally that way (a wide table, code);
+// if so the swipe is its, as in a native reader.
+function canScrollHorizontally(path: EventTarget[], stopAt: HTMLElement, dx: number) {
+	for (const target of path) {
+		if (!(target instanceof HTMLElement)) continue;
+		if (target.scrollWidth > target.clientWidth + 1 && /auto|scroll/.test(getComputedStyle(target).overflowX)) {
+			if (dx < 0 && target.scrollLeft + target.clientWidth < target.scrollWidth - 1) return true;
+			if (dx > 0 && target.scrollLeft > 0) return true;
+		}
+		if (target === stopAt) break;
+	}
+	return false;
+}
+
+/** Phones: swipe the open message sideways to reach the newer (right) or older (left) one, as in Gmail. */
+export function useMessageSwipeNavigation(scroller: RefObject<HTMLElement | null>, messageId: string, ready: boolean) {
+	const context = useContext(NavigationContext);
+	const router = useRouter();
+	const { previousId, nextId } = context ? getMessageDetailNavigationState(context.entries, messageId) : { previousId: null, nextId: null };
+	const hrefs = useRef({ newer: null as string | null, older: null as string | null });
+	hrefs.current = {
+		newer: context && previousId ? `${context.hrefPrefix}/${previousId}` : null,
+		older: context && nextId ? `${context.hrefPrefix}/${nextId}` : null,
+	};
+
+	useEffect(() => {
+		const element = scroller.current;
+		if (!element || !ready) return;
+		const target = element;
+		target.style.transform = "";
+		target.style.opacity = "";
+		target.style.transition = "";
+		let start: { x: number; y: number } | null = null;
+		let state: "pending" | "swiping" | "ignored" = "pending";
+		let dx = 0;
+		let armed = false;
+
+		function setVisual(x: number, animate: boolean) {
+			target.style.transition = animate ? "transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 180ms ease-out" : "none";
+			target.style.transform = x ? `translateX(${x}px)` : "";
+			target.style.opacity = x ? String(Math.max(0.4, 1 - Math.abs(x) / target.clientWidth)) : "";
+		}
+		function onTouchStart(event: TouchEvent) {
+			const touch = event.touches[0];
+			start = event.touches.length === 1 && !isEdgeSwipeStart(touch.clientX) ? { x: touch.clientX, y: touch.clientY } : null;
+			state = "pending";
+			dx = 0;
+			armed = false;
+		}
+		function onTouchMove(event: TouchEvent) {
+			if (!start || state === "ignored") return;
+			const touch = event.touches[0];
+			const moveX = touch.clientX - start.x;
+			const moveY = touch.clientY - start.y;
+			if (state === "pending") {
+				if (Math.abs(moveY) > 10 && Math.abs(moveY) > Math.abs(moveX)) { state = "ignored"; return; }
+				if (Math.abs(moveX) < 12) return;
+				if (canScrollHorizontally(event.composedPath(), target, moveX)) { state = "ignored"; return; }
+				state = "swiping";
+			}
+			const destination = moveX > 0 ? hrefs.current.newer : hrefs.current.older;
+			// No message that way: resist, like the end of a native pager.
+			dx = destination ? moveX : moveX * 0.2;
+			const nowArmed = !!destination && Math.abs(dx) >= SWIPE_COMMIT_DISTANCE;
+			if (nowArmed !== armed) {
+				armed = nowArmed;
+				haptic("selection");
+			}
+			setVisual(dx, false);
+		}
+		function onTouchEnd() {
+			if (state !== "swiping") return;
+			const destination = dx > 0 ? hrefs.current.newer : hrefs.current.older;
+			if (armed && destination) {
+				haptic("impact");
+				setVisual(Math.sign(dx) * target.clientWidth, true);
+				router.push(destination);
+			} else {
+				setVisual(0, true);
+			}
+			start = null;
+			state = "pending";
+		}
+		// An interrupted gesture never navigates; it only springs back.
+		function onTouchCancel() {
+			if (state === "swiping") setVisual(0, true);
+			start = null;
+			state = "pending";
+		}
+
+		target.addEventListener("touchstart", onTouchStart, { passive: true });
+		target.addEventListener("touchmove", onTouchMove, { passive: true });
+		target.addEventListener("touchend", onTouchEnd, { passive: true });
+		target.addEventListener("touchcancel", onTouchCancel, { passive: true });
+		return () => {
+			target.removeEventListener("touchstart", onTouchStart);
+			target.removeEventListener("touchmove", onTouchMove);
+			target.removeEventListener("touchend", onTouchEnd);
+			target.removeEventListener("touchcancel", onTouchCancel);
+			target.style.transform = "";
+			target.style.opacity = "";
+			target.style.transition = "";
+		};
+	}, [scroller, messageId, ready, router]);
 }

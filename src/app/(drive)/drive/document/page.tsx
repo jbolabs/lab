@@ -97,7 +97,7 @@ function DocumentEditor({ userId, id, parentId }: { userId: string; id: string |
 	const segment = (active: boolean) => clsx("min-h-11 rounded-full px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground");
 	return <div className="flex h-full min-h-0 flex-col rounded-t-3xl bg-card text-foreground" onKeyDown={(event) => { if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "s") { event.preventDefault(); void save(); } }}>
 		<header className="flex min-h-[4.25rem] shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-3 py-3 sm:px-5">
-			<Link href={backHref} aria-label={t("docs.back")} title={t("docs.back")} className="flex size-11 shrink-0 items-center justify-center rounded-full text-foreground/80 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ArrowLeft size={20} /></Link>
+			<Link href={backHref} data-edge-swipe-back aria-label={t("docs.back")} title={t("docs.back")} className="flex size-11 shrink-0 items-center justify-center rounded-full text-foreground/80 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><ArrowLeft size={20} /></Link>
 			<div className="flex min-w-0 flex-1 items-center gap-2">
 				<FileText size={18} aria-hidden="true" className="hidden shrink-0 text-signal sm:block" />
 				{loading ? <Skeleton className="h-6 w-48" /> : fileId ? <h1 className="min-w-0 truncate text-lg text-foreground" title={name}>{name}</h1>

@@ -4,9 +4,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useMessageConfirmation } from "./use-message-confirmation";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
-import { Archive, ChevronLeft, ChevronRight, ListFilter, Mail, MailOpen, Trash2, Star } from "lucide-react";
+import { Archive, Check, ChevronLeft, ChevronRight, ListFilter, Mail, MailOpen, Trash2, Star } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,6 +23,11 @@ import type { Message } from "@/hooks/types";
 import { setMessageDragData } from "@/lib/messages/drag-utils";
 import { BulkMessageToolbar } from "./bulk-message-toolbar";
 import { SwipeableRow } from "./swipeable-row";
+import { PullToRefresh } from "./pull-to-refresh";
+import { useLongPress } from "./use-long-press";
+import { haptic } from "@/lib/haptics";
+import { MessageAvatar } from "./message-avatar";
+import { splitEmailAddressList } from "@/lib/email/address";
 import { MessageListRowActions } from "./message-list-row-actions";
 import { dispatchMessageCountsDelta, toggleMessageStar } from "./message-list-row-actions-utils";
 import { MessageNavigationProgress, useMessageNavigation } from "./message-navigation";
@@ -67,6 +72,7 @@ function MessageListRow({
 	onSelectedChange,
 	onMessageAction,
 	dragMessageIds,
+	selectionMode = false,
 }: MessageListRowProps) {
 	const { t } = useLanguage();
 	const Icon = config.icon;
@@ -113,8 +119,39 @@ function MessageListRow({
 	}
 
 	const swipeable = compact && (config.folder === "inbox" || config.folder === "snoozed") && message.direction === "inbound";
+	const avatarAddress = message.direction === "inbound" ? message.fromAddr : splitEmailAddressList(message.toAddr)[0] ?? "";
+	const longPress = useLongPress(() => onSelectedChange(message.id, !selected), compact && config.folder !== "drafts");
+
+	function toggleStar() {
+		haptic("selection");
+		void toggleMessageStar(message.id).then((result) => setStarred(result.starred)).catch(() => toast.error(t("message.error.star")));
+	}
+
+	// Gmail's snackbar: the row is already gone, so offer to put it back. Undo returns it to the
+	// inbox, which would also clear a snooze, so it is only offered from the inbox itself.
+	function archiveFromSwipe(restore: () => void) {
+		void runRowAction("archive").then(() => {
+			if (config.folder !== "inbox" || config.folderId) return;
+			toast(t("list.archived"), {
+				duration: 6000,
+				action: {
+					label: t("common.undo"),
+					onClick: () => {
+						restore();
+						void onMessageAction(message.id, "inbox").catch(() => undefined);
+					},
+				},
+			});
+		}).catch(restore);
+	}
 
 	function onMessageNavigate(event: MouseEvent<HTMLAnchorElement>) {
+		if (selectionMode) {
+			event.preventDefault();
+			haptic("selection");
+			onSelectedChange(message.id, !selected);
+			return;
+		}
 		if (!read && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
 			rememberOpenedUnreadMessage(message.id);
 			const previousThreadUnread = threadUnread;
@@ -134,12 +171,13 @@ function MessageListRow({
 		const compactRow = (
 			<div
 				role={swipeable ? undefined : "listitem"}
-				className={`group grid grid-cols-[28px_minmax(0,1fr)_32px] gap-2 border-l-2 px-4 py-3 transition-colors ${active
+				className={`group relative grid grid-cols-[40px_minmax(0,1fr)_auto] gap-x-3 border-l-2 py-3 pl-4 pr-2 has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-inset has-[a:focus-visible]:ring-ring transition-colors select-none [-webkit-touch-callout:none] pointer-coarse:active:bg-accent/60 pointer-coarse:active:delay-75 ${active
 					? "border-l-signal bg-signal-soft"
 					: selected
 						? "border-l-transparent bg-muted/60"
 						: "border-l-transparent hover:bg-accent/60"
 					} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
+				{...longPress}
 				draggable={draggable}
 				onDragStart={(event) => {
 					if (!draggable) return;
@@ -147,43 +185,61 @@ function MessageListRow({
 				}}
 			>
 				<MessageNavigationProgress progress={navigation.progress} />
-				<Checkbox
-					checked={selected}
-					onCheckedChange={(checked) => onSelectedChange(message.id, (checked === true))}
-					className="mt-1 relative after:absolute after:-inset-3.5"
+				{/* Gmail's pattern: the sender's avatar is the selection control, and turns into a check when selected. */}
+				<button
+					type="button"
+					role="checkbox"
+					aria-checked={selected}
 					aria-label={t("list.selectFrom", { sender: party })}
-				/>
-				<Link href={href} onClick={config.folder === "drafts" ? undefined : onMessageNavigate} aria-current={active ? "true" : undefined} className="min-w-0">
-					<span className="flex items-baseline justify-between gap-3">
-						<span className={clsx(unread && "font-semibold",getMessagePartyClassName(rowMessage, config.folder))}>
-							{unread && <><span aria-hidden="true" className="mr-2 inline-block size-1.5 rounded-full bg-signal align-middle" /><span className="sr-only">{t("list.unread")} </span></>}
-							{party}
-
-							{(message.threadCount ?? 1) > 1 && (
-								<span className="ml-2 text-xs font-normal text-muted-foreground">{message.threadCount}</span>
-							)}
+					onClick={() => {
+						haptic("selection");
+						onSelectedChange(message.id, !selected);
+					}}
+					className="relative z-10 mt-0.5 size-10 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+				>
+					{selected ? (
+						<span className="flex size-10 items-center justify-center rounded-full bg-signal text-signal-foreground animate-in zoom-in-75 fade-in-0 duration-150 motion-reduce:animate-none">
+							<Check className="size-5" strokeWidth={2.5} />
 						</span>
-						<span className={clsx(unread ?"font-medium":"text-muted-foreground","shrink-0 text-[11px]")}>
-							{message.scheduledAt ? formatScheduledSendTime(message.scheduledAt, t) : formatMessageListTimestamp(message.createdAt)}
-						</span>
+					) : (
+						<MessageAvatar
+							mailboxId={message.mailboxId}
+							address={avatarAddress}
+							name={party}
+							hasManagedAvatar={message.direction === "inbound" && !!message.fromContactHasAvatar}
+							className="size-10"
+						/>
+					)}
+				</button>
+				{/* The link's ::after covers the row, so anywhere outside the avatar and star opens the message. */}
+				<Link href={href} onClick={config.folder === "drafts" && !selectionMode ? undefined : onMessageNavigate} aria-current={active ? "true" : undefined} className="min-w-0 outline-none after:absolute after:inset-0">
+					<span className={clsx("block text-[15px] leading-5", unread && "font-semibold", getMessagePartyClassName(rowMessage, config.folder))}>
+						{unread && <><span aria-hidden="true" className="mr-1.5 inline-block size-2 rounded-full bg-signal align-[0.1em]" /><span className="sr-only">{t("list.unread")} </span></>}
+						{party}
+						{(message.threadCount ?? 1) > 1 && (
+							<span className="ml-1.5 text-xs font-normal text-muted-foreground tabular-nums">{message.threadCount}</span>
+						)}
 					</span>
-					<span
-						className={`mt-1 block truncate text-sm ${unread ? "font-semibold text-foreground" : "text-foreground/80"
-							}`}
-					>
+					<span className={clsx("mt-0.5 block truncate text-sm leading-5", unread ? "font-semibold text-foreground" : "text-foreground/85")}>
 						{message.subject ?? t("list.noSubject")}
 					</span>
-					<span className="mt-0.5 block truncate text-xs leading-5 text-muted-foreground">
+					<span className="mt-0.5 block truncate text-[13px] leading-5 text-muted-foreground">
 						{preview}
 					</span>
 				</Link>
-				<Button variant="ghost" size="icon" className="self-center pointer-coarse:min-h-11 pointer-coarse:min-w-11" aria-label={starred ? t("message.removeStar") : t("message.star")} aria-pressed={starred} onClick={() => void toggleMessageStar(message.id).then(result => setStarred(result.starred)).catch(() => toast.error(t("message.error.star")))}><Star data-icon="inline-start" className={starred ? "fill-current" : undefined} /></Button>
+				<div className="flex flex-col items-end justify-between">
+					<span className={clsx("mt-0.5 shrink-0 whitespace-nowrap text-xs leading-5 tabular-nums", unread ? "font-semibold text-foreground" : "text-muted-foreground")}>
+						{message.scheduledAt ? formatScheduledSendTime(message.scheduledAt, t) : formatMessageListTimestamp(message.createdAt)}
+					</span>
+					<Button variant="ghost" size="icon" className={clsx("relative z-10 -mb-1.5 size-9 pointer-coarse:size-11 pointer-coarse:-mr-1 pointer-coarse:-mb-2.5", starred ? "text-foreground" : "text-muted-foreground/70")} aria-label={starred ? t("message.removeStar") : t("message.star")} aria-pressed={starred} onClick={toggleStar}><Star data-icon="inline-start" className={clsx("transition-transform duration-150 ease-out active:scale-90", starred && "fill-current")} /></Button>
+				</div>
 			</div>
 		);
 		if (!swipeable) return compactRow;
 		return (
 			<SwipeableRow
 				role="listitem"
+				disabled={selectionMode}
 				startAction={{
 					label: read ? t("list.markUnread") : t("list.markRead"),
 					icon: read ? Mail : MailOpen,
@@ -194,7 +250,8 @@ function MessageListRow({
 					label: t("common.archive"),
 					icon: Archive,
 					className: "bg-emerald-600",
-					onTrigger: () => void runRowAction("archive").catch(() => undefined),
+					dismisses: true,
+					onTrigger: archiveFromSwipe,
 				}}
 			>
 				{compactRow}
@@ -214,9 +271,7 @@ function MessageListRow({
 						variant="ghost"
 						size="icon"
 						className="relative z-10"
-						onClick={() => {
-							void toggleMessageStar(message.id).then((result) => setStarred(result.starred)).catch(() => toast.error(t("message.error.star")));
-						}}
+						onClick={toggleStar}
 						aria-label={t("message.star")}
 						aria-pressed={starred}
 					>
@@ -321,7 +376,8 @@ export function MessageFolderPage({
 	const [unreadOnly, setUnreadOnly] = useState(false);
 	const [conversationView] = useConversationView();
 	const grouped = conversationView && config.folder !== "drafts";
-	const { messages, isLoading, total, limit, updateMessages } = useMessages(config.folder, selectedMailbox?.id, {
+	const listScroller = useRef<HTMLDivElement>(null);
+	const { messages, isLoading, total, limit, updateMessages, refresh } = useMessages(config.folder, selectedMailbox?.id, {
 		query,
 		limit: pageSize,
 		offset,
@@ -493,18 +549,21 @@ export function MessageFolderPage({
 	return (
 		<div className="flex h-full min-h-0 flex-col">
 			{confirmation}
-			<div className={`flex h-14 shrink-0 items-center justify-between border-b border-border ${compact ? "px-4" : "px-4.5 md:px-6"}`}>
+			<div data-selection-active={selectedIds.length > 0 || undefined} className={`flex h-14 shrink-0 items-center justify-between border-b border-border ${compact ? "px-4" : "px-4.5 md:px-6"}`}>
 				{selectedMessageId ? <h2 className="sr-only">{title}</h2> : <h1 className="sr-only">{title}</h1>}
 				<div className="flex min-w-0 flex-1 items-center gap-4">
-					<HintTooltip label={t("list.selectAll")}>
-						<Checkbox
-							checked={allVisibleSelected}
-							disabled={messages.length === 0}
-							onCheckedChange={(checked) => toggleAllVisible((checked === true))}
-							className="relative after:absolute after:-inset-3.5"
-							aria-label={t("list.selectAll")}
-						/>
-					</HintTooltip>
+					{/* Phones select with a long press or the avatar, and their selection bar leads with its close button. */}
+					{!isMobile && (
+						<HintTooltip label={t("list.selectAll")}>
+							<Checkbox
+								checked={allVisibleSelected}
+								disabled={messages.length === 0}
+								onCheckedChange={(checked) => toggleAllVisible((checked === true))}
+								className="relative after:absolute after:-inset-3.5"
+								aria-label={t("list.selectAll")}
+							/>
+						</HintTooltip>
+					)}
 					{selectedIds.length > 0 && !compact ? (
 						<BulkMessageToolbar
 							selectedCount={selectedIds.length}
@@ -516,13 +575,18 @@ export function MessageFolderPage({
 						/>
 					) : (
 						(
-							<p aria-hidden="true" className="truncate font-semibold text-foreground pl-1">{title}</p>
+							// iOS scrolls to the top when the status bar is tapped, but only for the page itself; lists here
+							// scroll their own container, so tapping the title does it instead.
+							<p aria-hidden="true" className="flex min-w-0 items-baseline gap-2 pl-1 max-md:pl-0" onClick={() => listScroller.current?.scrollTo({ top: 0, behavior: "smooth" })}>
+								<span className="truncate font-semibold text-foreground max-md:text-[22px] max-md:leading-7 max-md:tracking-[-0.02em]">{title}</span>
+								{isMobile && titleUnread > 0 && <span className="shrink-0 text-sm font-medium text-signal tabular-nums">{titleUnread}</span>}
+							</p>
 						)
 					)}
 				</div>
 				{(selectedIds.length === 0 || compact) && (
 					<div className="flex shrink-0 items-center gap-1 text-muted-foreground [&_button]:pointer-coarse:size-11">
-						<span className="text-xs text-muted-foreground whitespace-nowrap">
+						<span className="text-xs text-muted-foreground whitespace-nowrap max-md:hidden">
 							{t("list.range", { start: pageRange.start, end: pageRange.end, total: pageRange.total })}
 						</span>
 						<HintTooltip label={t("list.previousPage")}>
@@ -530,6 +594,7 @@ export function MessageFolderPage({
 								variant="ghost"
 								size="icon"
 								disabled={offset === 0 || isLoading}
+								className={clsx(isMobile && total <= limit && "hidden")}
 								onClick={() => setOffset(Math.max(offset - limit, 0))}
 								aria-label={t("list.previousPage")}
 							>
@@ -541,6 +606,7 @@ export function MessageFolderPage({
 								variant="ghost"
 								size="icon"
 								disabled={offset + messages.length >= total || isLoading}
+								className={clsx(isMobile && total <= limit && "hidden")}
 								onClick={() => setOffset(offset + limit)}
 								aria-label={t("list.nextPage")}
 							>
@@ -580,7 +646,8 @@ export function MessageFolderPage({
 				<Alert variant="destructive" className="shrink-0"><AlertDescription>{actionError}</AlertDescription></Alert>
 			)}
 
-			<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-gutter-stable">
+			<PullToRefresh scroller={listScroller} onRefresh={refresh}>
+			<div ref={listScroller} className="min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-gutter-stable">
 				<div role="list" aria-label={title} className="divide-y divide-border">
 					{messages.map((message) => (
 						<MessageListRow
@@ -600,6 +667,7 @@ export function MessageFolderPage({
 								});
 							}}
 							dragMessageIds={expandSelectedIds(selectedIds.includes(message.id) ? selectedIds : [message.id])}
+							selectionMode={isMobile && selectedIds.length > 0}
 						/>
 					))}
 				</div>
@@ -608,6 +676,7 @@ export function MessageFolderPage({
 					<Empty className="min-h-72"><EmptyHeader><EmptyMedia variant="icon"><config.icon /></EmptyMedia><EmptyTitle>{title}</EmptyTitle><EmptyDescription>{hasActiveFilters ? t("list.noMatch") : config.emptyTextKey ? t(config.emptyTextKey) : config.emptyText}</EmptyDescription></EmptyHeader></Empty>
 				)}
 			</div>
+			</PullToRefresh>
 		</div>
 	);
 }

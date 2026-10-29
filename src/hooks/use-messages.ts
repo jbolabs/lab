@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Message, MessageFilterOptions, MessageFolder } from "./types";
 import {
 	clearMessageCountsCache,
@@ -21,6 +21,7 @@ export function useMessages(
 	const [total, setTotal] = useState(0);
 	const [limit, setLimit] = useState(filters?.limit ?? 25);
 	const [offset, setOffset] = useState(filters?.offset ?? 0);
+	const reload = useRef<() => Promise<void>>(async () => {});
 
 	const unreadCount = messages.filter((m) => m.direction === "inbound" && !m.read).length;
 
@@ -47,6 +48,7 @@ export function useMessages(
 		}
 
 		void loadMessages(false, true);
+		reload.current = () => loadMessages(true);
 		function onMessagesChanged() {
 			clearMessageListCache();
 			clearMessageCountsCache();
@@ -66,5 +68,13 @@ export function useMessages(
 		};
 	}, [enabled, filters?.group, filters?.limit, filters?.offset, filters?.query, filters?.read, filters?.title, folder, folderId, mailboxId]);
 
-	return { messages, unreadCount, isLoading, total, limit, offset, updateMessages: setMessages };
+	// Pull-to-refresh: refetch now and resolve when the list is back; counts follow the usual event.
+	const refresh = useCallback(() => {
+		clearMessageListCache();
+		clearMessageCountsCache();
+		window.dispatchEvent(new Event("mailflare:message-counts-changed"));
+		return reload.current();
+	}, []);
+
+	return { messages, unreadCount, isLoading, total, limit, offset, updateMessages: setMessages, refresh };
 }

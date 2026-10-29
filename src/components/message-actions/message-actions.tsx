@@ -262,16 +262,29 @@ export function MessageActions({
 			{confirmation}
 			{error && <span role="alert" className="text-xs text-red-600">{error}</span>}
 
-			{isMobile && <div role="toolbar" aria-label={t("message.reply")} className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t bg-background pl-4 pr-40 pt-2 pb-[calc(.5rem+env(safe-area-inset-bottom))]">
+			{/* Phones: Gmail's reply bar. The Compose button is hidden while reading, so the bar spans the width. */}
+			{isMobile && <div role="toolbar" aria-label={t("message.reply")} className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t bg-background px-4 pt-2 pb-[calc(.5rem+env(safe-area-inset-bottom))]">
 				<Button className="min-h-11 flex-1" disabled={disabled} onClick={() => void handleReply("reply")}><Reply data-icon="inline-start" />{t("message.reply")}</Button>
+				{canReplyAll && <Button variant="outline" size="icon" className="size-11 shrink-0" aria-label={t("message.replyAll")} disabled={disabled} onClick={() => void handleReply("replyAll")}><ReplyAll data-icon="inline-start" /></Button>}
 				{message && messageMeta && <Button variant="outline" size="icon" className="size-11 shrink-0" aria-label={t("message.forward")} disabled={disabled} onClick={() => void handleForward()}><Forward data-icon="inline-start" /></Button>}
 			</div>}
+			{/* Phones: the reader toolbar Gmail uses, archive, trash and read state; the rest is under More. */}
 			{isMobile && (
 				<>
 					<Button
 						variant="ghost"
 						size="icon"
-					className="pointer-coarse:size-11"
+						className="pointer-coarse:size-11"
+						aria-label={t("common.archive")}
+						disabled={disabled || status === "archived"}
+						onClick={() => runAction("archive")}
+					>
+						<Archive data-icon="inline-start" />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="pointer-coarse:size-11"
 						aria-label={trashLabel}
 						disabled={disabled}
 						onClick={onTrashClick}
@@ -281,12 +294,12 @@ export function MessageActions({
 					<Button
 						variant="ghost"
 						size="icon"
-					className="pointer-coarse:size-11"
-						aria-label={t("common.reportSpam")}
-						disabled={disabled || status === "spam" || direction !== "inbound"}
-						onClick={() => runAction("spam")}
+						className="pointer-coarse:size-11"
+						aria-label={read ? t("common.markUnread") : t("common.markRead")}
+						disabled={disabled}
+						onClick={() => runAction(markAction)}
 					>
-						<ShieldAlert data-icon="inline-start" />
+						{read ? <Mail data-icon="inline-start" /> : <MailOpen data-icon="inline-start" />}
 					</Button>
 				</>
 			)}
@@ -391,13 +404,6 @@ export function MessageActions({
 				</>
 			)}
 			<MessageActionMenu open={moreOpen} onOpenChange={setMoreOpen} disabled={disabled} actions={[
-				...(isMobile ? [
-					{ label: t("common.archive"), icon: <Archive data-icon="inline-start" />, disabled: status === "archived", onSelect: () => void runAction("archive") },
-					{ label: t("message.reply"), icon: <Reply data-icon="inline-start" />, onSelect: () => void handleReply("reply") },
-					...(canReplyAll ? [{ label: t("message.replyAll"), icon: <ReplyAll data-icon="inline-start" />, onSelect: () => void handleReply("replyAll") }] : []),
-					...(message && messageMeta ? [{ label: t("message.forward"), icon: <Forward data-icon="inline-start" />, onSelect: () => void handleForward() }] : []),
-					{ label: read ? t("common.markUnread") : t("common.markRead"), icon: <Mail data-icon="inline-start" />, onSelect: () => void runAction(markAction) },
-				] : []),
 				...(direction === "inbound" && status === "received" ? [{ label: t("common.snooze"), icon: <Clock data-icon="inline-start" />, onSelect: () => setSnoozeOpen(true) }] : []),
 				...(direction === "inbound" ? [
 					{ label: t("actions.unsubscribe"), icon: <BellOff data-icon="inline-start" />, disabled: !unsubscribeUrl && status === "trash", onSelect: () => void onUnsubscribe() },
