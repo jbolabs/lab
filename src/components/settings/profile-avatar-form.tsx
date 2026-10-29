@@ -1,5 +1,6 @@
 "use client";
-
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 import { Camera, LoaderCircle, User } from "lucide-react";
 import { authFetch } from "@/lib/auth/client";
@@ -12,7 +13,10 @@ import { dispatchMailboxAvatarChanged } from "@/lib/mailboxes/avatar-client";
 import { useLanguage } from "@/components/language-provider";
 import { Input } from "@/components/ui/input";
 import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
-import type { ProfileAvatarFormProps, ProfileAvatarSessionResponse } from "./types";
+import type {
+	ProfileAvatarFormProps,
+	ProfileAvatarSessionResponse,
+} from "./types";
 import {
 	getMailboxProfileAvatarUrl,
 	PROFILE_AVATAR_ACCEPT,
@@ -20,7 +24,6 @@ import {
 	uploadProfileAvatar,
 	validateProfileAvatar,
 } from "./profile-avatar-form-utils";
-
 export function ProfileAvatarForm({
 	mailboxId,
 	initialHasAvatar = false,
@@ -36,14 +39,12 @@ export function ProfileAvatarForm({
 	const [status, setStatus] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
-
 	useEffect(() => {
 		if (mailboxId) {
 			setHasAvatar(initialHasAvatar);
 			setAvatarUrl(`/api/mailboxes/${mailboxId}/avatar`);
 			return;
 		}
-
 		authFetch("/api/auth/me", { redirectOnUnauthorized: false })
 			.then((response) => (response.ok ? response.json() : null))
 			.then((data) => {
@@ -52,18 +53,15 @@ export function ProfileAvatarForm({
 			})
 			.catch(() => setHasAvatar(false));
 	}, [initialHasAvatar, mailboxId]);
-
 	async function onPick(event: React.ChangeEvent<HTMLInputElement>) {
 		const picked = event.target.files?.[0] ?? null;
 		event.target.value = "";
 		if (!picked) return;
-
 		const validationError = validateProfileAvatar(picked);
 		if (validationError) {
 			setStatus(validationError);
 			return;
 		}
-
 		setBusy(true);
 		setStatus(null);
 		try {
@@ -84,11 +82,12 @@ export function ProfileAvatarForm({
 				dispatchProfileAvatarChanged(nextAvatarUrl);
 			}
 		} catch (error) {
-			setStatus(error instanceof Error ? error.message : t("avatar.uploadFailed"));
+			setStatus(
+				error instanceof Error ? error.message : t("avatar.uploadFailed"),
+			);
 			setBusy(false);
 		}
 	}
-
 	return (
 		<div className="flex flex-col items-start gap-2">
 			<Input
@@ -98,13 +97,19 @@ export function ProfileAvatarForm({
 				className="hidden"
 				onChange={onPick}
 			/>
-			<button
+			<Button
 				type="button"
 				onClick={() => inputRef.current?.click()}
 				disabled={busy}
-				className="group relative h-24 w-24 overflow-hidden rounded-full border border-border bg-primary text-primary-foreground shadow-sm outline-none ring-ring transition focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait"
 				style={getAvatarColorStyle(colorSeed ?? mailboxId ?? name)}
-				aria-label={hasAvatar ? t("avatar.change", { name }) : t("avatar.upload", { name })}
+				aria-label={
+					hasAvatar
+						? t("avatar.change", { name })
+						: t("avatar.upload", { name })
+				}
+				variant="ghost"
+				className="group relative size-20 shrink-0 overflow-hidden rounded-full"
+				size="icon"
 			>
 				{hasAvatar ? (
 					<ProgressiveAvatarImage
@@ -118,7 +123,7 @@ export function ProfileAvatarForm({
 						<User className="h-9 w-9" />
 					</span>
 				)}
-				<span className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+				<span className="absolute inset-0 flex items-center justify-center bg-background/80 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
 					{busy ? (
 						<LoaderCircle className="h-6 w-6 animate-spin" />
 					) : (
@@ -128,8 +133,12 @@ export function ProfileAvatarForm({
 						</span>
 					)}
 				</span>
-			</button>
-			{status && <p role="alert" className="max-w-xs text-xs text-red-600">{status}</p>}
+			</Button>
+			{status && (
+				<Alert variant="destructive">
+					<AlertDescription>{status}</AlertDescription>
+				</Alert>
+			)}
 		</div>
 	);
 }

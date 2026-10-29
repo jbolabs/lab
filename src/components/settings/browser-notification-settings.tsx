@@ -1,5 +1,11 @@
 "use client";
-
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+	Field,
+	FieldContent,
+	FieldLabel,
+	FieldDescription,
+} from "@/components/ui/field";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/language-provider";
 import { Switch } from "@/components/ui/switch";
@@ -7,16 +13,20 @@ import {
 	areBrowserNotificationsEnabled,
 	setBrowserNotificationsEnabled,
 } from "@/hooks/message-realtime-utils";
-
 export function BrowserNotificationSettings() {
 	const { t } = useLanguage();
-	const [permission, setPermission] = useState<NotificationPermission | "unsupported">("unsupported");
+	const [permission, setPermission] = useState<
+		NotificationPermission | "unsupported"
+	>("unsupported");
 	const [enabled, setEnabled] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-
 	useEffect(() => {
 		const refresh = () => {
-			setPermission(typeof Notification === "undefined" ? "unsupported" : Notification.permission);
+			setPermission(
+				typeof Notification === "undefined"
+					? "unsupported"
+					: Notification.permission,
+			);
 			setEnabled(areBrowserNotificationsEnabled());
 		};
 		refresh();
@@ -27,17 +37,16 @@ export function BrowserNotificationSettings() {
 			window.removeEventListener("storage", refresh);
 		};
 	}, []);
-
 	return (
 		<div>
-			<label className="flex items-start gap-3 rounded-xl bg-muted/60 p-4">
-				<span className="flex-1">
-					<span className="block text-sm font-medium text-foreground">{t("settings.notifications.title")}</span>
-					<span className="mt-1 block text-sm text-muted-foreground">
+			<Field orientation="horizontal">
+				<FieldContent>
+					<FieldLabel htmlFor="browser-notification-settings-0">{t("settings.notifications.title")}</FieldLabel>
+					<FieldDescription>
 						{t("settings.notifications.description")}
-					</span>
-				</span>
-				<Switch
+					</FieldDescription>
+				</FieldContent>
+				<Switch id="browser-notification-settings-0"
 					checked={permission === "granted" && enabled}
 					disabled={permission === "unsupported" || permission === "denied"}
 					onCheckedChange={(nextEnabled) => {
@@ -53,7 +62,10 @@ export function BrowserNotificationSettings() {
 						}
 						void (async () => {
 							try {
-								const nextPermission = permission === "granted" ? permission : await Notification.requestPermission();
+								const nextPermission =
+									permission === "granted"
+										? permission
+										: await Notification.requestPermission();
 								setPermission(nextPermission);
 								if (nextPermission !== "granted") return;
 								setBrowserNotificationsEnabled(true);
@@ -65,14 +77,22 @@ export function BrowserNotificationSettings() {
 					}}
 					aria-label={t("settings.notifications.enable")}
 				/>
-			</label>
+			</Field>
 			{permission === "denied" && (
-				<p className="mt-2 px-4 text-sm text-muted-foreground">{t("settings.notifications.blocked")}</p>
+				<p className="mt-2 px-4 text-sm text-muted-foreground">
+					{t("settings.notifications.blocked")}
+				</p>
 			)}
 			{permission === "unsupported" && (
-				<p className="mt-2 px-4 text-sm text-muted-foreground">{t("settings.notifications.unavailable")}</p>
+				<p className="mt-2 px-4 text-sm text-muted-foreground">
+					{t("settings.notifications.unavailable")}
+				</p>
 			)}
-			{error && <p role="alert" className="mt-2 px-4 text-sm text-red-600">{error}</p>}
+			{error && (
+				<Alert variant="destructive">
+					<AlertDescription>{error}</AlertDescription>
+				</Alert>
+			)}
 		</div>
 	);
 }

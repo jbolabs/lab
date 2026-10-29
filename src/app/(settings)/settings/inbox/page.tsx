@@ -1,3 +1,10 @@
+import {
+	CardHeader,
+	CardTitle,
+	CardDescription,
+	Card,
+	CardContent,
+} from "@/components/ui/card";
 import { getServerTranslator } from "@/lib/i18n/server";
 import { AppearanceSettings } from "@/components/settings/appearance-settings";
 import { InboxThreadingSettings } from "@/components/settings/inbox-threading-settings";
@@ -10,103 +17,150 @@ import { SpamFilterSettings } from "@/components/settings/spam-filter-settings";
 import { TrashRetentionSettings } from "@/components/settings/trash-retention-settings";
 import { PushNotificationSettings } from "@/components/settings/push-notification-settings";
 import { BrowserNotificationSettings } from "@/components/settings/browser-notification-settings";
-
 export default async function SettingsInboxPage() {
 	const t = await getServerTranslator();
 	return (
-		<div className="space-y-8 py-4">
-			<h1 className="sr-only">{t("settings.nav.inbox")}</h1>
-			<section className="space-y-4">
-				<div>
-					<h2 className="text-xl font-semibold text-foreground">{t("settingsPage.inbox.experience")}</h2>
-					<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.experienceDescription")}</p>
-				</div>
-				<div className="divide-y divide-border rounded-3xl bg-card p-6">
-					<div className="py-6 first:pt-0 last:pb-0">
-						<div className="mb-4">
-							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.appearance")}</h3>
-							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.appearanceDescription")}</p>
-						</div>
-						<AppearanceSettings />
+		<div className="flex flex-col gap-8 py-4">
+			<h1 className="text-2xl font-semibold tracking-tight">
+				{t("settings.nav.inbox")}
+			</h1>
+			<Card>
+				<CardHeader>
+					<CardTitle>{t("settingsPage.inbox.experience")}</CardTitle>
+					<CardDescription>
+						{t("settingsPage.inbox.experienceDescription")}
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div className="divide-y divide-border py-6">
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("settingsPage.inbox.appearance")}</CardTitle>
+								<CardDescription>
+									{t("settingsPage.inbox.appearanceDescription")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<AppearanceSettings />
+							</CardContent>
+						</Card>
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("settingsPage.inbox.readingLayout")}</CardTitle>
+								<CardDescription>
+									{t("settingsPage.inbox.readingLayoutDescription")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<InboxReadingLayoutSettings />
+							</CardContent>
+						</Card>
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("settingsPage.inbox.threading")}</CardTitle>
+								<CardDescription>
+									{t("settingsPage.inbox.threadingDescription")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<InboxThreadingSettings />
+							</CardContent>
+						</Card>
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("settingsPage.inbox.addresses")}</CardTitle>
+								<CardDescription>
+									{t("settingsPage.inbox.addressesDescription")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<RecipientAddressSettings />
+							</CardContent>
+						</Card>
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("settingsPage.inbox.shortcuts")}</CardTitle>
+								<CardDescription>
+									{t("settingsPage.inbox.shortcutsDescription")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<InboxShortcutsSettings />
+							</CardContent>
+						</Card>
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("settingsPage.inbox.notifications")}</CardTitle>
+								<CardDescription>
+									{t("settingsPage.inbox.notificationsDescription")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<BrowserNotificationSettings />
+								<div className="mt-4">
+									<PushNotificationSettings />
+								</div>
+							</CardContent>
+						</Card>
 					</div>
-					<div className="py-6 first:pt-0 last:pb-0">
-						<div className="mb-4">
-							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.readingLayout")}</h3>
-							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.readingLayoutDescription")}</p>
-						</div>
-						<InboxReadingLayoutSettings />
+				</CardContent>
+			</Card>
+			<Card>
+				<CardHeader>
+					<CardTitle>{t("settingsPage.inbox.handling")}</CardTitle>
+					<CardDescription>
+						{t("settingsPage.inbox.handlingDescription")}
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div className="divide-y divide-border py-6">
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("settingsPage.inbox.spamProtection")}</CardTitle>
+								<CardDescription>
+									{t("settingsPage.inbox.spamProtectionDescription")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<SpamFilterSettings />
+							</CardContent>
+						</Card>
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("settingsPage.inbox.remoteContent")}</CardTitle>
+								<CardDescription>
+									{t("settingsPage.inbox.remoteContentDescription")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<RemoteContentSettings />
+							</CardContent>
+						</Card>
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("settingsPage.inbox.cleanup")}</CardTitle>
+								<CardDescription>
+									{t("settingsPage.inbox.cleanupDescription")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<TrashRetentionSettings />
+							</CardContent>
+						</Card>
+						<Card>
+							<CardHeader>
+								<CardTitle>{t("settingsPage.inbox.autoReply")}</CardTitle>
+								<CardDescription>
+									{t("settingsPage.inbox.autoReplyDescription")}
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<MailboxAutoReplyForm />
+							</CardContent>
+						</Card>
 					</div>
-					<div className="py-6 first:pt-0 last:pb-0">
-						<div className="mb-4">
-							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.threading")}</h3>
-							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.threadingDescription")}</p>
-						</div>
-						<InboxThreadingSettings />
-					</div>
-					<div className="py-6 first:pt-0 last:pb-0">
-						<div className="mb-4">
-							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.addresses")}</h3>
-							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.addressesDescription")}</p>
-						</div>
-						<RecipientAddressSettings />
-					</div>
-					<div className="py-6 first:pt-0 last:pb-0">
-						<div className="mb-4">
-							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.shortcuts")}</h3>
-							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.shortcutsDescription")}</p>
-						</div>
-						<InboxShortcutsSettings />
-					</div>
-					<div className="py-6 first:pt-0 last:pb-0">
-						<div className="mb-4">
-							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.notifications")}</h3>
-							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.notificationsDescription")}</p>
-						</div>
-						<BrowserNotificationSettings />
-						<div className="mt-4">
-							<PushNotificationSettings />
-						</div>
-					</div>
-				</div>
-			</section>
-			<section className="space-y-4">
-				<div>
-					<h2 className="text-xl font-semibold text-foreground">{t("settingsPage.inbox.handling")}</h2>
-					<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.handlingDescription")}</p>
-				</div>
-				<div className="divide-y divide-border rounded-3xl bg-card p-6">
-					<div className="py-6 first:pt-0 last:pb-0">
-						<div className="mb-4">
-							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.spamProtection")}</h3>
-							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.spamProtectionDescription")}</p>
-						</div>
-						<SpamFilterSettings />
-					</div>
-					<div className="py-6 first:pt-0 last:pb-0">
-						<div className="mb-4">
-							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.remoteContent")}</h3>
-							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.remoteContentDescription")}</p>
-						</div>
-						<RemoteContentSettings />
-					</div>
-					<div className="py-6 first:pt-0 last:pb-0">
-						<div className="mb-4">
-							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.cleanup")}</h3>
-							<p className="mt-1 text-sm text-muted-foreground">{t("settingsPage.inbox.cleanupDescription")}</p>
-						</div>
-						<TrashRetentionSettings />
-					</div>
-					<div className="py-6 first:pt-0 last:pb-0">
-						<div className="mb-4">
-							<h3 className="text-base font-semibold text-foreground">{t("settingsPage.inbox.autoReply")}</h3>
-							<p className="mt-1 text-sm text-muted-foreground">
-								{t("settingsPage.inbox.autoReplyDescription")}
-							</p>
-						</div>
-						<MailboxAutoReplyForm />
-					</div>
-				</div>
-			</section>
+				</CardContent>
+			</Card>
 		</div>
 	);
 }
