@@ -136,9 +136,9 @@ Mailbox authorization is separate from user role and goes through `src/lib/mailb
 
 `messages.status` is a free-text column driving the folder views: `received` (inbox), `sent`, `draft`, `spam`, `trash`, `archived`. Orthogonal to that are `starred`, `snoozedUntil`, and `folderId` (user-created folders in the `folders` table). A "folder" route under `src/app/(dashboard)/` is usually a status filter, not a table.
 
-### Licensing gates branding
+### No licensing
 
-Pro/Team keys are validated against Paymug (`src/lib/licenses/`); only a one-way key hash is stored. Without an active license the app falls back to the default name, icon, and favicon, and custom branding is unavailable. `getLicenseEntitlements` is the gate.
+Lab removed upstream Mailflare's Paymug licensing: accounts, shared inboxes, booking hosts, custom branding and account forwarding are ungated. The `license_settings` table remains in the schema (and backups) but nothing reads it; do not reintroduce feature gates or upsells.
 
 ### Self-update
 

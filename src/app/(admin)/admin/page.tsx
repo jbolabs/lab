@@ -14,7 +14,7 @@ type AdminSection = {
 	titleKey: TranslationKey;
 	descriptionKey: TranslationKey;
 	icon: typeof Bot;
-	permission?: "primary" | "domains" | "users" | "accounts";
+	permission?: "primary" | "domains" | "users";
 };
 
 const sections: AdminSection[] = [
@@ -43,7 +43,6 @@ const sections: AdminSection[] = [
 		titleKey: "admin.nav.accounts",
 		descriptionKey: "admin.section.accounts",
 		icon: Users,
-		permission: "accounts",
 	},
 	{
 		href: "/api-keys",
@@ -75,7 +74,6 @@ export default function AdminSettingsPage() {
 		if (!user) return false;
 		if (section.permission === "primary") return user.isPrimaryAdmin;
 		if (section.permission === "domains") return user.isPrimaryAdmin || user.canManageDomains;
-		if (section.permission === "accounts") return !!user.canManageAccounts;
 		return user.isPrimaryAdmin || user.canManageUsers;
 	}
 
