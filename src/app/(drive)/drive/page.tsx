@@ -1,7 +1,7 @@
 "use client";
 import { useConfirmation } from "@/app/(calendar)/use-confirmation";
 import { Item } from "@/components/ui/item";
-import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { FieldGroup, Field, FieldLabel } from "@/components/ui/field";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -12,7 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import * as DropdownMenu from "@/components/ui/dropdown-menu";
 import { cn as clsx } from "@/lib/utils";
-import { ArrowDown, ArrowUp, ChevronRight, Download, ExternalLink, Mail, MoreVertical, Pencil, RotateCcw, Share2, Trash2, UploadCloud, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight, Download, ExternalLink, FolderOpen, Mail, MoreVertical, Pencil, RotateCcw, Share2, Trash2, UploadCloud, X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -306,7 +306,7 @@ export default function DrivePage() {
 								<span />
 							</div>
 						))
-						: sorted.length === 0 ? <Empty><EmptyHeader><EmptyTitle>{emptyText}</EmptyTitle></EmptyHeader></Empty>
+						: sorted.length === 0 ? <Empty><EmptyHeader><EmptyMedia variant="icon">{view === "trash" ? <Trash2 /> : <FolderOpen />}</EmptyMedia><EmptyTitle>{emptyText}</EmptyTitle></EmptyHeader></Empty>
 						: sorted.map((item) => {
 							const { Icon, className } = driveIconFor(item);
 							// Only the owner's own folders take drops, matching what the move endpoint allows.

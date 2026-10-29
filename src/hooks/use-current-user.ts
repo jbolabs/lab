@@ -12,6 +12,8 @@ export type CurrentUser = {
 	canManageMailboxes: boolean;
 	canManageDomains: boolean;
 	canManageUsers: boolean;
+	/** Licensed for more than one account; without it Accounts is only an upsell, so it stays out of navigation. */
+	canManageAccounts?: boolean;
 	hasAvatar: boolean;
 };
 

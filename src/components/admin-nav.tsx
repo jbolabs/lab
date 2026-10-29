@@ -6,8 +6,6 @@ import {
 	Activity,
 	Mail,
 	Settings,
-	Palette,
-	BadgeDollarSign,
 	Users,
 	Route,
 	Webhook,
@@ -27,7 +25,7 @@ import { SidebarHeader } from "./sidebar-header";
 import { SidebarScaffold } from "./sidebar-scaffold";
 import { useSidebar } from "./sidebar-state";
 
-type AdminLinkPermission = "primary" | "domains" | "users";
+type AdminLinkPermission = "primary" | "domains" | "users" | "accounts";
 
 type AdminNavLink = {
 	href: string;
@@ -93,7 +91,7 @@ const sections: {
 				icon: Bot,
 				permission: "primary",
 			},
-			{ href: "/accounts", labelKey: "admin.nav.accounts", icon: Users },
+			{ href: "/accounts", labelKey: "admin.nav.accounts", icon: Users, permission: "accounts" },
 			{
 				href: "/activity",
 				labelKey: "admin.nav.activity",
@@ -104,24 +102,6 @@ const sections: {
 				href: "/backups",
 				labelKey: "admin.nav.backups",
 				icon: DatabaseBackup,
-				permission: "primary",
-			},
-		],
-	},
-	{
-		id: "Product",
-		labelKey: "admin.nav.product",
-		links: [
-			{
-				href: "/branding",
-				labelKey: "admin.nav.branding",
-				icon: Palette,
-				permission: "primary",
-			},
-			{
-				href: "/licenses",
-				labelKey: "admin.nav.licenses",
-				icon: BadgeDollarSign,
 				permission: "primary",
 			},
 		],
@@ -174,6 +154,7 @@ export function AdminNav({ className }: { className?: string }) {
 		if (link.permission === "primary") return user.isPrimaryAdmin;
 		if (link.permission === "domains")
 			return user.isPrimaryAdmin || user.canManageDomains;
+		if (link.permission === "accounts") return !!user.canManageAccounts;
 		return user.isPrimaryAdmin || user.canManageUsers;
 	}
 

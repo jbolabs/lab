@@ -11,7 +11,6 @@ import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { PoweredBy } from "@/components/sidebar-footer";
 import { useSidebar } from "@/components/sidebar-state";
 import { authFetch } from "@/lib/auth/client";
 import { formatDriveSize } from "@/lib/drive/utils";
@@ -141,7 +140,7 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 			<div className="min-h-0 flex-1 overflow-y-auto px-3 pt-1">
 				<DropdownMenu.DropdownMenu>
 					<DropdownMenu.DropdownMenuTrigger asChild>
-						<Button variant="ghost" type="button" aria-label={t("drive.new")} className={clsx("mb-4 flex h-14 items-center gap-3 rounded-2xl bg-card text-sm font-medium text-foreground shadow-md transition-shadow hover:shadow-lg", compact ? "w-14 justify-center" : "w-fit px-5")}>
+						<Button type="button" aria-label={t("drive.new")} className={clsx("mb-3 h-10 max-md:min-h-11", compact ? "size-10 px-0" : "w-full justify-start gap-3 px-3")}>
 							<Plus data-icon="inline-start" />{!compact && t("drive.new")}
 						</Button>
 					</DropdownMenu.DropdownMenuTrigger>
@@ -161,7 +160,7 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 						// Attachments takes trashed attachments back.
 						const target: DriveDropTarget | null = key === "my" ? { kind: "folder", id: null } : key === "trash" ? { kind: "trash" } : key === "attachments" ? { kind: "attachments" } : null;
 						return (
-							<Link key={key} href={href} onClick={onNavigate} {...(target ? dropProps(key, target) : {})} aria-current={active ? "page" : undefined} title={compact ? label : undefined} className={clsx("flex h-10 items-center gap-3 rounded-full text-sm", compact ? "w-10 justify-center" : "px-4", dropKey === key ? dropHighlight : active ? "bg-signal-soft font-medium text-signal-soft-foreground" : "text-foreground/80 hover:bg-accent/60")}>
+							<Link key={key} href={href} onClick={onNavigate} {...(target ? dropProps(key, target) : {})} aria-current={active ? "page" : undefined} title={compact ? label : undefined} className={clsx("flex h-9 items-center gap-3 rounded-md text-sm text-sidebar-foreground transition-colors max-md:min-h-11", compact ? "mx-auto size-10 justify-center" : "px-3", dropKey === key ? dropHighlight : active ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground" : "hover:bg-sidebar-accent")}>
 								<Icon size={16} />{!compact && label}
 							</Link>
 						);
@@ -170,18 +169,18 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 				{!compact && (
 					<div className="mt-3">
 						<div className="flex items-center gap-1">
-							<Button variant="ghost" type="button" onClick={toggleFolders} aria-expanded={foldersOpen} aria-label={t("drive.foldersToggle")} className= "flex h-9 min-w-0 flex-1 items-center gap-2 px-4 text-xs font-semibold uppercase tracking-wide [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11">
+							<Button variant="ghost" type="button" onClick={toggleFolders} aria-expanded={foldersOpen} aria-label={t("drive.foldersToggle")} className="h-9 min-w-0 flex-1 justify-start gap-2 px-3 font-medium text-sidebar-foreground [@media(pointer:coarse)]:min-h-11">
 								<ChevronRight data-icon="inline-start" className={clsx("transition-transform", foldersOpen && "rotate-90")} />{t("drive.folders")}
 							</Button>
 							<Button variant="ghost" type="button" onClick={() => { setFolderName(""); setCreating(true); }} aria-label={t("drive.newFolder")} title={t("drive.newFolder")} className= "flex size-8 shrink-0 items-center justify-center [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"><Plus data-icon="inline-start" /></Button>
 						</div>
 						{foldersOpen && (
 							<ul className="mt-0.5 flex flex-col gap-0.5">
-								{rows.length === 0 && <li className="px-4 py-1.5 text-xs text-muted-foreground">{t("drive.noFolders")}</li>}
+								{rows.length === 0 && <li className="px-3 py-1.5 text-xs text-muted-foreground">{t("drive.noFolders")}</li>}
 								{rows.map((folder) => (
 									<li key={folder.id}>
-										<Link href={`/drive?folder=${encodeURIComponent(folder.id)}`} onClick={onNavigate} {...dropProps(folder.id, { kind: "folder", id: folder.id })} aria-current={activeFolder === folder.id ? "page" : undefined} style={{ paddingLeft: 16 + folder.depth * 14 }} className={clsx("flex h-8 items-center gap-2 rounded-full pr-3 text-sm", dropKey === folder.id ? dropHighlight : activeFolder === folder.id ? "bg-signal-soft font-medium text-signal-soft-foreground" : "text-foreground/80 hover:bg-accent/60")}>
-											<Folder size={14} className="shrink-0 text-amber-500" /><span className="truncate">{folder.name}</span>
+										<Link href={`/drive?folder=${encodeURIComponent(folder.id)}`} onClick={onNavigate} {...dropProps(folder.id, { kind: "folder", id: folder.id })} aria-current={activeFolder === folder.id ? "page" : undefined} style={{ paddingLeft: 12 + folder.depth * 14 }} className={clsx("flex h-8 items-center gap-2 rounded-md pr-3 text-sm text-sidebar-foreground max-md:min-h-11", dropKey === folder.id ? dropHighlight : activeFolder === folder.id ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground" : "hover:bg-sidebar-accent")}>
+											<Folder size={14} className="shrink-0 text-muted-foreground" /><span className="truncate">{folder.name}</span>
 										</Link>
 									</li>
 								))}
@@ -202,7 +201,6 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 							</div>
 						) : <p className="mb-2 text-xs text-muted-foreground">{t("drive.storageUsed", { size: formatDriveSize(storage.used) })}</p>
 					)}
-					<PoweredBy className="" />
 				</div>
 			)}
 			<Dialog open={creating} onOpenChange={(open) => { if (!saving) setCreating(open); }}>

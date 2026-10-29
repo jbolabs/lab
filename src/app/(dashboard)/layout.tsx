@@ -15,7 +15,6 @@ import { AgentPanel } from "@/components/agent/agent-panel";
 import { AssistantOpenContext } from "@/components/agent/assistant-open-state";
 import { Button } from "@/components/ui/button";
 import { DnsSkippedBanner } from "@/components/dns-skipped-banner";
-import { LicenseIndicator } from "@/components/license-indicator";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { SidebarProvider } from "@/components/sidebar-state";
 import { SidebarAside, MobileMenuButton } from "@/components/sidebar-aside";
@@ -88,7 +87,6 @@ export default function DashboardLayout({
                       >
                         <HelpCircle className="h-5 w-5" />
                       </Link> */}
-											<LicenseIndicator />
 											{assistantEnabled && (
 												<Button
 													type="button"

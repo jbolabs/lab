@@ -11,7 +11,6 @@ import { ComposeProvider } from "@/components/compose/compose-context";
 import { FloatingComposer } from "@/components/compose/floating-composer";
 import { MailboxProvider } from "@/components/mailbox-provider";
 import { MailboxSelector } from "@/components/mailbox-selector";
-import { LicenseIndicator } from "@/components/license-indicator";
 import { AdminNav } from "@/components/admin-nav";
 import { SidebarProvider } from "@/components/sidebar-state";
 import clsx from "clsx";
@@ -67,7 +66,6 @@ export default function DashboardLayout({
             <div className="relative flex min-h-0 min-w-0 flex-col">
                             <MobileTopBar title={mobileTitle} />
               <header className="absolute top-[max(0.5rem,env(safe-area-inset-top))] right-4 flex items-center gap-4 z-10">
-                <LicenseIndicator />
                 <MailboxSelector />
               </header>
               <main id="main-content" tabIndex={-1} className={clsx("focus:outline-none page-flush min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain bg-background max-md:pb-[calc(6rem+env(safe-area-inset-bottom))] px-4 py-8 md:px-6 md:pt-16 scrollbar-gutter-stable lg:px-12", mobileTitle && "max-md:[&_h1]:sr-only")}>

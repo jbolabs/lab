@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { BadgeDollarSign, Bot, Globe2, KeyRound, Mail, Palette, Users } from "lucide-react";
+import { Bot, Globe2, KeyRound, Mail, Users } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import type { TranslationKey } from "@/lib/i18n/types";
-import { AdminUpdateCard } from "@/components/admin-update-card";
+import { DatabaseMigrationsNotice } from "@/components/database-migrations-notice";
 import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription } from "@/components/ui/item";
 import { ChevronRight } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -14,7 +14,7 @@ type AdminSection = {
 	titleKey: TranslationKey;
 	descriptionKey: TranslationKey;
 	icon: typeof Bot;
-	permission?: "primary" | "domains" | "users";
+	permission?: "primary" | "domains" | "users" | "accounts";
 };
 
 const sections: AdminSection[] = [
@@ -39,24 +39,11 @@ const sections: AdminSection[] = [
 		permission: "domains",
 	},
 	{
-		href: "/branding",
-		titleKey: "admin.nav.branding",
-		descriptionKey: "admin.section.branding",
-		icon: Palette,
-		permission: "primary",
-	},
-	{
-		href: "/licenses",
-		titleKey: "admin.nav.licenses",
-		descriptionKey: "admin.section.licenses",
-		icon: BadgeDollarSign,
-		permission: "primary",
-	},
-	{
 		href: "/accounts",
 		titleKey: "admin.nav.accounts",
 		descriptionKey: "admin.section.accounts",
 		icon: Users,
+		permission: "accounts",
 	},
 	{
 		href: "/api-keys",
@@ -88,6 +75,7 @@ export default function AdminSettingsPage() {
 		if (!user) return false;
 		if (section.permission === "primary") return user.isPrimaryAdmin;
 		if (section.permission === "domains") return user.isPrimaryAdmin || user.canManageDomains;
+		if (section.permission === "accounts") return !!user.canManageAccounts;
 		return user.isPrimaryAdmin || user.canManageUsers;
 	}
 
@@ -113,7 +101,7 @@ export default function AdminSettingsPage() {
 			</ItemGroup>
 			{user?.isPrimaryAdmin && (
 				<div className="mt-8">
-					<AdminUpdateCard />
+					<DatabaseMigrationsNotice />
 				</div>
 			)}
 		</div>

@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
-import packageJson from "../../package.json";
 import { useSidebar } from "./sidebar-state";
 import { useShortcuts } from "./shortcuts";
 import { Keyboard } from "lucide-react";
@@ -13,44 +12,24 @@ export function SidebarFooter() {
 	const { minimal } = useSidebar();
 	const { openHelpModal, shortcutsEnabled, shortcutsPreferenceLoading } =
 		useShortcuts();
-	if (minimal) return null;
+	if (minimal || !shortcutsEnabled || shortcutsPreferenceLoading) return null;
 
+	// Keyboard shortcuts are a desktop affordance; phones get no footer at all.
 	return (
-		<div className="px-3 pt-3 flex flex-col gap-2">
-			{shortcutsEnabled && !shortcutsPreferenceLoading && (
-				<Button
-					variant="ghost"
-					size="sm"
-					type="button"
-					onClick={openHelpModal}
-					className="w-full justify-between max-md:min-h-11"
-				>
-					<span className="flex items-center gap-1.5">
-						<Keyboard data-icon="inline-start" />
-						{t("navigation.shortcuts")}
-					</span>
-					<Kbd>?</Kbd>
-				</Button>
-			)}
-			<PoweredBy />
-		</div>
-	);
-}
-
-/** The application source link, shared by the mail and Drive sidebars. */
-export function PoweredBy({ className = "px-1" }: { className?: string }) {
-	const { t } = useLanguage();
-	return (
-		<p className={`${className} text-[11px] text-muted-foreground`}>
-			{t("navigation.poweredBy")}{" "}
-			<a
-				href="https://github.com/jbolabs/lab"
-				target="_blank"
-				className="hover:underline text-muted-foreground"
-				rel="noreferrer"
+		<div className="px-3 pt-3 max-md:hidden">
+			<Button
+				variant="ghost"
+				size="sm"
+				type="button"
+				onClick={openHelpModal}
+				className="w-full justify-between"
 			>
-				Lab v{packageJson.version}
-			</a>
-		</p>
+				<span className="flex items-center gap-1.5">
+					<Keyboard data-icon="inline-start" />
+					{t("navigation.shortcuts")}
+				</span>
+				<Kbd>?</Kbd>
+			</Button>
+		</div>
 	);
 }

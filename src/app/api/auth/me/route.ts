@@ -32,6 +32,7 @@ export async function GET(request: Request) {
 			resetEmail: user.resetEmail,
 			forwardingEmail: user.forwardingEmail,
 			canForwardEmail: entitlements.canForwardEmail,
+			canManageAccounts: entitlements.canManageAccounts,
 			role: user.role,
 			isPrimaryAdmin: user.isPrimaryAdmin,
 			canManageMailboxes: user.canManageMailboxes,
