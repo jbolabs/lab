@@ -2,5 +2,8 @@
 // Offline, the service worker answers the navigation from its cached copy of the page.
 export function reloadPage(): Promise<never> {
 	window.location.reload();
-	return new Promise<never>(() => undefined);
+	// oxlint-disable-next-line promise/avoid-new -- A promise that never settles keeps the spinner until the page unloads.
+	return new Promise<never>(() => {
+		// Never settles.
+	});
 }
