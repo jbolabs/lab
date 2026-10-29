@@ -1,11 +1,19 @@
 "use client";
-import { Field, FieldLabel } from "@/components/ui/field";
-
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+	PageHeader,
+	PageHeaderText,
+	PageTitle,
+	PageDescription,
+} from "@/components/ui/page-header";
+import { runAsyncAction } from "@/lib/async-cleanup";
+
 import type { ManagedAccount } from "../types";
 import { fetchManagedAccount } from "../utils";
 import { saveAccountPassword } from "./utils";
@@ -19,27 +27,54 @@ export default function AccountPasswordPage() {
 	const [message, setMessage] = useState<string | null>(null);
 
 	useEffect(() => {
-		void fetchManagedAccount(id)
-			.then(setAccount)
-			.catch((error) => setMessage(error instanceof Error ? error.message : t("account.loadFailed")));
+		runAsyncAction(
+			async () => {
+				const result0 = await fetchManagedAccount(id);
+				setAccount(result0);
+			},
+			(failure) =>
+				setMessage(
+					failure instanceof Error ? failure.message : t("account.loadFailed")
+				)
+		);
 	}, [id, t]);
 
 	return (
 		<div className="flex flex-col gap-6">
-			<div>
-				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("account.password.title")}</h1>
-				<p className="mt-2 text-sm text-muted-foreground">{t("account.password.resetFor", { name: account?.name ?? t("account.password.thisAccount") })}</p>
-			</div>
+			<PageHeader>
+				<PageHeaderText>
+					<PageTitle>{t("account.password.title")}</PageTitle>
+					<PageDescription>
+						{t("account.password.resetFor", {
+							name: account?.name ?? t("account.password.thisAccount"),
+						})}
+					</PageDescription>
+				</PageHeaderText>
+			</PageHeader>
 			<form
-				onSubmit={(event) => void saveAccountPassword({ event, account, password, setPassword, setSaving, setMessage, t })}
-				className="flex flex-col gap-5 rounded-lg bg-card p-6"
+				onSubmit={(event) =>
+					saveAccountPassword({
+						account,
+						event,
+						password,
+						setMessage,
+						setPassword,
+						setSaving,
+						t,
+					})
+				}
+				className="flex flex-col gap-6"
 			>
 				{account && !account.editable ? (
-					<p className="text-sm text-muted-foreground">{t("account.password.onlyPrimary")}</p>
+					<p className="text-sm text-muted-foreground">
+						{t("account.password.onlyPrimary")}
+					</p>
 				) : (
 					<>
-						<Field className="flex flex-col gap-2">
-							<FieldLabel htmlFor="account-new-password">{t("account.password.new")}</FieldLabel>
+						<Field>
+							<FieldLabel htmlFor="account-new-password">
+								{t("account.password.new")}
+							</FieldLabel>
 							<Input
 								id="account-new-password"
 								type="password"
@@ -52,17 +87,22 @@ export default function AccountPasswordPage() {
 								onChange={(event) => setPassword(event.target.value)}
 								placeholder={t("account.password.placeholder")}
 							/>
-							<p className="text-xs leading-5 text-muted-foreground">
-								{t("account.password.hint")}
-							</p>
+							<FieldDescription>{t("account.password.hint")}</FieldDescription>
 						</Field>
-						<Button type="submit" disabled={!account || saving || password.trim().length < 8}>
-							{saving ? t("account.password.resetting") : t("account.password.reset")}
+						<Button
+							type="submit"
+							disabled={!account || saving || password.trim().length < 8}
+						>
+							{saving
+								? t("account.password.resetting")
+								: t("account.password.reset")}
 						</Button>
 					</>
 				)}
 			</form>
-			{message && <p role="status" className="text-sm text-muted-foreground">{message}</p>}
+			{message && (
+				<output className="text-sm text-muted-foreground">{message}</output>
+			)}
 		</div>
 	);
 }

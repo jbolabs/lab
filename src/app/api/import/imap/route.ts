@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
+
 import { getDb } from "@/db";
 import { folders } from "@/db/schema";
 import { requireUser } from "@/lib/auth/cookies";
@@ -10,6 +11,7 @@ import { getImportMessageUserId } from "@/lib/import/destination";
 import { fetchImapMessages } from "@/lib/import/imap";
 import { importMessagesToMailbox } from "@/lib/import/service";
 import { getMailboxAccessLevel } from "@/lib/mailboxes/access";
+
 import type { ImapImportRequest } from "./types";
 import { parseImapImportRequest } from "./utils";
 
@@ -22,7 +24,15 @@ export async function POST(request: Request) {
 		input = parseImapImportRequest(body);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid IMAP import request" }, { status });
+		return NextResponse.json(
+			{
+				error:
+					error instanceof Error
+						? error.message
+						: "Invalid IMAP import request",
+			},
+			{ status }
+		);
 	}
 
 	const access = await getMailboxAccessLevel(getDb(env), user, input.mailboxId);
@@ -34,7 +44,12 @@ export async function POST(request: Request) {
 		const [folder] = await db
 			.select({ id: folders.id })
 			.from(folders)
-			.where(and(eq(folders.id, input.destination.folderId), eq(folders.mailboxId, access.mailbox.id)))
+			.where(
+				and(
+					eq(folders.id, input.destination.folderId),
+					eq(folders.mailboxId, access.mailbox.id)
+				)
+			)
 			.limit(1);
 		if (!folder) {
 			return NextResponse.json({ error: "Folder not found" }, { status: 404 });
@@ -42,18 +57,26 @@ export async function POST(request: Request) {
 	}
 
 	try {
-		const { messages: rawMessages, total, nextOffset } = await fetchImapMessages(input);
-		const result = await importMessagesToMailbox(env, {
-			userId: getImportMessageUserId(input.destination, user.id, access.mailbox.userId),
-			mailboxId: access.mailbox.id,
-			destination: input.destination,
+		const {
 			messages: rawMessages,
+			total,
+			nextOffset,
+		} = await fetchImapMessages(input);
+		const result = await importMessagesToMailbox(env, {
+			destination: input.destination,
+			mailboxId: access.mailbox.id,
+			messages: rawMessages,
+			userId: getImportMessageUserId(
+				input.destination,
+				user.id,
+				access.mailbox.userId
+			),
 		});
-		return NextResponse.json({ ...result, total, nextOffset });
+		return NextResponse.json({ ...result, nextOffset, total });
 	} catch (error) {
 		return NextResponse.json(
 			{ error: error instanceof Error ? error.message : "IMAP import failed" },
-			{ status: 502 },
+			{ status: 502 }
 		);
 	}
 }

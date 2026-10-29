@@ -1,5 +1,8 @@
 import type { domains } from "@/db/schema";
-import type { CfDnsRecord, CfEmailRoutingRule } from "@/lib/cloudflare-api.types";
+import type {
+	CfDnsRecord,
+	CfEmailRoutingRule,
+} from "@/lib/cloudflare-api.types";
 
 /**
  * Exactly what one provisioning attempt changed on the Cloudflare zone, so a
@@ -8,7 +11,7 @@ import type { CfDnsRecord, CfEmailRoutingRule } from "@/lib/cloudflare-api.types
  * already had — and tearing those down would leave the account worse off than
  * the orphaned config the rollback exists to prevent.
  */
-export type DomainProvisioningChanges = {
+export interface DomainProvisioningChanges {
 	zoneId: string;
 	/** Email Routing was off before this attempt and this attempt turned it on. */
 	enabledEmailRouting: boolean;
@@ -20,15 +23,15 @@ export type DomainProvisioningChanges = {
 	createdAddressRules: string[];
 	/** MX records removed with the user's confirmation, retained so rollback can restore them. */
 	deletedMxRecords: CfDnsRecord[];
-};
+}
 
-export type DomainProvisioningError = {
+export interface DomainProvisioningError {
 	message: string;
 	code?: "MX_RECORDS_CONFLICT";
 	status: number;
-};
+}
 
-export type DomainProvisioningResult = {
+export interface DomainProvisioningResult {
 	hostname: string;
 	zone: { id: string; name: string };
 	routingEnabled: boolean;
@@ -37,11 +40,11 @@ export type DomainProvisioningResult = {
 	sendingSubdomainTag: string | null;
 	routingStatus?: string;
 	changes: DomainProvisioningChanges;
-};
+}
 
-export type DomainPreflightResult = {
+export interface DomainPreflightResult {
 	hostname: string;
 	zone: { id: string; name: string };
-};
+}
 
 export type DomainRow = typeof domains.$inferSelect;

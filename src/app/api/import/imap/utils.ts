@@ -1,9 +1,12 @@
-import type { ImapImportInput } from "@/lib/import/imap-types";
 import { parseImportDestination } from "@/lib/import/destination";
 import type { ImportDestination } from "@/lib/import/destination-types";
+import type { ImapImportInput } from "@/lib/import/imap-types";
+
 import type { ImapImportRequest } from "./types";
 
-export function parseImapImportRequest(input: ImapImportRequest): ImapImportInput & {
+export function parseImapImportRequest(
+	input: ImapImportRequest
+): ImapImportInput & {
 	mailboxId: string;
 	destination: ImportDestination;
 } {
@@ -16,21 +19,29 @@ export function parseImapImportRequest(input: ImapImportRequest): ImapImportInpu
 	const offset = Math.max(Math.floor(Number(input.offset ?? 0)) || 0, 0);
 	const destination = parseImportDestination(input.destination);
 
-	if (!input.mailboxId) throw new Error("Mailbox is required");
-	if (!host) throw new Error("IMAP host is required");
-	if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("IMAP port is invalid");
-	if (!username || !password) throw new Error("IMAP username and password are required");
+	if (!input.mailboxId) {
+		throw new Error("Mailbox is required");
+	}
+	if (!host) {
+		throw new Error("IMAP host is required");
+	}
+	if (!Number.isInteger(port) || port < 1 || port > 65_535) {
+		throw new Error("IMAP port is invalid");
+	}
+	if (!username || !password) {
+		throw new Error("IMAP username and password are required");
+	}
 
 	return {
-		mailboxId: input.mailboxId,
+		destination,
+		folder,
 		host,
+		limit,
+		mailboxId: input.mailboxId,
+		offset,
+		password,
 		port,
 		secure: input.secure ?? port === 993,
 		username,
-		password,
-		folder,
-		limit,
-		offset,
-		destination,
 	};
 }

@@ -1,1 +1,3 @@
-export type SharedFileParams = { params: Promise<{ id: string }> };
+export interface SharedFileParams {
+	params: Promise<{ id: string }>;
+}

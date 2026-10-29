@@ -3,7 +3,7 @@ import type { InProcessQueue } from "./queue";
 import type { RealtimeHubRegistry } from "./realtime";
 import type { SqliteDatabase } from "./sqlite-database";
 
-export type NodeRuntime = {
+export interface NodeRuntime {
 	env: CloudflareEnv;
 	dataDir: string;
 	database: SqliteDatabase;
@@ -12,4 +12,4 @@ export type NodeRuntime = {
 	outboundQueue: InProcessQueue;
 	agentQueue: InProcessQueue;
 	realtime: RealtimeHubRegistry;
-};
+}

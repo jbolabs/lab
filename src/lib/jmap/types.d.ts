@@ -1,29 +1,37 @@
-import type { ApiAuthResult } from "@/lib/api/key-auth-types";
 import type { AppDatabase } from "@/db";
+import type { ApiAuthResult } from "@/lib/api/key-auth-types";
 
 export type JmapId = string;
 
 /** [methodName, arguments, callId] */
 export type JmapInvocation = [string, Record<string, unknown>, string];
 
-export type JmapRequest = {
+export interface JmapRequest {
 	using: string[];
 	methodCalls: JmapInvocation[];
 	createdIds?: Record<string, JmapId>;
-};
+}
 
-export type JmapResponse = {
+export interface JmapResponse {
 	methodResponses: JmapInvocation[];
 	createdIds?: Record<string, JmapId>;
 	sessionState: string;
-};
+}
 
-export type JmapMethodError = { type: string; description?: string; [key: string]: unknown };
+export interface JmapMethodError {
+	type: string;
+	description?: string;
+	[key: string]: unknown;
+}
 
 /** RFC 8620 §5.3 SetError: why one object in a /set or /import call was rejected. */
-export type JmapSetError = { type: string; properties?: string[]; description?: string };
+export interface JmapSetError {
+	type: string;
+	properties?: string[];
+	description?: string;
+}
 
-export type JmapContext = {
+export interface JmapContext {
 	env: CloudflareEnv;
 	db: AppDatabase;
 	auth: ApiAuthResult;
@@ -31,9 +39,20 @@ export type JmapContext = {
 	origin: string;
 	/** Client-assigned creation ids resolved so far in this request. */
 	createdIds: Record<string, JmapId>;
-};
+}
 
-export type JmapMethodHandler = (ctx: JmapContext, args: Record<string, unknown>) => Promise<Record<string, unknown> | JmapMethodError>;
+export type JmapMethodHandler = (
+	ctx: JmapContext,
+	args: Record<string, unknown>
+) => Promise<Record<string, unknown> | JmapMethodError>;
+
+export type SystemRole =
+	| "inbox"
+	| "sent"
+	| "drafts"
+	| "archive"
+	| "junk"
+	| "trash";
 
 /** How a JMAP Mailbox id maps onto Mailflare's mailbox × status/folder model. */
 export type MailboxRef =
@@ -41,9 +60,7 @@ export type MailboxRef =
 	| { kind: "role"; mailboxId: string; role: SystemRole }
 	| { kind: "folder"; mailboxId: string; folderId: string };
 
-export type SystemRole = "inbox" | "sent" | "drafts" | "archive" | "junk" | "trash";
-
-export type AccessibleMailbox = {
+export interface AccessibleMailbox {
 	id: string;
 	userId: string;
 	localPart: string;
@@ -52,15 +69,18 @@ export type AccessibleMailbox = {
 	permission: "read_only" | "send_as" | "send_on_behalf" | "full_access";
 	type: "personal" | "shared";
 	isPrimary: boolean;
-};
+}
 
-export type EmailAddressObject = { name: string | null; email: string };
+export interface EmailAddressObject {
+	name: string | null;
+	email: string;
+}
 
-export type EmailBodyPart = {
+export interface EmailBodyPart {
 	partId: string | null;
 	blobId: string | null;
 	size: number;
-	headers?: Array<{ name: string; value: string }>;
+	headers?: { name: string; value: string }[];
 	name: string | null;
 	type: string;
 	charset: string | null;
@@ -69,9 +89,9 @@ export type EmailBodyPart = {
 	language: string[] | null;
 	location: string | null;
 	subParts?: EmailBodyPart[];
-};
+}
 
-export type FilterCondition = {
+export interface FilterCondition {
 	inMailbox?: string;
 	inMailboxOtherThan?: string[];
 	before?: string;
@@ -93,9 +113,17 @@ export type FilterCondition = {
 	hasAttachment?: boolean;
 	/** `[name]` matches messages carrying the header; `[name, value]` those whose value equals it. */
 	header?: string[];
-};
+}
 
-export type FilterOperator = { operator: "AND" | "OR" | "NOT"; conditions: Filter[] };
+export interface FilterOperator {
+	operator: "AND" | "OR" | "NOT";
+	conditions: Filter[];
+}
+
 export type Filter = FilterOperator | FilterCondition;
 
-export type Comparator = { property: string; isAscending?: boolean; collation?: string };
+export interface Comparator {
+	property: string;
+	isAscending?: boolean;
+	collation?: string;
+}

@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
+
 import { getDb } from "@/db";
 import { folders } from "@/db/schema";
 import { requireUser } from "@/lib/auth/cookies";
@@ -8,6 +9,7 @@ import { RequestBodyTooLargeError } from "@/lib/http/errors";
 import { getImportMessageUserId } from "@/lib/import/destination";
 import { importMessagesToMailbox } from "@/lib/import/service";
 import { getMailboxAccessLevel } from "@/lib/mailboxes/access";
+
 import { parseImportForm } from "./utils";
 
 export async function POST(request: Request) {
@@ -22,7 +24,10 @@ export async function POST(request: Request) {
 	}
 
 	if (!input.mailboxId || input.messages.length === 0) {
-		return NextResponse.json({ error: "Select a mailbox and at least one .eml or .mbox file" }, { status: 400 });
+		return NextResponse.json(
+			{ error: "Select a mailbox and at least one .eml or .mbox file" },
+			{ status: 400 }
+		);
 	}
 
 	const db = getDb(env);
@@ -34,7 +39,12 @@ export async function POST(request: Request) {
 		const [folder] = await db
 			.select({ id: folders.id })
 			.from(folders)
-			.where(and(eq(folders.id, input.destination.folderId), eq(folders.mailboxId, access.mailbox.id)))
+			.where(
+				and(
+					eq(folders.id, input.destination.folderId),
+					eq(folders.mailboxId, access.mailbox.id)
+				)
+			)
 			.limit(1);
 		if (!folder) {
 			return NextResponse.json({ error: "Folder not found" }, { status: 404 });
@@ -42,10 +52,14 @@ export async function POST(request: Request) {
 	}
 
 	const result = await importMessagesToMailbox(env, {
-		userId: getImportMessageUserId(input.destination, user.id, access.mailbox.userId),
-		mailboxId: access.mailbox.id,
 		destination: input.destination,
+		mailboxId: access.mailbox.id,
 		messages: input.messages,
+		userId: getImportMessageUserId(
+			input.destination,
+			user.id,
+			access.mailbox.userId
+		),
 	});
 	return NextResponse.json(result);
 }

@@ -1,1 +1,5 @@
-export type ZonedDay = { date: string; start: Date; end: Date };
+export interface ZonedDay {
+	date: string;
+	start: Date;
+	end: Date;
+}

@@ -1,16 +1,19 @@
 "use client";
 
+import { LockKeyhole } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { LockKeyhole } from "lucide-react";
-import { useLanguage } from "@/components/language-provider";
+
 import { AuthShell } from "@/components/auth/auth-shell";
-import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/auth/password-input";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { useLanguage } from "@/components/language-provider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
+import { withCleanup } from "@/lib/async-cleanup";
+
 import { confirmPasswordReset } from "./utils";
 
 export function ResetPasswordClient() {
@@ -22,7 +25,7 @@ export function ResetPasswordClient() {
 	const [loading, setLoading] = useState(false);
 	const [done, setDone] = useState(false);
 
-	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+	function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		if (password !== confirm) {
 			setError(t("auth.reset.mismatch"));
@@ -30,18 +33,23 @@ export function ResetPasswordClient() {
 		}
 		setLoading(true);
 		setError(null);
-		try {
-			const result = await confirmPasswordReset(token, password);
-			if (!result.ok) {
-				setError(result.error ?? t("auth.reset.failed"));
-				return;
+		return withCleanup(
+			async () => {
+				try {
+					const result = await confirmPasswordReset(token, password);
+					if (!result.ok) {
+						setError(result.error ?? t("auth.reset.failed"));
+						return;
+					}
+					setDone(true);
+				} catch {
+					setError(t("auth.serverUnreachable"));
+				}
+			},
+			() => {
+				setLoading(false);
 			}
-			setDone(true);
-		} catch {
-			setError(t("auth.serverUnreachable"));
-		} finally {
-			setLoading(false);
-		}
+		);
 	}
 
 	if (!token) {
@@ -81,7 +89,7 @@ export function ResetPasswordClient() {
 		>
 			{!done && (
 				<form onSubmit={onSubmit} className="flex flex-col">
-					<FieldGroup className="flex-1 gap-5 [&>button[type=submit]]:mt-auto lg:[&>button[type=submit]]:mt-0">
+					<FieldGroup className="flex-1 [&>button[type=submit]]:mt-auto lg:[&>button[type=submit]]:mt-0">
 						<Field data-invalid={!!error}>
 							<FieldLabel htmlFor="password">
 								{t("auth.reset.newPassword")}
@@ -90,7 +98,6 @@ export function ResetPasswordClient() {
 								aria-describedby={error ? "auth-error" : undefined}
 								aria-invalid={!!error}
 								id="password"
-
 								autoComplete="new-password"
 								value={password}
 								onChange={(event) => setPassword(event.target.value)}
@@ -107,7 +114,6 @@ export function ResetPasswordClient() {
 								aria-describedby={error ? "auth-error" : undefined}
 								aria-invalid={!!error}
 								id="confirm"
-
 								autoComplete="new-password"
 								value={confirm}
 								onChange={(event) => setConfirm(event.target.value)}
@@ -116,13 +122,14 @@ export function ResetPasswordClient() {
 							/>
 						</Field>
 						{error && (
-							<Alert id="auth-error" variant="destructive">
+							<Alert id="auth-error" variant="error">
 								<AlertDescription>{error}</AlertDescription>
 							</Alert>
 						)}
 						<Button
 							type="submit"
-							className="min-h-12 w-full"
+							size="lg"
+							className="w-full"
 							disabled={loading}
 						>
 							{loading && <Spinner data-icon="inline-start" />}

@@ -1,4 +1,4 @@
-export type ImapImportInput = {
+export interface ImapImportInput {
 	host: string;
 	port: number;
 	secure: boolean;
@@ -8,4 +8,4 @@ export type ImapImportInput = {
 	limit: number;
 	/** Number of newest messages already imported by earlier batches. */
 	offset: number;
-};
+}

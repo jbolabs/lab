@@ -3,9 +3,9 @@ import type {
 	CloudAttachmentExtraction,
 } from "./cloud-attachment-types";
 
-const ZERO_WIDTH_RE = /[\u200B-\u200D\u2060\uFEFF]/g;
+const ZERO_WIDTH_RE = /[\u200B-\u200D\u2060\uFEFF]/gu;
 const OUTLOOK_CLOUD_ATTACHMENT_RE =
-	/^\s*\[(https?:\/\/[^\]\s]+)\]([^<\r\n]+)<(https?:\/\/[^>\s]+)>\s*$/gm;
+	/^\s*\[(?<capture1>https?:\/\/[^\]\s]+)\](?<capture2>[^<\r\n]+)<(?<capture3>https?:\/\/[^>\s]+)>\s*$/gmu;
 
 function isMicrosoftCloudFileUrl(value: string): boolean {
 	try {
@@ -20,30 +20,36 @@ function isMicrosoftCloudFileUrl(value: string): boolean {
 	}
 }
 
-export function extractCloudAttachments(content: string): CloudAttachmentExtraction {
-	const normalized = content.replace(ZERO_WIDTH_RE, "");
+export function extractCloudAttachments(
+	content: string
+): CloudAttachmentExtraction {
+	const normalized = content.replaceAll(ZERO_WIDTH_RE, "");
 	const attachments: CloudAttachment[] = [];
 
-	const body = normalized.replace(
+	const body = normalized.replaceAll(
 		OUTLOOK_CLOUD_ATTACHMENT_RE,
 		(fullMatch, _iconUrl: string, rawFilename: string, fileUrl: string) => {
-			if (!isMicrosoftCloudFileUrl(fileUrl)) return fullMatch;
+			if (!isMicrosoftCloudFileUrl(fileUrl)) {
+				return fullMatch;
+			}
 
 			const filename = rawFilename.trim();
-			if (!filename) return fullMatch;
+			if (!filename) {
+				return fullMatch;
+			}
 
 			attachments.push({
-				id: `${fileUrl}-${attachments.length}`,
 				filename,
+				id: `${fileUrl}-${attachments.length}`,
 				provider: "OneDrive",
 				url: fileUrl,
 			});
 			return "";
-		},
+		}
 	);
 
 	return {
 		attachments,
-		content: body.replace(/\n{3,}/g, "\n\n").trim(),
+		content: body.replaceAll(/\n{3,}/gu, "\n\n").trim(),
 	};
 }

@@ -4,10 +4,15 @@ export function isMissingUsersTableError(error: unknown): boolean {
 
 	while (current && !visited.has(current)) {
 		visited.add(current);
-		if (current instanceof Error && /no such table:\s*users/i.test(current.message)) {
+		if (
+			current instanceof Error &&
+			/no such table:\s*users/iu.test(current.message)
+		) {
 			return true;
 		}
-		if (typeof current !== "object" || !("cause" in current)) break;
+		if (typeof current !== "object" || !("cause" in current)) {
+			break;
+		}
 		current = (current as { cause?: unknown }).cause;
 	}
 

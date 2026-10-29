@@ -1,4 +1,5 @@
 import { authFetch } from "@/lib/auth/client";
+
 import type {
 	DomainCreateResult,
 	DomainListResult,
@@ -11,11 +12,13 @@ export async function getDomains(): Promise<DomainListResult> {
 	return (await res.json()) as DomainListResult;
 }
 
-export async function checkDomain(hostname: string): Promise<DomainPreflightResponse> {
+export async function checkDomain(
+	hostname: string
+): Promise<DomainPreflightResponse> {
 	const res = await authFetch("/api/domains/check", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ hostname }),
+		headers: { "Content-Type": "application/json" },
+		method: "POST",
 	});
 	const data = (await res.json()) as Omit<DomainPreflightResponse, "ok">;
 	return { ok: res.ok, ...data };
@@ -25,32 +28,38 @@ export async function createDomain(
 	hostname: string,
 	enableSending: boolean,
 	replaceMxRecords = false,
-	skipDns = false,
+	skipDns = false
 ): Promise<{ ok: boolean; data: DomainCreateResult }> {
 	const res = await authFetch("/api/domains", {
-		method: "POST",
+		body: JSON.stringify({
+			enableRouting: true,
+			enableSending,
+			hostname,
+			replaceMxRecords,
+			skipDns,
+		}),
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ hostname, enableRouting: true, enableSending, replaceMxRecords, skipDns }),
+		method: "POST",
 	});
 
 	return {
-		ok: res.ok,
 		data: (await res.json()) as DomainCreateResult,
+		ok: res.ok,
 	};
 }
 
 export async function createMailbox(
 	domainId: string,
-	localPart: string,
+	localPart: string
 ): Promise<{ ok: boolean; data: MailboxCreateResult }> {
 	const res = await authFetch("/api/mailboxes", {
-		method: "POST",
+		body: JSON.stringify({ displayName: localPart, domainId, localPart }),
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ domainId, localPart, displayName: localPart }),
+		method: "POST",
 	});
 
 	return {
-		ok: res.ok,
 		data: (await res.json()) as MailboxCreateResult,
+		ok: res.ok,
 	};
 }

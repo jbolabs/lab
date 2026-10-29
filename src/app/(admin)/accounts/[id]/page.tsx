@@ -1,14 +1,29 @@
 "use client";
-import { FieldLabel, Field, FieldGroup } from "@/components/ui/field";
-
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import { Upload } from "lucide-react";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+
 import { useLanguage } from "@/components/language-provider";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
 import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+	FieldLabel,
+	Field,
+	FieldContent,
+	FieldDescription,
+	FieldGroup,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+	PageHeader,
+	PageHeaderText,
+	PageTitle,
+	PageDescription,
+} from "@/components/ui/page-header";
+import { Switch } from "@/components/ui/switch";
+import { runAsyncAction } from "@/lib/async-cleanup";
+
 import type { ManagedAccount } from "./types";
 import {
 	fetchManagedAccount,
@@ -26,111 +41,177 @@ export default function AccountDetailsPage() {
 	const [avatarVersion, setAvatarVersion] = useState(0);
 
 	useEffect(() => {
-		void fetchManagedAccount(id)
-			.then(setAccount)
-			.catch((error) => setMessage(error instanceof Error ? error.message : t("account.loadFailed")));
+		runAsyncAction(
+			async () => {
+				const result0 = await fetchManagedAccount(id);
+				setAccount(result0);
+			},
+			(failure) =>
+				setMessage(
+					failure instanceof Error ? failure.message : t("account.loadFailed")
+				)
+		);
 	}, [id, t]);
 
-	async function saveDetails() {
-		if (!account) return;
+	function saveDetails() {
+		if (!account) {
+			return;
+		}
 		setSaving(true);
 		setMessage(null);
-		try {
-			await saveManagedAccount(account);
-			setMessage(t("account.updated"));
-		} catch (error) {
-			setMessage(error instanceof Error ? error.message : t("account.updateFailed"));
-		} finally {
-			setSaving(false);
-		}
+		return runAsyncAction(
+			async () => {
+				await saveManagedAccount(account);
+				setMessage(t("account.updated"));
+			},
+			(failure) => {
+				setMessage(
+					failure instanceof Error ? failure.message : t("account.updateFailed")
+				);
+			},
+			() => {
+				setSaving(false);
+			}
+		);
 	}
 
 	async function uploadAvatar(file: File | undefined) {
-		if (!file || !account) return;
+		if (!file || !account) {
+			return;
+		}
 		try {
 			await uploadManagedAccountAvatar(account.id, file);
 			setAccount({ ...account, hasAvatar: true });
 			setAvatarVersion(Date.now());
 		} catch (error) {
-			setMessage(error instanceof Error ? error.message : t("account.avatarFailed"));
+			setMessage(
+				error instanceof Error ? error.message : t("account.avatarFailed")
+			);
 		}
 	}
 
-	if (!account) return <p className="text-sm text-muted-foreground">{message ?? t("account.loadingAccount")}</p>;
+	if (!account) {
+		return (
+			<p className="text-sm text-muted-foreground">
+				{message ?? t("account.loadingAccount")}
+			</p>
+		);
+	}
 
 	return (
 		<div className="flex flex-col gap-6">
-			<div>
-				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("account.detailsTitle")}</h1>
-				<p className="mt-2 text-sm text-muted-foreground">{t("account.detailsDescription")}</p>
-			</div>
-			<section className="flex flex-col gap-5 rounded-lg bg-card p-6">
+			<PageHeader>
+				<PageHeaderText>
+					<PageTitle>{t("account.detailsTitle")}</PageTitle>
+					<PageDescription>{t("account.detailsDescription")}</PageDescription>
+				</PageHeaderText>
+			</PageHeader>
+			<FieldGroup>
 				{!account.editable && (
-					<p className="rounded-lg bg-muted/60 p-4 text-sm text-muted-foreground">
-						{t("account.noPermission")}
-					</p>
+					<Alert variant="muted">
+						<AlertDescription>{t("account.noPermission")}</AlertDescription>
+					</Alert>
 				)}
 				<div className="flex items-center gap-4">
 					<span className="relative flex size-16 items-center justify-center overflow-hidden rounded-full bg-signal-soft text-xl font-semibold text-signal">
 						{account.name.charAt(0).toUpperCase()}
 						{account.hasAvatar && (
-							<ProgressiveAvatarImage src={getManagedAccountAvatarUrl(id, avatarVersion)} alt="" className="absolute inset-0 h-full w-full object-cover" />
+							<ProgressiveAvatarImage
+								src={getManagedAccountAvatarUrl(id, avatarVersion)}
+								alt=""
+								className="absolute inset-0 size-full object-cover"
+							/>
 						)}
 					</span>
 					{account.editable && (
-						<FieldLabel className="cursor-pointer">
-							<span className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm">
-								<Upload className="size-4" />
+						<Button asChild variant="outline">
+							<label className="cursor-pointer">
+								<Upload />
 								{t("account.changeAvatar")}
-							</span>
-							<Input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={(event) => void uploadAvatar(event.target.files?.[0])} />
-						</FieldLabel>
+								<Input
+									type="file"
+									accept="image/jpeg,image/png,image/webp,image/gif"
+									className="sr-only"
+									onChange={(event) => uploadAvatar(event.target.files?.[0])}
+								/>
+							</label>
+						</Button>
 					)}
 				</div>
-				<Field className="flex flex-col gap-2">
+				<Field>
 					<FieldLabel htmlFor="account-email">{t("auth.email")}</FieldLabel>
-					<Input id="account-email" value={account.email} readOnly className="bg-muted/60 text-muted-foreground" />
-				</Field>
-				<Field className="flex flex-col gap-2">
-					<FieldLabel htmlFor="account-name">{t("common.name")}</FieldLabel>
-					<Input id="account-name" value={account.name} disabled={!account.editable} onChange={(event) => setAccount({ ...account, name: event.target.value })} />
-				</Field>
-				{account.canForwardEmail && <Field className="flex flex-col gap-2">
-					<FieldLabel htmlFor="forwarding-email">{t("account.forwardingOptional")}</FieldLabel>
 					<Input
-						id="forwarding-email"
-						type="email"
-						value={account.forwardingEmail ?? ""}
-						disabled={!account.editable}
-						onChange={(event) => setAccount({ ...account, forwardingEmail: event.target.value || null })}
-						placeholder="destination@example.com"
+						id="account-email"
+						value={account.email}
+						readOnly
+						className=""
 					/>
-					<p className="text-xs leading-5 text-muted-foreground">
-						{t("settings.forwarding.hint")}
-					</p>
-				</Field>}
-				<FieldGroup className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/60 p-4">
-					<Field className="flex flex-col gap-1">
-						<FieldLabel htmlFor="account-enabled" className="font-semibold text-foreground">{t("account.enabled")}</FieldLabel>
-						<p id="account-enabled-description" className="text-xs leading-5 text-muted-foreground">
-							{account.isPrimaryAdmin ? t("account.primaryAlwaysEnabled") : t("account.allowSignIn")}
-						</p>
+				</Field>
+				<Field>
+					<FieldLabel htmlFor="account-name">{t("common.name")}</FieldLabel>
+					<Input
+						id="account-name"
+						value={account.name}
+						disabled={!account.editable}
+						onChange={(event) =>
+							setAccount({ ...account, name: event.target.value })
+						}
+					/>
+				</Field>
+				{account.canForwardEmail && (
+					<Field>
+						<FieldLabel htmlFor="forwarding-email">
+							{t("account.forwardingOptional")}
+						</FieldLabel>
+						<Input
+							id="forwarding-email"
+							type="email"
+							value={account.forwardingEmail ?? ""}
+							disabled={!account.editable}
+							onChange={(event) =>
+								setAccount({
+									...account,
+									forwardingEmail: event.target.value || null,
+								})
+							}
+							placeholder="destination@example.com"
+						/>
+						<FieldDescription>{t("settings.forwarding.hint")}</FieldDescription>
 					</Field>
+				)}
+				<Field orientation="horizontal">
+					<FieldContent>
+						<FieldLabel htmlFor="account-enabled">
+							{t("account.enabled")}
+						</FieldLabel>
+						<FieldDescription id="account-enabled-description">
+							{account.isPrimaryAdmin
+								? t("account.primaryAlwaysEnabled")
+								: t("account.allowSignIn")}
+						</FieldDescription>
+					</FieldContent>
 					<Switch
 						id="account-enabled"
 						aria-describedby="account-enabled-description"
 						checked={!account.disabled}
 						disabled={saving || !account.editable || account.isPrimaryAdmin}
-						onCheckedChange={(enabled) => setAccount({ ...account, disabled: !enabled })}
+						onCheckedChange={(enabled) =>
+							setAccount({ ...account, disabled: !enabled })
+						}
 					/>
-				</FieldGroup>
+				</Field>
 				{account.editable && (
-					<Button onClick={() => void saveDetails()} disabled={saving || !account.name.trim()}>
+					<Button
+						onClick={() => saveDetails()}
+						disabled={saving || !account.name.trim()}
+					>
 						{saving ? t("common.saving") : t("account.saveDetails")}
 					</Button>
 				)}
-			</section>
-			{message && <p role="status" className="text-sm text-muted-foreground">{message}</p>}
+			</FieldGroup>
+			{message && (
+				<output className="text-sm text-muted-foreground">{message}</output>
+			)}
 		</div>
 	);
 }

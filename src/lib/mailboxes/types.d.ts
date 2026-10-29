@@ -1,10 +1,14 @@
 import type { mailboxes } from "@/db/schema";
 
-export type MailboxPermission = "read_only" | "send_as" | "send_on_behalf" | "full_access";
+export type MailboxPermission =
+	| "read_only"
+	| "send_as"
+	| "send_on_behalf"
+	| "full_access";
 
 export type MailboxType = "personal" | "shared";
 
-export type MailboxAccessLevel = {
+export interface MailboxAccessLevel {
 	mailbox: typeof mailboxes.$inferSelect;
 	permission: MailboxPermission;
 	isOwner: boolean;
@@ -12,7 +16,7 @@ export type MailboxAccessLevel = {
 	canSendAs: boolean;
 	canSendOnBehalf: boolean;
 	canManage: boolean;
-};
+}
 
 export type AuditAction =
 	| "auth.login"
@@ -23,11 +27,11 @@ export type AuditAction =
 	| "permission.change"
 	| "mailbox.access";
 
-export type AuditLogInput = {
+export interface AuditLogInput {
 	actorUserId?: string | null;
 	targetUserId?: string | null;
 	mailboxId?: string | null;
 	messageId?: string | null;
 	action: AuditAction | string;
 	metadata?: Record<string, unknown>;
-};
+}

@@ -1,4 +1,5 @@
 import { AuthGuard } from "@/components/auth/auth-guard";
+
 import { authPageMetadata } from "../auth-metadata";
 import { ForgotPasswordClient } from "./forgot-password-client";
 

@@ -3,7 +3,7 @@ import type { BackupTableGroupId } from "@/lib/backups/types";
 export type BackupScheduleType = "daily" | "weekly" | "monthly";
 export type BackupStatus = "queued" | "running" | "completed" | "failed";
 
-export type BackupSettings = {
+export interface BackupSettings {
 	id: string;
 	enabled: boolean;
 	scheduleType: BackupScheduleType;
@@ -12,9 +12,9 @@ export type BackupSettings = {
 	retentionDays: number;
 	excludedTableGroups: BackupTableGroupId[];
 	updatedAt: string;
-};
+}
 
-export type BackupItem = {
+export interface BackupItem {
 	id: string;
 	status: BackupStatus;
 	trigger: "manual" | "scheduled";
@@ -24,13 +24,13 @@ export type BackupItem = {
 	createdAt: string;
 	startedAt: string | null;
 	completedAt: string | null;
-};
+}
 
-export type BackupsResponse = {
+export interface BackupsResponse {
 	settings: BackupSettings;
 	backups: BackupItem[];
 	configuration: {
 		configured: boolean;
 		missing: string[];
 	};
-};
+}

@@ -1,10 +1,12 @@
 import type { SpamSignal } from "@/lib/spam/types";
 
-export type SpamScoreDetailsProps = {
+export interface SpamScoreDetailsProps {
 	score?: number | null;
 	verdict?: "inbox" | "suspicious" | "spam" | null;
 	signals?: string | null;
 	analysisError?: string | null;
-};
+}
 
-export type ParsedSpamDetails = { signals: SpamSignal[] };
+export interface ParsedSpamDetails {
+	signals: SpamSignal[];
+}

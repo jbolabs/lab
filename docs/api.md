@@ -107,43 +107,25 @@ Admin API keys cannot read or send mail. Enable **Allow MCP access** when creati
 
 ### Choose aliases when creating an account
 
-In **Admin > Accounts > New account**, the primary address is assigned by default.
-Add optional aliases by choosing each username and domain, or enable **Use all domains**
-to also receive and send as the primary username on every available active domain owned
-by the same admin, including domains added later.
+In **Admin > Accounts > New account**, the primary address is assigned by default. Add optional aliases by choosing each username and domain, or enable **Use all domains** to also receive and send as the primary username on every available active domain owned by the same admin, including domains added later.
 
-The dashboard, admin API, and MCP `manage_accounts` create action share the same
-creation handler. For example, this API body creates `sam@example.com` with just
-`sales@example.net` as an additional alias:
+The dashboard, admin API, and MCP `manage_accounts` create action share the same creation handler. For example, this API body creates `sam@example.com` with just `sales@example.net` as an additional alias:
 
 ```json
 {
-  "username": "sam",
-  "domainId": "dom_example_com",
-  "password": "REPLACE_WITH_A_STRONG_PASSWORD",
-  "useAllDomains": false,
-  "aliases": [
-    { "domainId": "dom_example_net", "localPart": "sales" }
-  ]
+	"username": "sam",
+	"domainId": "dom_example_com",
+	"password": "REPLACE_WITH_A_STRONG_PASSWORD",
+	"useAllDomains": false,
+	"aliases": [{ "domainId": "dom_example_net", "localPart": "sales" }]
 }
 ```
 
-Pass the same object as `data` to `manage_accounts` with `action: "create"`.
-`aliases` defaults to an empty list. Alias domains must
-be active and owned by the admin creating the account. Duplicate addresses and conflicts
-with existing mailboxes or aliases are rejected, including equivalent dot/plus variants.
-An alias shares its mailbox's delivery, message storage, and sending permissions.
+Pass the same object as `data` to `manage_accounts` with `action: "create"`. `aliases` defaults to an empty list. Alias domains must be active and owned by the admin creating the account. Duplicate addresses and conflicts with existing mailboxes or aliases are rejected, including equivalent dot/plus variants. An alias shares its mailbox's delivery, message storage, and sending permissions.
 
-For backward compatibility, API/MCP requests that omit `useAllDomains` still default
-to `true`; pass `false` explicitly for primary-only or selected-alias accounts. The
-dashboard sends `false` unless the checkbox is enabled. This changes initial address
-assignment, not existing mailbox management permissions. Existing accounts are not
-modified and no database migration is required.
+For backward compatibility, API/MCP requests that omit `useAllDomains` still default to `true`; pass `false` explicitly for primary-only or selected-alias accounts. The dashboard sends `false` unless the checkbox is enabled. This changes initial address assignment, not existing mailbox management permissions. Existing accounts are not modified and no database migration is required.
 
-Creation validates all selected addresses before provisioning. Account, mailbox, and
-alias records are inserted atomically. If Cloudflare routing fails, the new records
-are removed and routing changes from that attempt are rolled back, preserving existing
-rules. If cleanup itself fails, the response reports that manual checking is needed.
+Creation validates all selected addresses before provisioning. Account, mailbox, and alias records are inserted atomically. If Cloudflare routing fails, the new records are removed and routing changes from that attempt are rolled back, preserving existing rules. If cleanup itself fails, the response reports that manual checking is needed.
 
 ## Sending email
 
@@ -151,19 +133,19 @@ Send email through `POST /api/v1/send`. `to`, `cc` and `bcc` accept either a com
 
 ```json
 {
-  "from": "support@example.com",
-  "to": ["user@example.net", "\"Maya Chen\" <maya@example.net>"],
-  "cc": "ops@example.com",
-  "bcc": ["audit@example.com"],
-  "subject": "Report",
-  "text": "Attached.",
-  "attachments": [
-    {
-      "filename": "report.pdf",
-      "type": "application/pdf",
-      "contentBase64": "<base64 data>"
-    }
-  ]
+	"from": "support@example.com",
+	"to": ["user@example.net", "\"Maya Chen\" <maya@example.net>"],
+	"cc": "ops@example.com",
+	"bcc": ["audit@example.com"],
+	"subject": "Report",
+	"text": "Attached.",
+	"attachments": [
+		{
+			"filename": "report.pdf",
+			"type": "application/pdf",
+			"contentBase64": "<base64 data>"
+		}
+	]
 }
 ```
 
@@ -171,12 +153,12 @@ To send a reply that threads correctly in the recipient's client, pass the paren
 
 ```json
 {
-  "from": "support@example.com",
-  "to": "user@example.net",
-  "subject": "Re: Report",
-  "text": "Thanks, received.",
-  "inReplyTo": "<CAF1abc@mail.example.net>",
-  "references": ["<CAF0root@mail.example.net>", "<CAF1abc@mail.example.net>"]
+	"from": "support@example.com",
+	"to": "user@example.net",
+	"subject": "Re: Report",
+	"text": "Thanks, received.",
+	"inReplyTo": "<CAF1abc@mail.example.net>",
+	"references": ["<CAF0root@mail.example.net>", "<CAF1abc@mail.example.net>"]
 }
 ```
 
@@ -188,9 +170,7 @@ Each user can also choose **Settings > Inbox > Trash and Spam clean-up** to dele
 
 Messages composed in Mailflare are sent as HTML with a plain-text alternative derived from it. Quoted or forwarded content is wrapped in `<div class="mailflare-quote" data-mailflare-quote="1">` so the reader can fold it. `POST /api/drafts` accepts `forwardOfMessageId`, which copies that message's attachments onto the new draft; `DELETE /api/drafts/{id}/attachments/{attachmentId}` removes one, and `POST /api/send` with `draftId` sends the draft's stored files along with any uploaded in the request.
 
-The dashboard composer accepts up to 10 attachments. An administrator sets the outgoing per-file and combined limit from 1 to 25 MB on **General** (`/general`); the default is 25 MB. Attachment metadata is stored in D1 and file content is stored in R2. Normal message downloads require access to the mailbox containing the message.
-The limits below apply to domains that send through Cloudflare. Resend and Amazon SES take attachments directly, within the same administrator limit. Cloudflare Email Sending limits the entire encoded message, including attachments, to 5 MiB for general recipients, or 25 MiB for verified destination addresses. To stay under the general limit, files over 3 MB and smaller files that would exceed the message budget are sent as R2 download links. The recipient can download them for 30 days; anyone with the link can access the file during that time. The outgoing cap still applies to those files. Cloudflare also limits recipient count to 50, subject length to 998 characters, and headers to 16 KB.
-Incoming mail that exceeds the attachment count or 25 MB decoded attachment limit is rejected during delivery, so the sender's mail provider can report a delivery failure. Cloudflare Email Routing also limits the entire raw message to 25 MiB, including MIME encoding, and may reject it before Mailflare runs.
+The dashboard composer accepts up to 10 attachments. An administrator sets the outgoing per-file and combined limit from 1 to 25 MB on **General** (`/general`); the default is 25 MB. Attachment metadata is stored in D1 and file content is stored in R2. Normal message downloads require access to the mailbox containing the message. The limits below apply to domains that send through Cloudflare. Resend and Amazon SES take attachments directly, within the same administrator limit. Cloudflare Email Sending limits the entire encoded message, including attachments, to 5 MiB for general recipients, or 25 MiB for verified destination addresses. To stay under the general limit, files over 3 MB and smaller files that would exceed the message budget are sent as R2 download links. The recipient can download them for 30 days; anyone with the link can access the file during that time. The outgoing cap still applies to those files. Cloudflare also limits recipient count to 50, subject length to 998 characters, and headers to 16 KB. Incoming mail that exceeds the attachment count or 25 MB decoded attachment limit is rejected during delivery, so the sender's mail provider can report a delivery failure. Cloudflare Email Routing also limits the entire raw message to 25 MiB, including MIME encoding, and may reject it before Mailflare runs.
 
 ## JMAP
 
@@ -213,7 +193,7 @@ When two-factor authentication is on, `POST /api/auth/login` returns `{ ok: true
 `GET /api/messages?q=...` (session) and `GET /api/v1/messages?q=...` (API key, `read` scope) accept the same query grammar, backed by an FTS5 index over subject, sender, recipients and body:
 
 | Syntax | Meaning |
-|---|---|
+| --- | --- |
 | `invoice` | prefix match anywhere (`inv` finds "invoice") |
 | `"private window"` | exact phrase |
 | `-word` | exclude |

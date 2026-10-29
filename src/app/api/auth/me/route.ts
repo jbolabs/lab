@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+
 import { getCurrentUser } from "@/lib/auth/cookies";
 import { getEnv } from "@/lib/cloudflare";
-import { hasPrimaryDomain, userHasMailboxes } from "@/lib/user";
 import { hasCloudflareCredentials, isNodeRuntime } from "@/lib/runtime";
+import { hasPrimaryDomain, userHasMailboxes } from "@/lib/user";
 
 export async function GET(request: Request) {
 	const env = getEnv();
@@ -22,28 +23,28 @@ export async function GET(request: Request) {
 		// Authentication remains valid when optional mailbox/setup metadata is unavailable.
 	}
 	return NextResponse.json({
-		user: {
-			id: user.id,
-			email: user.email,
-			name: user.name,
-			timeZone: user.timeZone,
-			resetEmail: user.resetEmail,
-			forwardingEmail: user.forwardingEmail,
-			canForwardEmail: true,
-			role: user.role,
-			isPrimaryAdmin: user.isPrimaryAdmin,
-			canManageMailboxes: user.canManageMailboxes,
-			canManageDomains: user.canManageDomains,
-			canManageUsers: user.canManageUsers,
-			keyboardShortcutsEnabled: user.keyboardShortcutsEnabled,
-			spamProtectionEnabled: user.spamProtectionEnabled,
-			showFullRecipientAddresses: user.showFullRecipientAddresses,
-			hasAvatar: !!user.avatarKey,
-			mfaEnabled: user.totpEnabled,
-		},
-		runtime: isNodeRuntime(env) ? "node" : "cloudflare",
-		managesDns: hasCloudflareCredentials(env),
 		hasMailboxes,
 		isSetup,
+		managesDns: hasCloudflareCredentials(env),
+		runtime: isNodeRuntime(env) ? "node" : "cloudflare",
+		user: {
+			canForwardEmail: true,
+			canManageDomains: user.canManageDomains,
+			canManageMailboxes: user.canManageMailboxes,
+			canManageUsers: user.canManageUsers,
+			email: user.email,
+			forwardingEmail: user.forwardingEmail,
+			hasAvatar: !!user.avatarKey,
+			id: user.id,
+			isPrimaryAdmin: user.isPrimaryAdmin,
+			keyboardShortcutsEnabled: user.keyboardShortcutsEnabled,
+			mfaEnabled: user.totpEnabled,
+			name: user.name,
+			resetEmail: user.resetEmail,
+			role: user.role,
+			showFullRecipientAddresses: user.showFullRecipientAddresses,
+			spamProtectionEnabled: user.spamProtectionEnabled,
+			timeZone: user.timeZone,
+		},
 	});
 }

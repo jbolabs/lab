@@ -1,25 +1,25 @@
 {
-  "name": "@jbolabs/lab-deployment",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "check": "tsc --noEmit && bun node_modules/alchemy/bin/cli.js --help && bun check-runtime.ts",
-    "plan": "bun alchemy plan alchemy.run.ts --stage prod --no-input",
-    "plan:github": "bun alchemy plan github.ts --stage ci --no-input",
-    "deploy:github": "bun alchemy deploy github.ts --stage ci --no-input",
-    "deploy": "node ../scripts/deploy-production.mjs"
-  },
-  "devDependencies": {
-    "@effect/platform-bun": "4.0.4",
-    "@effect/platform-node": "4.0.4",
-    "alchemy": "2.0.0-beta.82",
-    "effect": "4.0.4",
-    "@types/bun": "1.4.2",
-    "typescript": "6.0.3"
-  },
-  "overrides": {
-    "@effect/sql-d1": "4.0.2",
-    "@effect/sql-sqlite-do": "4.0.2",
-    "@effect/platform-node-shared": "4.0.4"
-  }
+	"name": "@jbolabs/lab-deployment",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"check": "tsc --noEmit && bun node_modules/alchemy/bin/cli.js --help && bun check-runtime.ts",
+		"plan": "bun alchemy plan alchemy.run.ts --stage prod --no-input",
+		"plan:github": "bun alchemy plan github.ts --stage ci --no-input",
+		"deploy:github": "bun alchemy deploy github.ts --stage ci --no-input",
+		"deploy": "node ../scripts/deploy-production.mjs"
+	},
+	"devDependencies": {
+		"@effect/platform-bun": "4.0.4",
+		"@effect/platform-node": "4.0.4",
+		"@types/bun": "1.4.2",
+		"alchemy": "2.0.0-beta.82",
+		"effect": "4.0.4",
+		"typescript": "6.0.3"
+	},
+	"overrides": {
+		"@effect/platform-node-shared": "4.0.4",
+		"@effect/sql-d1": "4.0.2",
+		"@effect/sql-sqlite-do": "4.0.2"
+	}
 }

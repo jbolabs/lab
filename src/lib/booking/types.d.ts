@@ -1,4 +1,6 @@
-export type BookingEventInput = {
+import type { calendarEvents } from "@/db/schema";
+
+export interface BookingEventInput {
 	name: string;
 	slug: string;
 	description: string;
@@ -12,13 +14,16 @@ export type BookingEventInput = {
 	timeRanges: BookingTimeRange[];
 	timeZone: string;
 	enabled: boolean;
-};
+}
 
-export type BookingTimeRange = { startTime: string; endTime: string };
+export interface BookingTimeRange {
+	startTime: string;
+	endTime: string;
+}
 
 export type BookingEventRecord = BookingEventInput & {
 	id: string;
 	userId: string;
 };
 
-export type ExistingCalendarEvent = typeof import("@/db/schema").calendarEvents.$inferSelect;
+export type ExistingCalendarEvent = typeof calendarEvents.$inferSelect;

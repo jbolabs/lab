@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { AUTH_SESSION_CHANGED_EVENT, authFetch } from "@/lib/auth/client";
 
-export type CurrentUser = {
+export interface CurrentUser {
 	id: string;
 	email: string;
 	name: string;
@@ -13,7 +14,7 @@ export type CurrentUser = {
 	canManageDomains: boolean;
 	canManageUsers: boolean;
 	hasAvatar: boolean;
-};
+}
 
 let cachedUser: CurrentUser | null = null;
 let inflight: Promise<CurrentUser | null> | null = null;
@@ -26,19 +27,25 @@ export function clearCurrentUserCache(): void {
 }
 
 export function fetchCurrentUser(): Promise<CurrentUser | null> {
-	if (cachedUser) return Promise.resolve(cachedUser);
+	if (cachedUser) {
+		return Promise.resolve(cachedUser);
+	}
 	if (!inflight) {
 		const requestGeneration = generation;
 		const request = authFetch("/api/auth/me", { redirectOnUnauthorized: false })
 			.then((response) => (response.ok ? response.json() : null))
 			.then((data) => {
-				if (requestGeneration !== generation) return null;
+				if (requestGeneration !== generation) {
+					return null;
+				}
 				cachedUser = (data as { user?: CurrentUser } | null)?.user ?? null;
 				return cachedUser;
 			})
 			.catch(() => null)
 			.finally(() => {
-				if (inflight === request) inflight = null;
+				if (inflight === request) {
+					inflight = null;
+				}
 			});
 		inflight = request;
 	}
@@ -47,29 +54,27 @@ export function fetchCurrentUser(): Promise<CurrentUser | null> {
 
 export function useCurrentUser(): CurrentUser | null {
 	const [user, setUser] = useState<CurrentUser | null>(cachedUser);
-	const [reloadKey, setReloadKey] = useState(0);
 
 	useEffect(() => {
 		let active = true;
-		const requestGeneration = generation;
-		void fetchCurrentUser().then((next) => {
-			if (active && requestGeneration === generation) setUser(next);
-		});
-		return () => {
-			active = false;
-		};
-	}, [reloadKey]);
-
-	// Login and logout swap the cached account without a reload, so refetch when the session changes.
-	useEffect(() => {
+		async function load() {
+			const requestGeneration = generation;
+			const next = await fetchCurrentUser();
+			if (active && requestGeneration === generation) {
+				setUser(next);
+			}
+		}
 		function onSessionChanged() {
 			clearCurrentUserCache();
 			setUser(null);
-			setReloadKey((key) => key + 1);
+			void load();
 		}
+		void load();
 		window.addEventListener(AUTH_SESSION_CHANGED_EVENT, onSessionChanged);
-		return () => window.removeEventListener(AUTH_SESSION_CHANGED_EVENT, onSessionChanged);
+		return () => {
+			active = false;
+			window.removeEventListener(AUTH_SESSION_CHANGED_EVENT, onSessionChanged);
+		};
 	}, []);
-
 	return user;
 }

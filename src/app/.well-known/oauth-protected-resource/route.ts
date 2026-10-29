@@ -1,5 +1,12 @@
 import { getEnv } from "@/lib/cloudflare";
+import { oauthError } from "@/lib/oauth/config";
 import { metadata } from "@/lib/oauth/protocol";
-import { oauthError, preflight } from "@/lib/oauth/config";
-export function GET(request: Request) { try { return metadata(getEnv(), request, true); } catch (error) { return oauthError(error); } }
-export const OPTIONS = preflight;
+
+export function GET(request: Request) {
+	try {
+		return metadata(getEnv(), request, true);
+	} catch (error) {
+		return oauthError(error);
+	}
+}
+export { preflight as OPTIONS } from "@/lib/oauth/config";

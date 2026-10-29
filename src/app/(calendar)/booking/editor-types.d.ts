@@ -1,6 +1,6 @@
 import type { BookingForm, BookingHost } from "./types";
 
-export type BookingEditorProps = {
+export interface BookingEditorProps {
 	form: BookingForm;
 	open: boolean;
 	editingId: string | null;
@@ -15,4 +15,4 @@ export type BookingEditorProps = {
 	onDelete: () => void;
 	onToggleEnabled: () => void;
 	onClosed: () => void;
-};
+}

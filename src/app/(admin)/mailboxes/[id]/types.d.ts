@@ -1,4 +1,4 @@
-export type MailboxDetail = {
+export interface MailboxDetail {
 	id: string;
 	userId: string;
 	domainId: string;
@@ -12,60 +12,60 @@ export type MailboxDetail = {
 	createdAt: string;
 	hostname: string;
 	isPrimary?: boolean;
-};
+}
 
-export type MailboxDetailResponse = {
+export interface MailboxDetailResponse {
 	mailbox?: MailboxDetail;
 	error?: string;
-};
+}
 
-export type MailboxAvatarFormProps = {
+export interface MailboxAvatarFormProps {
 	mailboxId: string;
 	hasAvatar: boolean;
 	name: string;
-};
+}
 
-export type MailboxAvatarUploadResponse = {
+export interface MailboxAvatarUploadResponse {
 	error?: string;
-};
+}
 
-export type MailboxAlias = {
+export interface MailboxAlias {
 	id: string;
 	domainId: string;
 	localPart: string;
 	hostname: string;
 	createdAt: string;
-};
+}
 
-export type MailboxAliasDomain = {
+export interface MailboxAliasDomain {
 	id: string;
 	hostname: string;
-};
+}
 
-export type MailboxAliasesResponse = {
+export interface MailboxAliasesResponse {
 	aliases: MailboxAlias[];
 	availableDomains: MailboxAliasDomain[];
 	error?: string;
-};
+}
 
-export type SharedInboxMember = {
+export interface SharedInboxMember {
 	id: string;
 	userId: string;
 	userEmail: string;
 	userName: string;
 	permission: "read_only" | "send_as" | "send_on_behalf" | "full_access";
 	createdAt: string;
-};
+}
 
-export type SharedInboxAccount = {
+export interface SharedInboxAccount {
 	id: string;
 	email: string;
 	name: string;
 	role: "admin" | "user";
-};
+}
 
-export type SharedInboxAccessResponse = {
+export interface SharedInboxAccessResponse {
 	members: SharedInboxMember[];
 	availableUsers: SharedInboxAccount[];
 	error?: string;
-};
+}

@@ -1,8 +1,8 @@
-export type AccountMailboxesRouteParams = {
+export interface AccountMailboxesRouteParams {
 	params: Promise<{ id: string }>;
-};
+}
 
-export type AccountMailboxItem = {
+export interface AccountMailboxItem {
 	id: string;
 	domainId: string;
 	localPart: string;
@@ -10,4 +10,4 @@ export type AccountMailboxItem = {
 	displayName: string | null;
 	type: "personal" | "shared";
 	createdAt: Date;
-};
+}

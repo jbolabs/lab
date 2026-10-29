@@ -1,5 +1,7 @@
 import { Suspense } from "react";
+
 import { AuthGuard } from "@/components/auth/auth-guard";
+
 import { authPageMetadata } from "../auth-metadata";
 import { ResetPasswordClient } from "./reset-password-client";
 

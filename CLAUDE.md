@@ -6,7 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm run dev                    # Vite + vinext in local workerd
-npm run lint                   # eslint (next/core-web-vitals + next/typescript)
+npm run lint                   # Ultracite Oxlint + strict shadcn rules (check only)
+npm run lint:fix               # apply safe lint fixes
+npm run format                 # Oxfmt: tabs, double quotes, semicolons
+npm run format:check           # check formatting without writes
 npm run build                  # vinext build, including the complete Worker
 
 npm run db:generate            # drizzle-kit generate from src/db/schema/index.ts
@@ -64,8 +67,8 @@ Threading: `resolveThreadId` in `src/lib/email/threading.ts` files an inbound or
 
 `routing_rules.scope` splits two genuinely different mechanisms, and mixing them up is the easy mistake:
 
-- **`domain`** — evaluated by `resolveInboundAddress` (`src/lib/email/routing.ts`) *while resolving the address*, in three phases: `reject` rules first (so a sender can be blocked even when the recipient is a real mailbox), then exact mailbox and alias lookup, then `forward`/`store` catch-all fallbacks. Ordered by descending `priority`, then oldest first. This phase split is what stops a `*` catch-all from shadowing real mailboxes — preserve it.
-- **`mailbox`** — evaluated by `resolveInboxRuleDestination` *after* delivery, to pick a folder or move to spam/trash.
+- **`domain`** — evaluated by `resolveInboundAddress` (`src/lib/email/routing.ts`) _while resolving the address_, in three phases: `reject` rules first (so a sender can be blocked even when the recipient is a real mailbox), then exact mailbox and alias lookup, then `forward`/`store` catch-all fallbacks. Ordered by descending `priority`, then oldest first. This phase split is what stops a `*` catch-all from shadowing real mailboxes — preserve it.
+- **`mailbox`** — evaluated by `resolveInboxRuleDestination` _after_ delivery, to pick a folder or move to spam/trash.
 
 Both queries filter on `scope`, so any new rule must set it explicitly. `forward` and `reject` are actioned in `worker.ts`, never in the queue consumer.
 
@@ -127,7 +130,7 @@ Native push goes straight to APNs when the server has `APNS_KEY_ID`/`APNS_TEAM_I
 
 Two independent auth surfaces:
 
-- **Session cookie** (`ep_session`) — `getCurrentUser` / `requireUser` in `src/lib/auth/cookies.ts`, backed by `src/lib/auth/session.ts`. Used by dashboard/admin API routes. `requireUser` *throws*, which Next surfaces as a 500; prefer `requireSessionUser` from `src/lib/api/auth.ts`, which returns a proper 401 response. Most older routes still use `requireUser` and 500 on unauthenticated requests.
+- **Session cookie** (`ep_session`) — `getCurrentUser` / `requireUser` in `src/lib/auth/cookies.ts`, backed by `src/lib/auth/session.ts`. Used by dashboard/admin API routes. `requireUser` _throws_, which Next surfaces as a 500; prefer `requireSessionUser` from `src/lib/api/auth.ts`, which returns a proper 401 response. Most older routes still use `requireUser` and 500 on unauthenticated requests.
 - **API key bearer token** — `authenticateApiKey` + `requireScope` in `src/lib/api/auth.ts`, used by the public `/api/v1/*` surface.
 
 Mailbox authorization is separate from user role and goes through `src/lib/mailboxes/access.ts` (`getMailboxAccessLevel`, `listAccessibleMailboxes`, `listAccessibleMailboxIds`), which accounts for ownership, the `mailbox_access` sharing table, and admin role. Message queries scope by accessible mailbox IDs, not by `userId` — see `src/app/api/messages/route.ts` for the canonical pattern.

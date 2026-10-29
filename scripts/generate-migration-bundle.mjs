@@ -1,11 +1,16 @@
-import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import fs from "node:fs";
+
+const { readFileSync, readdirSync, writeFileSync } = fs;
 
 const root = new URL("../", import.meta.url);
 const migrationsDirectory = new URL("drizzle/migrations/", root);
 const output = new URL("src/lib/migrations/bundle.json", root);
 
 function splitSql(sql) {
-	const tokens = sql.match(/--[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/|'(?:''|[^'])*'|"(?:""|[^"])*"|`(?:``|[^`])*`|\[[^\]]*\]|[A-Za-z_]+|;|[^\S\n]+|\n|./g) ?? [];
+	const tokens =
+		sql.match(
+			/--[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/|'(?:''|[^'])*'|"(?:""|[^"])*"|`(?:``|[^`])*`|\[[^\]]*\]|[A-Za-z_]+|;|[^\S\n]+|\n|./gu
+		) ?? [];
 	const statements = [];
 	let current = "";
 	let triggerDepth = 0;
@@ -18,28 +23,40 @@ function splitSql(sql) {
 		}
 
 		const word = token.toUpperCase();
-		if (word === "TRIGGER") insideTrigger = true;
-		if (insideTrigger && (word === "BEGIN" || word === "CASE")) triggerDepth += 1;
-		if (insideTrigger && word === "END") triggerDepth -= 1;
+		if (word === "TRIGGER") {
+			insideTrigger = true;
+		}
+		if (insideTrigger && (word === "BEGIN" || word === "CASE")) {
+			triggerDepth += 1;
+		}
+		if (insideTrigger && word === "END") {
+			triggerDepth -= 1;
+		}
 		current += token;
 
 		if (token === ";" && triggerDepth === 0) {
-			if (current.trim()) statements.push(current.trim());
+			if (current.trim()) {
+				statements.push(current.trim());
+			}
 			current = "";
 			insideTrigger = false;
 		}
 	}
 
-	if (current.trim()) statements.push(current.trim());
+	if (current.trim()) {
+		statements.push(current.trim());
+	}
 	return statements;
 }
 
 const migrations = readdirSync(migrationsDirectory)
 	.filter((name) => name.endsWith(".sql"))
-	.sort()
+	.toSorted()
 	.map((name) => ({
 		name,
-		statements: splitSql(readFileSync(new URL(name, migrationsDirectory), "utf8")),
+		statements: splitSql(
+			readFileSync(new URL(name, migrationsDirectory), "utf-8")
+		),
 	}));
 
 writeFileSync(output, `${JSON.stringify({ migrations }, null, 2)}\n`);

@@ -1,3 +1,3 @@
-export type CalendarEventRouteParams = {
+export interface CalendarEventRouteParams {
 	params: Promise<{ eventId: string }>;
-};
+}

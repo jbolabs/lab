@@ -1,10 +1,12 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
 import { requireUser } from "@/lib/auth/cookies";
 import { getEnv } from "@/lib/cloudflare";
+
 import type { UpdateForwardingEmailInput } from "./types";
 import { parseUpdateForwardingEmailRequest } from "./utils";
 
@@ -20,7 +22,6 @@ export async function PATCH(request: Request) {
 		}
 		return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 	}
-
 
 	await getDb(env)
 		.update(users)

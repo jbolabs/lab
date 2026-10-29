@@ -1,9 +1,15 @@
-import type { MessageCounts, MessageFolder } from "@/hooks/types";
 import type { messages } from "@/db/schema";
+import type { MessageCounts, MessageFolder } from "@/hooks/types";
 
 export type MessageCountRow = Pick<
 	typeof messages.$inferSelect,
-	"mailboxId" | "folderId" | "direction" | "status" | "read" | "starred" | "snoozedUntil"
+	| "mailboxId"
+	| "folderId"
+	| "direction"
+	| "status"
+	| "read"
+	| "starred"
+	| "snoozedUntil"
 > & { total?: number };
 
 export type FolderAccumulator = MessageCounts["folders"];

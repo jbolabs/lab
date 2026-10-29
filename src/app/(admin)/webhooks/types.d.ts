@@ -1,14 +1,17 @@
-export type WebhookEvent = "message.inbound" | "message.outbound" | "message.failed";
+export type WebhookEvent =
+	| "message.inbound"
+	| "message.outbound"
+	| "message.failed";
 
-export type WebhookDeliveryStats = {
+export interface WebhookDeliveryStats {
 	total: number;
 	delivered: number;
 	failing: number;
 	pending: number;
 	lastAttemptAt: number | null;
-};
+}
 
-export type Webhook = {
+export interface Webhook {
 	id: string;
 	url: string;
 	description: string | null;
@@ -17,9 +20,9 @@ export type Webhook = {
 	maxAttempts: number;
 	createdAt: string | number;
 	stats: WebhookDeliveryStats;
-};
+}
 
-export type WebhookDelivery = {
+export interface WebhookDelivery {
 	id: string;
 	eventType: string;
 	status: "pending" | "delivered" | "failed" | "retrying" | "exhausted";
@@ -32,20 +35,20 @@ export type WebhookDelivery = {
 	nextRetryAt: string | number | null;
 	createdAt: string | number;
 	payload: string;
-};
+}
 
-export type CreateWebhookInput = {
+export interface CreateWebhookInput {
 	url: string;
 	description?: string;
 	events: WebhookEvent[];
 	maxAttempts: number;
-};
+}
 
-export type UpdateWebhookInput = {
+export interface UpdateWebhookInput {
 	url?: string;
 	description?: string | null;
 	events?: WebhookEvent[];
 	enabled?: boolean;
 	maxAttempts?: number;
 	rotateSecret?: true;
-};
+}

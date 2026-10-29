@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
-import { getEnv } from "@/lib/cloudflare";
+import { NextResponse } from "next/server";
+
 import { getDb } from "@/db";
 import { folders, routingRules } from "@/db/schema";
 import { requireUser } from "@/lib/auth/cookies";
+import { getEnv } from "@/lib/cloudflare";
 import { newId } from "@/lib/ids";
 import { getMailboxAccessLevel } from "@/lib/mailboxes/access";
 import { routingRuleSchema } from "@/lib/validators";
@@ -26,7 +27,12 @@ export async function GET(request: Request) {
 	const rows = await db
 		.select()
 		.from(routingRules)
-		.where(and(eq(routingRules.mailboxId, mailboxId), eq(routingRules.scope, "mailbox")));
+		.where(
+			and(
+				eq(routingRules.mailboxId, mailboxId),
+				eq(routingRules.scope, "mailbox")
+			)
+		);
 	return NextResponse.json({ rules: rows });
 }
 
@@ -35,7 +41,10 @@ export async function POST(request: Request) {
 	const user = await requireUser(env, request);
 	const parsed = routingRuleSchema.safeParse(await request.json());
 	if (!parsed.success) {
-		return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+		return NextResponse.json(
+			{ error: parsed.error.flatten() },
+			{ status: 400 }
+		);
 	}
 
 	const db = getDb(env);
@@ -43,14 +52,22 @@ export async function POST(request: Request) {
 	if (!access?.canManage) {
 		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
 	}
-	const mailbox = access.mailbox;
+	const { mailbox } = access;
 
-	const destination = parsed.data.destination ?? (parsed.data.folderId ? `folder:${parsed.data.folderId}` : "");
-	const systemAction = destination === "spam" || destination === "trash" ? destination : null;
-	const folderId = destination.startsWith("folder:") ? destination.slice("folder:".length) : null;
+	const destination =
+		parsed.data.destination ??
+		(parsed.data.folderId ? `folder:${parsed.data.folderId}` : "");
+	const systemAction =
+		destination === "spam" || destination === "trash" ? destination : null;
+	const folderId = destination.startsWith("folder:")
+		? destination.slice("folder:".length)
+		: null;
 
 	if (!systemAction && !folderId) {
-		return NextResponse.json({ error: "Destination is required" }, { status: 400 });
+		return NextResponse.json(
+			{ error: "Destination is required" },
+			{ status: 400 }
+		);
 	}
 
 	if (folderId) {
@@ -66,19 +83,19 @@ export async function POST(request: Request) {
 
 	const id = newId("rule");
 	await db.insert(routingRules).values({
-		id,
-		userId: user.id,
+		action: systemAction ?? "store",
 		domainId: mailbox.domainId,
-		scope: "mailbox",
-		pattern: parsed.data.matchValue.trim(),
+		folderId,
+		forwardTo: null,
+		id,
+		mailboxId: mailbox.id,
 		matchField: parsed.data.matchField,
 		matchOperator: parsed.data.matchOperator,
 		matchValue: parsed.data.matchValue.trim(),
-		action: systemAction ?? "store",
-		mailboxId: mailbox.id,
-		folderId,
-		forwardTo: null,
+		pattern: parsed.data.matchValue.trim(),
 		priority: parsed.data.priority,
+		scope: "mailbox",
+		userId: user.id,
 	});
 
 	return NextResponse.json({ id, ...parsed.data });

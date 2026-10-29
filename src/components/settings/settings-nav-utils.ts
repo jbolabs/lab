@@ -2,7 +2,6 @@ import type { SettingsNavSection } from "./settings-nav-types";
 
 export const settingsNavSections: SettingsNavSection[] = [
 	{
-		labelKey: "settings.nav.settings",
 		items: [
 			{
 				href: "/settings/account",
@@ -29,9 +28,9 @@ export const settingsNavSections: SettingsNavSection[] = [
 				labelKey: "settings.nav.rules",
 			},
 		],
+		labelKey: "settings.nav.settings",
 	},
 	{
-		labelKey: "settings.nav.mailbox",
 		items: [
 			{
 				href: "/settings/mailboxes",
@@ -47,6 +46,7 @@ export const settingsNavSections: SettingsNavSection[] = [
 				labelKey: "settings.nav.export",
 			},
 		],
+		labelKey: "settings.nav.mailbox",
 	},
 ];
 

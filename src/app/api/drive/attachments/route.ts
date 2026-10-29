@@ -1,11 +1,59 @@
 import { eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
+
+import { chunks } from "@/app/api/drive/bulk-utils";
 import { getDb } from "@/db";
 import { messageAttachments, messages } from "@/db/schema";
 import { authorizeDrive } from "@/lib/drive/auth";
-import { getMailboxAccessLevel, hasMailboxPermission } from "@/lib/mailboxes/access";
+import {
+	getMailboxAccessLevel,
+	hasMailboxPermission,
+} from "@/lib/mailboxes/access";
 
 const MAX_BULK = 200;
+
+async function getPermittedAttachments(
+	db: ReturnType<typeof getDb>,
+	user: Parameters<typeof getMailboxAccessLevel>[1],
+	ids: string[]
+) {
+	const batches = await Promise.all(
+		chunks(ids).map((slice) =>
+			db
+				.select({
+					id: messageAttachments.id,
+					mailboxId: messages.mailboxId,
+					r2Key: messageAttachments.r2Key,
+					trashedAt: messageAttachments.trashedAt,
+					userId: messages.userId,
+				})
+				.from(messageAttachments)
+				.innerJoin(messages, eq(messageAttachments.messageId, messages.id))
+				.where(inArray(messageAttachments.id, slice))
+		)
+	);
+	const rows = batches.flat();
+	const mailboxIds = [
+		...new Set(rows.flatMap((row) => (row.mailboxId ? [row.mailboxId] : []))),
+	];
+	const access = await Promise.all(
+		mailboxIds.map(async (id) => {
+			const permission = await getMailboxAccessLevel(db, user, id);
+			return [
+				id,
+				!!permission &&
+					hasMailboxPermission(permission.permission, "send_on_behalf"),
+			] as const;
+		})
+	);
+	const permissions = new Map(access);
+	const permitted = rows
+		.filter((row) =>
+			row.mailboxId ? permissions.get(row.mailboxId) : row.userId === user.id
+		)
+		.map(({ id, r2Key, trashedAt }) => ({ id, r2Key, trashedAt }));
+	return { denied: rows.length - permitted.length, permitted };
+}
 
 /**
  * Trash, restore or permanently delete email attachments.
@@ -18,48 +66,64 @@ const MAX_BULK = 200;
  */
 export async function POST(request: Request) {
 	const auth = await authorizeDrive(request, true);
-	if (auth.error) return auth.error;
+	if (auth.error) {
+		return auth.error;
+	}
 	const { env, user } = auth;
 	const db = getDb(env);
-	const body = await request.json().catch(() => ({})) as { action?: unknown; ids?: unknown };
-	const ids = Array.isArray(body.ids) ? [...new Set(body.ids.filter((id): id is string => typeof id === "string"))] : [];
-	if (body.action !== "trash" && body.action !== "restore" && body.action !== "delete") return NextResponse.json({ error: "Unknown action" }, { status: 400 });
-	if (!ids.length || ids.length > MAX_BULK) return NextResponse.json({ error: "Select between 1 and 200 attachments" }, { status: 400 });
-
-	const permitted: { id: string; r2Key: string; trashedAt: Date | null }[] = [];
-	const accessCache = new Map<string, boolean>();
-	let denied = 0;
-	for (let index = 0; index < ids.length; index += 50) {
-		const rows = await db
-			.select({ id: messageAttachments.id, r2Key: messageAttachments.r2Key, trashedAt: messageAttachments.trashedAt, mailboxId: messages.mailboxId, userId: messages.userId })
-			.from(messageAttachments)
-			.innerJoin(messages, eq(messageAttachments.messageId, messages.id))
-			.where(inArray(messageAttachments.id, ids.slice(index, index + 50)));
-		for (const row of rows) {
-			let allowed: boolean;
-			if (!row.mailboxId) allowed = row.userId === user.id;
-			else {
-				if (!accessCache.has(row.mailboxId)) {
-					const access = await getMailboxAccessLevel(db, user, row.mailboxId);
-					accessCache.set(row.mailboxId, !!access && hasMailboxPermission(access.permission, "send_on_behalf"));
-				}
-				allowed = accessCache.get(row.mailboxId)!;
-			}
-			if (allowed) permitted.push({ id: row.id, r2Key: row.r2Key, trashedAt: row.trashedAt }); else denied += 1;
-		}
+	const body = (await request.json().catch(() => ({}))) as {
+		action?: unknown;
+		ids?: unknown;
+	};
+	const ids = Array.isArray(body.ids)
+		? [
+				...new Set(
+					body.ids.filter((id): id is string => typeof id === "string")
+				),
+			]
+		: [];
+	if (
+		body.action !== "trash" &&
+		body.action !== "restore" &&
+		body.action !== "delete"
+	) {
+		return NextResponse.json({ error: "Unknown action" }, { status: 400 });
 	}
-	if (denied && !permitted.length) return NextResponse.json({ error: "You cannot change these attachments" }, { status: 403 });
+	if (!ids.length || ids.length > MAX_BULK) {
+		return NextResponse.json(
+			{ error: "Select between 1 and 200 attachments" },
+			{ status: 400 }
+		);
+	}
 
-	let targets = permitted;
-	if (body.action === "trash") targets = permitted.filter((row) => !row.trashedAt);
-	else targets = permitted.filter((row) => row.trashedAt);
+	const { permitted, denied } = await getPermittedAttachments(db, user, ids);
+	if (denied && !permitted.length) {
+		return NextResponse.json(
+			{ error: "You cannot change these attachments" },
+			{ status: 403 }
+		);
+	}
+
+	const targets =
+		body.action === "trash"
+			? permitted.filter((row) => !row.trashedAt)
+			: permitted.filter((row) => row.trashedAt);
 	const targetIds = targets.map((row) => row.id);
 
-	for (let index = 0; index < targetIds.length; index += 50) {
-		const slice = targetIds.slice(index, index + 50);
-		if (body.action === "delete") await db.delete(messageAttachments).where(inArray(messageAttachments.id, slice));
-		else await db.update(messageAttachments).set({ trashedAt: body.action === "trash" ? new Date() : null }).where(inArray(messageAttachments.id, slice));
+	await Promise.all(
+		chunks(targetIds).map((slice) =>
+			body.action === "delete"
+				? db
+						.delete(messageAttachments)
+						.where(inArray(messageAttachments.id, slice))
+				: db
+						.update(messageAttachments)
+						.set({ trashedAt: body.action === "trash" ? new Date() : null })
+						.where(inArray(messageAttachments.id, slice))
+		)
+	);
+	if (body.action === "delete" && targets.length) {
+		await env.BUCKET.delete(targets.map((row) => row.r2Key));
 	}
-	if (body.action === "delete" && targets.length) await env.BUCKET.delete(targets.map((row) => row.r2Key));
 	return NextResponse.json({ count: targets.length, denied });
 }

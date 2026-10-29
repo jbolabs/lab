@@ -1,20 +1,27 @@
 import { authFetch } from "@/lib/auth/client";
+
 import type { GeneralSettings } from "./types";
 
 export async function loadGeneralSettings(): Promise<GeneralSettings> {
 	const response = await authFetch("/api/admin/general", { cache: "no-store" });
 	const data = (await response.json()) as GeneralSettings & { error?: string };
-	if (!response.ok) throw new Error(data.error ?? "Could not load general settings");
+	if (!response.ok) {
+		throw new Error(data.error ?? "Could not load general settings");
+	}
 	return data as GeneralSettings;
 }
 
-export async function saveGeneralSettings(changes: Partial<GeneralSettings>): Promise<GeneralSettings> {
+export async function saveGeneralSettings(
+	changes: Partial<GeneralSettings>
+): Promise<GeneralSettings> {
 	const response = await authFetch("/api/admin/general", {
-		method: "PUT",
-		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(changes),
+		headers: { "Content-Type": "application/json" },
+		method: "PUT",
 	});
 	const data = (await response.json()) as GeneralSettings & { error?: string };
-	if (!response.ok) throw new Error(data.error ?? "Could not save general settings");
+	if (!response.ok) {
+		throw new Error(data.error ?? "Could not save general settings");
+	}
 	return data as GeneralSettings;
 }

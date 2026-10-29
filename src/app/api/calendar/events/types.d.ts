@@ -1,6 +1,6 @@
 import type { CalendarRepeat } from "@/lib/calendar/types";
 
-export type CalendarEventInput = {
+export interface CalendarEventInput {
 	title: string;
 	description?: string;
 	location?: string;
@@ -16,4 +16,4 @@ export type CalendarEventInput = {
 	endsAt: string;
 	mailboxId?: string | null;
 	from?: string;
-};
+}

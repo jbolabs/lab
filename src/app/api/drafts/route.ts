@@ -1,15 +1,17 @@
-import { NextResponse } from "next/server";
 import { and, desc, eq } from "drizzle-orm";
-import { getEnv } from "@/lib/cloudflare";
+import { NextResponse } from "next/server";
+
 import { getDb } from "@/db";
 import { messages } from "@/db/schema";
 import { requireUser } from "@/lib/auth/cookies";
-import { newId } from "@/lib/ids";
-import { buildSnippet } from "@/lib/email/parse";
-import { readJsonBody } from "@/lib/http/request";
+import { getEnv } from "@/lib/cloudflare";
 import { copyMessageAttachments } from "@/lib/email/attachments";
-import { getMailboxAccessLevel } from "@/lib/mailboxes/access";
+import { buildSnippet } from "@/lib/email/parse";
 import { RequestBodyTooLargeError } from "@/lib/http/errors";
+import { readJsonBody } from "@/lib/http/request";
+import { newId } from "@/lib/ids";
+import { getMailboxAccessLevel } from "@/lib/mailboxes/access";
+
 import type { DraftPayload } from "./types";
 import { getDraftSender } from "./utils";
 
@@ -24,7 +26,9 @@ export async function GET(request: Request) {
 		eq(messages.direction, "outbound" as const),
 		eq(messages.status, "draft"),
 	];
-	if (mailboxId) conditions.push(eq(messages.mailboxId, mailboxId));
+	if (mailboxId) {
+		conditions.push(eq(messages.mailboxId, mailboxId));
+	}
 
 	const rows = await db
 		.select()
@@ -59,7 +63,9 @@ export async function POST(request: Request) {
 			.from(messages)
 			.where(eq(messages.id, input.forwardOfMessageId))
 			.limit(1);
-		const sourceAccess = source?.mailboxId ? await getMailboxAccessLevel(db, user, source.mailboxId) : null;
+		const sourceAccess = source?.mailboxId
+			? await getMailboxAccessLevel(db, user, source.mailboxId)
+			: null;
 		if (!source || !sourceAccess?.canRead) {
 			return NextResponse.json({ error: "Message not found" }, { status: 404 });
 		}
@@ -70,26 +76,29 @@ export async function POST(request: Request) {
 	const text = input.text ?? "";
 	const html = input.html ?? "";
 
-	await db.insert(messages).values({
-		id: draftId,
-		userId: user.id,
-		mailboxId: sender.mailboxId,
-		direction: "outbound",
-		fromAddr: sender.fromAddr,
-		toAddr: input.to ?? "",
-		ccAddr: input.cc || null,
+	const buildDraftValues = () => ({
 		bccAddr: input.bcc || null,
-		subject: input.subject ?? null,
-		snippet: buildSnippet(text || null, html || null),
-		textBody: text || null,
+		ccAddr: input.cc || null,
+		direction: "outbound" as const,
+		fromAddr: sender.fromAddr,
 		htmlBody: html || null,
-		status: "draft",
-		read: true,
+		id: draftId,
 		inReplyTo: input.inReplyTo || null,
+		mailboxId: sender.mailboxId,
+		read: true,
 		references: input.references || null,
+		snippet: buildSnippet(text || null, html || null),
+		status: "draft",
+		subject: input.subject ?? null,
+		textBody: text || null,
 		threadId: input.threadId || null,
+		toAddr: input.to ?? "",
+		userId: user.id,
 	});
+	await db.insert(messages).values(buildDraftValues());
 
-	const attachments = forwardSourceId ? await copyMessageAttachments(env, forwardSourceId, draftId) : [];
-	return NextResponse.json({ draft: { id: draftId, attachments } });
+	const attachments = forwardSourceId
+		? await copyMessageAttachments(env, forwardSourceId, draftId)
+		: [];
+	return NextResponse.json({ draft: { attachments, id: draftId } });
 }

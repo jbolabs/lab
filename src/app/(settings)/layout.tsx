@@ -1,62 +1,79 @@
 "use client";
 
-import { SkipToContent } from "@/components/skip-to-content";
-import Link from "next/link";
-import { HelpCircle } from "lucide-react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ComposeProvider } from "@/components/compose/compose-context";
 import { FloatingComposer } from "@/components/compose/floating-composer";
-import { MailSearchInput } from "@/components/mail-search/mail-search-input";
+import { DashboardNav } from "@/components/dashboard-nav";
 import { MailSearchProvider } from "@/components/mail-search/mail-search-context";
+import { MailSearchInput } from "@/components/mail-search/mail-search-input";
 import { MailboxProvider } from "@/components/mailbox-provider";
 import { MailboxSelector } from "@/components/mailbox-selector";
-import { DashboardNav } from "@/components/dashboard-nav";
-import { SidebarProvider } from "@/components/sidebar-state";
-import { ShortcutsProvider } from "@/components/shortcuts";
-import { SidebarAside, MobileMenuButton } from "@/components/sidebar-aside";
 import { RouteTitle } from "@/components/route-title";
+import { ShortcutsProvider } from "@/components/shortcuts/shortcuts-context";
+import { SidebarAside, MobileMenuButton } from "@/components/sidebar-aside";
+import { SidebarProvider } from "@/components/sidebar-state";
+import { SkipToContent } from "@/components/skip-to-content";
+import { cn as scopeLayoutClasses } from "@/lib/utils";
 
 export default function DashboardLayout({
-  children,
+	children,
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-  return (
-    <AuthGuard>
-      <SidebarProvider mobileOverlay>
-        <MailboxProvider>
-          <ComposeProvider>
-            <MailSearchProvider>
-              <ShortcutsProvider>
-                <RouteTitle />
-                <div className="grid h-[100dvh] grid-cols-[minmax(0,1fr)] md:grid-cols-[var(--sidebar-width)_minmax(0,1fr)] overflow-hidden bg-sidebar transition-[grid-template-columns]" style={{ transitionDuration: "var(--sidebar-transition-duration)" }}>
-                  <SkipToContent />
-                  <SidebarAside>
-                    <DashboardNav />
-                  </SidebarAside>
-                  <div className="flex min-h-0 min-w-0 flex-col">
-                    <header className="flex h-16 w-full shrink-0 items-center gap-4 pr-4 text-sm">
-                      <MobileMenuButton className="ml-2" />
-                      <MailSearchInput />
-                      {/* <Link
+	return (
+		<AuthGuard>
+			<SidebarProvider mobileOverlay>
+				<MailboxProvider>
+					<ComposeProvider>
+						<MailSearchProvider>
+							<ShortcutsProvider>
+								<RouteTitle />
+								<div
+									className={scopeLayoutClasses(
+										scopeLayoutClasses(
+											"grid h-dvh grid-cols-1 overflow-hidden bg-sidebar",
+											"transition-[grid-template-columns]",
+											"md:grid-cols-[var(--sidebar-width)_minmax(0,1fr)]"
+										),
+										"duration-(--layout-duration)"
+									)}
+									style={
+										{
+											"--layout-duration": "var(--sidebar-transition-duration)",
+										} as React.CSSProperties
+									}
+								>
+									<SkipToContent />
+									<SidebarAside>
+										<DashboardNav />
+									</SidebarAside>
+									<div className="flex min-h-0 min-w-0 flex-col">
+										<header className="flex h-16 w-full shrink-0 items-center gap-4 pr-4 text-sm">
+											<MobileMenuButton className="ml-2" />
+											<MailSearchInput />
+											{/* <Link
                     href="/settings/account"
                     className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent"
                   >
                     <HelpCircle className="h-5 w-5" />
                   </Link> */}
-                      <MailboxSelector />
-                    </header>
-                    <main id="main-content" tabIndex={-1} className="focus:outline-none page-flush min-h-0 flex-1 overflow-y-auto max-md:rounded-t-3xl max-md:bg-card overscroll-contain scrollbar-gutter-stable">
-                      {children}
-                    </main>
-                  </div>
-                  <FloatingComposer />
-                </div>
-              </ShortcutsProvider>
-            </MailSearchProvider>
-          </ComposeProvider>
-        </MailboxProvider>
-      </SidebarProvider>
-    </AuthGuard>
-  );
+											<MailboxSelector />
+										</header>
+										<main
+											id="main-content"
+											tabIndex={-1}
+											className="min-h-0 flex-1 scrollbar-gutter-stable overflow-y-auto overscroll-contain focus:outline-none max-md:rounded-t-lg max-md:bg-card"
+										>
+											{children}
+										</main>
+									</div>
+									<FloatingComposer />
+								</div>
+							</ShortcutsProvider>
+						</MailSearchProvider>
+					</ComposeProvider>
+				</MailboxProvider>
+			</SidebarProvider>
+		</AuthGuard>
+	);
 }

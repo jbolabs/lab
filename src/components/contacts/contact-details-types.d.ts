@@ -1,18 +1,18 @@
-export type ContactDetailsRecord = {
+export interface ContactDetailsRecord {
 	email: string;
 	displayName: string | null;
 	hasAvatar: boolean;
 	source: "manual" | "inbound" | "outbound" | null;
 	blocked: boolean;
 	lastSeenAt: string | null;
-};
+}
 
-export type ContactDetailsResponse = {
+export interface ContactDetailsResponse {
 	contact?: ContactDetailsRecord;
 	error?: string;
-};
+}
 
-export type ContactDetailsTriggerProps = {
+export interface ContactDetailsTriggerProps {
 	mailboxId: string | null;
 	address: string;
 	/** Contact name. Not the formatted Name <mailbox> label. */
@@ -20,4 +20,4 @@ export type ContactDetailsTriggerProps = {
 	/** Visible text. Falls back to name. */
 	label?: string;
 	className?: string;
-};
+}

@@ -1,13 +1,24 @@
 "use client";
-import { FieldLabel, Field, FieldGroup } from "@/components/ui/field";
-import { useEffect, useState } from "react";
+
+import { useState } from "react";
+
+import { isHtmlSignature } from "@/components/compose/rich-text-utils";
 import { useLanguage } from "@/components/language-provider";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
-import { isHtmlSignature } from "@/components/compose/rich-text-utils";
 import { EmailHtmlRenderer } from "@/components/messages/email-html-renderer";
 import { Button } from "@/components/ui/button";
+import {
+	FieldLabel,
+	Field,
+	FieldGroup,
+	FieldDescription,
+	FieldTitle,
+} from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { withCleanup } from "@/lib/async-cleanup";
+
 import { updateMailboxSignature } from "./utils";
+
 export function MailboxSignatureForm() {
 	const { t } = useLanguage();
 	const { selectedMailbox, setSelectedMailbox, isLoading } =
@@ -16,43 +27,64 @@ export function MailboxSignatureForm() {
 	const [savedSignature, setSavedSignature] = useState("");
 	const [status, setStatus] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
-	useEffect(() => {
+	const resetKey = JSON.stringify([
+		selectedMailbox?.id,
+		selectedMailbox?.signature,
+	]);
+	const [previousResetKey, setPreviousResetKey] = useState<string | null>(null);
+	if (previousResetKey !== resetKey) {
+		setPreviousResetKey(resetKey);
 		const nextSignature = selectedMailbox?.signature ?? "";
 		setSignature(nextSignature);
 		setSavedSignature(nextSignature);
 		setStatus(null);
-	}, [selectedMailbox?.id, selectedMailbox?.signature]);
+	}
+
 	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		if (!selectedMailbox) return;
+		if (!selectedMailbox) {
+			return;
+		}
 		setSaving(true);
 		setStatus(null);
-		try {
-			const saved = await updateMailboxSignature(selectedMailbox.id, signature);
-			setSignature(saved);
-			setSavedSignature(saved);
-			setSelectedMailbox({ ...selectedMailbox, signature: saved });
-			setStatus(t("common.saved"));
-		} catch (error) {
-			setStatus(
-				error instanceof Error ? error.message : t("settings.signature.failed"),
-			);
-		} finally {
-			setSaving(false);
-		}
+		return await withCleanup(
+			async () => {
+				try {
+					const saved = await updateMailboxSignature(
+						selectedMailbox.id,
+						signature
+					);
+					setSignature(saved);
+					setSavedSignature(saved);
+					setSelectedMailbox({ ...selectedMailbox, signature: saved });
+					setStatus(t("common.saved"));
+				} catch (error) {
+					setStatus(
+						error instanceof Error
+							? error.message
+							: t("settings.signature.failed")
+					);
+				}
+			},
+			() => {
+				setSaving(false);
+			}
+		);
 	}
-	if (isLoading)
+	if (isLoading) {
 		return (
 			<p className="text-sm text-muted-foreground">
 				{t("settings.signature.loadingInbox")}
 			</p>
 		);
-	if (!selectedMailbox)
+	}
+	if (!selectedMailbox) {
 		return (
 			<p className="text-sm text-muted-foreground">
 				{t("settings.signature.selectInbox")}
 			</p>
 		);
+	}
 	const address = `${selectedMailbox.localPart}@${selectedMailbox.hostname}`;
 	const canManage = selectedMailbox.permission === "full_access";
 	return (
@@ -70,17 +102,13 @@ export function MailboxSignatureForm() {
 						rows={6}
 						disabled={!canManage || saving}
 					/>
-					<p className="text-xs leading-5 text-muted-foreground">
-						{t("settings.signature.hint")}
-					</p>
+					<FieldDescription>{t("settings.signature.hint")}</FieldDescription>
 				</Field>
 				{isHtmlSignature(signature) && (
 					<div className="flex flex-col gap-2">
-						<p className="text-xs font-medium text-muted-foreground">
-							{t("settings.signature.preview")}
-						</p>
+						<FieldTitle>{t("settings.signature.preview")}</FieldTitle>
 						<EmailHtmlRenderer
-							className="rounded-md border border-border bg-card p-4 text-sm text-foreground"
+							className="rounded-lg border p-4 text-sm text-foreground"
 							html={signature}
 						/>
 					</div>
@@ -100,9 +128,7 @@ export function MailboxSignatureForm() {
 						</p>
 					)}
 					{status && (
-						<p role="status" className="text-sm text-muted-foreground">
-							{status}
-						</p>
+						<output className="text-sm text-muted-foreground">{status}</output>
 					)}
 				</div>
 			</FieldGroup>

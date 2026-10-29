@@ -1,4 +1,4 @@
-export type RecipientInputProps = {
+export interface RecipientInputProps {
 	id: string;
 	label: string;
 	value: string[];
@@ -10,4 +10,4 @@ export type RecipientInputProps = {
 	autoFocus?: boolean;
 	/** Rendered at the right edge of the row, e.g. the Cc/Bcc toggles. */
 	trailing?: React.ReactNode;
-};
+}

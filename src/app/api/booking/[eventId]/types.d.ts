@@ -1,1 +1,3 @@
-export type BookingEventRouteContext = { params: Promise<{ eventId: string }> };
+export interface BookingEventRouteContext {
+	params: Promise<{ eventId: string }>;
+}

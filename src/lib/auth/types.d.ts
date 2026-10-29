@@ -1,6 +1,6 @@
 export type UserRole = "admin" | "user";
 
-export type SessionUser = {
+export interface SessionUser {
 	id: string;
 	email: string;
 	resetEmail: string | null;
@@ -21,4 +21,4 @@ export type SessionUser = {
 	remoteContentMode: "ask" | "new_sender" | "allow";
 	createdByUserId: string | null;
 	createdAt: Date;
-};
+}

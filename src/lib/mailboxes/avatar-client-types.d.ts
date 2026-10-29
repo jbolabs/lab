@@ -1,4 +1,4 @@
-export type MailboxAvatarChangedDetail = {
+export interface MailboxAvatarChangedDetail {
 	mailboxId: string;
 	url: string;
-};
+}

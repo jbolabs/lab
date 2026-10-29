@@ -1,5 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+
 import type { getDb } from "@/db";
 import { domains, mailboxes, users } from "@/db/schema";
 import { assertAdmin } from "@/lib/auth/admin";
@@ -11,26 +12,30 @@ type Db = ReturnType<typeof getDb>;
 export function listAccountsForAdmin(db: Db) {
 	return db
 		.select({
-			id: users.id,
+			avatarKey: users.avatarKey,
+			canManageDomains: users.canManageDomains,
+			canManageMailboxes: users.canManageMailboxes,
+			canManageUsers: users.canManageUsers,
+			createdAt: users.createdAt,
+			deletedAt: users.deletedAt,
+			disabled: users.disabled,
 			email: users.email,
+			id: users.id,
+			isPrimaryAdmin: users.isPrimaryAdmin,
+			lastSignInAt: users.lastSignInAt,
 			name: users.name,
 			resetEmail: users.resetEmail,
 			role: users.role,
-			isPrimaryAdmin: users.isPrimaryAdmin,
-			disabled: users.disabled,
-			avatarKey: users.avatarKey,
-			canManageMailboxes: users.canManageMailboxes,
-			canManageDomains: users.canManageDomains,
-			canManageUsers: users.canManageUsers,
-			createdAt: users.createdAt,
-			lastSignInAt: users.lastSignInAt,
-			deletedAt: users.deletedAt,
 		})
 		.from(users)
 		.orderBy(desc(users.createdAt));
 }
 
-export async function getDomainForAdmin(db: Db, adminUserId: string, domainId: string) {
+export async function getDomainForAdmin(
+	db: Db,
+	adminUserId: string,
+	domainId: string
+) {
 	const [domain] = await db
 		.select()
 		.from(domains)
@@ -39,11 +44,17 @@ export async function getDomainForAdmin(db: Db, adminUserId: string, domainId: s
 	return domain ?? null;
 }
 
-export async function getExistingMailbox(db: Db, domainId: string, localPart: string) {
+export async function getExistingMailbox(
+	db: Db,
+	domainId: string,
+	localPart: string
+) {
 	const [mailbox] = await db
 		.select()
 		.from(mailboxes)
-		.where(and(eq(mailboxes.domainId, domainId), eq(mailboxes.localPart, localPart)))
+		.where(
+			and(eq(mailboxes.domainId, domainId), eq(mailboxes.localPart, localPart))
+		)
 		.limit(1);
 	return mailbox ?? null;
 }
@@ -65,35 +76,38 @@ export function accountListItemFromUser(user: {
 	deletedAt?: Date | null;
 }) {
 	return {
-		id: user.id,
+		canManageDomains: !!user.canManageDomains,
+		canManageMailboxes: !!user.canManageMailboxes,
+		canManageUsers: !!user.canManageUsers,
+		createdAt: user.createdAt,
+		deletedAt: user.deletedAt ?? null,
+		disabled: user.disabled,
 		email: user.email,
+		hasAvatar: !!user.avatarKey,
+		id: user.id,
+		isPrimaryAdmin: !!user.isPrimaryAdmin,
+		lastSignInAt: user.lastSignInAt ?? null,
 		name: user.name,
 		resetEmail: user.resetEmail,
 		role: user.role,
-		isPrimaryAdmin: !!user.isPrimaryAdmin,
-		disabled: user.disabled,
-		hasAvatar: !!user.avatarKey,
-		canManageMailboxes: !!user.canManageMailboxes,
-		canManageDomains: !!user.canManageDomains,
-		canManageUsers: !!user.canManageUsers,
-		createdAt: user.createdAt,
-		lastSignInAt: user.lastSignInAt ?? null,
-		deletedAt: user.deletedAt ?? null,
 	};
 }
 
 /** Admin session for managing shared inboxes. */
-export async function requireTeamSharingAdmin(request: Request) {
-	return requireTeamAdmin(request);
-}
 
 export async function requireTeamAdmin(request: Request) {
 	const env = getEnv();
 	try {
 		const user = await requireUser(env, request);
 		assertAdmin(user);
-		return { env, user, error: null };
+		return { env, error: null, user };
 	} catch {
-		return { env, user: null, error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+		return {
+			env,
+			error: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+			user: null,
+		};
 	}
 }
+
+export { requireTeamAdmin as requireTeamSharingAdmin };

@@ -1,20 +1,30 @@
 "use client";
-import { FieldLabel, Field, FieldGroup } from "@/components/ui/field";
+
 import { useState } from "react";
+
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
+import {
+	FieldLabel,
+	Field,
+	FieldGroup,
+	FieldDescription,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { withCleanup } from "@/lib/async-cleanup";
+
 import type { ForwardingEmailFormProps } from "./types";
 import { updateForwardingEmail } from "./utils";
+
 export function ForwardingEmailForm({
 	initialForwardingEmail,
 }: ForwardingEmailFormProps) {
 	const { t } = useLanguage();
 	const [forwardingEmail, setForwardingEmail] = useState(
-		initialForwardingEmail,
+		initialForwardingEmail
 	);
 	const [savedForwardingEmail, setSavedForwardingEmail] = useState(
-		initialForwardingEmail,
+		initialForwardingEmail
 	);
 	const [status, setStatus] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
@@ -22,20 +32,25 @@ export function ForwardingEmailForm({
 		event.preventDefault();
 		setSaving(true);
 		setStatus(null);
-		try {
-			const saved = await updateForwardingEmail(forwardingEmail);
-			setForwardingEmail(saved);
-			setSavedForwardingEmail(saved);
-			setStatus(t("common.saved"));
-		} catch (error) {
-			setStatus(
-				error instanceof Error
-					? error.message
-					: t("settings.forwarding.failed"),
-			);
-		} finally {
-			setSaving(false);
-		}
+		return await withCleanup(
+			async () => {
+				try {
+					const saved = await updateForwardingEmail(forwardingEmail);
+					setForwardingEmail(saved);
+					setSavedForwardingEmail(saved);
+					setStatus(t("common.saved"));
+				} catch (error) {
+					setStatus(
+						error instanceof Error
+							? error.message
+							: t("settings.forwarding.failed")
+					);
+				}
+			},
+			() => {
+				setSaving(false);
+			}
+		);
 	}
 	return (
 		<form onSubmit={onSubmit} className="flex flex-col gap-4">
@@ -52,9 +67,7 @@ export function ForwardingEmailForm({
 						autoComplete="email"
 						placeholder="destination@example.com"
 					/>
-					<p className="text-xs leading-5 text-muted-foreground">
-						{t("settings.forwarding.hint")}
-					</p>
+					<FieldDescription>{t("settings.forwarding.hint")}</FieldDescription>
 				</Field>
 				<div className="flex items-center gap-3">
 					<Button
@@ -64,9 +77,7 @@ export function ForwardingEmailForm({
 						{saving ? t("common.saving") : t("settings.forwarding.save")}
 					</Button>
 					{status && (
-						<p role="status" className="text-sm text-muted-foreground">
-							{status}
-						</p>
+						<output className="text-sm text-muted-foreground">{status}</output>
 					)}
 				</div>
 			</FieldGroup>

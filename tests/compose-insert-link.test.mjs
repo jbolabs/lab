@@ -1,17 +1,31 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
-import { dirname, join } from "node:path";
+import fs from "node:fs";
+import nodePath from "node:path";
 import test, { after } from "node:test";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
+
 import { build } from "esbuild";
 import { JSDOM } from "jsdom";
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const outDir = mkdtempSync(join(root, "tests", ".tmp-compose-insert-link-"));
-after(() => rmSync(outDir, { recursive: true, force: true }));
+const { mkdtempSync, rmSync } = fs;
+const { join } = nodePath;
 
-const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "https://mail.example/" });
-for (const key of ["window", "document", "HTMLElement", "HTMLInputElement", "Element", "Node", "Event"]) {
+const root = join(import.meta.dirname, "..");
+const outDir = mkdtempSync(join(root, "tests", ".tmp-compose-insert-link-"));
+after(() => rmSync(outDir, { force: true, recursive: true }));
+
+const dom = new JSDOM("<!doctype html><html><body></body></html>", {
+	url: "https://mail.example/",
+});
+for (const key of [
+	"window",
+	"document",
+	"HTMLElement",
+	"HTMLInputElement",
+	"Element",
+	"Node",
+	"Event",
+]) {
 	globalThis[key] = key === "window" ? dom.window : dom.window[key];
 }
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -19,41 +33,59 @@ document.queryCommandState = () => false;
 document.queryCommandValue = () => "";
 
 await build({
-	entryPoints: [join(root, "src/components/compose/rich-text-editor.tsx")],
-	outfile: join(outDir, "editor.mjs"),
-	bundle: true,
-	platform: "browser",
-	format: "esm",
-	external: ["react", "react-dom", "react-dom/*"],
 	alias: { "@": join(root, "src") },
+	bundle: true,
+	entryPoints: [join(root, "src/components/compose/rich-text-editor.tsx")],
+	external: ["react", "react-dom", "react-dom/*"],
+	format: "esm",
 	logLevel: "silent",
+	outfile: join(outDir, "editor.mjs"),
+	platform: "browser",
 });
 
 const { createElement, act } = await import("react");
 const { createRoot } = await import("react-dom/client");
-const { RichTextEditor } = await import(pathToFileURL(join(outDir, "editor.mjs")).href);
+const { RichTextEditor } = await import(
+	pathToFileURL(join(outDir, "editor.mjs")).href
+);
 
 async function setup(t, selected = false) {
 	const container = document.createElement("div");
-	document.body.appendChild(container);
+	document.body.append(container);
 	const reactRoot = createRoot(container);
 	t.after(async () => {
-		await act(async () => reactRoot.unmount());
+		await act(() => Promise.resolve(reactRoot.unmount()));
 		container.remove();
 	});
 	let submits = 0;
 	const commands = [];
 	document.execCommand = (command, _showUi, value) => {
-		commands.push({ command, value, selection: window.getSelection().toString() });
+		commands.push({
+			command,
+			selection: window.getSelection().toString(),
+			value,
+		});
 		return true;
 	};
-	await act(async () => {
-		reactRoot.render(createElement("form", {
-			onSubmit(event) {
-				event.preventDefault();
-				submits++;
-			},
-		}, createElement(RichTextEditor, { value: "Read this", onChange() {} })));
+	await act(() => {
+		try {
+			reactRoot.render(
+				createElement(
+					"form",
+					{
+						onSubmit(event) {
+							event.preventDefault();
+							submits += 1;
+						},
+					},
+					createElement(RichTextEditor, { onChange() {}, value: "Read this" })
+				)
+			);
+
+			return Promise.resolve();
+		} catch (error) {
+			return Promise.reject(error);
+		}
 	});
 	const editor = container.querySelector('[role="textbox"]');
 	editor.focus();
@@ -62,31 +94,66 @@ async function setup(t, selected = false) {
 	range.setEnd(editor.firstChild, 9);
 	window.getSelection().removeAllRanges();
 	window.getSelection().addRange(range);
-	await act(async () => container.querySelector('[aria-label="Insert link"]').click());
-	const input = container.querySelector('input[placeholder="https://example.com"]');
+	await act(() =>
+		Promise.resolve(
+			container.querySelector('[aria-label="Insert link"]').click()
+		)
+	);
+	const input = container.querySelector(
+		'input[placeholder="https://example.com"]'
+	);
 	assert.ok(input);
-	assert.equal(container.querySelectorAll("form").length, 1, "the popup must not nest a form inside the composer");
+	assert.equal(
+		container.querySelectorAll("form").length,
+		1,
+		"the popup must not nest a form inside the composer"
+	);
 	return {
-		commands,
-		async fill(value) {
-			await act(async () => {
-				Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, "value").set.call(input, value);
-				input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
-			});
-		},
 		async apply(key) {
 			let event;
-			await act(async () => {
-				if (key) {
-					event = new dom.window.KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
-					input.dispatchEvent(event);
-				} else {
-					Array.from(container.querySelectorAll("button")).find((button) => button.textContent === "Apply").click();
+			await act(() => {
+				try {
+					if (key) {
+						event = new dom.window.KeyboardEvent("keydown", {
+							bubbles: true,
+							cancelable: true,
+							key,
+						});
+						input.dispatchEvent(event);
+					} else {
+						[...container.querySelectorAll("button")]
+							.find((button) => button.textContent === "Apply")
+							.click();
+					}
+
+					return Promise.resolve();
+				} catch (error) {
+					return Promise.reject(error);
 				}
 			});
 			assert.equal(submits, 0, "inserting a link must not submit the composer");
-			assert.equal(container.querySelector('input[placeholder="https://example.com"]'), null, "the popup closes");
+			assert.equal(
+				container.querySelector('input[placeholder="https://example.com"]'),
+				null,
+				"the popup closes"
+			);
 			return event;
+		},
+		commands,
+		async fill(value) {
+			await act(() => {
+				try {
+					Object.getOwnPropertyDescriptor(
+						dom.window.HTMLInputElement.prototype,
+						"value"
+					).set.call(input, value);
+					input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+
+					return Promise.resolve();
+				} catch (error) {
+					return Promise.reject(error);
+				}
+			});
 		},
 	};
 }
@@ -95,7 +162,13 @@ test("Apply inserts a URL at the caret without submitting the compose form", asy
 	const popup = await setup(t);
 	await popup.fill(" example.com ");
 	await popup.apply();
-	assert.deepEqual(popup.commands, [{ command: "insertHTML", value: '<a href="https://example.com">https://example.com</a>', selection: "" }]);
+	assert.deepEqual(popup.commands, [
+		{
+			command: "insertHTML",
+			selection: "",
+			value: '<a href="https://example.com">https://example.com</a>',
+		},
+	]);
 });
 
 test("Enter links the saved text selection and prevents implicit form submission", async (t) => {
@@ -103,7 +176,13 @@ test("Enter links the saved text selection and prevents implicit form submission
 	await popup.fill("https://example.com/read");
 	const event = await popup.apply("Enter");
 	assert.equal(event.defaultPrevented, true);
-	assert.deepEqual(popup.commands, [{ command: "createLink", value: "https://example.com/read", selection: "Read this" }]);
+	assert.deepEqual(popup.commands, [
+		{
+			command: "createLink",
+			selection: "Read this",
+			value: "https://example.com/read",
+		},
+	]);
 });
 
 test("Apply with a blank URL closes the popup without inserting or submitting", async (t) => {

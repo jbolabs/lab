@@ -1,24 +1,57 @@
 "use client";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-
-import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+
 import { useLanguage } from "@/components/language-provider";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { NativeSelect } from "@/components/ui/native-select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
-import { getAvatarColorStyle } from "@/lib/avatar-colors";
-import { useCurrentUser, clearCurrentUserCache } from "@/hooks/use-current-user";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogClose,
+} from "@/components/ui/dialog";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { NativeSelect } from "@/components/ui/native-select";
+import {
+	PageHeader,
+	PageHeaderText,
+	PageTitle,
+	PageDescription,
+} from "@/components/ui/page-header";
+import {
+	Table,
+	TableHeader,
+	TableRow,
+	TableHead,
+	TableBody,
+	TableCell,
+} from "@/components/ui/table";
+import {
+	useCurrentUser,
+	clearCurrentUserCache,
+} from "@/hooks/use-current-user";
+import { runAsyncAction } from "@/lib/async-cleanup";
+
 import type { ManagedAccount } from "../types";
 import {
 	fetchManagedAccount,
 	fetchTransferCandidates,
 	saveManagedAccount,
 	transferPrimaryAdmin,
-	type TransferCandidate,
 } from "../utils";
+import type { TransferCandidate } from "../utils";
 
 export default function AccountPermissionsPage() {
 	const { t } = useLanguage();
@@ -33,40 +66,76 @@ export default function AccountPermissionsPage() {
 	const [transferring, setTransferring] = useState(false);
 
 	useEffect(() => {
-		void fetchManagedAccount(id)
-			.then(setAccount)
-			.catch((error) => setMessage(error instanceof Error ? error.message : t("account.permissions.loadFailed")));
+		runAsyncAction(
+			async () => {
+				const result0 = await fetchManagedAccount(id);
+				setAccount(result0);
+			},
+			(failure) =>
+				setMessage(
+					failure instanceof Error
+						? failure.message
+						: t("account.permissions.loadFailed")
+				)
+		);
 	}, [id, t]);
 
 	const isPrimary = !!account?.canChangeRole;
 	const transferTarget = useMemo(
-		() => candidates.find((candidate) => candidate.id === transferTargetId) ?? null,
-		[candidates, transferTargetId],
+		() =>
+			candidates.find((candidate) => candidate.id === transferTargetId) ?? null,
+		[candidates, transferTargetId]
 	);
 
 	useEffect(() => {
-		if (!isPrimary) return;
-		void fetchTransferCandidates()
-			.then((list) => setCandidates(list.filter((candidate) => candidate.id !== currentUser?.id && !candidate.disabled)))
-			.catch(() => undefined);
+		if (!isPrimary) {
+			return;
+		}
+		runAsyncAction(
+			async () => {
+				const result0 = await fetchTransferCandidates();
+				return await ((list: typeof result0) =>
+					setCandidates(
+						list.filter(
+							(candidate) =>
+								candidate.id !== currentUser?.id && !candidate.disabled
+						)
+					))(result0);
+			},
+			() => {
+				/* empty */
+			}
+		);
 	}, [isPrimary, currentUser?.id]);
 
-	async function savePermissions() {
-		if (!account) return;
+	function savePermissions() {
+		if (!account) {
+			return;
+		}
 		setSaving(true);
 		setMessage(null);
-		try {
-			await saveManagedAccount(account);
-			setMessage(t("account.permissions.updated"));
-		} catch (error) {
-			setMessage(error instanceof Error ? error.message : t("account.permissions.updateFailed"));
-		} finally {
-			setSaving(false);
-		}
+		return runAsyncAction(
+			async () => {
+				await saveManagedAccount(account);
+				setMessage(t("account.permissions.updated"));
+			},
+			(failure) => {
+				setMessage(
+					failure instanceof Error
+						? failure.message
+						: t("account.permissions.updateFailed")
+				);
+			},
+			() => {
+				setSaving(false);
+			}
+		);
 	}
 
 	async function confirmTransfer() {
-		if (!transferTarget) return;
+		if (!transferTarget) {
+			return;
+		}
 		setTransferring(true);
 		setMessage(null);
 		try {
@@ -76,165 +145,233 @@ export default function AccountPermissionsPage() {
 			// A full reload drops the stale cached session so the navigation reflects the new role.
 			window.location.assign(`/accounts/${transferTarget.id}/permissions`);
 		} catch (error) {
-			setMessage(error instanceof Error ? error.message : t("account.permissions.transferFailed"));
+			setMessage(
+				error instanceof Error
+					? error.message
+					: t("account.permissions.transferFailed")
+			);
 			setTransferring(false);
 		}
 	}
 
 	const editable = !!account?.editable;
 
+	const renderPermissionsTable = () => (
+		<Table className="w-full table-fixed text-left [&_td]:whitespace-normal">
+			<TableHeader className="">
+				<TableRow>
+					<TableHead scope="col" className="">
+						{t("account.permissions.permission")}
+					</TableHead>
+					<TableHead scope="col" className="w-28 text-center">
+						{t("account.permissions.allowed")}
+					</TableHead>
+				</TableRow>
+			</TableHeader>
+			<TableBody className="">
+				<TableRow>
+					<TableCell className="">
+						<p className="text-sm font-semibold text-foreground">
+							{t("account.permissions.manageMailboxes")}
+						</p>
+						<p className="mt-1 text-xs text-muted-foreground">
+							{t("account.permissions.manageMailboxesHint")}
+						</p>
+					</TableCell>
+					<TableCell className="text-center">
+						<Checkbox
+							aria-label={t("account.permissions.allowMailboxes")}
+							checked={account?.canManageMailboxes ?? false}
+							disabled={!account || !editable}
+							onCheckedChange={(checked) =>
+								account &&
+								setAccount({
+									...account,
+									canManageMailboxes: checked === true,
+								})
+							}
+						/>
+					</TableCell>
+				</TableRow>
+				<TableRow>
+					<TableCell className="">
+						<p className="text-sm font-semibold text-foreground">
+							{t("account.permissions.manageDomains")}
+						</p>
+						<p className="mt-1 text-xs text-muted-foreground">
+							{t("account.permissions.manageDomainsHint")}
+						</p>
+					</TableCell>
+					<TableCell className="text-center">
+						<Checkbox
+							aria-label={t("account.permissions.allowDomains")}
+							checked={account?.canManageDomains ?? false}
+							disabled={!account || !account.canChangeRole}
+							onCheckedChange={(checked) =>
+								account &&
+								setAccount({
+									...account,
+									canManageDomains: checked === true,
+								})
+							}
+						/>
+					</TableCell>
+				</TableRow>
+				<TableRow>
+					<TableCell className="">
+						<p className="text-sm font-semibold text-foreground">
+							{t("account.permissions.manageUsers")}
+						</p>
+						<p className="mt-1 text-xs text-muted-foreground">
+							{t("account.permissions.manageUsersHint")}
+						</p>
+					</TableCell>
+					<TableCell className="text-center">
+						<Checkbox
+							aria-label={t("account.permissions.allowUsers")}
+							checked={account?.canManageUsers ?? false}
+							disabled={!account || !account.canChangeRole}
+							onCheckedChange={(checked) =>
+								account &&
+								setAccount({ ...account, canManageUsers: checked === true })
+							}
+						/>
+					</TableCell>
+				</TableRow>
+			</TableBody>
+		</Table>
+	);
 	return (
 		<div className="flex flex-col gap-6">
-			<div>
-				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("account.permissions.title")}</h1>
-				<p className="mt-2 text-sm text-muted-foreground">{t("account.permissions.description")}</p>
-			</div>
+			<PageHeader>
+				<PageHeaderText>
+					<PageTitle>{t("account.permissions.title")}</PageTitle>
+					<PageDescription>
+						{t("account.permissions.description")}
+					</PageDescription>
+				</PageHeaderText>
+			</PageHeader>
 			{account?.isPrimaryAdmin && (
-				<section className="rounded-lg bg-amber-50 p-6">
-					<p className="text-sm font-semibold text-amber-900">{t("account.permissions.primaryAdmin")}</p>
-					<p className="mt-1 text-sm text-amber-800">{t("account.permissions.primaryNote")}</p>
-				</section>
+				<Alert variant="warning">
+					<AlertTitle>{t("account.permissions.primaryAdmin")}</AlertTitle>
+					<AlertDescription>
+						{t("account.permissions.primaryNote")}
+					</AlertDescription>
+				</Alert>
 			)}
-			<section className="flex flex-col gap-3 rounded-lg bg-card p-6">
-				<label htmlFor="account-role" className="block text-sm font-semibold text-foreground">{t("accounts.role")}</label>
+			<Field>
+				<FieldLabel htmlFor="account-role">{t("accounts.role")}</FieldLabel>
 				<NativeSelect
 					id="account-role"
 					value={account?.role ?? "user"}
 					disabled={!account || saving || !account.canChangeRole}
 					containerClassName="w-full sm:w-64"
-					className="h-10 text-sm"
-					onChange={(event) => account && setAccount({ ...account, role: event.target.value === "admin" ? "admin" : "user" })}
+					onChange={(event) =>
+						account &&
+						setAccount({
+							...account,
+							role: event.target.value === "admin" ? "admin" : "user",
+						})
+					}
 				>
 					<option value="user">{t("accounts.roleUser")}</option>
 					<option value="admin">{t("accounts.roleAdmin")}</option>
 				</NativeSelect>
-				<p className="text-xs text-muted-foreground">
+				<FieldDescription>
 					{account?.canChangeRole
 						? t("account.permissions.admins")
 						: t("account.permissions.onlyPrimaryRoles")}
-				</p>
-			</section>
+				</FieldDescription>
+			</Field>
 			<div className="overflow-hidden rounded-lg bg-card">
-				<Table className="w-full table-fixed text-left [&_td]:whitespace-normal">
-					<TableHeader className="border-b border-border bg-muted/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-						<TableRow>
-							<TableHead scope="col" className="px-5 py-3">{t("account.permissions.permission")}</TableHead>
-							<TableHead scope="col" className="w-28 px-5 py-3 text-center">{t("account.permissions.allowed")}</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody className="divide-y divide-border">
-						<TableRow>
-							<TableCell className="px-5 py-4">
-								<p className="text-sm font-semibold text-foreground">{t("account.permissions.manageMailboxes")}</p>
-								<p className="mt-1 text-xs text-muted-foreground">{t("account.permissions.manageMailboxesHint")}</p>
-							</TableCell>
-							<TableCell className="px-5 py-4 text-center">
-								<Checkbox
-									aria-label={t("account.permissions.allowMailboxes")}
-									checked={account?.canManageMailboxes ?? false}
-									disabled={!account || !editable}
-									onCheckedChange={(checked) => account && setAccount({ ...account, canManageMailboxes: (checked === true) })}
-								/>
-							</TableCell>
-						</TableRow>
-						<TableRow>
-							<TableCell className="px-5 py-4">
-								<p className="text-sm font-semibold text-foreground">{t("account.permissions.manageDomains")}</p>
-								<p className="mt-1 text-xs text-muted-foreground">{t("account.permissions.manageDomainsHint")}</p>
-							</TableCell>
-							<TableCell className="px-5 py-4 text-center">
-								<Checkbox
-									aria-label={t("account.permissions.allowDomains")}
-									checked={account?.canManageDomains ?? false}
-									disabled={!account || !account.canChangeRole}
-									onCheckedChange={(checked) => account && setAccount({ ...account, canManageDomains: (checked === true) })}
-								/>
-							</TableCell>
-						</TableRow>
-						<TableRow>
-							<TableCell className="px-5 py-4">
-								<p className="text-sm font-semibold text-foreground">{t("account.permissions.manageUsers")}</p>
-								<p className="mt-1 text-xs text-muted-foreground">{t("account.permissions.manageUsersHint")}</p>
-							</TableCell>
-							<TableCell className="px-5 py-4 text-center">
-								<Checkbox
-									aria-label={t("account.permissions.allowUsers")}
-									checked={account?.canManageUsers ?? false}
-									disabled={!account || !account.canChangeRole}
-									onCheckedChange={(checked) => account && setAccount({ ...account, canManageUsers: (checked === true) })}
-								/>
-							</TableCell>
-						</TableRow>
-					</TableBody>
-				</Table>
+				{renderPermissionsTable()}
 			</div>
 			{editable && (
-				<Button onClick={() => void savePermissions()} disabled={saving}>
+				<Button onClick={() => savePermissions()} disabled={saving}>
 					{saving ? t("common.saving") : t("account.permissions.save")}
 				</Button>
 			)}
 			{isPrimary && (
-				<section className="flex flex-col gap-4 rounded-lg bg-card p-6">
-					<div>
-						<h2 className="text-sm font-semibold text-foreground">{t("account.permissions.transferTitle")}</h2>
-						<p className="mt-1 text-xs text-muted-foreground">{t("account.permissions.transferHint")}</p>
-					</div>
-					<div className="flex flex-col gap-3 sm:flex-row">
+				<Card>
+					<CardHeader>
+						<CardTitle>{t("account.permissions.transferTitle")}</CardTitle>
+						<CardDescription>
+							{t("account.permissions.transferHint")}
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="flex flex-col gap-3 sm:flex-row">
 						<NativeSelect
 							aria-label={t("account.permissions.selectNext")}
 							value={transferTargetId}
 							containerClassName="w-full sm:max-w-sm"
-							className="h-10 text-sm"
 							onChange={(event) => setTransferTargetId(event.target.value)}
 						>
 							<option value="">{t("account.permissions.selectAccount")}</option>
 							{candidates.map((candidate) => (
-								<option key={candidate.id} value={candidate.id}>{candidate.email} — {candidate.name}</option>
+								<option key={candidate.id} value={candidate.id}>
+									{candidate.email} — {candidate.name}
+								</option>
 							))}
 						</NativeSelect>
-						<Button variant="outline" disabled={!transferTarget} onClick={() => setTransferOpen(true)}>
+						<Button
+							variant="outline"
+							disabled={!transferTarget}
+							onClick={() => setTransferOpen(true)}
+						>
 							{t("account.permissions.transferTitle")}
 						</Button>
-					</div>
-				</section>
+					</CardContent>
+				</Card>
 			)}
-			{message && <p role="status" className="text-sm text-muted-foreground">{message}</p>}
+			{message && (
+				<output className="text-sm text-muted-foreground">{message}</output>
+			)}
 
 			<Dialog open={transferOpen} onOpenChange={setTransferOpen}>
-				<DialogContent className="w-[min(420px,calc(100vw-32px))] max-h-[calc(100dvh-4rem)] overflow-y-auto">
+				<DialogContent className="max-h-[calc(100dvh-4rem)] w-[min(420px,calc(100vw-32px))] overflow-y-auto">
 					<DialogHeader>
-						<DialogTitle>{t("account.permissions.transferQuestion")}</DialogTitle>
+						<DialogTitle>
+							{t("account.permissions.transferQuestion")}
+						</DialogTitle>
 						<DialogDescription>
 							{t("account.permissions.transferWarning")}
 						</DialogDescription>
 					</DialogHeader>
 					{transferTarget && (
 						<div className="flex items-center gap-4 rounded-lg border border-border p-4">
-							<span
-								className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold text-white"
-								style={getAvatarColorStyle(transferTarget.email)}
-							>
+							<span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary font-semibold text-primary-foreground">
 								{transferTarget.name.charAt(0).toUpperCase()}
 								{transferTarget.hasAvatar && (
 									<ProgressiveAvatarImage
 										src={`/api/accounts/${transferTarget.id}/avatar`}
 										alt=""
-										className="absolute inset-0 h-full w-full object-cover"
+										className="absolute inset-0 size-full object-cover"
 									/>
 								)}
 							</span>
 							<span className="min-w-0">
-								<span className="block truncate font-semibold text-foreground">{transferTarget.name}</span>
-								<span className="block truncate text-sm text-muted-foreground">{transferTarget.email}</span>
+								<span className="block truncate font-semibold text-foreground">
+									{transferTarget.name}
+								</span>
+								<span className="block truncate text-sm text-muted-foreground">
+									{transferTarget.email}
+								</span>
 							</span>
 						</div>
 					)}
 					<div className="flex justify-end gap-2">
 						<DialogClose asChild>
-							<Button variant="outline" disabled={transferring}>{t("common.cancel")}</Button>
+							<Button variant="outline" disabled={transferring}>
+								{t("common.cancel")}
+							</Button>
 						</DialogClose>
-						<Button disabled={transferring || !transferTarget} onClick={() => void confirmTransfer()}>
-							{transferring ? t("account.permissions.transferring") : t("account.permissions.confirmTransfer")}
+						<Button
+							disabled={transferring || !transferTarget}
+							onClick={() => confirmTransfer()}
+						>
+							{transferring
+								? t("account.permissions.transferring")
+								: t("account.permissions.confirmTransfer")}
 						</Button>
 					</div>
 				</DialogContent>

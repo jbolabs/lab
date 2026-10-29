@@ -1,4 +1,4 @@
-export type ContactAvatarChangedDetail = {
+export interface ContactAvatarChangedDetail {
 	email: string;
 	hasAvatar: boolean;
-};
+}

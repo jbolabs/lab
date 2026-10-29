@@ -8,7 +8,7 @@ export type FolderColor =
 	| "#16a34a"
 	| "#0d9488";
 
-export type FolderColorOption = {
+export interface FolderColorOption {
 	value: FolderColor;
 	label: string;
-};
+}

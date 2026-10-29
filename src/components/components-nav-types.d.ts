@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-export type NavLink = {
+export interface NavLink {
 	href?: string;
 	label?: string;
 	icon?: LucideIcon;
@@ -9,4 +9,4 @@ export type NavLink = {
 	preloadMessages?: boolean;
 	count?: number;
 	onMessageDrop?: (messageIds: string[]) => void;
-};
+}

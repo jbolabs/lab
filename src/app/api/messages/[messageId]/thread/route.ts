@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+
 import { getCurrentUser } from "@/lib/auth/cookies";
 import { getEnv } from "@/lib/cloudflare";
 import { getMessageThreadForUser } from "@/lib/email/thread-view";
 
-type MessageRouteParams = {
+interface MessageRouteParams {
 	params: Promise<{ messageId: string }>;
-};
+}
 
 /** Every message in the same conversation as `messageId`, oldest first, with bodies. */
 export async function GET(request: Request, { params }: MessageRouteParams) {

@@ -1,5 +1,9 @@
 "use client";
 
+import { useState } from "react";
+
+import { htmlToPlainText } from "@/components/compose/rich-text-utils";
+import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -9,11 +13,14 @@ import {
 	DialogDescription,
 	DialogFooter,
 } from "@/components/ui/dialog";
-import { useState } from "react";
-import { useLanguage } from "@/components/language-provider";
+import {
+	withCleanup,
+	requireSuccessfulResponse,
+	requireActionEntity,
+} from "@/lib/async-cleanup";
 import { authFetch } from "@/lib/auth/client";
 import { formatUserDate } from "@/lib/time/utils";
-import { htmlToPlainText } from "@/components/compose/rich-text-utils";
+
 import type { SendReviewProps } from "./send-review-types";
 
 export function SendReview({
@@ -28,33 +35,64 @@ export function SendReview({
 	async function confirm() {
 		setBusy(true);
 		setError(null);
-		try {
-			const response = await authFetch(
-				`/api/agent/approvals/${approvalId}/confirm`,
-				{ method: "POST" },
-			);
-			const result = (await response.json()) as {
-				status?: string;
-				messageId?: string;
-				error?: string;
-			};
-			if (!response.ok || result.status !== "sent" || !result.messageId)
-				throw new Error(result.error || t("agent.review.deliveryNeedsReview"));
-			window.dispatchEvent(new Event("mailflare:messages-changed"));
-			onSent?.(result.messageId);
-		} catch (cause) {
-			setError(
-				cause instanceof Error ? cause.message : t("agent.review.couldNotSend"),
-			);
-		} finally {
-			setBusy(false);
-		}
+		return await withCleanup(
+			async () => {
+				try {
+					const response = await authFetch(
+						`/api/agent/approvals/${approvalId}/confirm`,
+						{ method: "POST" }
+					);
+					const result = (await response.json()) as {
+						status?: string;
+						messageId?: string;
+						error?: string;
+					};
+					const failureMessage =
+						result.error || t("agent.review.deliveryNeedsReview");
+					requireSuccessfulResponse(
+						{ ok: response.ok && result.status === "sent" },
+						failureMessage
+					);
+					const deliveredMessage = requireActionEntity(
+						result.messageId ? { id: result.messageId } : null,
+						failureMessage
+					);
+
+					window.dispatchEvent(new Event("mailflare:messages-changed"));
+					onSent?.(deliveredMessage.id);
+				} catch (error_) {
+					setError(
+						error_ instanceof Error
+							? error_.message
+							: t("agent.review.couldNotSend")
+					);
+				}
+			},
+			() => {
+				setBusy(false);
+			}
+		);
 	}
+	function confirmLabel() {
+		if (busy) {
+			if (snapshot.scheduledAt) {
+				return t("agent.review.scheduling");
+			}
+			return t("agent.review.sending");
+		}
+		if (snapshot.scheduledAt) {
+			return t("agent.review.confirmSchedule");
+		}
+		return t("agent.review.confirmSend");
+	}
+
 	return (
 		<Dialog
 			open
 			onOpenChange={(open) => {
-				if (!open && !busy) onClose?.();
+				if (!open && !busy) {
+					onClose?.();
+				}
 			}}
 		>
 			<DialogContent
@@ -106,7 +144,7 @@ export function SendReview({
 						</>
 					)}
 				</dl>
-				<pre className="mt-4 max-h-72 overflow-auto whitespace-pre-wrap rounded-lg border border-border p-3 text-sm">
+				<pre className="mt-4 max-h-72 overflow-auto rounded-lg border border-border p-3 text-sm whitespace-pre-wrap">
 					{snapshot.text || htmlToPlainText(snapshot.html || "")}
 				</pre>
 				{snapshot.attachments.length > 0 && (
@@ -134,14 +172,8 @@ export function SendReview({
 							{t("common.cancel")}
 						</Button>
 					)}
-					<Button type="button" onClick={() => void confirm()} disabled={busy}>
-						{busy
-							? snapshot.scheduledAt
-								? t("agent.review.scheduling")
-								: t("agent.review.sending")
-							: snapshot.scheduledAt
-								? t("agent.review.confirmSchedule")
-								: t("agent.review.confirmSend")}
+					<Button type="button" onClick={() => confirm()} disabled={busy}>
+						{confirmLabel()}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

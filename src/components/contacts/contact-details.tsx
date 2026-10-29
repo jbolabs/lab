@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
+
 import { useLanguage } from "@/components/language-provider";
-import { formatUserDate } from "@/lib/time/utils";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -11,10 +11,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { ContactAvatarForm } from "./contact-avatar-form";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { withCleanup } from "@/lib/async-cleanup";
+import { formatUserDate } from "@/lib/time/utils";
 import { cn } from "@/lib/utils";
+
+import { ContactAvatarForm } from "./contact-avatar-form";
 import type {
 	ContactDetailsRecord,
 	ContactDetailsTriggerProps,
@@ -32,6 +35,7 @@ export function ContactDetailsTrigger({
 	className,
 }: ContactDetailsTriggerProps) {
 	const { t } = useLanguage();
+	const translateEffect = useEffectEvent(t);
 	const [open, setOpen] = useState(false);
 	const visibleLabel = label ?? name;
 	const [renamed, setRenamed] = useState<{
@@ -55,24 +59,33 @@ export function ContactDetailsTrigger({
 	}
 
 	useEffect(() => {
-		if (!open || !mailboxId) return;
+		if (!open || !mailboxId) {
+			return;
+		}
 		let cancelled = false;
-		fetchContactDetails(mailboxId, address)
+		void fetchContactDetails(mailboxId, address)
 			.then((nextContact) => {
-				if (cancelled) return;
+				if (cancelled) {
+					return null;
+				}
 				setContact(nextContact);
 				setDisplayName(nextContact.displayName ?? name);
+
+				return null;
 			})
 			.catch((loadError) => {
-				if (!cancelled)
+				if (!cancelled) {
 					setError(
 						loadError instanceof Error
 							? loadError.message
-							: t("contact.loadFailed"),
+							: translateEffect("contact.loadFailed")
 					);
+				}
 			})
 			.finally(() => {
-				if (!cancelled) setLoading(false);
+				if (!cancelled) {
+					setLoading(false);
+				}
 			});
 		return () => {
 			cancelled = true;
@@ -80,45 +93,61 @@ export function ContactDetailsTrigger({
 	}, [address, mailboxId, name, open]);
 
 	async function saveContact() {
-		if (!mailboxId || !displayName.trim()) return;
+		if (!mailboxId || !displayName.trim()) {
+			return;
+		}
 		setSaving(true);
 		setError(null);
-		try {
-			const updated = await updateContactName(mailboxId, address, displayName);
-			const nextName = updated.displayName ?? displayName.trim();
-			setContact(updated);
-			if (!label) setRenamed({ from: visibleLabel, value: nextName });
-			setOpen(false);
-			window.dispatchEvent(
-				new CustomEvent("mailflare:contact-changed", {
-					detail: { email: updated.email, displayName: nextName },
-				}),
-			);
-		} catch (saveError) {
-			setError(
-				saveError instanceof Error
-					? saveError.message
-					: t("contact.updateFailed"),
-			);
-		} finally {
-			setSaving(false);
-		}
+		return await withCleanup(
+			async () => {
+				try {
+					const updated = await updateContactName(
+						mailboxId,
+						address,
+						displayName
+					);
+					const nextName = updated.displayName ?? displayName.trim();
+					setContact(updated);
+					if (!label) {
+						setRenamed({ from: visibleLabel, value: nextName });
+					}
+					setOpen(false);
+					window.dispatchEvent(
+						new CustomEvent("mailflare:contact-changed", {
+							detail: { displayName: nextName, email: updated.email },
+						})
+					);
+				} catch (saveError) {
+					setError(
+						saveError instanceof Error
+							? saveError.message
+							: t("contact.updateFailed")
+					);
+				}
+			},
+			() => {
+				setSaving(false);
+			}
+		);
 	}
 
-	if (!mailboxId) return <span className={className}>{shownName}</span>;
+	if (!mailboxId) {
+		return <span className={className}>{shownName}</span>;
+	}
 
 	return (
 		<>
-			<button
+			<Button
 				type="button"
+				variant="link"
 				onClick={() => handleOpenChange(true)}
 				className={cn(
-					className,
-					"rounded-sm text-left hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+					"text-left whitespace-normal active:not-disabled:scale-100",
+					className
 				)}
 			>
 				{shownName}
-			</button>
+			</Button>
 			<Dialog open={open} onOpenChange={handleOpenChange}>
 				<DialogContent>
 					<DialogHeader>
@@ -134,7 +163,7 @@ export function ContactDetailsTrigger({
 								hasAvatar={contact?.hasAvatar ?? false}
 								onAvatarChange={(hasAvatar) =>
 									setContact((current) =>
-										current ? { ...current, hasAvatar } : current,
+										current ? { ...current, hasAvatar } : current
 									)
 								}
 							/>
@@ -165,22 +194,22 @@ export function ContactDetailsTrigger({
 						</Field>
 						<div className="grid gap-3 rounded-lg bg-muted/60 p-3 text-sm sm:grid-cols-2">
 							<div>
-								<p className="text-xs font-medium uppercase text-muted-foreground">
+								<p className="text-xs font-medium text-muted-foreground uppercase">
 									{t("contact.source")}
 								</p>
-								<p className="mt-1 capitalize text-foreground/80">
+								<p className="mt-1 text-foreground/80 capitalize">
 									{contact?.source ?? t("contact.sourceEmail")}
 								</p>
 							</div>
 							<div>
-								<p className="text-xs font-medium uppercase text-muted-foreground">
+								<p className="text-xs font-medium text-muted-foreground uppercase">
 									{t("contact.lastSeen")}
 								</p>
 								<p className="mt-1 text-foreground/80">
 									{contact?.lastSeenAt
 										? formatUserDate(contact.lastSeenAt, {
-												month: "short",
 												day: "2-digit",
+												month: "short",
 												year: "numeric",
 											})
 										: t("contact.unknown")}

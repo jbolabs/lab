@@ -1,4 +1,11 @@
 "use client";
+
+import { useState } from "react";
+
+import { useLanguage } from "@/components/language-provider";
+import type { MailboxOption } from "@/components/mailbox-provider";
+import { useSelectedMailbox } from "@/components/mailbox-provider";
+import { Button } from "@/components/ui/button";
 import {
 	Field,
 	FieldContent,
@@ -6,21 +13,26 @@ import {
 	FieldDescription,
 	FieldGroup,
 } from "@/components/ui/field";
-import { useEffect, useState } from "react";
-import { useLanguage } from "@/components/language-provider";
-import { useSelectedMailbox } from "@/components/mailbox-provider";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { withCleanup } from "@/lib/async-cleanup";
+
+import { Switch } from "../ui/switch";
 import type { MailboxAutoReplySettings } from "./types";
 import { updateMailboxAutoReply } from "./utils";
-import { Switch } from "../ui/switch";
+
 const defaultSettings: MailboxAutoReplySettings = {
+	body: "",
 	enabled: false,
 	subject: "Out of office",
-	body: "",
 };
+function getAutoReplySettings(mailbox: MailboxOption | null) {
+	return {
+		body: mailbox?.autoReplyBody ?? "",
+		enabled: mailbox?.autoReplyEnabled ?? false,
+		subject: mailbox?.autoReplySubject ?? "Out of office",
+	};
+}
 export function MailboxAutoReplyForm() {
 	const { t } = useLanguage();
 	const { selectedMailbox, setSelectedMailbox, isLoading } =
@@ -29,61 +41,71 @@ export function MailboxAutoReplyForm() {
 	const [savedSettings, setSavedSettings] = useState(defaultSettings);
 	const [status, setStatus] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
-	useEffect(() => {
-		const nextSettings = {
-			enabled: selectedMailbox?.autoReplyEnabled ?? false,
-			subject: selectedMailbox?.autoReplySubject ?? "Out of office",
-			body: selectedMailbox?.autoReplyBody ?? "",
-		};
+	const nextSettings = getAutoReplySettings(selectedMailbox);
+	const resetKey = JSON.stringify([selectedMailbox?.id, nextSettings]);
+	const [previousResetKey, setPreviousResetKey] = useState<string | null>(null);
+	if (previousResetKey !== resetKey) {
+		setPreviousResetKey(resetKey);
+
 		setSettings(nextSettings);
 		setSavedSettings(nextSettings);
 		setStatus(null);
-	}, [
-		selectedMailbox?.id,
-		selectedMailbox?.autoReplyEnabled,
-		selectedMailbox?.autoReplySubject,
-		selectedMailbox?.autoReplyBody,
-	]);
+	}
+
 	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		if (!selectedMailbox) return;
+		if (!selectedMailbox) {
+			return;
+		}
 		if (settings.enabled && !settings.body.trim()) {
 			setStatus(t("settings.autoReply.needMessage"));
 			return;
 		}
 		setSaving(true);
 		setStatus(null);
-		try {
-			const saved = await updateMailboxAutoReply(selectedMailbox.id, settings);
-			setSettings(saved);
-			setSavedSettings(saved);
-			setSelectedMailbox({
-				...selectedMailbox,
-				autoReplyEnabled: saved.enabled,
-				autoReplySubject: saved.subject,
-				autoReplyBody: saved.body,
-			});
-			setStatus(t("common.saved"));
-		} catch (error) {
-			setStatus(
-				error instanceof Error ? error.message : t("settings.autoReply.failed"),
-			);
-		} finally {
-			setSaving(false);
-		}
+		return await withCleanup(
+			async () => {
+				try {
+					const saved = await updateMailboxAutoReply(
+						selectedMailbox.id,
+						settings
+					);
+					setSettings(saved);
+					setSavedSettings(saved);
+					setSelectedMailbox({
+						...selectedMailbox,
+						autoReplyBody: saved.body,
+						autoReplyEnabled: saved.enabled,
+						autoReplySubject: saved.subject,
+					});
+					setStatus(t("common.saved"));
+				} catch (error) {
+					setStatus(
+						error instanceof Error
+							? error.message
+							: t("settings.autoReply.failed")
+					);
+				}
+			},
+			() => {
+				setSaving(false);
+			}
+		);
 	}
-	if (isLoading)
+	if (isLoading) {
 		return (
 			<p className="text-sm text-muted-foreground">
 				{t("settings.signature.loadingInbox")}
 			</p>
 		);
-	if (!selectedMailbox)
+	}
+	if (!selectedMailbox) {
 		return (
 			<p className="text-sm text-muted-foreground">
 				{t("settings.autoReply.selectInbox")}
 			</p>
 		);
+	}
 	const address = `${selectedMailbox.localPart}@${selectedMailbox.hostname}`;
 	const canManage = selectedMailbox.permission === "full_access";
 	const changed = JSON.stringify(settings) !== JSON.stringify(savedSettings);
@@ -98,7 +120,8 @@ export function MailboxAutoReplyForm() {
 						<FieldDescription>{t("settings.autoReply.limit")}</FieldDescription>
 					</FieldContent>
 
-					<Switch id="mailbox-auto-reply-form-0"
+					<Switch
+						id="mailbox-auto-reply-form-0"
 						checked={settings.enabled}
 						onCheckedChange={(enabled) => setSettings({ ...settings, enabled })}
 						disabled={!canManage || saving}
@@ -146,9 +169,9 @@ export function MailboxAutoReplyForm() {
 								</p>
 							)}
 							{status && (
-								<p role="status" className="text-sm text-muted-foreground">
+								<output className="text-sm text-muted-foreground">
 									{status}
-								</p>
+								</output>
 							)}
 						</div>
 					</>

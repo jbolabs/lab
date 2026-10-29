@@ -1,10 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { Mail, X } from "lucide-react";
-import { getEmailDisplayName } from "@/lib/email/address";
+import Link from "next/link";
+
 import { useLanguage } from "@/components/language-provider";
+import { Button } from "@/components/ui/button";
+import { getEmailDisplayName } from "@/lib/email/address";
+
 import type { NewMessagePopupProps } from "./new-message-popup-types";
 
 export function NewMessagePopup({
@@ -13,10 +15,10 @@ export function NewMessagePopup({
 }: NewMessagePopupProps) {
 	const { t } = useLanguage();
 	return (
-		<div className="fixed right-5 top-[calc(1.25rem+env(safe-area-inset-top))] z-[100] w-[min(380px,calc(100vw-40px))] rounded-lg border bg-card p-4 shadow-md">
+		<div className="fixed top-safe-add-5 right-5 z-[100] w-[min(380px,calc(100vw-40px))] rounded-lg border bg-card p-4 shadow-md">
 			<div className="flex items-start gap-3">
-				<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-signal-soft text-signal">
-					<Mail className="h-5 w-5" />
+				<div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-signal-soft text-signal">
+					<Mail className="size-5" />
 				</div>
 				<Link
 					href={`/inbox/${notification.messageId}`}
@@ -41,7 +43,7 @@ export function NewMessagePopup({
 					size="icon"
 					type="button"
 					onClick={onDismiss}
-					className="size-11 shrink-0"
+					className="shrink-0"
 				>
 					<X />
 					<span className="sr-only">{t("notification.dismiss")}</span>

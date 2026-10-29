@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 
-export type LoadingTransitionProps = {
+export interface LoadingTransitionProps {
 	children?: ReactNode;
 	ready: boolean;
-};
+}
 
-export type PageLoadingContextValue = {
-	reportLoading(id: string, loading: boolean): void;
-};
+export interface PageLoadingContextValue {
+	reportLoading: (id: string, loading: boolean) => void;
+}

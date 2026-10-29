@@ -1,8 +1,8 @@
-export type MessageNavigationEntry = {
+export interface MessageNavigationEntry {
 	id: string;
 	unread: boolean;
-};
+}
 
-export type MessageNavigationResponse = {
+export interface MessageNavigationResponse {
 	messages: MessageNavigationEntry[];
-};
+}

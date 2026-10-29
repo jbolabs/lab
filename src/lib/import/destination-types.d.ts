@@ -1,4 +1,10 @@
-export type ImportSystemSection = "inbox" | "sent" | "drafts" | "archived" | "spam" | "trash";
+export type ImportSystemSection =
+	| "inbox"
+	| "sent"
+	| "drafts"
+	| "archived"
+	| "spam"
+	| "trash";
 
 export type ImportDestination =
 	| {
@@ -10,8 +16,8 @@ export type ImportDestination =
 			folderId: string;
 	  };
 
-export type ImportMessagePlacement = {
+export interface ImportMessagePlacement {
 	direction: "inbound" | "outbound";
 	status: string;
 	folderId: string | null;
-};
+}

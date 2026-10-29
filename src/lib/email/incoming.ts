@@ -1,6 +1,7 @@
 import { getDb } from "@/db";
-import { recordRuleMatch, resolveInboundAddress, type RoutingDecision } from "@/lib/email/routing";
 import { MAILFLARE_FORWARDED_HEADER } from "@/lib/email/account-forwarding";
+import { recordRuleMatch, resolveInboundAddress } from "@/lib/email/routing";
+import type { RoutingDecision } from "@/lib/email/routing";
 
 /**
  * Resolves the routing decision for a live inbound message. Used by the Worker `email`
@@ -11,13 +12,15 @@ import { MAILFLARE_FORWARDED_HEADER } from "@/lib/email/account-forwarding";
 export async function resolveIncomingMail(
 	env: CloudflareEnv,
 	from: string,
-	to: string,
+	to: string
 ): Promise<RoutingDecision | null> {
 	try {
 		const db = getDb(env);
 		const decision = await resolveInboundAddress(db, to, from);
 		if (decision?.ruleId) {
-			await recordRuleMatch(db, decision.ruleId).catch(() => undefined);
+			await recordRuleMatch(db, decision.ruleId).catch(() => {
+				// Cleanup failure does not mask the original result.
+			});
 		}
 		return decision;
 	} catch (error) {
@@ -34,7 +37,7 @@ export async function resolveIncomingMail(
  */
 export async function forwardMessage(
 	message: ForwardableEmailMessage,
-	destination: string,
+	destination: string
 ): Promise<boolean> {
 	try {
 		const headers = new Headers();
@@ -42,7 +45,10 @@ export async function forwardMessage(
 		await message.forward(destination, headers);
 		return true;
 	} catch (error) {
-		console.error(`Forwarding failed for ${message.to} -> ${destination}`, error);
+		console.error(
+			`Forwarding failed for ${message.to} -> ${destination}`,
+			error
+		);
 		return false;
 	}
 }

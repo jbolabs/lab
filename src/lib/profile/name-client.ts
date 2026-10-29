@@ -6,6 +6,6 @@ export function dispatchProfileNameChanged(name: string): void {
 	window.dispatchEvent(
 		new CustomEvent<ProfileNameChangedDetail>(PROFILE_NAME_CHANGED_EVENT, {
 			detail: { name },
-		}),
+		})
 	);
 }

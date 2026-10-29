@@ -1,5 +1,6 @@
 import { desc, inArray, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+
 import { getDb } from "@/db";
 import { auditLogs, users } from "@/db/schema";
 import { assertPrimaryAdmin } from "@/lib/auth/admin";
@@ -19,11 +20,11 @@ export async function GET(request: Request) {
 	const limit = Math.min(Number(url.searchParams.get("limit") ?? 100), 200);
 	const rows = await getDb(env)
 		.select({
-			id: auditLogs.id,
 			action: auditLogs.action,
-			metadata: auditLogs.metadata,
-			createdAt: auditLogs.createdAt,
 			actorEmail: users.email,
+			createdAt: auditLogs.createdAt,
+			id: auditLogs.id,
+			metadata: auditLogs.metadata,
 		})
 		.from(auditLogs)
 		.leftJoin(users, eq(users.id, auditLogs.actorUserId))

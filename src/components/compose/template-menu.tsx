@@ -1,6 +1,10 @@
 "use client";
 
+import { FileText, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import { useLanguage } from "@/components/language-provider";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenuItem,
 	DropdownMenuSeparator,
@@ -9,11 +13,8 @@ import {
 	DropdownMenuSubContent,
 	DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-
-import { FileText, Plus, Trash2 } from "lucide-react";
-import { useLanguage } from "@/components/language-provider";
 import { authFetch } from "@/lib/auth/client";
+
 import { textToHtml } from "./rich-text-utils";
 import type { ComposeTemplate, TemplateMenuProps } from "./template-types";
 
@@ -24,29 +25,35 @@ export function TemplateMenu({ onApply, onNew }: TemplateMenuProps) {
 	useEffect(() => {
 		void authFetch("/api/templates", { cache: "no-store" })
 			.then(async (response) => {
-				if (response.ok)
+				if (response.ok) {
 					setTemplates(
 						((await response.json()) as { templates: ComposeTemplate[] })
-							.templates,
+							.templates
 					);
+				}
+
+				return null;
 			})
-			.catch(() => {});
+			.catch(() => {
+				// Keep the current UI state when this optional background request fails.
+			});
 	}, []);
 	async function remove(id: string) {
 		const response = await authFetch(`/api/templates/${id}`, {
 			method: "DELETE",
 		});
-		if (response.ok)
+		if (response.ok) {
 			setTemplates((current) =>
-				current.filter((template) => template.id !== id),
+				current.filter((template) => template.id !== id)
 			);
+		}
 	}
 
 	return (
 		<DropdownMenuSub>
 			<DropdownMenuSubTrigger>
 				<span className="flex items-center">
-					<FileText className="mr-2 h-4 w-4" />
+					<FileText className="mr-2 size-4" />
 					{t("template.menu")}
 				</span>
 			</DropdownMenuSubTrigger>
@@ -64,14 +71,14 @@ export function TemplateMenu({ onApply, onNew }: TemplateMenuProps) {
 								key={template.id}
 								onSelect={() =>
 									onApply({
-										title: template.subject ?? "",
 										html:
 											template.htmlBody ?? textToHtml(template.textBody ?? ""),
+										title: template.subject ?? "",
 									})
 								}
-								className="group justify-between gap-2"
+								className="group justify-between"
 							>
-								<span className="whitespace-normal break-words">
+								<span className="break-words whitespace-normal">
 									{template.subject || t("template.untitled")}
 								</span>
 								<Button
@@ -93,7 +100,7 @@ export function TemplateMenu({ onApply, onNew }: TemplateMenuProps) {
 					</div>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem onSelect={onNew}>
-						<Plus className="mr-2 h-4 w-4" />
+						<Plus className="mr-2 size-4" />
 						{t("template.new")}
 					</DropdownMenuItem>
 				</DropdownMenuGroup>

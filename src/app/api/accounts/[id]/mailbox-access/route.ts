@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
 
 const accountsRemovedResponse = () =>
-	NextResponse.json({ error: "Multiple accounts are not available in this build" }, { status: 410 });
+	NextResponse.json(
+		{ error: "Multiple accounts are not available in this build" },
+		{ status: 410 }
+	);
 
-export async function GET() {
+export function GET() {
 	return accountsRemovedResponse();
 }
 
-export async function POST() {
+export function POST() {
 	return accountsRemovedResponse();
 }
 
-export async function DELETE() {
+export function DELETE() {
 	return accountsRemovedResponse();
 }

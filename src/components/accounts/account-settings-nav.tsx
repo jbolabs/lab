@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
+
 import { useLanguage } from "@/components/language-provider";
-import { cn } from "@/lib/utils";
+import { Item, ItemContent, ItemTitle } from "@/components/ui/item";
+
 import { SectionNavSheet } from "../section-nav-sheet";
 import {
 	accountSettingsNavItems,
@@ -18,8 +20,8 @@ export function AccountSettingsNav() {
 	const currentItem = accountSettingsNavItems.find((item) =>
 		isActiveAccountSettingsPath(
 			pathname,
-			getAccountSettingsHref(id, item.segment),
-		),
+			getAccountSettingsHref(id, item.segment)
+		)
 	);
 	const currentLabel = t(currentItem?.labelKey ?? "accountSettings.title");
 
@@ -30,25 +32,26 @@ export function AccountSettingsNav() {
 			className="w-full shrink-0 px-4 py-4 md:w-48 md:px-0 md:py-0"
 		>
 			<div className="sticky top-6 flex flex-col gap-3">
-				<h2 className="px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+				<h2 className="px-4 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
 					{t("accountSettings.title")}
 				</h2>
 				<nav className="flex flex-col gap-1">
 					{accountSettingsNavItems.map((item) => {
 						const href = getAccountSettingsHref(id, item.segment);
+						const active = isActiveAccountSettingsPath(pathname, href);
 						return (
-							<Link
+							<Item
+								asChild
 								key={item.segment || "details"}
-								href={href}
-								className={cn(
-									"block min-h-11 rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
-									isActiveAccountSettingsPath(pathname, href)
-										? "bg-signal-soft text-signal-soft-foreground"
-										: "text-muted-foreground hover:bg-background/70 hover:text-foreground",
-								)}
+								size="navigation"
+								variant={active ? "selected" : "default"}
 							>
-								{t(item.labelKey)}
-							</Link>
+								<Link href={href} aria-current={active ? "page" : undefined}>
+									<ItemContent>
+										<ItemTitle>{t(item.labelKey)}</ItemTitle>
+									</ItemContent>
+								</Link>
+							</Item>
 						);
 					})}
 				</nav>

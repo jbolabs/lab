@@ -1,6 +1,6 @@
 import type { users } from "@/db/schema";
 
-export type ApiAuthResult = {
+export interface ApiAuthResult {
 	/** The API key that authenticated; mobile push registrations hang off it. */
 	keyId: string;
 	keyKind: "legacy" | "mcp" | "device";
@@ -9,4 +9,4 @@ export type ApiAuthResult = {
 	scopes: string[];
 	mailboxIds: string[] | null;
 	user: typeof users.$inferSelect;
-};
+}

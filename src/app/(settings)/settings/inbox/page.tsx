@@ -1,3 +1,13 @@
+import { AppearanceSettings } from "@/components/settings/appearance-settings";
+import { InboxReadingLayoutSettings } from "@/components/settings/inbox-reading-layout-settings";
+import { InboxShortcutsSettings } from "@/components/settings/inbox-shortcuts-settings";
+import { InboxThreadingSettings } from "@/components/settings/inbox-threading-settings";
+import { MailboxAutoReplyForm } from "@/components/settings/mailbox-auto-reply-form";
+import { PushNotificationSettings } from "@/components/settings/push-notification-settings";
+import { RecipientAddressSettings } from "@/components/settings/recipient-address-settings";
+import { RemoteContentSettings } from "@/components/settings/remote-content-settings";
+import { SpamFilterSettings } from "@/components/settings/spam-filter-settings";
+import { TrashRetentionSettings } from "@/components/settings/trash-retention-settings";
 import {
 	CardHeader,
 	CardTitle,
@@ -5,24 +15,22 @@ import {
 	Card,
 	CardContent,
 } from "@/components/ui/card";
+import {
+	PageHeader,
+	PageHeaderText,
+	PageTitle,
+} from "@/components/ui/page-header";
 import { getServerTranslator } from "@/lib/i18n/server";
-import { AppearanceSettings } from "@/components/settings/appearance-settings";
-import { InboxThreadingSettings } from "@/components/settings/inbox-threading-settings";
-import { RemoteContentSettings } from "@/components/settings/remote-content-settings";
-import { RecipientAddressSettings } from "@/components/settings/recipient-address-settings";
-import { InboxReadingLayoutSettings } from "@/components/settings/inbox-reading-layout-settings";
-import { InboxShortcutsSettings } from "@/components/settings/inbox-shortcuts-settings";
-import { MailboxAutoReplyForm } from "@/components/settings/mailbox-auto-reply-form";
-import { SpamFilterSettings } from "@/components/settings/spam-filter-settings";
-import { TrashRetentionSettings } from "@/components/settings/trash-retention-settings";
-import { PushNotificationSettings } from "@/components/settings/push-notification-settings";
+
 export default async function SettingsInboxPage() {
 	const t = await getServerTranslator();
 	return (
 		<div className="flex flex-col gap-8 py-4">
-			<h1 className="text-2xl font-semibold tracking-tight">
-				{t("settings.nav.inbox")}
-			</h1>
+			<PageHeader>
+				<PageHeaderText>
+					<PageTitle>{t("settings.nav.inbox")}</PageTitle>
+				</PageHeaderText>
+			</PageHeader>
 			<Card>
 				<CardHeader>
 					<CardTitle>{t("settingsPage.inbox.experience")}</CardTitle>

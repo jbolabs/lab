@@ -1,3 +1,1 @@
-import { RouteLoadingBar } from "@/components/route-loading-bar";
-
-export default RouteLoadingBar;
+export { RouteLoadingBar as default } from "@/components/route-loading-bar";

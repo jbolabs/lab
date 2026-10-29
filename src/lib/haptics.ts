@@ -6,15 +6,17 @@
 export type HapticKind = "selection" | "impact" | "success";
 
 const vibrationPatterns: Record<HapticKind, number | number[]> = {
-	selection: 8,
 	impact: 16,
+	selection: 8,
 	success: [10, 60, 14],
 };
 
 let iosSwitch: HTMLLabelElement | null = null;
 
 function getIosSwitch() {
-	if (iosSwitch?.isConnected) return iosSwitch;
+	if (iosSwitch?.isConnected) {
+		return iosSwitch;
+	}
 	const label = document.createElement("label");
 	label.setAttribute("aria-hidden", "true");
 	label.style.display = "none";
@@ -22,14 +24,21 @@ function getIosSwitch() {
 	input.type = "checkbox";
 	input.setAttribute("switch", "");
 	input.tabIndex = -1;
+	// oxlint-disable-next-line unicorn/prefer-dom-node-append -- Cloudflare Element overloads shadow DOM append; appendChild retains the DOM node signature.
 	label.appendChild(input);
+	// oxlint-disable-next-line unicorn/prefer-dom-node-append -- Cloudflare Element overloads shadow DOM append; appendChild retains the DOM node signature.
 	document.body.appendChild(label);
 	iosSwitch = label;
 	return label;
 }
 
 export function haptic(kind: HapticKind = "selection") {
-	if (typeof window === "undefined" || !window.matchMedia("(pointer: coarse)").matches) return;
+	if (
+		typeof window === "undefined" ||
+		!window.matchMedia("(pointer: coarse)").matches
+	) {
+		return;
+	}
 	if (typeof navigator.vibrate === "function") {
 		navigator.vibrate(vibrationPatterns[kind]);
 		return;

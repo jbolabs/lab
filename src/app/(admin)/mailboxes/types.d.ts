@@ -1,4 +1,4 @@
-export type Mailbox = {
+export interface Mailbox {
 	id: string;
 	localPart: string;
 	displayName: string | null;
@@ -8,29 +8,29 @@ export type Mailbox = {
 	type?: "personal" | "shared";
 	permission?: "read_only" | "send_as" | "send_on_behalf" | "full_access";
 	isPrimary?: boolean;
-};
+}
 
-export type Domain = {
+export interface Domain {
 	id: string;
 	hostname: string;
-};
+}
 
-export type CurrentAccountResponse = {
+export interface CurrentAccountResponse {
 	user?: {
 		id?: string;
 		email?: string;
 		name?: string | null;
 	};
-};
+}
 
-export type MailboxOwner = {
+export interface MailboxOwner {
 	id: string;
 	email: string;
 	name: string;
 	role: "admin" | "user";
-};
+}
 
-export type MailboxesResponse = {
+export interface MailboxesResponse {
 	mailboxes: Mailbox[];
 	canCreateShared: boolean;
-};
+}

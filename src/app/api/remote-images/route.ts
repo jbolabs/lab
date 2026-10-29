@@ -13,19 +13,23 @@ const IMAGE_HEADERS = {
 export async function GET(request: Request) {
 	const env = getEnv();
 	const auth = await requireSessionUser(env, request);
-	if (auth.error) return auth.error;
+	if (auth.error) {
+		return auth.error;
+	}
 
 	if (isNodeRuntime(env)) {
 		return Response.json(
 			{ error: "Remote images are unavailable in the self-hosted runtime" },
-			{ status: 503, headers: { "Cache-Control": "no-store" } },
+			{ headers: { "Cache-Control": "no-store" }, status: 503 }
 		);
 	}
 
 	const requestUrl = new URL(request.url);
 	const remoteUrl = requestUrl.searchParams.get("url") ?? "";
 	try {
-		const image = await fetchRemoteImage(remoteUrl, { blockedOrigins: [requestUrl.origin] });
+		const image = await fetchRemoteImage(remoteUrl, {
+			blockedOrigins: [requestUrl.origin],
+		});
 		const body = new ArrayBuffer(image.body.byteLength);
 		new Uint8Array(body).set(image.body);
 		return new Response(body, {
@@ -33,8 +37,14 @@ export async function GET(request: Request) {
 		});
 	} catch (error) {
 		if (error instanceof RemoteImageError) {
-			return Response.json({ error: error.message }, { status: error.status, headers: { "Cache-Control": "no-store" } });
+			return Response.json(
+				{ error: error.message },
+				{ headers: { "Cache-Control": "no-store" }, status: error.status }
+			);
 		}
-		return Response.json({ error: "Could not fetch remote image" }, { status: 502, headers: { "Cache-Control": "no-store" } });
+		return Response.json(
+			{ error: "Could not fetch remote image" },
+			{ headers: { "Cache-Control": "no-store" }, status: 502 }
+		);
 	}
 }

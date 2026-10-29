@@ -1,12 +1,14 @@
+import type { AttachmentContent } from "@/lib/email/attachment-types";
 import {
 	MAX_ATTACHMENT_COUNT,
 	MAX_ATTACHMENT_SIZE,
 	MAX_TOTAL_ATTACHMENT_SIZE,
 } from "@/lib/email/attachments";
 import { parseRawMime } from "@/lib/email/parse";
-import type { AttachmentContent } from "@/lib/email/attachment-types";
 
-export function inboundAttachmentLimitReason(attachments: AttachmentContent[]): string | null {
+export function inboundAttachmentLimitReason(
+	attachments: AttachmentContent[]
+): string | null {
 	if (attachments.length > MAX_ATTACHMENT_COUNT) {
 		return `Message rejected: more than ${MAX_ATTACHMENT_COUNT} attachments. Send fewer files or a download link.`;
 	}
@@ -24,7 +26,9 @@ export function inboundAttachmentLimitReason(attachments: AttachmentContent[]): 
 	return null;
 }
 
-export async function inboundAttachmentLimitReasonFromRaw(raw: ArrayBuffer): Promise<string | null> {
+export async function inboundAttachmentLimitReasonFromRaw(
+	raw: ArrayBuffer
+): Promise<string | null> {
 	const parsed = await parseRawMime(raw);
 	return inboundAttachmentLimitReason(parsed.attachments);
 }

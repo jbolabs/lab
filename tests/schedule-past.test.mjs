@@ -1,13 +1,26 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
-import { dirname, join } from "node:path";
+import fs from "node:fs";
+import nodePath from "node:path";
 import test from "node:test";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
+
 import { build } from "esbuild";
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const bundleDirectory = mkdtempSync(join(root, "node_modules", "mailflare-schedule-bundle-"));
+const { mkdtempSync, rmSync } = fs;
+const { join } = nodePath;
+
+const root = join(import.meta.dirname, "..");
+const bundleDirectory = mkdtempSync(
+	join(root, "node_modules", "mailflare-schedule-bundle-")
+);
 await build({
+	alias: { "cloudflare:workers": "./server/runtime/cloudflare-workers.ts" },
+	bundle: true,
+	format: "esm",
+	logLevel: "silent",
+	outfile: join(bundleDirectory, "entry.mjs"),
+	packages: "external",
+	platform: "node",
 	stdin: {
 		contents: `
 			export { isPastSchedule as isPastPick } from "./src/components/compose/schedule-send-utils.ts";
@@ -16,18 +29,13 @@ await build({
 		resolveDir: root,
 		sourcefile: "schedule-test-entry.ts",
 	},
-	outfile: join(bundleDirectory, "entry.mjs"),
-	bundle: true,
-	platform: "node",
-	format: "esm",
 	target: "node24",
 	tsconfig: join(root, "tsconfig.json"),
-	packages: "external",
-	alias: { "cloudflare:workers": "./server/runtime/cloudflare-workers.ts" },
-	logLevel: "silent",
 });
-const { isPastPick, isPastRequest } = await import(pathToFileURL(join(bundleDirectory, "entry.mjs")).href);
-rmSync(bundleDirectory, { recursive: true, force: true });
+const { isPastPick, isPastRequest } = await import(
+	pathToFileURL(join(bundleDirectory, "entry.mjs")).href
+);
+rmSync(bundleDirectory, { force: true, recursive: true });
 
 const now = new Date("2026-10-13T14:05:42.000Z");
 

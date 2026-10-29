@@ -1,6 +1,6 @@
 import type { ThreadMessage } from "@/hooks/types";
 
-export type ConversationThreadProps = {
+export interface ConversationThreadProps {
 	/** The message the reader is currently viewing; it is rendered by the page, not here. */
 	currentMessageId: string;
 	/** Which side of the current message to render. */
@@ -14,9 +14,9 @@ export type ConversationThreadProps = {
 	expandedAll: boolean;
 	onExpandedAllChange: (expanded: boolean) => void;
 	showFullRecipientAddresses?: boolean;
-};
+}
 
-export type ConversationMessageCardProps = {
+export interface ConversationMessageCardProps {
 	message: ThreadMessage;
 	mailboxId: string | null;
 	currentAccountName?: string;
@@ -24,9 +24,9 @@ export type ConversationMessageCardProps = {
 	ownAddresses?: string[];
 	defaultExpanded?: boolean;
 	showFullRecipientAddresses?: boolean;
-};
+}
 
-export type UseMessageThreadResult = {
+export interface UseMessageThreadResult {
 	messages: ThreadMessage[];
 	loading: boolean;
-};
+}

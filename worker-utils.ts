@@ -1,7 +1,9 @@
 import type { InboundQueueMessage } from "./src/lib/email/inbound";
 import type { WebhookRetryMessage } from "./src/lib/email/webhooks";
 
-export function isInboundQueueMessage(payload: unknown): payload is InboundQueueMessage {
+export function isInboundQueueMessage(
+	payload: unknown
+): payload is InboundQueueMessage {
 	return (
 		typeof payload === "object" &&
 		payload !== null &&
@@ -11,7 +13,9 @@ export function isInboundQueueMessage(payload: unknown): payload is InboundQueue
 	);
 }
 
-export function isWebhookRetryMessage(payload: unknown): payload is WebhookRetryMessage {
+export function isWebhookRetryMessage(
+	payload: unknown
+): payload is WebhookRetryMessage {
 	return (
 		typeof payload === "object" &&
 		payload !== null &&

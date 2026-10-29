@@ -1,14 +1,20 @@
 import { NextResponse } from "next/server";
-import { assertAdmin } from "@/lib/auth/admin";
+
 import { requireSessionUser } from "@/lib/api/auth";
+import { assertAdmin } from "@/lib/auth/admin";
 import { getEnv } from "@/lib/cloudflare";
-import { getSearchIndexStatus, rebuildSearchIndex } from "@/lib/search/index-admin";
+import {
+	getSearchIndexStatus,
+	rebuildSearchIndex,
+} from "@/lib/search/index-admin";
 
 /** Row counts for the index versus the messages table, to spot drift. */
 export async function GET(request: Request) {
 	const env = getEnv();
 	const auth = await requireSessionUser(env, request);
-	if (auth.error) return auth.error;
+	if (auth.error) {
+		return auth.error;
+	}
 	try {
 		assertAdmin(auth.user);
 	} catch {
@@ -21,7 +27,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
 	const env = getEnv();
 	const auth = await requireSessionUser(env, request);
-	if (auth.error) return auth.error;
+	if (auth.error) {
+		return auth.error;
+	}
 	try {
 		assertAdmin(auth.user);
 	} catch {

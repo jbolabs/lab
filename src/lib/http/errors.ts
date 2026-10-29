@@ -1,1 +1,3 @@
-export class RequestBodyTooLargeError extends Error {}
+export class RequestBodyTooLargeError extends Error {
+	override name = "RequestBodyTooLargeError";
+}

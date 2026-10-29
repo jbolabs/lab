@@ -1,5 +1,10 @@
 import bundle from "./bundle.json";
-import type { BundledMigration, MigrationNameRow, MigrationResult, MigrationStatus } from "./types";
+import type {
+	BundledMigration,
+	MigrationNameRow,
+	MigrationResult,
+	MigrationStatus,
+} from "./types";
 
 const MIGRATION_TABLE_SQL =
 	"CREATE TABLE IF NOT EXISTS d1_migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)";
@@ -8,27 +13,47 @@ const migrations = bundle.migrations as BundledMigration[];
 
 async function getAppliedMigrationNames(db: D1Database): Promise<string[]> {
 	const table = await db
-		.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'd1_migrations'")
+		.prepare(
+			"SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'd1_migrations'"
+		)
 		.first<MigrationNameRow>();
-	if (!table) return [];
+	if (!table) {
+		return [];
+	}
 
-	const result = await db.prepare("SELECT name FROM d1_migrations").all<MigrationNameRow>();
+	const result = await db
+		.prepare("SELECT name FROM d1_migrations")
+		.all<MigrationNameRow>();
 	return result.results.map((row) => row.name);
 }
 
-export async function getMigrationStatus(db: D1Database): Promise<MigrationStatus> {
+export async function getMigrationStatus(
+	db: D1Database
+): Promise<MigrationStatus> {
 	const applied = new Set(await getAppliedMigrationNames(db));
 	const committed = new Set(migrations.map((migration) => migration.name));
-	const pending = migrations.filter((migration) => !applied.has(migration.name)).map((migration) => migration.name);
-	const unknown = [...applied].filter((name) => !committed.has(name)).sort();
+	const pending = migrations
+		.filter((migration) => !applied.has(migration.name))
+		.map((migration) => migration.name);
+	const unknown = [...applied]
+		.filter((name) => !committed.has(name))
+		.toSorted();
 
-	return { ready: pending.length === 0 && unknown.length === 0, pending, unknown };
+	return {
+		pending,
+		ready: pending.length === 0 && unknown.length === 0,
+		unknown,
+	};
 }
 
-export async function applyPendingMigrations(db: D1Database): Promise<MigrationResult> {
+export async function applyPendingMigrations(
+	db: D1Database
+): Promise<MigrationResult> {
 	const initial = await getMigrationStatus(db);
 	if (initial.unknown.length > 0) {
-		throw new Error("The database contains migrations that are not part of this Lab release.");
+		throw new Error(
+			"The database contains migrations that are not part of this Lab release."
+		);
 	}
 
 	await db.prepare(MIGRATION_TABLE_SQL).run();
@@ -36,7 +61,9 @@ export async function applyPendingMigrations(db: D1Database): Promise<MigrationR
 
 	for (const name of initial.pending) {
 		const migration = migrations.find((candidate) => candidate.name === name);
-		if (!migration) continue;
+		if (!migration) {
+			continue;
+		}
 
 		try {
 			await db.batch([
@@ -49,9 +76,12 @@ export async function applyPendingMigrations(db: D1Database): Promise<MigrationR
 				.prepare("SELECT name FROM d1_migrations WHERE name = ?")
 				.bind(name)
 				.first<MigrationNameRow>();
-			if (completed) continue;
+			if (completed) {
+				continue;
+			}
 			throw new Error(
 				`Migration ${name} failed: ${error instanceof Error ? error.message : "Database error"}`,
+				{ cause: error }
 			);
 		}
 	}

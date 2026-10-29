@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+
 import {
 	REMOTE_CONTENT_CHANGE_EVENT,
 	allowRemoteContentFromSender,
 	loadRemoteContentPolicy,
 	shouldAutoLoadRemote,
-	type RemoteContentPolicy,
 } from "./use-remote-content-utils";
+import type { RemoteContentPolicy } from "./use-remote-content-utils";
 
 /**
  * Whether a message's remote content loads without a click, per the user's
@@ -22,8 +23,18 @@ export function useRemoteContent(sender: string | undefined, spam: boolean) {
 		let cancelled = false;
 		const load = () => {
 			loadRemoteContentPolicy(address)
-				.then((loaded) => { if (!cancelled) setPolicy(loaded); })
-				.catch(() => { if (!cancelled) setPolicy(null); });
+				.then((loaded) => {
+					if (!cancelled) {
+						setPolicy(loaded);
+					}
+
+					return null;
+				})
+				.catch(() => {
+					if (!cancelled) {
+						setPolicy(null);
+					}
+				});
 		};
 		load();
 		window.addEventListener(REMOTE_CONTENT_CHANGE_EVENT, load);
@@ -34,9 +45,13 @@ export function useRemoteContent(sender: string | undefined, spam: boolean) {
 	}, [address]);
 
 	const allowSender = useCallback(() => {
-		if (!address || spam || policy?.mode !== "new_sender") return;
-		void allowRemoteContentFromSender(address).catch(() => undefined);
+		if (!address || spam || policy?.mode !== "new_sender") {
+			return;
+		}
+		void allowRemoteContentFromSender(address).catch(() => {
+			// Keep the current UI state when this optional background request fails.
+		});
 	}, [address, spam, policy?.mode]);
 
-	return { autoAllow: shouldAutoLoadRemote(policy, spam), allowSender };
+	return { allowSender, autoAllow: shouldAutoLoadRemote(policy, spam) };
 }

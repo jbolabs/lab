@@ -1,1 +1,3 @@
-export type AdminMailboxRouteParams = { params: Promise<{ id: string }> };
+export interface AdminMailboxRouteParams {
+	params: Promise<{ id: string }>;
+}

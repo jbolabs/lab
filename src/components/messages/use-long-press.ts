@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, type MouseEvent, type PointerEvent } from "react";
+import { useRef } from "react";
+import type { MouseEvent, PointerEvent } from "react";
+
 import { haptic } from "@/lib/haptics";
 
 const LONG_PRESS_MS = 450;
@@ -14,15 +16,38 @@ export function useLongPress(onLongPress: () => void, enabled = true) {
 	const fired = useRef(false);
 
 	function cancel() {
-		if (timer.current !== null) window.clearTimeout(timer.current);
+		if (timer.current !== null) {
+			window.clearTimeout(timer.current);
+		}
 		timer.current = null;
 		start.current = null;
 	}
 
 	return {
+		onClickCapture(event: MouseEvent) {
+			if (!fired.current) {
+				return;
+			}
+			fired.current = false;
+			event.preventDefault();
+			event.stopPropagation();
+		},
+		onContextMenu(event: MouseEvent) {
+			// Android opens the link menu on long press; the press is ours.
+			if (fired.current || start.current) {
+				event.preventDefault();
+			}
+		},
+		onPointerCancel: cancel,
 		onPointerDown(event: PointerEvent) {
 			// Controls inside the row (avatar, star) keep their own press; only the row itself selects.
-			if (!enabled || event.pointerType === "mouse" || (event.target as Element).closest("button")) return;
+			if (
+				!enabled ||
+				event.pointerType === "mouse" ||
+				(event.target as Element).closest("button")
+			) {
+				return;
+			}
 			fired.current = false;
 			start.current = { x: event.clientX, y: event.clientY };
 			timer.current = window.setTimeout(() => {
@@ -33,20 +58,18 @@ export function useLongPress(onLongPress: () => void, enabled = true) {
 			}, LONG_PRESS_MS);
 		},
 		onPointerMove(event: PointerEvent) {
-			if (!start.current) return;
-			if (Math.hypot(event.clientX - start.current.x, event.clientY - start.current.y) > MOVE_TOLERANCE) cancel();
+			if (!start.current) {
+				return;
+			}
+			if (
+				Math.hypot(
+					event.clientX - start.current.x,
+					event.clientY - start.current.y
+				) > MOVE_TOLERANCE
+			) {
+				cancel();
+			}
 		},
 		onPointerUp: cancel,
-		onPointerCancel: cancel,
-		onContextMenu(event: MouseEvent) {
-			// Android opens the link menu on long press; the press is ours.
-			if (fired.current || start.current) event.preventDefault();
-		},
-		onClickCapture(event: MouseEvent) {
-			if (!fired.current) return;
-			fired.current = false;
-			event.preventDefault();
-			event.stopPropagation();
-		},
 	};
 }

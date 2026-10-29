@@ -1,15 +1,19 @@
 import { eq, desc, and } from "drizzle-orm";
+
 import { getDb } from "@/db";
 import { messages, domains, mailboxes } from "@/db/schema";
-import { getMailboxAccessLevel, listAccessibleMailboxIds } from "@/lib/mailboxes/access";
-import { createAuditLog } from "@/lib/mailboxes/audit";
 import type { SessionUser } from "@/lib/auth/types";
+import {
+	getMailboxAccessLevel,
+	listAccessibleMailboxIds,
+} from "@/lib/mailboxes/access";
+import { createAuditLog } from "@/lib/mailboxes/audit";
 import { applySpamFeedback } from "@/lib/spam/feedback";
 
 export async function listMessagesForUser(
 	env: CloudflareEnv,
 	userId: string,
-	options?: { direction?: "inbound" | "outbound"; limit?: number },
+	options?: { direction?: "inbound" | "outbound"; limit?: number }
 ) {
 	const db = getDb(env);
 	const limit = options?.limit ?? 50;
@@ -17,7 +21,7 @@ export async function listMessagesForUser(
 	if (options?.direction) {
 		conditions.push(eq(messages.direction, options.direction));
 	}
-	return db
+	return await db
 		.select()
 		.from(messages)
 		.where(and(...conditions))
@@ -27,16 +31,26 @@ export async function listMessagesForUser(
 
 export async function listMailboxesForUser(env: CloudflareEnv, userId: string) {
 	const db = getDb(env);
-	return db.select().from(mailboxes).where(eq(mailboxes.userId, userId));
+	return await db.select().from(mailboxes).where(eq(mailboxes.userId, userId));
 }
 
-export async function userHasMailboxes(env: CloudflareEnv, userId: string): Promise<boolean> {
+export async function userHasMailboxes(
+	env: CloudflareEnv,
+	userId: string
+): Promise<boolean> {
 	const db = getDb(env);
-	const [row] = await db.select({ id: mailboxes.id }).from(mailboxes).where(and(eq(mailboxes.userId, userId), eq(mailboxes.disabled, false))).limit(1);
+	const [row] = await db
+		.select({ id: mailboxes.id })
+		.from(mailboxes)
+		.where(and(eq(mailboxes.userId, userId), eq(mailboxes.disabled, false)))
+		.limit(1);
 	return !!row;
 }
 
-export async function userHasAccessibleMailboxes(env: CloudflareEnv, user: SessionUser): Promise<boolean> {
+export async function userHasAccessibleMailboxes(
+	env: CloudflareEnv,
+	user: SessionUser
+): Promise<boolean> {
 	const db = getDb(env);
 	const ids = await listAccessibleMailboxIds(db, user);
 	return ids.length > 0;
@@ -54,7 +68,11 @@ export async function getPrimaryDomain(env: CloudflareEnv) {
 	return row ?? null;
 }
 
-export async function getMailboxForUser(env: CloudflareEnv, userId: string, mailboxId: string) {
+export async function getMailboxForUser(
+	env: CloudflareEnv,
+	userId: string,
+	mailboxId: string
+) {
 	const db = getDb(env);
 	const [row] = await db
 		.select()
@@ -64,14 +82,20 @@ export async function getMailboxForUser(env: CloudflareEnv, userId: string, mail
 	return row ?? null;
 }
 
-export async function markMessageAsRead(env: CloudflareEnv, userId: string, messageId: string) {
+export async function markMessageAsRead(
+	env: CloudflareEnv,
+	userId: string,
+	messageId: string
+) {
 	const db = getDb(env);
 	const [message] = await db
 		.select()
 		.from(messages)
 		.where(eq(messages.id, messageId))
 		.limit(1);
-	if (!message || message.userId !== userId) return false;
+	if (!message || message.userId !== userId) {
+		return false;
+	}
 	await db
 		.update(messages)
 		.set({ read: true })
@@ -79,18 +103,33 @@ export async function markMessageAsRead(env: CloudflareEnv, userId: string, mess
 	return true;
 }
 
-export async function markMessageAsReadForUser(env: CloudflareEnv, user: SessionUser, messageId: string) {
+export async function markMessageAsReadForUser(
+	env: CloudflareEnv,
+	user: SessionUser,
+	messageId: string
+) {
 	const db = getDb(env);
-	const [message] = await db.select().from(messages).where(eq(messages.id, messageId)).limit(1);
-	if (!message?.mailboxId) return false;
+	const [message] = await db
+		.select()
+		.from(messages)
+		.where(eq(messages.id, messageId))
+		.limit(1);
+	if (!message?.mailboxId) {
+		return false;
+	}
 	const access = await getMailboxAccessLevel(db, user, message.mailboxId);
-	if (!access?.canRead) return false;
-	await db.update(messages).set({ read: true }).where(eq(messages.id, messageId));
+	if (!access?.canRead) {
+		return false;
+	}
+	await db
+		.update(messages)
+		.set({ read: true })
+		.where(eq(messages.id, messageId));
 	await createAuditLog(env, {
+		action: "email.read",
 		actorUserId: user.id,
 		mailboxId: message.mailboxId,
 		messageId,
-		action: "email.read",
 	});
 	return true;
 }
@@ -99,21 +138,33 @@ export async function updateMessageStatusForUser(
 	env: CloudflareEnv,
 	user: SessionUser,
 	messageId: string,
-	status: string,
+	status: string
 ) {
 	const db = getDb(env);
-	const [message] = await db.select().from(messages).where(eq(messages.id, messageId)).limit(1);
-	if (!message?.mailboxId) return false;
+	const [message] = await db
+		.select()
+		.from(messages)
+		.where(eq(messages.id, messageId))
+		.limit(1);
+	if (!message?.mailboxId) {
+		return false;
+	}
 	const access = await getMailboxAccessLevel(db, user, message.mailboxId);
-	if (!access?.canManage) return false;
-	if (status === "spam") return applySpamFeedback(env, user, messageId, "spam");
-	if (status === "received" && message.status === "spam") return applySpamFeedback(env, user, messageId, "ham");
+	if (!access?.canManage) {
+		return false;
+	}
+	if (status === "spam") {
+		return applySpamFeedback(env, user, messageId, "spam");
+	}
+	if (status === "received" && message.status === "spam") {
+		return applySpamFeedback(env, user, messageId, "ham");
+	}
 	await db.update(messages).set({ status }).where(eq(messages.id, messageId));
 	await createAuditLog(env, {
+		action: "email.delete",
 		actorUserId: user.id,
 		mailboxId: message.mailboxId,
 		messageId,
-		action: "email.delete",
 		metadata: { status },
 	});
 	return true;
@@ -123,7 +174,7 @@ export async function updateMessageStatus(
 	env: CloudflareEnv,
 	userId: string,
 	messageId: string,
-	status: string,
+	status: string
 ) {
 	const db = getDb(env);
 	const [message] = await db
@@ -131,10 +182,9 @@ export async function updateMessageStatus(
 		.from(messages)
 		.where(eq(messages.id, messageId))
 		.limit(1);
-	if (!message || message.userId !== userId) return false;
-	await db
-		.update(messages)
-		.set({ status })
-		.where(eq(messages.id, messageId));
+	if (!message || message.userId !== userId) {
+		return false;
+	}
+	await db.update(messages).set({ status }).where(eq(messages.id, messageId));
 	return true;
 }

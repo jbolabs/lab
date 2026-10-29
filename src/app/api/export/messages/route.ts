@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { getDb } from "@/db";
 import { requireUser } from "@/lib/auth/cookies";
 import { getEnv } from "@/lib/cloudflare";
@@ -10,7 +11,9 @@ export async function GET(request: Request) {
 	const user = await requireUser(env, request);
 	const url = new URL(request.url);
 	const mailboxId = url.searchParams.get("mailboxId");
-	if (!mailboxId) return NextResponse.json({ error: "Mailbox is required" }, { status: 400 });
+	if (!mailboxId) {
+		return NextResponse.json({ error: "Mailbox is required" }, { status: 400 });
+	}
 
 	const access = await getMailboxAccessLevel(getDb(env), user, mailboxId);
 	if (!access?.canRead) {
@@ -21,9 +24,9 @@ export async function GET(request: Request) {
 	const address = `${access.mailbox.localPart}.mbox`;
 	return new Response(mbox, {
 		headers: {
-			"Content-Type": "application/mbox; charset=utf-8",
-			"Content-Disposition": `attachment; filename="${address}"`,
 			"Cache-Control": "no-store",
+			"Content-Disposition": `attachment; filename="${address}"`,
+			"Content-Type": "application/mbox; charset=utf-8",
 		},
 	});
 }

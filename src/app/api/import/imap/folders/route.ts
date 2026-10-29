@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+
 import { requireUser } from "@/lib/auth/cookies";
 import { getEnv } from "@/lib/cloudflare";
 import { RequestBodyTooLargeError } from "@/lib/http/errors";
 import { readJsonBody } from "@/lib/http/request";
 import { listImapFolders } from "@/lib/import/imap";
+
 import type { ImapFolderListRequest } from "./types";
 import { parseImapFolderListRequest } from "./utils";
 
@@ -16,7 +18,15 @@ export async function POST(request: Request) {
 		input = parseImapFolderListRequest(body);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid IMAP folder request" }, { status });
+		return NextResponse.json(
+			{
+				error:
+					error instanceof Error
+						? error.message
+						: "Invalid IMAP folder request",
+			},
+			{ status }
+		);
 	}
 
 	try {
@@ -24,8 +34,13 @@ export async function POST(request: Request) {
 		return NextResponse.json({ folders });
 	} catch (error) {
 		return NextResponse.json(
-			{ error: error instanceof Error ? error.message : "Unable to list IMAP folders" },
-			{ status: 502 },
+			{
+				error:
+					error instanceof Error
+						? error.message
+						: "Unable to list IMAP folders",
+			},
+			{ status: 502 }
 		);
 	}
 }

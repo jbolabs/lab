@@ -1,11 +1,14 @@
 import { authFetch } from "@/lib/auth/client";
 
-type RecipientAddressSettingsResponse = {
+interface RecipientAddressSettingsResponse {
 	enabled?: boolean;
 	error?: string;
-};
+}
 
-async function readEnabled(response: Response, fallback: string): Promise<boolean> {
+async function readEnabled(
+	response: Response,
+	fallback: string
+): Promise<boolean> {
 	const data = (await response.json()) as RecipientAddressSettingsResponse;
 	if (!response.ok || typeof data.enabled !== "boolean") {
 		throw new Error(typeof data.error === "string" ? data.error : fallback);
@@ -18,11 +21,13 @@ export async function loadShowFullRecipientAddresses(): Promise<boolean> {
 	return readEnabled(response, "Failed to load recipient address settings");
 }
 
-export async function updateShowFullRecipientAddresses(enabled: boolean): Promise<boolean> {
+export async function updateShowFullRecipientAddresses(
+	enabled: boolean
+): Promise<boolean> {
 	const response = await authFetch("/api/settings/recipient-addresses", {
-		method: "PATCH",
-		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ enabled }),
+		headers: { "Content-Type": "application/json" },
+		method: "PATCH",
 	});
 	return readEnabled(response, "Failed to update recipient address settings");
 }

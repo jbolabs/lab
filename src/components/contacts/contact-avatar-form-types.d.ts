@@ -1,7 +1,7 @@
-export type ContactAvatarFormProps = {
+export interface ContactAvatarFormProps {
 	mailboxId: string;
 	address: string;
 	name: string;
 	hasAvatar: boolean;
 	onAvatarChange: (hasAvatar: boolean) => void;
-};
+}

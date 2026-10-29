@@ -1,9 +1,13 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
+
 import type { getDb } from "@/db";
 import { messages } from "@/db/schema";
-import { newId } from "@/lib/ids";
+import {
+	normalizeMessageId,
+	selectThreadLookupIds,
+} from "@/lib/email/thread-lookup";
 import type { ResolveThreadInput } from "@/lib/email/threading-types";
-import { normalizeMessageId, selectThreadLookupIds } from "@/lib/email/thread-lookup";
+import { newId } from "@/lib/ids";
 
 export { normalizeMessageId } from "@/lib/email/thread-lookup";
 
@@ -13,9 +17,11 @@ type Db = ReturnType<typeof getDb>;
 export function parseMessageIdList(value: string | null | undefined): string[] {
 	const seen = new Set<string>();
 	const result: string[] = [];
-	for (const token of (value ?? "").split(/[\s,]+/)) {
+	for (const token of (value ?? "").split(/[\s,]+/u)) {
 		const id = normalizeMessageId(token);
-		if (!id || seen.has(id)) continue;
+		if (!id || seen.has(id)) {
+			continue;
+		}
 		seen.add(id);
 		result.push(id);
 	}
@@ -31,12 +37,19 @@ export function formatMessageIdHeader(ids: string[]): string {
  * the parent itself. Long chains keep the root and the most recent ancestors,
  * which is what mail clients use to reconstruct a conversation.
  */
-export function buildReplyReferences(parentReferences: string[], parentMessageId: string | null): string[] {
+export function buildReplyReferences(
+	parentReferences: string[],
+	parentMessageId: string | null
+): string[] {
 	const ids = [...parentReferences];
 	const parent = normalizeMessageId(parentMessageId);
-	if (parent && !ids.includes(parent)) ids.push(parent);
+	if (parent && !ids.includes(parent)) {
+		ids.push(parent);
+	}
 	const MAX = 30;
-	if (ids.length <= MAX) return ids;
+	if (ids.length <= MAX) {
+		return ids;
+	}
 	return [ids[0], ...ids.slice(ids.length - (MAX - 1))];
 }
 
@@ -46,20 +59,38 @@ export function buildReplyReferences(parentReferences: string[], parentMessageId
  * new message joins the parent's thread. Otherwise it starts a thread keyed by
  * its own Message-ID so later replies can find it.
  */
-export async function resolveThreadId(db: Db, input: ResolveThreadInput): Promise<string> {
-	const candidates = selectThreadLookupIds(input.inReplyTo, input.references ?? []);
+export async function resolveThreadId(
+	db: Db,
+	input: ResolveThreadInput
+): Promise<string> {
+	const candidates = selectThreadLookupIds(
+		input.inReplyTo,
+		input.references ?? []
+	);
 
 	if (input.mailboxId && candidates.length > 0) {
 		// Stored Message-IDs may or may not include their angle brackets.
 		const variants = candidates.flatMap((id) => [id, `<${id}>`]);
 		const [parent] = await db
-			.select({ threadId: messages.threadId, providerMessageId: messages.providerMessageId })
+			.select({
+				providerMessageId: messages.providerMessageId,
+				threadId: messages.threadId,
+			})
 			.from(messages)
-			.where(and(eq(messages.mailboxId, input.mailboxId), inArray(messages.providerMessageId, variants)))
+			.where(
+				and(
+					eq(messages.mailboxId, input.mailboxId),
+					inArray(messages.providerMessageId, variants)
+				)
+			)
 			.orderBy(asc(messages.createdAt))
 			.limit(1);
 		if (parent) {
-			return parent.threadId ?? normalizeMessageId(parent.providerMessageId) ?? newId("thr");
+			return (
+				parent.threadId ??
+				normalizeMessageId(parent.providerMessageId) ??
+				newId("thr")
+			);
 		}
 	}
 

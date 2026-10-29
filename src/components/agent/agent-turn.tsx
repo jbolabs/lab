@@ -1,19 +1,34 @@
 "use client";
 
-import { Item, ItemContent } from "@/components/ui/item";
+import { ChevronDown, Clock3 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import Link from "next/link";
 import remarkGfm from "remark-gfm";
-import { ChevronDown, Clock3 } from "lucide-react";
+
 import { useLanguage } from "@/components/language-provider";
-import type { AgentTurnProps } from "./types";
-import { agentDraftIdFromHref, formatAgentDuration } from "./utils";
+import { Item, ItemContent } from "@/components/ui/item";
+
 import {
 	AgentDraftActions,
 	AgentPendingActions,
 	AgentToolActivity,
 } from "./tool-activity";
+import type { AgentTurnProps } from "./types";
+import { agentDraftIdFromHref, formatAgentDuration } from "./utils";
+
+function AgentMarkdownLink({ href, children }: React.ComponentProps<"a">) {
+	const draftId = agentDraftIdFromHref(href);
+	if (draftId) {
+		return (
+			<Link href={`/drafts/${encodeURIComponent(draftId)}`}>{children}</Link>
+		);
+	}
+	if (href?.startsWith("/") && !href.startsWith("//")) {
+		return <Link href={href}>{children}</Link>;
+	}
+	return <a href={href}>{children}</a>;
+}
 
 export function AgentTurnView({
 	turn,
@@ -31,7 +46,7 @@ export function AgentTurnView({
 		setWorkOpen(turn.running);
 	}
 	const turnDraftActions = draftActions.filter((action) =>
-		turn.activity.some((item) => item.id === action.messageId),
+		turn.activity.some((item) => item.id === action.messageId)
 	);
 	const workContent = (
 		<div className="mt-2 flex flex-col gap-2 text-xs">
@@ -40,7 +55,7 @@ export function AgentTurnView({
 					item.role === "reasoning" ? (
 						<p
 							key={item.id}
-							className="whitespace-pre-wrap break-words text-xs text-muted-foreground pl-5"
+							className="pl-5 text-xs break-words whitespace-pre-wrap text-muted-foreground"
 						>
 							{item.content}
 						</p>
@@ -50,7 +65,7 @@ export function AgentTurnView({
 							item={item}
 							forceOpen={turn.running}
 						/>
-					),
+					)
 				)
 			) : (
 				<p className="text-muted-foreground">
@@ -62,8 +77,8 @@ export function AgentTurnView({
 	return (
 		<div className="flex flex-col gap-3 py-2">
 			{turn.user && (
-				<Item variant="muted" className="ml-auto w-fit max-w-[90%]">
-					<ItemContent className="whitespace-pre-wrap break-words">
+				<Item variant="muted" className="ml-auto w-fit max-w-9/10">
+					<ItemContent className="break-words whitespace-pre-wrap">
 						{turn.user.content}
 					</ItemContent>
 				</Item>
@@ -87,11 +102,11 @@ export function AgentTurnView({
 									aria-hidden="true"
 								/>
 								<span>
-									{turn.durationMs !== null
-										? t("agent.turn.workedFor", {
+									{turn.durationMs === null
+										? t("agent.turn.workDetails")
+										: t("agent.turn.workedFor", {
 												duration: formatAgentDuration(turn.durationMs),
-											})
-										: t("agent.turn.workDetails")}
+											})}
 								</span>
 								<ChevronDown
 									size={13}
@@ -103,31 +118,20 @@ export function AgentTurnView({
 						</details>
 					)}
 					{turn.assistant?.content && (
-						<Item className="p-0">
-							<ItemContent className="break-words text-sm leading-relaxed text-foreground [&_a]:text-signal [&_li]:ml-4 [&_li]:list-disc [&_p]:mb-3 message-content">
+						<div>
+							<div className="text-sm leading-relaxed break-words text-foreground [&_a]:text-signal [&_li]:ml-4 [&_li]:list-disc [&_p]:mb-3">
 								<ReactMarkdown
 									remarkPlugins={[remarkGfm]}
 									skipHtml
 									components={{
+										a: AgentMarkdownLink,
 										img: () => null,
-										a: ({ href, children }) => {
-											const draftId = agentDraftIdFromHref(href);
-											return draftId ? (
-												<Link href={`/drafts/${encodeURIComponent(draftId)}`}>
-													{children}
-												</Link>
-											) : href?.startsWith("/") && !href.startsWith("//") ? (
-												<Link href={href}>{children}</Link>
-											) : (
-												<a href={href}>{children}</a>
-											);
-										},
 									}}
 								>
 									{turn.assistant.content}
 								</ReactMarkdown>
-							</ItemContent>
-						</Item>
+							</div>
+						</div>
 					)}
 					{turnDraftActions.map((action) => (
 						<AgentDraftActions

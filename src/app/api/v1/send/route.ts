@@ -1,16 +1,20 @@
 import { NextResponse } from "next/server";
-import { getEnv } from "@/lib/cloudflare";
-import { authenticateApiKey, requireScope } from "@/lib/api/auth";
-import { sendEmailSchema } from "@/lib/validators";
-import { sendEmail } from "@/lib/email/send";
-import { decodeBase64Content } from "@/lib/email/attachments";
-import { readJsonBody } from "@/lib/http/request";
-import { RequestBodyTooLargeError } from "@/lib/http/errors";
+
 import { getSendErrorStatus } from "@/app/api/send/error-utils";
+import { authenticateApiKey, requireScope } from "@/lib/api/auth";
+import { getEnv } from "@/lib/cloudflare";
+import { decodeBase64Content } from "@/lib/email/attachments";
+import { sendEmail } from "@/lib/email/send";
+import { RequestBodyTooLargeError } from "@/lib/http/errors";
+import { readJsonBody } from "@/lib/http/request";
+import { sendEmailSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
 	const env = getEnv();
-	const auth = await authenticateApiKey(env, request.headers.get("authorization"));
+	const auth = await authenticateApiKey(
+		env,
+		request.headers.get("authorization")
+	);
 	if (!auth || !requireScope(auth.scopes, "send")) {
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	}
@@ -24,7 +28,10 @@ export async function POST(request: Request) {
 	}
 	const parsed = sendEmailSchema.safeParse(body);
 	if (!parsed.success) {
-		return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+		return NextResponse.json(
+			{ error: parsed.error.flatten() },
+			{ status: 400 }
+		);
 	}
 	if (auth.mailboxIds && !auth.mailboxIds.includes(parsed.data.mailboxId)) {
 		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
@@ -35,17 +42,20 @@ export async function POST(request: Request) {
 		const result = await sendEmail(env, {
 			userId: auth.userId,
 			...fields,
-			publicOrigin: new URL(request.url).origin,
 			attachments: attachments?.map((attachment) => ({
-				filename: attachment.filename,
-				type: attachment.type,
 				content: decodeBase64Content(attachment.contentBase64),
 				disposition: "attachment",
+				filename: attachment.filename,
+				type: attachment.type,
 			})),
+			publicOrigin: new URL(request.url).origin,
 		});
 		return NextResponse.json(result);
-	} catch (err) {
-		const message = err instanceof Error ? err.message : "Send failed";
-		return NextResponse.json({ error: message }, { status: getSendErrorStatus(message) });
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "Send failed";
+		return NextResponse.json(
+			{ error: message },
+			{ status: getSendErrorStatus(message) }
+		);
 	}
 }

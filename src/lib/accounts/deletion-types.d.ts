@@ -1,7 +1,7 @@
-export type DeleteAccountsInput = {
+export interface DeleteAccountsInput {
 	ids: string[];
 	transferToId?: string | null;
-};
+}
 
 export type DeleteAccountsResult =
 	| { ok: true; deleted: number }

@@ -1,4 +1,4 @@
-export type AgentSendSnapshot = {
+export interface AgentSendSnapshot {
 	from: string;
 	to: string;
 	cc: string | null;
@@ -12,4 +12,4 @@ export type AgentSendSnapshot = {
 	mailboxId: string;
 	scheduledAt: string | null;
 	attachments: { id: string; filename: string; size: number; digest: string }[];
-};
+}

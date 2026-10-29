@@ -1,3 +1,6 @@
+import { ChangePasswordForm } from "@/components/settings/change-password-form";
+import { DeviceSettings } from "@/components/settings/device-settings";
+import { MfaSettings } from "@/components/settings/mfa-settings";
 import {
 	CardHeader,
 	CardTitle,
@@ -5,23 +8,27 @@ import {
 	Card,
 	CardContent,
 } from "@/components/ui/card";
+import {
+	PageHeader,
+	PageHeaderText,
+	PageTitle,
+	PageDescription,
+} from "@/components/ui/page-header";
 import { getServerTranslator } from "@/lib/i18n/server";
-import { ChangePasswordForm } from "@/components/settings/change-password-form";
-import { MfaSettings } from "@/components/settings/mfa-settings";
-import { DeviceSettings } from "@/components/settings/device-settings";
+
 export default async function SecuritySettingsPage() {
 	const t = await getServerTranslator();
 	return (
 		<div className="flex flex-col gap-8 py-4">
 			<section className="flex flex-col gap-4">
-				<div>
-					<h1 className="text-xl font-semibold text-foreground">
-						{t("settingsPage.security.title")}
-					</h1>
-					<p className="mt-1 text-sm text-muted-foreground">
-						{t("settingsPage.security.description")}
-					</p>
-				</div>
+				<PageHeader>
+					<PageHeaderText>
+						<PageTitle>{t("settingsPage.security.title")}</PageTitle>
+						<PageDescription>
+							{t("settingsPage.security.description")}
+						</PageDescription>
+					</PageHeaderText>
+				</PageHeader>
 				<Card>
 					<CardHeader>
 						<CardTitle>{t("settingsPage.security.changePassword")}</CardTitle>

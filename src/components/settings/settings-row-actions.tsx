@@ -1,6 +1,7 @@
 "use client";
-import type { ReactNode } from "react";
 import { MoreHorizontal } from "lucide-react";
+import type { ReactNode } from "react";
+
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +10,7 @@ import {
 	DropdownMenuContent,
 	DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
+
 export function SettingsRowActions({ children }: { children: ReactNode }) {
 	const { t } = useLanguage();
 	return (

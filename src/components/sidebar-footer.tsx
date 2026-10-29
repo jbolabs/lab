@@ -1,18 +1,22 @@
 "use client";
 
+import { Keyboard } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
-import { useSidebar } from "./sidebar-state";
-import { useShortcuts } from "./shortcuts";
-import { Keyboard } from "lucide-react";
+
 import { useLanguage } from "./language-provider";
+import { useShortcuts } from "./shortcuts/shortcuts-context";
+import { useSidebar } from "./sidebar-state";
 
 export function SidebarFooter() {
 	const { t } = useLanguage();
 	const { minimal } = useSidebar();
 	const { openHelpModal, shortcutsEnabled, shortcutsPreferenceLoading } =
 		useShortcuts();
-	if (minimal || !shortcutsEnabled || shortcutsPreferenceLoading) return null;
+	if (minimal || !shortcutsEnabled || shortcutsPreferenceLoading) {
+		return null;
+	}
 
 	// Keyboard shortcuts are a desktop affordance; phones get no footer at all.
 	return (

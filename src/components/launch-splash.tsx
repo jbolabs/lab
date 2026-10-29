@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+
 import { LAUNCH_SPLASH_SEEN_KEY } from "@/lib/launch/startup-screens-utils";
 
 // The launch splash continues the static iOS startup image (public/startup, same ink and mark at the
@@ -27,38 +28,70 @@ export function LaunchSplash() {
 			return;
 		}
 		let cancelled = false;
-		const timer = window.setTimeout(() => {
-			const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-			mark.current?.animate(
-				reduce
-					? [{ opacity: 1 }, { opacity: 0 }]
-					: [
-						{ transform: "scale(1)", easing: "cubic-bezier(0.33, 1, 0.68, 1)" },
-						{ transform: "scale(0.9)", opacity: 1, offset: 0.21, easing: "cubic-bezier(0.32, 0, 0.67, 0)" },
-						{ transform: "scale(6)", opacity: 0 },
-					],
-				{ duration: reduce ? 200 : 560, fill: "forwards" },
-			);
-			const fade = splash.animate([{ opacity: 1 }, { opacity: 0 }], {
-				duration: reduce ? 200 : 240,
-				delay: reduce ? 0 : 360,
-				easing: "cubic-bezier(0.2, 0, 0, 1)",
-				fill: "forwards",
-			});
-			void fade.finished.then(() => {
-				if (!cancelled) setGone(true);
-			}, () => undefined);
-		}, Math.max(0, MIN_VISIBLE_MS - performance.now()));
+		const timer = window.setTimeout(
+			() => {
+				const reduce = window.matchMedia(
+					"(prefers-reduced-motion: reduce)"
+				).matches;
+				mark.current?.animate(
+					reduce
+						? [{ opacity: 1 }, { opacity: 0 }]
+						: [
+								{
+									easing: "cubic-bezier(0.33, 1, 0.68, 1)",
+									transform: "scale(1)",
+								},
+								{
+									easing: "cubic-bezier(0.32, 0, 0.67, 0)",
+									offset: 0.21,
+									opacity: 1,
+									transform: "scale(0.9)",
+								},
+								{ opacity: 0, transform: "scale(6)" },
+							],
+					{ duration: reduce ? 200 : 560, fill: "forwards" }
+				);
+				const fade = splash.animate([{ opacity: 1 }, { opacity: 0 }], {
+					delay: reduce ? 0 : 360,
+					duration: reduce ? 200 : 240,
+					easing: "cubic-bezier(0.2, 0, 0, 1)",
+					fill: "forwards",
+				});
+				void fade.finished.then(
+					() => {
+						if (!cancelled) {
+							setGone(true);
+						}
+
+						return null;
+					},
+					() => {
+						// No provider or recoverable background failure requires an action.
+					}
+				);
+			},
+			Math.max(0, MIN_VISIBLE_MS - performance.now())
+		);
 		return () => {
 			cancelled = true;
 			window.clearTimeout(timer);
 		};
 	}, []);
 
-	if (gone) return null;
+	if (gone) {
+		return null;
+	}
 	return (
 		<div ref={root} className="launch-splash" aria-hidden="true">
-			<img ref={mark} src="/icon-512.png" alt="" width={160} height={160} className="launch-splash-mark" />
+			{/* oxlint-disable-next-line next/no-img-element -- Runtime branding uses the original image URL without an image optimization service. */}
+			<img
+				ref={mark}
+				src="/icon-512.png"
+				alt=""
+				width={160}
+				height={160}
+				className="launch-splash-mark"
+			/>
 		</div>
 	);
 }

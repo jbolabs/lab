@@ -1,12 +1,18 @@
-import type { TranslationKey } from "@/lib/i18n/types";
-import { authFetch } from "@/lib/auth/client";
 import type { MessageCountsDelta } from "@/hooks/types";
-import { dateFromZonedFields, formatUserDateTimeLocal, getUserTimeZone, parseUserDateTimeLocal, zonedDateFields } from "@/lib/time/utils";
+import { authFetch } from "@/lib/auth/client";
+import type { TranslationKey } from "@/lib/i18n/types";
+import {
+	dateFromZonedFields,
+	formatUserDateTimeLocal,
+	getUserTimeZone,
+	parseUserDateTimeLocal,
+	zonedDateFields,
+} from "@/lib/time/utils";
 
-export type SnoozePreset = {
+export interface SnoozePreset {
 	labelKey: TranslationKey;
 	value: string;
-};
+}
 
 export function formatSnoozeDateTime(date: Date): string {
 	return formatUserDateTimeLocal(date);
@@ -22,21 +28,40 @@ export function getSnoozePresets(now = new Date()): SnoozePreset[] {
 	nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
 
 	return [
-		{ labelKey: "snooze.tomorrow", value: formatSnoozeDateTime(dateFromZonedFields(tomorrow, getUserTimeZone())) },
-		{ labelKey: "snooze.nextWeek", value: formatSnoozeDateTime(dateFromZonedFields(nextWeek, getUserTimeZone())) },
-		{ labelKey: "snooze.nextMonth", value: formatSnoozeDateTime(dateFromZonedFields(nextMonth, getUserTimeZone())) },
+		{
+			labelKey: "snooze.tomorrow",
+			value: formatSnoozeDateTime(
+				dateFromZonedFields(tomorrow, getUserTimeZone())
+			),
+		},
+		{
+			labelKey: "snooze.nextWeek",
+			value: formatSnoozeDateTime(
+				dateFromZonedFields(nextWeek, getUserTimeZone())
+			),
+		},
+		{
+			labelKey: "snooze.nextMonth",
+			value: formatSnoozeDateTime(
+				dateFromZonedFields(nextMonth, getUserTimeZone())
+			),
+		},
 	];
 }
 
 export async function snoozeMessage(messageId: string, snoozedUntil: string) {
 	const parsed = parseUserDateTimeLocal(snoozedUntil);
-	if (!parsed) throw new Error("Choose a valid snooze time");
+	if (!parsed) {
+		throw new Error("Choose a valid snooze time");
+	}
 	const response = await authFetch(`/api/messages/${messageId}/snooze`, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ snoozedUntil: parsed.toISOString() }),
+		headers: { "Content-Type": "application/json" },
+		method: "POST",
 	});
-	if (!response.ok) throw new Error("Unable to snooze message");
+	if (!response.ok) {
+		throw new Error("Unable to snooze message");
+	}
 	window.dispatchEvent(new Event("mailflare:messages-changed"));
 }
 
@@ -45,19 +70,31 @@ export function isMessageSnoozed(snoozedUntil?: string | null): boolean {
 }
 
 export async function unsnoozeMessage(messageId: string) {
-	const response = await authFetch(`/api/messages/${messageId}/snooze`, { method: "DELETE" });
-	if (!response.ok) throw new Error("Unable to unsnooze message");
+	const response = await authFetch(`/api/messages/${messageId}/snooze`, {
+		method: "DELETE",
+	});
+	if (!response.ok) {
+		throw new Error("Unable to unsnooze message");
+	}
 	window.dispatchEvent(new Event("mailflare:messages-changed"));
 }
 
 export async function toggleMessageStar(messageId: string) {
-	const response = await authFetch(`/api/messages/${messageId}/star`, { method: "POST" });
-	if (!response.ok) throw new Error("Unable to update message star");
+	const response = await authFetch(`/api/messages/${messageId}/star`, {
+		method: "POST",
+	});
+	if (!response.ok) {
+		throw new Error("Unable to update message star");
+	}
 	const result = (await response.json()) as { starred: boolean };
 	window.dispatchEvent(new Event("mailflare:message-counts-changed"));
 	return result;
 }
 
 export function dispatchMessageCountsDelta(detail: MessageCountsDelta) {
-	window.dispatchEvent(new CustomEvent<MessageCountsDelta>("mailflare:message-counts-delta", { detail }));
+	window.dispatchEvent(
+		new CustomEvent<MessageCountsDelta>("mailflare:message-counts-delta", {
+			detail,
+		})
+	);
 }

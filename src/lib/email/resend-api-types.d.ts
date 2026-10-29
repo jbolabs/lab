@@ -1,4 +1,4 @@
-export type ResendDomainRecord = {
+export interface ResendDomainRecord {
 	record: string;
 	name: string;
 	type: "MX" | "TXT" | "CNAME";
@@ -6,19 +6,23 @@ export type ResendDomainRecord = {
 	ttl?: string | number;
 	status?: string;
 	priority?: number;
-};
+}
 
-export type ResendDomain = {
+export interface ResendDomain {
 	id: string;
 	name: string;
 	status: string;
 	capabilities?: { sending?: string; receiving?: string };
 	records?: ResendDomainRecord[];
-};
+}
 
-export type ResendWebhook = { id: string; endpoint: string; events?: string[] };
+export interface ResendWebhook {
+	id: string;
+	endpoint: string;
+	events?: string[];
+}
 
-export type ResendReceivedEmail = {
+export interface ResendReceivedEmail {
 	id: string;
 	from: string;
 	to: string[];
@@ -27,4 +31,4 @@ export type ResendReceivedEmail = {
 	subject?: string;
 	message_id?: string;
 	raw?: { download_url: string; expires_at?: string };
-};
+}

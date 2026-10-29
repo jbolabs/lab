@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 
-export type ReorderableItem = {
+export interface ReorderableItem {
 	id: string;
 	node: ReactNode;
-};
+}
 
-export type ReorderableListSpec = {
+export interface ReorderableListSpec {
 	id: string;
 	items: ReorderableItem[];
 	/** Row rendered above this list (e.g. a "More..." toggle). Dropping on it moves items between this list and the previous one. */
@@ -14,27 +14,27 @@ export type ReorderableListSpec = {
 	hidden?: boolean;
 	/** Narrows the ordered ids down to the ones to render. */
 	visibleIds?: (orderedIds: string[]) => string[];
-};
+}
 
-export type ReorderableListProps = {
+export interface ReorderableListProps {
 	lists: ReorderableListSpec[];
 	/** localStorage key for the saved layout. */
 	storageKey: string;
 	/** Hold-to-reorder is switched off when false (e.g. the collapsed icon rail). */
 	enabled?: boolean;
-};
+}
 
 export type ReorderableLayout = Record<string, string[]>;
 
-export type ReorderableDropTarget = {
+export interface ReorderableDropTarget {
 	listId: string;
 	/** Insert before this id; null appends to the list. */
 	beforeId: string | null;
 	/** Viewport y of the indicator line. */
 	lineY: number;
-};
+}
 
-export type ReorderableDrag = {
+export interface ReorderableDrag {
 	id: string;
 	left: number;
 	width: number;
@@ -44,4 +44,4 @@ export type ReorderableDrag = {
 	listLeft: number;
 	listWidth: number;
 	pointerY: number;
-};
+}

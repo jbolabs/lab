@@ -1,13 +1,13 @@
-export type ImportResult = {
+export interface ImportResult {
 	imported?: number;
 	skipped?: number;
 	errors?: string[];
 	error?: string;
 	total?: number;
 	nextOffset?: number | null;
-};
+}
 
-export type ImapFormState = {
+export interface ImapFormState {
 	host: string;
 	port: string;
 	secure: boolean;
@@ -16,36 +16,43 @@ export type ImapFormState = {
 	folder: string;
 	limit: string;
 	importAll: boolean;
-};
+}
 
-export type ImportSourceSection = "inbox" | "sent" | "drafts" | "archived" | "spam" | "trash" | "others";
+export type ImportSourceSection =
+	| "inbox"
+	| "sent"
+	| "drafts"
+	| "archived"
+	| "spam"
+	| "trash"
+	| "others";
 
-export type ImportSourceOption = {
+export interface ImportSourceOption {
 	value: ImportSourceSection;
 	label: string;
 	imapFolder: string;
 	destination: string;
 	system?: boolean;
-};
+}
 
 export type ImportTab = "file" | "imap";
 
-export type ImportSourceItem = {
+export interface ImportSourceItem {
 	id: string;
 	label: string;
 	imapFolder: string;
 	destination: string;
 	folderName?: string;
 	sourceSection?: ImportSourceSection;
-};
+}
 
-export type ImportFolderSummary = {
+export interface ImportFolderSummary {
 	id: string;
 	name: string;
-};
+}
 
-export type ImportProgress = {
+export interface ImportProgress {
 	completed: number;
 	label: string;
 	total: number;
-};
+}

@@ -1,17 +1,32 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+
 import { build } from "esbuild";
 
-const bundle = await build({ entryPoints: ["src/lib/http/content-type.ts"], bundle: true, write: false, platform: "neutral", format: "esm" });
-const { getInlineContentType, getMimeEssence } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`);
+const bundle = await build({
+	bundle: true,
+	entryPoints: ["src/lib/http/content-type.ts"],
+	format: "esm",
+	platform: "neutral",
+	write: false,
+});
+const { getInlineContentType, getMimeEssence } = await import(
+	`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`
+);
 
 test("inline types are served as their bare essence", () => {
 	assert.equal(getInlineContentType("image/PNG"), "image/png");
-	assert.equal(getInlineContentType("image/jpeg; name=\"photo.jpg\""), "image/jpeg");
+	assert.equal(
+		getInlineContentType('image/jpeg; name="photo.jpg"'),
+		"image/jpeg"
+	);
 	assert.equal(getInlineContentType("application/pdf"), "application/pdf");
 	assert.equal(getInlineContentType("video/mp4"), "video/mp4");
 	assert.equal(getInlineContentType("audio/mpeg"), "audio/mpeg");
-	assert.equal(getInlineContentType("text/plain; charset=\"ISO-8859-1\"; format=flowed"), "text/plain; charset=ISO-8859-1");
+	assert.equal(
+		getInlineContentType('text/plain; charset="ISO-8859-1"; format=flowed'),
+		"text/plain; charset=ISO-8859-1"
+	);
 	assert.equal(getInlineContentType("text/csv"), "text/csv");
 });
 
@@ -28,7 +43,7 @@ test("active or unparsable types never render inline", () => {
 		"application/javascript",
 		"image/png, text/html",
 		"image/png; x=1, text/html",
-		"text/plain; charset=\"a,b\"",
+		'text/plain; charset="a,b"',
 		"image/png\ttext/html",
 		"multipart/related",
 		"",

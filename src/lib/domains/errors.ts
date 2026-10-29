@@ -5,7 +5,7 @@ import type { DomainProvisioningError } from "@/lib/domains/types";
 export function getDomainProvisioningError(
 	error: unknown,
 	fallback: string,
-	fallbackStatus = 400,
+	fallbackStatus = 400
 ): DomainProvisioningError {
 	if (isCloudflareApiErrorCode(error, 2008)) {
 		return {

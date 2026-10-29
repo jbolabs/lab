@@ -1,4 +1,3 @@
-import type { ImportMessageInput } from "./types";
 import type { ImapImportInput } from "./imap-types";
 import {
 	assertSafeImapHost,
@@ -9,24 +8,44 @@ import {
 	quoteImapString,
 	selectImapUidBatch,
 } from "./imap-utils";
+import type { ImportMessageInput } from "./types";
 
 type CloudflareSocketConnect = (
 	address: { hostname: string; port: number },
-	options: { secureTransport: "on" | "off"; allowHalfOpen: boolean },
+	options: { secureTransport: "on" | "off"; allowHalfOpen: boolean }
 ) => Socket;
 
 async function getCloudflareSocketConnect(): Promise<CloudflareSocketConnect> {
 	try {
 		const moduleName = "cloudflare:sockets";
-		const sockets = await import(
+		const sockets = (await import(
 			/* webpackIgnore: true */
 			/* @vite-ignore */
 			moduleName
-		) as { connect: CloudflareSocketConnect };
+		)) as { connect: CloudflareSocketConnect };
 		return sockets.connect;
 	} catch {
-		throw new Error("IMAP import requires the Cloudflare Workers socket runtime");
+		throw new Error(
+			"IMAP import requires the Cloudflare Workers socket runtime"
+		);
 	}
+}
+
+function findCrlf(buffer: Uint8Array): number {
+	for (let index = 0; index < buffer.byteLength - 1; index += 1) {
+		if (buffer[index] === 13 && buffer[index + 1] === 10) {
+			return index;
+		}
+	}
+	return -1;
+}
+
+export interface ImapFetchResult {
+	messages: ImportMessageInput[];
+	/** Messages in the folder when the batch was fetched. */
+	total: number;
+	/** Offset for the next batch, or null when no older messages remain. */
+	nextOffset: number | null;
 }
 
 class ImapConnection {
@@ -52,7 +71,9 @@ class ImapConnection {
 
 	async readGreeting(): Promise<void> {
 		const line = await this.readLine();
-		if (!line.startsWith("* OK")) throw new Error("IMAP server did not send an OK greeting");
+		if (!line.startsWith("* OK")) {
+			throw new Error("IMAP server did not send an OK greeting");
+		}
 	}
 
 	async command(command: string): Promise<string[]> {
@@ -87,7 +108,9 @@ class ImapConnection {
 				if (!line.toUpperCase().includes(" OK")) {
 					throw new Error(`IMAP fetch failed: ${line}`);
 				}
-				if (!raw) throw new Error("IMAP fetch returned no message");
+				if (!raw) {
+					throw new Error("IMAP fetch returned no message");
+				}
 				return raw;
 			}
 		}
@@ -120,12 +143,17 @@ class ImapConnection {
 		}
 		const bytes = this.buffer.slice(0, length);
 		this.buffer = this.buffer.slice(length);
-		return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+		return bytes.buffer.slice(
+			bytes.byteOffset,
+			bytes.byteOffset + bytes.byteLength
+		) as ArrayBuffer;
 	}
 
 	private async readMore(): Promise<void> {
 		const { value, done } = await this.reader.read();
-		if (done || !value) throw new Error("IMAP connection closed unexpectedly");
+		if (done || !value) {
+			throw new Error("IMAP connection closed unexpectedly");
+		}
 		const next = new Uint8Array(this.buffer.byteLength + value.byteLength);
 		next.set(this.buffer);
 		next.set(value, this.buffer.byteLength);
@@ -133,36 +161,29 @@ class ImapConnection {
 	}
 }
 
-function findCrlf(buffer: Uint8Array): number {
-	for (let index = 0; index < buffer.byteLength - 1; index += 1) {
-		if (buffer[index] === 13 && buffer[index + 1] === 10) return index;
-	}
-	return -1;
-}
-
-export type ImapFetchResult = {
-	messages: ImportMessageInput[];
-	/** Messages in the folder when the batch was fetched. */
-	total: number;
-	/** Offset for the next batch, or null when no older messages remain. */
-	nextOffset: number | null;
-};
-
-export async function fetchImapMessages(input: ImapImportInput): Promise<ImapFetchResult> {
+export async function fetchImapMessages(
+	input: ImapImportInput
+): Promise<ImapFetchResult> {
 	assertSafeImapHost(input.host);
 	const connect = await getCloudflareSocketConnect();
 	const socket = connect(
 		{ hostname: input.host, port: input.port },
-		{ secureTransport: input.secure ? "on" : "off", allowHalfOpen: false },
+		{ allowHalfOpen: false, secureTransport: input.secure ? "on" : "off" }
 	);
 	const imap = new ImapConnection(socket);
 	try {
 		await imap.readGreeting();
-		await imap.command(`LOGIN ${quoteImapString(input.username)} ${quoteImapString(input.password)}`);
+		await imap.command(
+			`LOGIN ${quoteImapString(input.username)} ${quoteImapString(input.password)}`
+		);
 		await imap.command(`SELECT ${quoteImapString(input.folder)}`);
 		const searchLines = await imap.command("UID SEARCH ALL");
-		const batch = selectImapUidBatch(searchLines.flatMap(parseSearchUids), input.limit, input.offset);
-		const uids = batch.uids;
+		const batch = selectImapUidBatch(
+			searchLines.flatMap(parseSearchUids),
+			input.limit,
+			input.offset
+		);
+		const { uids } = batch;
 		const messages: ImportMessageInput[] = [];
 		for (const uid of uids) {
 			messages.push({
@@ -170,27 +191,39 @@ export async function fetchImapMessages(input: ImapImportInput): Promise<ImapFet
 				raw: await imap.fetchMessage(uid),
 			});
 		}
-		await imap.command("LOGOUT").catch(() => undefined);
-		return { messages, total: batch.total, nextOffset: batch.nextOffset };
+		await imap.command("LOGOUT").catch(() => {
+			// Cleanup failure does not mask the original result.
+		});
+		return { messages, nextOffset: batch.nextOffset, total: batch.total };
 	} finally {
 		await imap.close();
 	}
 }
 
-export async function listImapFolders(input: Omit<ImapImportInput, "folder" | "limit" | "offset">): Promise<string[]> {
+export async function listImapFolders(
+	input: Omit<ImapImportInput, "folder" | "limit" | "offset">
+): Promise<string[]> {
 	assertSafeImapHost(input.host);
 	const connect = await getCloudflareSocketConnect();
 	const socket = connect(
 		{ hostname: input.host, port: input.port },
-		{ secureTransport: input.secure ? "on" : "off", allowHalfOpen: false },
+		{ allowHalfOpen: false, secureTransport: input.secure ? "on" : "off" }
 	);
 	const imap = new ImapConnection(socket);
 	try {
 		await imap.readGreeting();
-		await imap.command(`LOGIN ${quoteImapString(input.username)} ${quoteImapString(input.password)}`);
+		await imap.command(
+			`LOGIN ${quoteImapString(input.username)} ${quoteImapString(input.password)}`
+		);
 		const lines = await imap.command('LIST "" "*"');
-		await imap.command("LOGOUT").catch(() => undefined);
-		return Array.from(new Set(lines.map(parseListMailboxName).filter((name): name is string => !!name)));
+		await imap.command("LOGOUT").catch(() => {
+			// Cleanup failure does not mask the original result.
+		});
+		return [
+			...new Set(
+				lines.map(parseListMailboxName).filter((name): name is string => !!name)
+			),
+		];
 	} finally {
 		await imap.close();
 	}

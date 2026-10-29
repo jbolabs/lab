@@ -1,9 +1,8 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import fs from "node:fs";
+import nodePath from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
 
 import {
 	isPrimaryMailbox,
@@ -11,14 +10,36 @@ import {
 	resolveMailboxDisplayName,
 	tracksAccountIdentity,
 } from "../src/lib/profile/identity-utils.ts";
+import { normalizeSource } from "./helpers/source.mjs";
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const read = (path) => readFileSync(join(root, path), "utf8");
+const { readFileSync } = fs;
+const { join } = nodePath;
+
+const root = join(import.meta.dirname, "..");
+const read = (path) => normalizeSource(readFileSync(join(root, path), "utf-8"));
 
 const ACCOUNT_EMAIL = "sam@example.com";
-const primary = { localPart: "sam", hostname: "example.com", type: "personal", displayName: "Sam Reyes", avatarKey: "avatars/user-1" };
-const secondary = { localPart: "billing", hostname: "example.com", type: "personal", displayName: "Billing", avatarKey: "avatars/mbx-2" };
-const shared = { localPart: "support", hostname: "example.com", type: "shared", displayName: "Support", avatarKey: "avatars/mbx-3" };
+const primary = {
+	avatarKey: "avatars/user-1",
+	displayName: "Sam Reyes",
+	hostname: "example.com",
+	localPart: "sam",
+	type: "personal",
+};
+const secondary = {
+	avatarKey: "avatars/mbx-2",
+	displayName: "Billing",
+	hostname: "example.com",
+	localPart: "billing",
+	type: "personal",
+};
+const shared = {
+	avatarKey: "avatars/mbx-3",
+	displayName: "Support",
+	hostname: "example.com",
+	localPart: "support",
+	type: "shared",
+};
 
 test("only the mailbox at the account address carries the account identity", () => {
 	assert.equal(isPrimaryMailbox(primary, ACCOUNT_EMAIL), true);
@@ -30,16 +51,34 @@ test("only the mailbox at the account address carries the account identity", () 
 });
 
 test("the address match ignores case and surrounding space", () => {
-	assert.equal(isPrimaryMailbox({ localPart: "Sam", hostname: "Example.com" }, " SAM@example.com "), true);
+	assert.equal(
+		isPrimaryMailbox(
+			{ hostname: "Example.com", localPart: "Sam" },
+			" SAM@example.com "
+		),
+		true
+	);
 	assert.equal(isPrimaryMailbox(primary, null), false);
 	assert.equal(isPrimaryMailbox(primary, undefined), false);
 });
 
 test("a secondary mailbox resolves to its own name and avatar", () => {
-	assert.equal(resolveMailboxDisplayName(primary, ACCOUNT_EMAIL, "Sam Reyes"), "Sam Reyes");
-	assert.equal(resolveMailboxDisplayName(secondary, ACCOUNT_EMAIL, "Sam Reyes"), "Billing");
-	assert.equal(resolveMailboxAvatarKey(primary, ACCOUNT_EMAIL, "avatars/user-1"), "avatars/user-1");
-	assert.equal(resolveMailboxAvatarKey(secondary, ACCOUNT_EMAIL, "avatars/user-1"), "avatars/mbx-2");
+	assert.equal(
+		resolveMailboxDisplayName(primary, ACCOUNT_EMAIL, "Sam Reyes"),
+		"Sam Reyes"
+	);
+	assert.equal(
+		resolveMailboxDisplayName(secondary, ACCOUNT_EMAIL, "Sam Reyes"),
+		"Billing"
+	);
+	assert.equal(
+		resolveMailboxAvatarKey(primary, ACCOUNT_EMAIL, "avatars/user-1"),
+		"avatars/user-1"
+	);
+	assert.equal(
+		resolveMailboxAvatarKey(secondary, ACCOUNT_EMAIL, "avatars/user-1"),
+		"avatars/mbx-2"
+	);
 });
 
 test("renaming the profile leaves sibling mailboxes untouched (issue #36)", () => {
@@ -71,13 +110,21 @@ test("renaming the profile leaves sibling mailboxes untouched (issue #36)", () =
 		.all("u1");
 
 	const identityRows = rows.filter((row) =>
-		tracksAccountIdentity({ localPart: row.local_part, hostname: row.hostname, type: row.type }, account.email),
+		tracksAccountIdentity(
+			{ hostname: row.hostname, localPart: row.local_part, type: row.type },
+			account.email
+		)
 	);
-	assert.deepEqual(identityRows.map((row) => row.id), ["m1"], "exactly one mailbox holds the account identity");
+	assert.deepEqual(
+		identityRows.map((row) => row.id),
+		["m1"],
+		"exactly one mailbox holds the account identity"
+	);
 
 	for (const row of identityRows) {
-		db.prepare("UPDATE mailboxes SET display_name = ?, avatar_key = ? WHERE id = ?")
-			.run("Sam R. Reyes", "avatars/user-2", row.id);
+		db.prepare(
+			"UPDATE mailboxes SET display_name = ?, avatar_key = ? WHERE id = ?"
+		).run("Sam R. Reyes", "avatars/user-2", row.id);
 	}
 
 	const named = db
@@ -85,65 +132,84 @@ test("renaming the profile leaves sibling mailboxes untouched (issue #36)", () =
 		.all()
 		.map((row) => ({ ...row }));
 	assert.deepEqual(named, [
-		{ id: "m1", display_name: "Sam R. Reyes", avatar_key: "avatars/user-2" },
-		{ id: "m2", display_name: "Billing", avatar_key: "avatars/mbx-2" },
-		{ id: "m3", display_name: "Projects", avatar_key: null },
+		{ avatar_key: "avatars/user-2", display_name: "Sam R. Reyes", id: "m1" },
+		{ avatar_key: "avatars/mbx-2", display_name: "Billing", id: "m2" },
+		{ avatar_key: null, display_name: "Projects", id: "m3" },
 	]);
 });
 
 test("the identity write is keyed by mailbox id, not by owner and type", () => {
 	const sync = read("src/lib/profile/sync.ts");
-	const updates = [...sync.matchAll(/\.update\(mailboxes\)[\s\S]*?\.where\(([\s\S]*?)\);/g)].map((m) => m[1]);
-	assert.ok(updates.length > 0, "no mailbox update found in syncPersonalIdentity");
+	const updates = [
+		...sync.matchAll(
+			/\.update\(mailboxes\)[\s\S]*?\.where\((?<capture1>[\s\S]*?)\);/gu
+		),
+	].map((m) => m[1]);
+	assert.ok(
+		updates.length > 0,
+		"no mailbox update found in syncPersonalIdentity"
+	);
 	for (const where of updates) {
 		assert.ok(
-			/eq\(mailboxes\.id,/.test(where),
-			`mailbox identity update must target a single mailbox id, got: ${where.trim()}`,
+			/eq\(mailboxes\.id,/u.test(where),
+			`mailbox identity update must target a single mailbox id, got: ${where.trim()}`
 		);
 		assert.ok(
-			!/eq\(mailboxes\.type, "personal"\)/.test(where),
-			"an update scoped by type fans the account name out to every personal mailbox",
+			!/eq\(mailboxes\.type, "personal"\)/u.test(where),
+			"an update scoped by type fans the account name out to every personal mailbox"
 		);
 	}
-	assert.match(sync, /tracksAccountIdentity/);
+	assert.match(sync, /tracksAccountIdentity/u);
 });
 
 test("the mailbox routes gate the account name on the identity check", () => {
 	const detail = read("src/app/api/mailboxes/[id]/route.ts");
-	assert.match(detail, /tracksAccountIdentity\(existing, user\.email\) && "displayName" in parsed\.data/);
+	assert.match(
+		detail,
+		/tracksAccountIdentity\(existing, user\.email\) && "displayName" in parsed\.data/u
+	);
 	assert.ok(
-		!/existing\.type === "personal" && "displayName" in parsed\.data/.test(detail),
-		"PATCH must not treat every personal mailbox as the account identity",
+		!/existing\.type === "personal" && "displayName" in parsed\.data/u.test(
+			detail
+		),
+		"PATCH must not treat every personal mailbox as the account identity"
 	);
 
 	const list = read("src/app/api/mailboxes/route.ts");
-	assert.match(list, /tracksAccountIdentity\(mailbox, user\.email\)/);
+	assert.match(list, /tracksAccountIdentity\(mailbox, user\.email\)/u);
 	assert.ok(
-		!/mailbox\.type === "personal"\n?\s*\? \{ displayName: user\.name/.test(list),
-		"the list response must not overwrite every personal mailbox name with the account name",
+		!/mailbox\.type === "personal"\n?\s*\? \{ displayName: user\.name/u.test(
+			list
+		),
+		"the list response must not overwrite every personal mailbox name with the account name"
 	);
 });
 
 test("outgoing mail and message lists use the mailbox's own name", () => {
 	const sender = read("src/lib/email/sender.ts");
-	assert.match(sender, /resolveMailboxDisplayName\(mailbox, mailbox\.ownerEmail, mailbox\.ownerName\)/);
+	assert.match(
+		sender,
+		/resolveMailboxDisplayName\(mailbox, mailbox\.ownerEmail, mailbox\.ownerName\)/u
+	);
 	assert.ok(
-		!/mailbox\.type === "personal" \? mailbox\.ownerName/.test(sender),
-		"every personal mailbox would send under the account owner's name",
+		!/mailbox\.type === "personal" \? mailbox\.ownerName/u.test(sender),
+		"every personal mailbox would send under the account owner's name"
 	);
 
 	const messages = read("src/app/api/messages/route.ts");
-	assert.match(messages, /tracksAccountIdentity\(mailbox, user\.email\)/);
+	assert.match(messages, /tracksAccountIdentity\(mailbox, user\.email\)/u);
 });
 
 test("the client only repaints the primary mailbox on profile changes", () => {
 	const provider = read("src/components/mailbox-provider.tsx");
-	assert.match(provider, /isIdentityMailbox\(mailbox\)/);
+	assert.match(provider, /isIdentityMailbox\(mailbox\)/u);
 	assert.ok(
-		!/mailbox\.type === "personal" \? \{ \.\.\.mailbox, displayName: name \}/.test(provider),
-		"a profile rename must not relabel every personal mailbox in the sidebar",
+		!/mailbox\.type === "personal" \? \{ \.\.\.mailbox, displayName: name \}/u.test(
+			provider
+		),
+		"a profile rename must not relabel every personal mailbox in the sidebar"
 	);
 
 	const utils = read("src/components/mailbox-provider-utils.ts");
-	assert.match(utils, /export function isIdentityMailbox/);
+	assert.match(utils, /export function isIdentityMailbox/u);
 });

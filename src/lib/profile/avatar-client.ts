@@ -10,6 +10,6 @@ export function dispatchProfileAvatarChanged(url: string): void {
 	window.dispatchEvent(
 		new CustomEvent<ProfileAvatarChangedDetail>(PROFILE_AVATAR_CHANGED_EVENT, {
 			detail: { url },
-		}),
+		})
 	);
 }

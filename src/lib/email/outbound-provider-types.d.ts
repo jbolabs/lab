@@ -7,15 +7,15 @@ export type OutboundProviderConfig =
 	| { provider: "resend"; apiKey: string }
 	| { provider: "ses"; config: AwsConfig };
 
-export type OutboundProviderAttachment = {
+export interface OutboundProviderAttachment {
 	filename: string;
 	type: string;
 	content: ArrayBuffer;
 	disposition: "attachment" | "inline";
 	contentId?: string | null;
-};
+}
 
-export type OutboundProviderMessage = {
+export interface OutboundProviderMessage {
 	from: string;
 	to: string[];
 	cc?: string[];
@@ -25,10 +25,10 @@ export type OutboundProviderMessage = {
 	text?: string;
 	headers?: Record<string, string>;
 	attachments?: OutboundProviderAttachment[];
-};
+}
 
-export type ResendKeyStatus = {
+export interface ResendKeyStatus {
 	configured: boolean;
 	/** Where the key in use comes from; the key itself never leaves the server. */
 	source: "settings" | "environment" | null;
-};
+}

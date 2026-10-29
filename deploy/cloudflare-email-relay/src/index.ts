@@ -6,48 +6,87 @@
  *
  * Route the domain's catch-all (and any address rules) to this Worker.
  */
-type Env = { MAILFLARE_URL: string; INBOUND_WEBHOOK_SECRET: string };
+interface Env {
+	MAILFLARE_URL: string;
+	INBOUND_WEBHOOK_SECRET: string;
+}
 
 type Decision =
 	| { action: "reject"; reason: string }
-	| { action: "forward"; forwardTo: string | null; forwardHeaders?: Record<string, string> }
-	| { action: "store"; forwardTo: string | null; forwardHeaders?: Record<string, string> };
+	| {
+			action: "forward";
+			forwardTo: string | null;
+			forwardHeaders?: Record<string, string>;
+	  }
+	| {
+			action: "store";
+			forwardTo: string | null;
+			forwardHeaders?: Record<string, string>;
+	  };
 
-async function sign(secret: string, raw: ArrayBuffer, from: string, to: string): Promise<string> {
-	const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+async function sign(
+	secret: string,
+	raw: ArrayBuffer,
+	from: string,
+	to: string
+): Promise<string> {
+	const key = await crypto.subtle.importKey(
+		"raw",
+		new TextEncoder().encode(secret),
+		{ hash: "SHA-256", name: "HMAC" },
+		false,
+		["sign"]
+	);
 	const prefix = new TextEncoder().encode(`${from}\n${to}\n`);
 	const data = new Uint8Array(prefix.byteLength + raw.byteLength);
 	data.set(prefix, 0);
 	data.set(new Uint8Array(raw), prefix.byteLength);
-	return Array.from(new Uint8Array(await crypto.subtle.sign("HMAC", key, data)), (byte) => byte.toString(16).padStart(2, "0")).join("");
+	return Array.from(
+		new Uint8Array(await crypto.subtle.sign("HMAC", key, data)),
+		(byte) => byte.toString(16).padStart(2, "0")
+	).join("");
 }
 
 export default {
 	async email(message: ForwardableEmailMessage, env: Env) {
 		if (message.rawSize > 25 * 1024 * 1024) {
-			message.setReject("Message rejected: raw email exceeds the 25 MiB receiving limit. Send a download link instead.");
+			message.setReject(
+				"Message rejected: raw email exceeds the 25 MiB receiving limit. Send a download link instead."
+			);
 			return;
 		}
 		const raw = await new Response(message.raw).arrayBuffer();
 		const headers = Object.fromEntries(message.headers);
 		let decision: Decision;
 		try {
-			const response = await fetch(`${env.MAILFLARE_URL.replace(/\/$/, "")}/api/inbound`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "message/rfc822",
-					"X-Mailflare-From": message.from,
-					"X-Mailflare-To": message.to,
-					"X-Mailflare-Headers": JSON.stringify(headers),
-					"X-Mailflare-Signature": await sign(env.INBOUND_WEBHOOK_SECRET, raw, message.from, message.to),
-				},
-				body: raw,
-			});
+			const response = await fetch(
+				`${env.MAILFLARE_URL.replace(/\/$/u, "")}/api/inbound`,
+				{
+					body: raw,
+					headers: {
+						"Content-Type": "message/rfc822",
+						"X-Mailflare-From": message.from,
+						"X-Mailflare-Headers": JSON.stringify(headers),
+						"X-Mailflare-Signature": await sign(
+							env.INBOUND_WEBHOOK_SECRET,
+							raw,
+							message.from,
+							message.to
+						),
+						"X-Mailflare-To": message.to,
+					},
+					method: "POST",
+				}
+			);
 			if (response.status === 413) {
-				message.setReject("Message rejected: receiving server says the email is too large. Send a download link instead.");
+				message.setReject(
+					"Message rejected: receiving server says the email is too large. Send a download link instead."
+				);
 				return;
 			}
-			if (!response.ok) throw new Error(`Mailflare answered ${response.status}`);
+			if (!response.ok) {
+				throw new Error(`Mailflare answered ${response.status}`);
+			}
 			decision = (await response.json()) as Decision;
 		} catch (error) {
 			console.error("Relay to Mailflare failed", error);
@@ -62,7 +101,10 @@ export default {
 		}
 		if (decision.forwardTo) {
 			try {
-				await message.forward(decision.forwardTo, new Headers(decision.forwardHeaders ?? {}));
+				await message.forward(
+					decision.forwardTo,
+					new Headers(decision.forwardHeaders ?? {})
+				);
 			} catch (error) {
 				console.error(`Forward to ${decision.forwardTo} failed`, error);
 			}

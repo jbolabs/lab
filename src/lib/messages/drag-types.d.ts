@@ -1,3 +1,3 @@
-export type MessageDragPayload = {
+export interface MessageDragPayload {
 	messageIds: string[];
-};
+}

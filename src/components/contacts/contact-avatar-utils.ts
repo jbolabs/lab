@@ -1,8 +1,17 @@
 import { getEmailAddress } from "@/lib/email/address";
 
-export function getManagedContactAvatarUrl(mailboxId: string, address: string, version = 0): string {
-	const params = new URLSearchParams({ mailboxId, address: getEmailAddress(address) });
-	if (version) params.set("v", String(version));
+export function getManagedContactAvatarUrl(
+	mailboxId: string,
+	address: string,
+	version = 0
+): string {
+	const params = new URLSearchParams({
+		address: getEmailAddress(address),
+		mailboxId,
+	});
+	if (version) {
+		params.set("v", String(version));
+	}
 	return `/api/contacts/avatar?${params.toString()}`;
 }
 

@@ -1,6 +1,9 @@
 import { authFetch } from "@/lib/auth/client";
 
-export async function exportMailbox(mailboxId: string, filename: string): Promise<void> {
+export async function exportMailbox(
+	mailboxId: string,
+	filename: string
+): Promise<void> {
 	const params = new URLSearchParams({ mailboxId });
 	const response = await authFetch(`/api/export/messages?${params.toString()}`);
 	if (!response.ok) {
@@ -13,6 +16,7 @@ export async function exportMailbox(mailboxId: string, filename: string): Promis
 	const link = document.createElement("a");
 	link.href = url;
 	link.download = filename;
+	// oxlint-disable-next-line unicorn/prefer-dom-node-append -- Cloudflare HTMLRewriter merges Element.append with the DOM type; appendChild keeps the browser node overload.
 	document.body.appendChild(link);
 	link.click();
 	link.remove();

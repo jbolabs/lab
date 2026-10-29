@@ -1,18 +1,30 @@
 /** Mobile sign-ins have their own, stricter budget (they skip Turnstile). */
-export async function allowDeviceLoginAttempt(env: CloudflareEnv, request: Request): Promise<boolean> {
+export async function allowDeviceLoginAttempt(
+	env: CloudflareEnv,
+	request: Request
+): Promise<boolean> {
 	const limiter = env.DEVICE_LOGIN_RATE_LIMIT ?? env.LOGIN_RATE_LIMIT;
-	if (!limiter) return true;
+	if (!limiter) {
+		return true;
+	}
 	const ip = request.headers.get("cf-connecting-ip")?.trim() || "unknown";
 	try {
-		return (await limiter.limit({ key: `device:${ip}` })).success;
+		return await limiter
+			.limit({ key: `device:${ip}` })
+			.then((resolved) => resolved.success);
 	} catch (error) {
 		console.warn("Device login rate limiter unavailable", error);
 		return true;
 	}
 }
 
-export async function allowLoginAttempt(env: CloudflareEnv, request: Request): Promise<boolean> {
-	if (!env.LOGIN_RATE_LIMIT) return true;
+export async function allowLoginAttempt(
+	env: CloudflareEnv,
+	request: Request
+): Promise<boolean> {
+	if (!env.LOGIN_RATE_LIMIT) {
+		return true;
+	}
 	const ip = request.headers.get("cf-connecting-ip")?.trim() || "unknown";
 	try {
 		const outcome = await env.LOGIN_RATE_LIMIT.limit({ key: ip });

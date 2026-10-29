@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+
 import { getDb } from "@/db";
 import { webhooks } from "@/db/schema";
 import { requireSessionUser } from "@/lib/api/auth";
@@ -10,9 +11,15 @@ import { getEnv } from "@/lib/cloudflare";
 export async function loadOwnedWebhook(request: Request, id: string) {
 	const env = getEnv();
 	const auth = await requireSessionUser(env, request);
-	if (auth.error) return { error: auth.error } as const;
-	const user = auth.user;
-	if (!isPrimaryAdmin(user)) return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) } as const;
+	if (auth.error) {
+		return { error: auth.error } as const;
+	}
+	const { user } = auth;
+	if (!isPrimaryAdmin(user)) {
+		return {
+			error: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+		} as const;
+	}
 	const db = getDb(env);
 	const [hook] = await db
 		.select()
@@ -21,7 +28,9 @@ export async function loadOwnedWebhook(request: Request, id: string) {
 		.limit(1);
 
 	if (!hook) {
-		return { error: NextResponse.json({ error: "Webhook not found" }, { status: 404 }) } as const;
+		return {
+			error: NextResponse.json({ error: "Webhook not found" }, { status: 404 }),
+		} as const;
 	}
-	return { env, db, user, hook, error: null } as const;
+	return { db, env, error: null, hook, user } as const;
 }

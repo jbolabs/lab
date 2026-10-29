@@ -1,18 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
-import { CONTACT_AVATAR_CHANGED_EVENT } from "@/lib/contacts/avatar-client";
-import { normalizeEmailAddress } from "@/lib/email/address";
-import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
 import type { ContactAvatarProps } from "@/components/contacts/contact-avatar-types";
 import {
 	getContactAvatarInitial,
 	getManagedContactAvatarUrl,
 } from "@/components/contacts/contact-avatar-utils";
+import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { CONTACT_AVATAR_CHANGED_EVENT } from "@/lib/contacts/avatar-client";
+import { normalizeEmailAddress } from "@/lib/email/address";
 
-export function MessageAvatar({
+function MessageAvatarContent({
 	mailboxId,
 	address,
 	name,
@@ -21,20 +21,15 @@ export function MessageAvatar({
 	className,
 }: ContactAvatarProps) {
 	const [managedAvatar, setManagedAvatar] = useState(hasManagedAvatar);
-	const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-	const [imageFailed, setImageFailed] = useState(false);
+	const [failedUrl, setFailedUrl] = useState<string | null>(null);
 	const [avatarVersion, setAvatarVersion] = useState(0);
 
 	useEffect(() => {
-		setManagedAvatar(hasManagedAvatar);
-		setAvatarUrl(null);
-		setImageFailed(false);
-		setAvatarVersion(0);
-	}, [address, hasManagedAvatar, mailboxId, managedAvatarUrl]);
-
-	useEffect(() => {
 		function onAvatarChanged(event: Event) {
-			const detail = (event as CustomEvent<{ email?: string; hasAvatar?: boolean }>).detail;
+			const { detail } = event as CustomEvent<{
+				email?: string;
+				hasAvatar?: boolean;
+			}>;
 			if (detail?.email === normalizeEmailAddress(address)) {
 				setManagedAvatar(!!detail.hasAvatar);
 				setAvatarVersion(Date.now());
@@ -42,25 +37,20 @@ export function MessageAvatar({
 		}
 
 		window.addEventListener(CONTACT_AVATAR_CHANGED_EVENT, onAvatarChanged);
-		return () => window.removeEventListener(CONTACT_AVATAR_CHANGED_EVENT, onAvatarChanged);
+		return () =>
+			window.removeEventListener(CONTACT_AVATAR_CHANGED_EVENT, onAvatarChanged);
 	}, [address]);
 
-	useEffect(() => {
-		setImageFailed(false);
-		if (managedAvatarUrl) {
-			setAvatarUrl(managedAvatarUrl);
-			return;
-		}
-		if (managedAvatar && mailboxId) {
-			setAvatarUrl(getManagedContactAvatarUrl(mailboxId, address, avatarVersion));
-			return;
-		}
-		setAvatarUrl(null);
-	}, [address, avatarVersion, mailboxId, managedAvatar, managedAvatarUrl]);
+	const avatarUrl =
+		managedAvatarUrl ||
+		(managedAvatar && mailboxId
+			? getManagedContactAvatarUrl(mailboxId, address, avatarVersion)
+			: null);
+	const imageFailed = avatarUrl === failedUrl;
 
 	return (
 		<Avatar
-			className={cn("size-9", className)}
+			className={className}
 
 			aria-hidden
 		>
@@ -71,12 +61,30 @@ export function MessageAvatar({
 					alt=""
 					className="absolute inset-0 h-full w-full object-cover"
 					onError={() => {
-						if (managedAvatarUrl) setImageFailed(true);
-						else if (managedAvatar) setManagedAvatar(false);
-						else setImageFailed(true);
+						if (managedAvatarUrl) {
+							setFailedUrl(avatarUrl);
+						} else if (managedAvatar) {
+							setManagedAvatar(false);
+						} else {
+							setFailedUrl(avatarUrl);
+						}
 					}}
 				/>
 			)}
 		</Avatar>
+	);
+}
+
+export function MessageAvatar(props: ContactAvatarProps) {
+	return (
+		<MessageAvatarContent
+			key={JSON.stringify([
+				props.address,
+				props.hasManagedAvatar,
+				props.mailboxId,
+				props.managedAvatarUrl,
+			])}
+			{...props}
+		/>
 	);
 }

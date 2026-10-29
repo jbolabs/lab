@@ -1,22 +1,18 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import {
 	AlertTriangle,
 	ArrowRight,
 	CheckCircle2,
 	MailPlus,
 } from "lucide-react";
-import { useLanguage } from "@/components/language-provider";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
 import { AuthShell } from "@/components/auth/auth-shell";
+import { useLanguage } from "@/components/language-provider";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-	InputGroup,
-	InputGroupInput,
-	InputGroupAddon,
-} from "@/components/ui/input-group";
-import { Input } from "@/components/ui/input";
 import {
 	Field,
 	FieldGroup,
@@ -24,11 +20,17 @@ import {
 	FieldDescription,
 	FieldContent,
 } from "@/components/ui/field";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import {
+	InputGroup,
+	InputGroupInput,
+	InputGroupAddon,
+} from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import { checkDomain, createDomain, createMailbox, getDomains } from "./utils";
+
 import type { DomainPreflight } from "./types";
+import { checkDomain, createDomain, createMailbox, getDomains } from "./utils";
 
 export function OnboardingClient() {
 	const { t } = useLanguage();
@@ -49,12 +51,18 @@ export function OnboardingClient() {
 		void getDomains()
 			.then((data) => {
 				const primary = data.domains?.[0];
-				if (!primary) return;
+				if (!primary) {
+					return;
+				}
 				setDomainId(primary.id);
 				setHostname(primary.hostname);
 				setStep(2);
+
+				return null;
 			})
-			.catch(() => undefined);
+			.catch(() => {
+				/* Preflight is advisory; form submission reports errors. */
+			});
 	}, []);
 
 	async function addDomain(replaceMxRecords = false) {
@@ -91,7 +99,7 @@ export function OnboardingClient() {
 			checkedDomain.hostname,
 			skipDns ? true : sendingRequested,
 			replaceMxRecords,
-			skipDns,
+			skipDns
 		);
 		setLoading(false);
 		if (!ok || !data.domain) {
@@ -114,8 +122,9 @@ export function OnboardingClient() {
 			skipDns ||
 			normalized.length < 3 ||
 			domainCheck?.hostname === normalized
-		)
+		) {
 			return;
+		}
 
 		setDomainChecking(true);
 		setError(null);
@@ -146,6 +155,56 @@ export function OnboardingClient() {
 		router.push("/inbox");
 	}
 
+	function renderMailboxStep() {
+		return (
+			<>
+				<Field data-invalid={!!error}>
+					<FieldLabel htmlFor="localPart">
+						{t("onboarding.mailboxAddress")}
+					</FieldLabel>
+					<InputGroup>
+						<InputGroupInput
+							aria-describedby={error ? "auth-error" : undefined}
+							aria-invalid={!!error}
+							id="localPart"
+							autoComplete="username"
+							autoCapitalize="none"
+							spellCheck={false}
+							value={localPart}
+							onChange={(e) => setLocalPart(e.target.value)}
+							className="min-w-0"
+						/>
+						<InputGroupAddon align="inline-end" className="max-w-36">
+							@{hostname}
+						</InputGroupAddon>
+					</InputGroup>
+				</Field>
+				<Button
+					onClick={addMailbox}
+					disabled={!localPart || loading}
+					size="lg"
+					className="w-full"
+				>
+					{loading && <Spinner data-icon="inline-start" />}
+					{loading ? t("setup.creating") : t("onboarding.goToInbox")}
+				</Button>
+			</>
+		);
+	}
+
+	function renderDomainSubmit() {
+		return (
+			<Button
+				onClick={() => addDomain()}
+				disabled={!hostname || loading || domainChecking}
+				size="lg"
+				className="w-full"
+			>
+				{loading && <Spinner data-icon="inline-start" />}
+				{loading ? t("onboarding.adding") : t("onboarding.addDomain")}
+			</Button>
+		);
+	}
 	return (
 		<AuthShell
 			icon={MailPlus}
@@ -160,8 +219,8 @@ export function OnboardingClient() {
 					: t("onboarding.mailboxDescription")
 			}
 			steps={[
-				{ label: t("onboarding.stepDomain"), active: step === 1 },
-				{ label: t("onboarding.stepMailbox"), active: step === 2 },
+				{ active: step === 1, label: t("onboarding.stepDomain") },
+				{ active: step === 2, label: t("onboarding.stepMailbox") },
 			]}
 			footer={
 				<span className="inline-flex items-center gap-2 text-muted-foreground">
@@ -170,10 +229,10 @@ export function OnboardingClient() {
 				</span>
 			}
 		>
-			<FieldGroup className="flex-1 gap-5 [&>button:last-of-type]:mt-auto lg:[&>button:last-of-type]:mt-0">
+			<FieldGroup className="flex-1 [&>button:last-of-type]:mt-auto lg:[&>button:last-of-type]:mt-0">
 				{step === 1 && (
 					<>
-						<Alert>
+						<Alert variant="info">
 							<AlertDescription>
 								<p>
 									{t("onboarding.cloudflareDns", { token: "\u0001" })
@@ -189,7 +248,7 @@ export function OnboardingClient() {
 															CF_TOKEN
 														</code>,
 														part,
-													],
+													]
 										)}
 								</p>
 							</AlertDescription>
@@ -216,16 +275,13 @@ export function OnboardingClient() {
 										setMxConflict(false);
 									}
 								}}
-								onBlur={() => void inspectDomain()}
+								onBlur={() => inspectDomain()}
 								placeholder="example.com"
 							/>
 						</Field>
-						<Field orientation="horizontal" className="rounded-lg border p-4">
+						<Field orientation="horizontal" className="p-4">
 							<FieldContent>
-								<FieldLabel
-									className="min-h-11 items-center"
-									htmlFor="onboarding-skip-dns"
-								>
+								<FieldLabel htmlFor="onboarding-skip-dns">
 									{t("setup.skipDns")}
 								</FieldLabel>
 								<FieldDescription>
@@ -243,22 +299,24 @@ export function OnboardingClient() {
 							/>
 						</Field>
 						{!skipDns && (
-							<Field orientation="horizontal" className="rounded-lg border p-4">
+							<Field orientation="horizontal" className="p-4">
 								<FieldContent>
-									<FieldLabel
-										className="min-h-11 items-center"
-										htmlFor="onboarding-enable-sending"
-									>
+									<FieldLabel htmlFor="onboarding-enable-sending">
 										{t("setup.enableSending")}
 									</FieldLabel>
 									<FieldDescription>
-										{domainChecking
-											? t("setup.checkingCloudflare")
-											: domainCheck
-												? enableSending
-													? t("setup.requiredToSend")
-													: t("setup.receiveOnly")
-												: t("onboarding.leaveToVerify")}
+										{(() => {
+											if (domainChecking) {
+												return t("setup.checkingCloudflare");
+											}
+											if (domainCheck) {
+												if (enableSending) {
+													return t("setup.requiredToSend");
+												}
+												return t("setup.receiveOnly");
+											}
+											return t("onboarding.leaveToVerify");
+										})()}
 									</FieldDescription>
 								</FieldContent>
 								{domainChecking ? (
@@ -274,26 +332,23 @@ export function OnboardingClient() {
 							</Field>
 						)}
 						{domainCheck && !skipDns && (
-							<Alert>
-								<CheckCircle2 className="size-4" />
+							<Alert variant="success">
+								<CheckCircle2 />
 								<AlertDescription>
 									{t("setup.domainFound", { zone: domainCheck.zone.name })}
 								</AlertDescription>
 							</Alert>
 						)}
 						{mxConflict && (
-							<Alert>
+							<Alert variant="warning">
+								<AlertTriangle />
 								<AlertDescription className="gap-4">
-									<div className="flex items-start gap-3">
-										<AlertTriangle className="mt-0.5 size-4 shrink-0" />
-										<p className="text-sm leading-6">
-											{t("onboarding.mxConflict")}
-										</p>
-									</div>
+									<p>{t("onboarding.mxConflict")}</p>
 									<Button
-										onClick={() => void addDomain(true)}
+										onClick={() => addDomain(true)}
 										disabled={loading}
-										className="min-h-12 w-full"
+										size="lg"
+										className="w-full"
 									>
 										{loading && <Spinner data-icon="inline-start" />}
 										{loading
@@ -303,56 +358,12 @@ export function OnboardingClient() {
 								</AlertDescription>
 							</Alert>
 						)}
-						{!mxConflict && (
-							<Button
-								onClick={() => void addDomain()}
-								disabled={!hostname || loading || domainChecking}
-								className="min-h-12 w-full"
-							>
-								{loading && <Spinner data-icon="inline-start" />}
-								{loading ? t("onboarding.adding") : t("onboarding.addDomain")}
-							</Button>
-						)}
+						{!mxConflict && renderDomainSubmit()}
 					</>
 				)}
-				{step === 2 && (
-					<>
-						<Field data-invalid={!!error}>
-							<FieldLabel htmlFor="localPart">
-								{t("onboarding.mailboxAddress")}
-							</FieldLabel>
-							<InputGroup>
-								<InputGroupInput
-									aria-describedby={error ? "auth-error" : undefined}
-									aria-invalid={!!error}
-									id="localPart"
-									autoComplete="username"
-									autoCapitalize="none"
-									spellCheck={false}
-									value={localPart}
-									onChange={(e) => setLocalPart(e.target.value)}
-									className="min-w-0"
-								/>
-								<InputGroupAddon
-									align="inline-end"
-									className="max-w-36 truncate"
-								>
-									@{hostname}
-								</InputGroupAddon>
-							</InputGroup>
-						</Field>
-						<Button
-							onClick={addMailbox}
-							disabled={!localPart || loading}
-							className="min-h-12 w-full"
-						>
-							{loading && <Spinner data-icon="inline-start" />}
-							{loading ? t("setup.creating") : t("onboarding.goToInbox")}
-						</Button>
-					</>
-				)}
+				{step === 2 && renderMailboxStep()}
 				{error && (
-					<Alert id="auth-error" variant="destructive">
+					<Alert id="auth-error" variant="error">
 						<AlertDescription>{error}</AlertDescription>
 					</Alert>
 				)}

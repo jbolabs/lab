@@ -1,10 +1,15 @@
-export type AuthActivityAction = "auth.login" | "auth.logout" | "auth.mfa_verified" | "auth.password_reset" | "auth.device_login";
+export type AuthActivityAction =
+	| "auth.login"
+	| "auth.logout"
+	| "auth.mfa_verified"
+	| "auth.password_reset"
+	| "auth.device_login";
 
-export type AuthActivityMetadata = {
+export interface AuthActivityMetadata {
 	ipAddress: string;
 	city: string | null;
 	country: string | null;
 	device: string;
 	platform: string;
 	userAgent: string;
-};
+}

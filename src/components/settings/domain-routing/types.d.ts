@@ -1,8 +1,13 @@
 export type DomainRuleAction = "store" | "forward" | "reject";
 export type DomainRuleField = "recipient" | "sender" | "title" | "content";
-export type DomainRuleOperator = "contains" | "exact" | "starts_with" | "ends_with" | "regex";
+export type DomainRuleOperator =
+	| "contains"
+	| "exact"
+	| "starts_with"
+	| "ends_with"
+	| "regex";
 
-export type DomainRule = {
+export interface DomainRule {
 	id: string;
 	domainId: string;
 	name: string | null;
@@ -18,16 +23,16 @@ export type DomainRule = {
 	priority: number;
 	matchCount: number;
 	lastMatchedAt: string | number | null;
-};
+}
 
-export type DomainRuleMailbox = {
+export interface DomainRuleMailbox {
 	id: string;
 	localPart: string;
 	displayName: string | null;
 	disabled: boolean;
-};
+}
 
-export type DomainRuleInput = {
+export interface DomainRuleInput {
 	domainId: string;
 	name?: string;
 	enabled: boolean;
@@ -40,11 +45,11 @@ export type DomainRuleInput = {
 	keepCopy: boolean;
 	rejectReason?: string | null;
 	priority: number;
-};
+}
 
-export type DomainRoutingProps = {
+export interface DomainRoutingProps {
 	domain?: {
 		id: string;
 		hostname: string;
 	};
-};
+}

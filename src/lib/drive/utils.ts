@@ -15,8 +15,22 @@ export const DRIVE_MAX_NAME_LENGTH = 255;
 export const DRIVE_MAX_DEPTH = 64;
 
 export function normalizeDriveName(value: unknown): string | null {
-	if (typeof value !== "string") return null;
-	const name = value.replace(/[\u0000-\u001f/\\]/g, " ").replace(/\s+/g, " ").trim().slice(0, DRIVE_MAX_NAME_LENGTH);
+	if (typeof value !== "string") {
+		return null;
+	}
+	const name = value
+		.split("")
+		.map((character) =>
+			(character.codePointAt(0) ?? 32) < 32 ||
+			character === "/" ||
+			character === "\\"
+				? " "
+				: character
+		)
+		.join("")
+		.replaceAll(/\s+/gu, " ")
+		.trim()
+		.slice(0, DRIVE_MAX_NAME_LENGTH);
 	return name && name !== "." && name !== ".." ? name : null;
 }
 
@@ -33,15 +47,25 @@ export function toDriveCrumbs(chain: DriveRow[]): DriveCrumb[] {
 }
 
 export function formatDriveSize(bytes: number): string {
-	if (bytes < 1024) return `${bytes} B`;
+	if (bytes < 1024) {
+		return `${bytes} B`;
+	}
 	const units = ["KB", "MB", "GB", "TB"];
 	let value = bytes / 1024;
 	let unit = 0;
-	while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit += 1; }
+	while (value >= 1024 && unit < units.length - 1) {
+		value /= 1024;
+		unit += 1;
+	}
 	return `${value >= 10 ? Math.round(value) : value.toFixed(1)} ${units[unit]}`;
 }
 
-export function driveContentDisposition(filename: string, inline: boolean): string {
-	const ascii = filename.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
+export function driveContentDisposition(
+	filename: string,
+	inline: boolean
+): string {
+	const ascii = filename
+		.replaceAll(/[^\u0020-\u007E]/gu, "_")
+		.replaceAll(/["\\]/gu, "_");
 	return `${inline ? "inline" : "attachment"}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
 }

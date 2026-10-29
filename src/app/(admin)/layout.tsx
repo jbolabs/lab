@@ -1,82 +1,96 @@
 "use client";
 
-import "./admin-console.css";
-import { AdminConfirmationProvider } from "./admin-confirmation-provider";
-import { SkipToContent } from "@/components/skip-to-content";
-import Link from "next/link";
-import { HelpCircle, Search } from "lucide-react";
-import { useLanguage } from "@/components/language-provider";
+import { clsx } from "clsx";
+import { usePathname } from "next/navigation";
+
+import { AdminNav } from "@/components/admin-nav";
+import { adminPageTitles } from "@/components/admin-page-titles";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ComposeProvider } from "@/components/compose/compose-context";
 import { FloatingComposer } from "@/components/compose/floating-composer";
+import { useLanguage } from "@/components/language-provider";
 import { MailboxProvider } from "@/components/mailbox-provider";
 import { MailboxSelector } from "@/components/mailbox-selector";
-import { AdminNav } from "@/components/admin-nav";
-import { SidebarProvider } from "@/components/sidebar-state";
-import clsx from "clsx";
-import { usePathname } from "next/navigation";
-import { adminPageTitles } from "@/components/admin-page-titles";
+import { RouteTitle } from "@/components/route-title";
+import { ShortcutsProvider } from "@/components/shortcuts/shortcuts-context";
 import { SidebarAside, MobileTopBar } from "@/components/sidebar-aside";
 import { SidebarResizeBoundary } from "@/components/sidebar-resize-boundary";
-import { ShortcutsProvider } from "@/components/shortcuts";
-import { RouteTitle } from "@/components/route-title";
+import { SidebarProvider } from "@/components/sidebar-state";
+import { SkipToContent } from "@/components/skip-to-content";
+
+import { AdminConfirmationProvider } from "./admin-confirmation-provider";
 
 const primaryOnlyPrefixes = [
-  "/agent",
-  "/api-keys",
-  "/webhooks",
-  "/backups",
-  "/branding",
-  "/activity",
-  "/audit-logs",
-  "/general",
-  "/ai-usage",
+	"/agent",
+	"/api-keys",
+	"/webhooks",
+	"/backups",
+	"/branding",
+	"/activity",
+	"/audit-logs",
+	"/general",
+	"/ai-usage",
 ];
 
 export default function DashboardLayout({
-  children,
+	children,
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-  const { t } = useLanguage();
-  const pathname = usePathname();
-  const requirePrimary = primaryOnlyPrefixes.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
+	const { t } = useLanguage();
+	const pathname = usePathname();
+	const requirePrimary = primaryOnlyPrefixes.some(
+		(prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+	);
 
-  const mobileTitleKey = adminPageTitles[pathname];
-  const mobileTitle = mobileTitleKey ? t(mobileTitleKey) : undefined;
+	const mobileTitleKey = adminPageTitles[pathname];
+	const mobileTitle = mobileTitleKey ? t(mobileTitleKey) : undefined;
 
-  return (
-    <AuthGuard requireMailbox requireRole="admin" requirePrimary={requirePrimary}>
-      <SidebarProvider expandedWidth={256} mobileOverlay>
-      <MailboxProvider>
-        <ComposeProvider>
-          <ShortcutsProvider>
-            <RouteTitle />
-          <div className="grid h-dvh grid-cols-[minmax(0,1fr)] md:grid-cols-[var(--sidebar-width)_minmax(0,1fr)] overflow-hidden bg-sidebar transition-[grid-template-columns]" style={{ transitionDuration: "var(--sidebar-transition-duration)" }}>
-            <SkipToContent />
-            <SidebarAside>
-              <div className="h-full">
-                <AdminNav />
-              </div>
-              <SidebarResizeBoundary />
-            </SidebarAside>
-            <div className="relative flex min-h-0 min-w-0 flex-col">
-                            <MobileTopBar title={mobileTitle} />
-              <header className="absolute top-[max(0.5rem,env(safe-area-inset-top))] right-4 flex items-center gap-4 z-10">
-                <MailboxSelector />
-              </header>
-              <main id="main-content" tabIndex={-1} className={clsx("focus:outline-none page-flush min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain bg-background max-md:pb-[calc(6rem+env(safe-area-inset-bottom))] px-4 py-8 md:px-6 md:pt-16 scrollbar-gutter-stable lg:px-12", mobileTitle && "max-md:[&_h1]:sr-only")}>
-                <div className="admin-console w-full max-w-5xl mx-auto"><AdminConfirmationProvider>{children}</AdminConfirmationProvider></div>
-              </main>
-            </div>
-            <FloatingComposer />
-          </div>
-          </ShortcutsProvider>
-        </ComposeProvider>
-      </MailboxProvider>
-      </SidebarProvider>
-    </AuthGuard>
-  );
+	return (
+		<AuthGuard
+			requireMailbox
+			requireRole="admin"
+			requirePrimary={requirePrimary}
+		>
+			<SidebarProvider expandedWidth={256} mobileOverlay>
+				<MailboxProvider>
+					<ComposeProvider>
+						<ShortcutsProvider>
+							<RouteTitle />
+							<div className="grid h-dvh grid-cols-[minmax(0,1fr)] overflow-hidden bg-sidebar transition-all duration-(--sidebar-transition-duration) md:grid-cols-[var(--sidebar-width)_minmax(0,1fr)]">
+								<SkipToContent />
+								<SidebarAside>
+									<div className="h-full">
+										<AdminNav />
+									</div>
+									<SidebarResizeBoundary />
+								</SidebarAside>
+								<div className="relative flex min-h-0 min-w-0 flex-col">
+									<MobileTopBar title={mobileTitle} />
+									<header className="absolute top-safe-2 right-4 z-10 flex items-center gap-4">
+										<MailboxSelector />
+									</header>
+									<main
+										id="main-content"
+										tabIndex={-1}
+										className={clsx(
+											"min-h-0 min-w-0 flex-1 scrollbar-gutter-stable overflow-y-auto overscroll-contain bg-background px-4 py-8 focus:outline-none max-md:pb-safe-add-24 md:px-6 md:pt-16 lg:px-12",
+											mobileTitle && "max-md:[&_h1]:sr-only"
+										)}
+									>
+										<div className="mx-auto w-full max-w-5xl">
+											<AdminConfirmationProvider>
+												{children}
+											</AdminConfirmationProvider>
+										</div>
+									</main>
+								</div>
+								<FloatingComposer />
+							</div>
+						</ShortcutsProvider>
+					</ComposeProvider>
+				</MailboxProvider>
+			</SidebarProvider>
+		</AuthGuard>
+	);
 }

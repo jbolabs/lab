@@ -6,8 +6,8 @@ export const LAUNCH_MARK_SIZE = screens.markSize;
 /** `apple-touch-startup-image` entries for every screen in startup-screens.json (portrait only; the app is portrait). */
 export function getStartupImages() {
 	return screens.screens.map(({ width, height, ratio }) => ({
-		url: `/startup/${width * ratio}x${height * ratio}.png`,
 		media: `(device-width: ${width}px) and (device-height: ${height}px) and (-webkit-device-pixel-ratio: ${ratio}) and (orientation: portrait)`,
+		url: `/startup/${width * ratio}x${height * ratio}.png`,
 	}));
 }
 

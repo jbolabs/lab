@@ -1,6 +1,12 @@
 import type { DriveCrumb, DriveItemDto, DriveRole } from "@/lib/drive/types";
 
-export type DriveListing = { items: DriveItemDto[]; path: DriveCrumb[]; role: DriveRole; storageUsed: number; storageLimit: number | null };
+export interface DriveListing {
+	items: DriveItemDto[];
+	path: DriveCrumb[];
+	role: DriveRole;
+	storageUsed: number;
+	storageLimit: number | null;
+}
 
 const MAX_ENTRIES = 50;
 // Listings already fetched this session, keyed by the page's request key, so going back to a folder
@@ -14,7 +20,12 @@ export function readDriveListing(key: string) {
 export function saveDriveListing(key: string, listing: DriveListing) {
 	listings.delete(key);
 	listings.set(key, listing);
-	if (listings.size > MAX_ENTRIES) listings.delete(listings.keys().next().value!);
+	if (listings.size > MAX_ENTRIES) {
+		const oldest = listings.keys().next().value;
+		if (oldest !== undefined) {
+			listings.delete(oldest);
+		}
+	}
 }
 
 // After a change, other cached listings may be out of date (a moved file, an upload into another folder).

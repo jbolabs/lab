@@ -1,14 +1,16 @@
 "use client";
 
+import { TextAlignJustify } from "lucide-react";
 import Link from "next/link";
+
+import { HintTooltip } from "@/components/hint-tooltip";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { TextAlignJustify } from "lucide-react";
+
 import { BrandMark, Wordmark } from "./brand";
+import { useLanguage } from "./language-provider";
 import { useSidebar } from "./sidebar-state";
 import type { SidebarHeaderProps } from "./sidebar-state-types";
-import { HintTooltip } from "@/components/hint-tooltip";
-import { useLanguage } from "./language-provider";
 
 export function SidebarHeader({ href, app }: SidebarHeaderProps) {
 	const { t } = useLanguage();
@@ -17,9 +19,9 @@ export function SidebarHeader({ href, app }: SidebarHeaderProps) {
 		<Button
 			type="button"
 			variant="ghost"
-			size="icon"
+			size="icon-lg"
 			onClick={toggle}
-			className="size-11 shrink-0"
+			className="shrink-0"
 			aria-label={
 				minimal ? t("navigation.expandMenu") : t("navigation.collapseMenu")
 			}

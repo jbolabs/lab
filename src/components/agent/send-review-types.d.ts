@@ -1,4 +1,4 @@
-export type ReviewSnapshot = {
+export interface ReviewSnapshot {
 	from: string;
 	to: string;
 	cc: string | null;
@@ -8,13 +8,18 @@ export type ReviewSnapshot = {
 	html: string | null;
 	scheduledAt: string | null;
 	attachments: { id: string; filename: string; size: number }[];
-};
+}
 
-export type SendReviewProps = {
+export interface SendReviewProps {
 	approvalId: string;
 	snapshot: ReviewSnapshot;
 	onClose?: () => void;
 	onSent?: (messageId: string) => void;
-};
+}
 
-export type AgentReviewResponse = { status: string; snapshot: ReviewSnapshot | null; stale: boolean; error?: string };
+export interface AgentReviewResponse {
+	status: string;
+	snapshot: ReviewSnapshot | null;
+	stale: boolean;
+	error?: string;
+}

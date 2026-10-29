@@ -1,5 +1,6 @@
 import type { TranslationKey } from "@/lib/i18n/types";
-export type RichTextEditorProps = {
+
+export interface RichTextEditorProps {
 	id: string;
 	/** Editable HTML. */
 	value: string;
@@ -12,11 +13,11 @@ export type RichTextEditorProps = {
 	toolbarStart?: React.ReactNode;
 	toolbarEnd?: React.ReactNode;
 	footerContent?: React.ReactNode;
-};
+}
 
-export type ToolbarCommand = {
+export interface ToolbarCommand {
 	command: string;
 	labelKey: TranslationKey;
 	icon: React.ComponentType<{ className?: string }>;
 	value?: string;
-};
+}

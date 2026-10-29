@@ -2,18 +2,24 @@
 
 import { ContactDetailsTrigger } from "@/components/contacts/contact-details";
 import { getEmailAddress } from "@/lib/email/address";
-import { formatRecipientAddress, recipientContactName, type RecipientAddressStyle } from "@/lib/email/recipient-display";
+import {
+	formatRecipientAddress,
+	recipientContactName,
+} from "@/lib/email/recipient-display";
+import type { RecipientAddressStyle } from "@/lib/email/recipient-display";
 
 export function RecipientList({
 	entries,
 	mailboxId,
-	style,
+	addressStyle,
 }: {
 	entries: string[];
 	mailboxId: string | null;
-	style: RecipientAddressStyle;
+	addressStyle: RecipientAddressStyle;
 }) {
-	if (entries.length === 0) return <>—</>;
+	if (entries.length === 0) {
+		return <>—</>;
+	}
 	return (
 		<>
 			{entries.map((entry, index) => (
@@ -23,7 +29,7 @@ export function RecipientList({
 						mailboxId={mailboxId}
 						address={entry}
 						name={recipientContactName(entry)}
-						label={formatRecipientAddress(entry, style)}
+						label={formatRecipientAddress(entry, addressStyle)}
 					/>
 				</span>
 			))}

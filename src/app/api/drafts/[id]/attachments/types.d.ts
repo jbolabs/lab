@@ -1,1 +1,3 @@
-export type DraftAttachmentUploadParams = { params: Promise<{ id: string }> };
+export interface DraftAttachmentUploadParams {
+	params: Promise<{ id: string }>;
+}

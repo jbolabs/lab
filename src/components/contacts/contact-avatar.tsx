@@ -1,19 +1,22 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
 import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getAvatarColorStyle } from "@/lib/avatar-colors";
 import { CONTACT_AVATAR_CHANGED_EVENT } from "@/lib/contacts/avatar-client";
 import { normalizeEmailAddress } from "@/lib/email/address";
-import { getAvatarColorStyle } from "@/lib/avatar-colors";
 import { cn } from "@/lib/utils";
+
 import type { ContactAvatarProps } from "./contact-avatar-types";
 import {
 	getContactAvatarInitial,
 	getManagedContactAvatarUrl,
 } from "./contact-avatar-utils";
 
-export function ContactAvatar({
+function ContactAvatarContent({
 	mailboxId,
 	address,
 	name,
@@ -22,22 +25,15 @@ export function ContactAvatar({
 	className,
 }: ContactAvatarProps) {
 	const [managedAvatar, setManagedAvatar] = useState(hasManagedAvatar);
-	const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-	const [imageFailed, setImageFailed] = useState(false);
+	const [failedUrl, setFailedUrl] = useState<string | null>(null);
 	const [avatarVersion, setAvatarVersion] = useState(0);
 
 	useEffect(() => {
-		setManagedAvatar(hasManagedAvatar);
-		setAvatarUrl(null);
-		setImageFailed(false);
-		setAvatarVersion(0);
-	}, [address, hasManagedAvatar, mailboxId, managedAvatarUrl]);
-
-	useEffect(() => {
 		function onAvatarChanged(event: Event) {
-			const detail = (
-				event as CustomEvent<{ email?: string; hasAvatar?: boolean }>
-			).detail;
+			const { detail } = event as CustomEvent<{
+				email?: string;
+				hasAvatar?: boolean;
+			}>;
 			if (detail?.email === normalizeEmailAddress(address)) {
 				setManagedAvatar(!!detail.hasAvatar);
 				setAvatarVersion(Date.now());
@@ -49,47 +45,68 @@ export function ContactAvatar({
 			window.removeEventListener(CONTACT_AVATAR_CHANGED_EVENT, onAvatarChanged);
 	}, [address]);
 
-	useEffect(() => {
-		setImageFailed(false);
-		if (managedAvatarUrl) {
-			setAvatarUrl(managedAvatarUrl);
-			return;
-		}
-		if (managedAvatar && mailboxId) {
-			setAvatarUrl(
-				getManagedContactAvatarUrl(mailboxId, address, avatarVersion),
-			);
-			return;
-		}
-		setAvatarUrl(null);
-	}, [address, avatarVersion, mailboxId, managedAvatar, managedAvatarUrl]);
+	const avatarUrl =
+		managedAvatarUrl ||
+		(managedAvatar && mailboxId
+			? getManagedContactAvatarUrl(mailboxId, address, avatarVersion)
+			: null);
+	const imageFailed = avatarUrl === failedUrl;
 
+	const colors = getAvatarColorStyle(normalizeEmailAddress(address) || name);
 	return (
-		<Avatar
-			className={cn(
-				"relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-foreground/80",
-				className,
-			)}
-			style={getAvatarColorStyle(normalizeEmailAddress(address) || name)}
-			aria-hidden
+		<span
+			className="contents"
+			style={
+				{
+					"--avatar-background": colors.backgroundColor,
+					"--avatar-foreground": colors.color,
+				} as CSSProperties
+			}
 		>
-			<AvatarFallback
-				style={getAvatarColorStyle(normalizeEmailAddress(address) || name)}
+			<Avatar
+				className={cn(
+					"relative flex size-9 shrink-0 items-center justify-center overflow-hidden",
+					className
+				)}
+
+				aria-hidden
 			>
-				{getContactAvatarInitial(name, address)}
-			</AvatarFallback>
-			{avatarUrl && !imageFailed && (
-				<ProgressiveAvatarImage
-					src={avatarUrl}
-					alt=""
-					className="absolute inset-0 h-full w-full object-cover"
-					onError={() => {
-						if (managedAvatarUrl) setImageFailed(true);
-						else if (managedAvatar) setManagedAvatar(false);
-						else setImageFailed(true);
-					}}
-				/>
-			)}
-		</Avatar>
+				<AvatarFallback asChild>
+					<span className="bg-(--avatar-background) text-(--avatar-foreground)">
+						{getContactAvatarInitial(name, address)}
+					</span>
+				</AvatarFallback>
+				{avatarUrl && !imageFailed && (
+					<ProgressiveAvatarImage
+						src={avatarUrl}
+						alt=""
+						className="absolute inset-0 h-full w-full object-cover"
+						onError={() => {
+							if (managedAvatarUrl) {
+								setFailedUrl(avatarUrl);
+							} else if (managedAvatar) {
+								setManagedAvatar(false);
+							} else {
+								setFailedUrl(avatarUrl);
+							}
+						}}
+					/>
+				)}
+			</Avatar>
+		</span>
+	);
+}
+
+export function ContactAvatar(props: ContactAvatarProps) {
+	return (
+		<ContactAvatarContent
+			key={JSON.stringify([
+				props.address,
+				props.hasManagedAvatar,
+				props.mailboxId,
+				props.managedAvatarUrl,
+			])}
+			{...props}
+		/>
 	);
 }

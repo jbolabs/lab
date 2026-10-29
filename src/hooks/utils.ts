@@ -1,9 +1,14 @@
 import { authFetch } from "@/lib/auth/client";
+import { setCachedMessageRead } from "@/lib/messages/detail-cache";
 import { parseSearchQuery } from "@/lib/search/query-utils";
 import { getUserTimeZone } from "@/lib/time/utils";
-import { setCachedMessageRead } from "@/lib/messages/detail-cache";
-import type { MessageFilterOptions, MessageFolder } from "./types";
-import type { MessageCounts, MessageListResponse } from "./types";
+
+import type {
+	MessageFilterOptions,
+	MessageFolder,
+	MessageCounts,
+	MessageListResponse,
+} from "./types";
 
 /**
  * The search string goes to the server whole; operators are parsed there
@@ -13,17 +18,65 @@ import type { MessageCounts, MessageListResponse } from "./types";
 export function parseMessageSearchQuery(query: string): MessageFilterOptions {
 	const parsed = parseSearchQuery(query);
 	const filters: MessageFilterOptions = {};
-	if (parsed.read) filters.read = parsed.read;
-	const remaining = query.replace(/(^|\s)(is:(un)?read|:(un)?read)(?=\s|$)/gi, " ").replace(/\s+/g, " ").trim();
-	if (remaining) filters.query = remaining;
+	if (parsed.read) {
+		filters.read = parsed.read;
+	}
+	const remaining = query
+		.replaceAll(
+			/(?<capture1>^|\s)(?<capture2>is:(?<capture3>un)?read|:(?<capture4>un)?read)(?=\s|$)/giu,
+			" "
+		)
+		.replaceAll(/\s+/gu, " ")
+		.trim();
+	if (remaining) {
+		filters.query = remaining;
+	}
 	return filters;
+}
+
+function resolveMessageFilters(filters?: MessageFilterOptions) {
+	const searchFilters = filters?.query
+		? parseMessageSearchQuery(filters.query)
+		: null;
+	return searchFilters
+		? {
+				...filters,
+				...searchFilters,
+				read: filters?.read ?? searchFilters.read,
+			}
+		: filters;
+}
+
+function applyMessageFilters(
+	params: URLSearchParams,
+	filters?: MessageFilterOptions
+) {
+	const parsedFilters = resolveMessageFilters(filters);
+	if (parsedFilters?.query?.trim()) {
+		params.set("q", parsedFilters.query.trim());
+	}
+	if (parsedFilters?.title?.trim()) {
+		params.set("title", parsedFilters.title.trim());
+	}
+	if (parsedFilters?.read && parsedFilters.read !== "all") {
+		params.set("read", parsedFilters.read);
+	}
+	if (filters?.limit) {
+		params.set("limit", String(filters.limit));
+	}
+	if (filters?.offset) {
+		params.set("offset", String(filters.offset));
+	}
+	if (filters?.group) {
+		params.set("group", filters.group);
+	}
 }
 
 export function getMessageQueryParams(
 	folder: MessageFolder,
 	mailboxId?: string | null,
 	filters?: MessageFilterOptions,
-	folderId?: string | null,
+	folderId?: string | null
 ) {
 	const params = new URLSearchParams();
 	params.set("timeZone", getUserTimeZone());
@@ -32,8 +85,12 @@ export function getMessageQueryParams(
 		params.set("direction", "inbound");
 		params.set("status", "received");
 	}
-	if (folder === "starred") params.set("starred", "true");
-	if (folder === "snoozed") params.set("snoozed", "true");
+	if (folder === "starred") {
+		params.set("starred", "true");
+	}
+	if (folder === "snoozed") {
+		params.set("snoozed", "true");
+	}
 
 	if (folder === "sent") {
 		params.set("direction", "outbound");
@@ -54,24 +111,22 @@ export function getMessageQueryParams(
 		params.set("status", folder);
 	}
 
-	if (folderId) params.set("folderId", folderId);
-	if (mailboxId) params.set("mailboxId", mailboxId);
-	const searchFilters = filters?.query ? parseMessageSearchQuery(filters.query) : null;
-	const parsedFilters = searchFilters
-		? { ...filters, ...searchFilters, read: filters?.read ?? searchFilters.read }
-		: filters;
-	if (parsedFilters?.query?.trim()) params.set("q", parsedFilters.query.trim());
-	if (parsedFilters?.title?.trim()) params.set("title", parsedFilters.title.trim());
-	if (parsedFilters?.read && parsedFilters.read !== "all") params.set("read", parsedFilters.read);
-	if (filters?.limit) params.set("limit", String(filters.limit));
-	if (filters?.offset) params.set("offset", String(filters.offset));
-	if (filters?.group) params.set("group", filters.group);
+	if (folderId) {
+		params.set("folderId", folderId);
+	}
+	if (mailboxId) {
+		params.set("mailboxId", mailboxId);
+	}
+	applyMessageFilters(params, filters);
 
 	return params;
 }
 
 const messageCountsCache = new Map<string, MessageCounts>();
-const messageCountsRequests = new Map<string, Promise<MessageCounts | undefined>>();
+const messageCountsRequests = new Map<
+	string,
+	Promise<MessageCounts | undefined>
+>();
 const messageListCache = new Map<string, MessageListResponse>();
 const messageListRequests = new Map<string, Promise<MessageListResponse>>();
 let messageCacheGeneration = 0;
@@ -96,21 +151,29 @@ export function clearMessageListCache() {
 export function markMessagesReadInCaches(messageIds: string[], read: boolean) {
 	const ids = new Set(messageIds);
 	for (const [key, response] of messageListCache) {
-		if (!response.messages?.some((message) => ids.has(message.id))) continue;
+		if (!response.messages?.some((message) => ids.has(message.id))) {
+			continue;
+		}
 		messageListCache.set(key, {
 			...response,
 			messages: response.messages.map((message) => {
-				if (!ids.has(message.id)) return message;
+				if (!ids.has(message.id)) {
+					return message;
+				}
 				const threadSize = message.threadMessageIds?.length;
 				return {
 					...message,
 					read,
-					...(threadSize !== undefined ? { threadUnread: read ? 0 : threadSize } : {}),
+					...(threadSize === undefined
+						? {}
+						: { threadUnread: read ? 0 : threadSize }),
 				};
 			}),
 		});
 	}
-	for (const id of ids) setCachedMessageRead(id, read);
+	for (const id of ids) {
+		setCachedMessageRead(id, read);
+	}
 }
 
 // Caches must drop on every change, including ones made while no list is mounted
@@ -131,20 +194,31 @@ export function clearMessageClientState() {
 	messageListRequests.clear();
 }
 
-export async function fetchMessageCounts(mailboxId?: string | null, force = false): Promise<MessageCounts | undefined> {
+export async function fetchMessageCounts(
+	mailboxId?: string | null,
+	force = false
+): Promise<MessageCounts | undefined> {
 	const key = mailboxId ?? "all";
-	if (!force && messageCountsCache.has(key)) return messageCountsCache.get(key);
-	if (!force && messageCountsRequests.has(key)) return messageCountsRequests.get(key);
+	if (!force && messageCountsCache.has(key)) {
+		return messageCountsCache.get(key);
+	}
+	if (!force && messageCountsRequests.has(key)) {
+		return await messageCountsRequests.get(key);
+	}
 
 	const requestGeneration = messageCacheGeneration;
 	const countsGeneration = messageCountsGeneration;
 	const request = (async () => {
 		const params = new URLSearchParams();
-		if (mailboxId) params.set("mailboxId", mailboxId);
+		if (mailboxId) {
+			params.set("mailboxId", mailboxId);
+		}
 		const query = params.toString();
-		const res = await authFetch(`/api/messages/counts${query ? `?${query}` : ""}`);
+		const res = await authFetch(
+			`/api/messages/counts${query ? `?${query}` : ""}`
+		);
 		const data = (await res.json()) as { counts?: MessageCounts };
-		const counts = data.counts;
+		const { counts } = data;
 		if (
 			counts &&
 			requestGeneration === messageCacheGeneration &&
@@ -160,13 +234,20 @@ export async function fetchMessageCounts(mailboxId?: string | null, force = fals
 	});
 
 	messageCountsRequests.set(key, request);
-	return request;
+	return await request;
 }
 
-export async function fetchMessageList(params: URLSearchParams, force = false): Promise<MessageListResponse> {
+export async function fetchMessageList(
+	params: URLSearchParams,
+	force = false
+): Promise<MessageListResponse> {
 	const key = params.toString();
-	if (!force && messageListCache.has(key)) return messageListCache.get(key) ?? {};
-	if (!force && messageListRequests.has(key)) return messageListRequests.get(key) ?? {};
+	if (!force && messageListCache.has(key)) {
+		return messageListCache.get(key) ?? {};
+	}
+	if (!force && messageListRequests.has(key)) {
+		return messageListRequests.get(key) ?? {};
+	}
 
 	const requestGeneration = messageCacheGeneration;
 	const request = authFetch(`/api/messages?${key}`)
@@ -185,5 +266,5 @@ export async function fetchMessageList(params: URLSearchParams, force = false): 
 		});
 
 	messageListRequests.set(key, request);
-	return request;
+	return await request;
 }

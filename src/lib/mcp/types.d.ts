@@ -1,8 +1,8 @@
 import type { users } from "@/db/schema";
 
-export type McpPrincipal = {
+export interface McpPrincipal {
 	keyId: string;
 	user: typeof users.$inferSelect;
 	scopes: string[];
 	mailboxIds: string[];
-};
+}

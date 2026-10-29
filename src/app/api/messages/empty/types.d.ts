@@ -1,13 +1,13 @@
 import type { PermanentDeleteFolder } from "../bulk/types";
 
-export type EmptyFolderPayload = {
+export interface EmptyFolderPayload {
 	mailboxId?: string;
 	folder?: PermanentDeleteFolder;
-};
+}
 
-export type EmptyFolderResponse = {
+export interface EmptyFolderResponse {
 	ok?: boolean;
 	deleted?: number;
 	remaining?: number;
 	error?: string;
-};
+}

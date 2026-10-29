@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
+
 import {
 	AUTH_SESSION_CHANGED_EVENT,
 	getClientSessionToken,
 } from "@/lib/auth/client";
+
 import type {
 	MessageRealtimeState,
 	NewMessageEvent,
@@ -16,8 +18,18 @@ import {
 	REALTIME_HEARTBEAT_INTERVAL_MS,
 } from "./message-realtime-utils";
 
+function broadcast(
+	channel: BroadcastChannel | null,
+	message: RealtimeChannelMessage
+) {
+	// oxlint-disable-next-line unicorn/require-post-message-target-origin -- BroadcastChannel is same-origin and has no targetOrigin parameter.
+	channel?.postMessage(message);
+}
+
 export function useMessagePolling(): MessageRealtimeState {
-	const [notification, setNotification] = useState<NewMessageEvent | null>(null);
+	const [notification, setNotification] = useState<NewMessageEvent | null>(
+		null
+	);
 	const dismissNotification = useCallback(() => setNotification(null), []);
 
 	useEffect(() => {
@@ -36,121 +48,193 @@ export function useMessagePolling(): MessageRealtimeState {
 		let stopped = false;
 
 		function dispatchMessagesChanged() {
-			window.dispatchEvent(new CustomEvent("mailflare:messages-changed", { detail: { realtime: true } }));
+			window.dispatchEvent(
+				new CustomEvent("mailflare:messages-changed", {
+					detail: { realtime: true },
+				})
+			);
 		}
 
 		function clearConnectionTimers() {
-			if (reconnectTimer) window.clearTimeout(reconnectTimer);
-			if (heartbeatTimer) window.clearInterval(heartbeatTimer);
+			if (reconnectTimer) {
+				window.clearTimeout(reconnectTimer);
+			}
+			if (heartbeatTimer) {
+				window.clearInterval(heartbeatTimer);
+			}
 			reconnectTimer = null;
 			heartbeatTimer = null;
 		}
 
 		function startFallbackRefresh() {
-			if (fallbackTimer) return;
+			if (fallbackTimer) {
+				return;
+			}
 			fallbackTimer = window.setInterval(() => {
-				if (!connected && document.visibilityState === "visible") dispatchMessagesChanged();
+				if (!connected && document.visibilityState === "visible") {
+					dispatchMessagesChanged();
+				}
 			}, REALTIME_FALLBACK_INTERVAL_MS);
 		}
 
 		function setConnected(value: boolean) {
 			connected = value;
 			if (value) {
-				if (fallbackTimer) window.clearInterval(fallbackTimer);
+				if (fallbackTimer) {
+					window.clearInterval(fallbackTimer);
+				}
 				fallbackTimer = null;
 			} else {
 				startFallbackRefresh();
 			}
-			if (leader) channel?.postMessage({ type: "status", connected: value } satisfies RealtimeChannelMessage);
+			if (leader) {
+				broadcast(channel, {
+					connected: value,
+					type: "status",
+				} satisfies RealtimeChannelMessage);
+			}
 		}
 
 		function handleNotification(payload: string, fromSocket: boolean) {
 			try {
-				const parsed = JSON.parse(payload) as { type?: string; revision?: string; changed?: boolean; draftId?: string; mailboxId?: string };
+				const parsed = JSON.parse(payload) as {
+					type?: string;
+					revision?: string;
+					changed?: boolean;
+					draftId?: string;
+					mailboxId?: string;
+				};
 				if (parsed.type === "revision" && typeof parsed.revision === "string") {
-					revision = parsed.revision;
+					({ revision } = parsed);
 					if (parsed.changed) {
 						dispatchMessagesChanged();
-						if (fromSocket) channel?.postMessage({ type: "refresh" } satisfies RealtimeChannelMessage);
+						if (fromSocket) {
+							broadcast(channel, {
+								type: "refresh",
+							} satisfies RealtimeChannelMessage);
+						}
 					}
 					return;
 				}
-				if (parsed.type === "agent_draft" && parsed.draftId && parsed.mailboxId) {
-					window.dispatchEvent(new CustomEvent("mailflare:agent-draft", { detail: parsed }));
+				if (
+					parsed.type === "agent_draft" &&
+					parsed.draftId &&
+					parsed.mailboxId
+				) {
+					window.dispatchEvent(
+						new CustomEvent("mailflare:agent-draft", { detail: parsed })
+					);
 					dispatchMessagesChanged();
-					if (fromSocket) channel?.postMessage({ type: "notification", payload } satisfies RealtimeChannelMessage);
+					if (fromSocket) {
+						broadcast(channel, {
+							payload,
+							type: "notification",
+						} satisfies RealtimeChannelMessage);
+					}
 					return;
 				}
-			} catch { return; }
+			} catch {
+				return;
+			}
 			const event = parseNewMessageEvent(payload);
-			if (!event) return;
+			if (!event) {
+				return;
+			}
 			dispatchMessagesChanged();
 			setNotification(event);
 			if (fromSocket) {
-				channel?.postMessage({ type: "notification", payload } satisfies RealtimeChannelMessage);
+				broadcast(channel, {
+					payload,
+					type: "notification",
+				} satisfies RealtimeChannelMessage);
 			}
 		}
 
 		function sendHeartbeat() {
-			if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: "ping", revision }));
+			if (socket?.readyState === WebSocket.OPEN) {
+				socket.send(JSON.stringify({ revision, type: "ping" }));
+			}
 		}
 
-		function scheduleReconnect() {
+		let reconnect = () => {
+			/* Installed before the first connection can close. */
+		};
+		function onSocketClose() {
+			clearConnectionTimers();
 			setConnected(false);
-			if (stopped || !leader || !getClientSessionToken()) return;
+			if (stopped || !leader || !getClientSessionToken()) {
+				return;
+			}
 			const delay = getReconnectDelay(reconnectAttempt);
 			reconnectAttempt += 1;
-			reconnectTimer = window.setTimeout(connect, delay);
+			reconnectTimer = window.setTimeout(() => reconnect(), delay);
 		}
-
 		function connect() {
 			clearConnectionTimers();
-			if (stopped || !leader || !getClientSessionToken()) return;
+			if (stopped || !leader || !getClientSessionToken()) {
+				return;
+			}
 
 			socket = new WebSocket(getRealtimeWebSocketUrl());
-			socket.onopen = () => {
+			socket.addEventListener("open", () => {
 				reconnectAttempt = 0;
 				revision = null;
 				setConnected(true);
 				dispatchMessagesChanged();
 				sendHeartbeat();
-				heartbeatTimer = window.setInterval(sendHeartbeat, REALTIME_HEARTBEAT_INTERVAL_MS);
-			};
-			socket.onmessage = (message) => {
-				if (message.data === "pong" || typeof message.data !== "string") return;
+				heartbeatTimer = window.setInterval(
+					sendHeartbeat,
+					REALTIME_HEARTBEAT_INTERVAL_MS
+				);
+			});
+			socket.addEventListener("message", (message) => {
+				if (message.data === "pong" || typeof message.data !== "string") {
+					return;
+				}
 				handleNotification(message.data, true);
-			};
-			socket.onerror = () => socket?.close();
-			socket.onclose = () => {
-				clearConnectionTimers();
-				scheduleReconnect();
-			};
+			});
+			socket.addEventListener("error", () => socket?.close());
+			socket.addEventListener("close", onSocketClose);
 		}
 
+		reconnect = connect;
 		function requestLeadership() {
-			if (stopped || !getClientSessionToken()) return;
+			if (stopped || !getClientSessionToken()) {
+				return;
+			}
 			if (!channel || !navigator.locks) {
 				leader = true;
 				connect();
 				return;
 			}
 			lockAbort = new AbortController();
-			void navigator.locks.request("mailflare:realtime", { signal: lockAbort.signal }, async () => {
-				if (stopped || !getClientSessionToken()) return;
-				await new Promise<void>((resolve) => {
-					releaseLeader = resolve;
-					leader = true;
-					connect();
+			void navigator.locks
+				.request(
+					"mailflare:realtime",
+					{ signal: lockAbort.signal },
+					async () => {
+						if (stopped || !getClientSessionToken()) {
+							return;
+						}
+						// oxlint-disable-next-line promise/avoid-new -- Hold the Web Lock until explicit release, including on browsers without Promise.withResolvers.
+						await new Promise<void>((resolve) => {
+							releaseLeader = resolve;
+							leader = true;
+							connect();
+						});
+						leader = false;
+						releaseLeader = null;
+					}
+				)
+				.catch(() => {
+					// Keep the current UI state when this optional background request fails.
 				});
-				leader = false;
-				releaseLeader = null;
-			}).catch(() => {});
 		}
 
 		function restartForSessionChange() {
 			sessionToken = getClientSessionToken();
 			if (socket) {
-				socket.onclose = null;
+				socket.removeEventListener("close", onSocketClose);
 				socket.close(1000, "Session changed");
 				socket = null;
 			}
@@ -168,10 +252,15 @@ export function useMessagePolling(): MessageRealtimeState {
 		function onChannelMessage(event: MessageEvent<RealtimeChannelMessage>) {
 			const message = event.data;
 			if (message?.type === "status_request" && leader) {
-				channel?.postMessage({ type: "status", connected } satisfies RealtimeChannelMessage);
+				broadcast(channel, {
+					connected,
+					type: "status",
+				} satisfies RealtimeChannelMessage);
 			} else if (message?.type === "status" && !leader) {
 				setConnected(message.connected);
-				if (message.connected) dispatchMessagesChanged();
+				if (message.connected) {
+					dispatchMessagesChanged();
+				}
 			} else if (message?.type === "notification" && !leader) {
 				handleNotification(message.payload, false);
 			} else if (message?.type === "refresh") {
@@ -180,26 +269,42 @@ export function useMessagePolling(): MessageRealtimeState {
 		}
 
 		function onLocalMessagesChanged(event: Event) {
-			if ((event as CustomEvent<{ realtime?: boolean }>).detail?.realtime) return;
-			channel?.postMessage({ type: "refresh" } satisfies RealtimeChannelMessage);
+			if ((event as CustomEvent<{ realtime?: boolean }>).detail?.realtime) {
+				return;
+			}
+			broadcast(channel, {
+				type: "refresh",
+			} satisfies RealtimeChannelMessage);
 		}
 
 		function onVisibilityChange() {
-			if (document.visibilityState === "visible") dispatchMessagesChanged();
+			if (document.visibilityState === "visible") {
+				dispatchMessagesChanged();
+			}
 		}
 
 		function onStorageChange() {
-			if (sessionToken !== getClientSessionToken()) restartForSessionChange();
+			if (sessionToken !== getClientSessionToken()) {
+				restartForSessionChange();
+			}
 		}
 
 		if (typeof BroadcastChannel !== "undefined") {
 			channel = new BroadcastChannel("mailflare:realtime");
-			channel.onmessage = onChannelMessage;
-			channel.postMessage({ type: "status_request" } satisfies RealtimeChannelMessage);
+			channel.addEventListener("message", onChannelMessage);
+			broadcast(channel, {
+				type: "status_request",
+			} satisfies RealtimeChannelMessage);
 		}
-		window.addEventListener(AUTH_SESSION_CHANGED_EVENT, restartForSessionChange);
+		window.addEventListener(
+			AUTH_SESSION_CHANGED_EVENT,
+			restartForSessionChange
+		);
 		window.addEventListener("storage", onStorageChange);
-		window.addEventListener("mailflare:messages-changed", onLocalMessagesChanged);
+		window.addEventListener(
+			"mailflare:messages-changed",
+			onLocalMessagesChanged
+		);
 		document.addEventListener("visibilitychange", onVisibilityChange);
 		window.addEventListener("focus", onVisibilityChange);
 		startFallbackRefresh();
@@ -207,29 +312,44 @@ export function useMessagePolling(): MessageRealtimeState {
 
 		return () => {
 			stopped = true;
-			window.removeEventListener(AUTH_SESSION_CHANGED_EVENT, restartForSessionChange);
+			window.removeEventListener(
+				AUTH_SESSION_CHANGED_EVENT,
+				restartForSessionChange
+			);
 			window.removeEventListener("storage", onStorageChange);
-			window.removeEventListener("mailflare:messages-changed", onLocalMessagesChanged);
+			window.removeEventListener(
+				"mailflare:messages-changed",
+				onLocalMessagesChanged
+			);
 			document.removeEventListener("visibilitychange", onVisibilityChange);
 			window.removeEventListener("focus", onVisibilityChange);
-			if (leader) channel?.postMessage({ type: "status", connected: false } satisfies RealtimeChannelMessage);
+			if (leader) {
+				broadcast(channel, {
+					connected: false,
+					type: "status",
+				} satisfies RealtimeChannelMessage);
+			}
 			lockAbort?.abort();
 			releaseLeader?.();
 			clearConnectionTimers();
-			if (fallbackTimer) window.clearInterval(fallbackTimer);
+			if (fallbackTimer) {
+				window.clearInterval(fallbackTimer);
+			}
 			channel?.close();
 			if (socket) {
-				socket.onclose = null;
+				socket.removeEventListener("close", onSocketClose);
 				socket.close(1000, "Client closed");
 			}
 		};
 	}, []);
 
 	useEffect(() => {
-		if (!notification) return;
-		const timer = window.setTimeout(() => setNotification(null), 8_000);
+		if (!notification) {
+			return;
+		}
+		const timer = window.setTimeout(() => setNotification(null), 8000);
 		return () => window.clearTimeout(timer);
 	}, [notification]);
 
-	return { notification, dismissNotification };
+	return { dismissNotification, notification };
 }

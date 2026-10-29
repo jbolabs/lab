@@ -2,12 +2,12 @@ import type { AppDatabase } from "@/db";
 import { deleteMessageWithObjects } from "@/lib/email/message-cleanup";
 import { createAuditLog } from "@/lib/mailboxes/audit";
 
-type DeletableMessage = {
+interface DeletableMessage {
 	id: string;
 	mailboxId: string | null;
 	rawR2Key: string | null;
 	status: string;
-};
+}
 
 /**
  * Permanently remove messages (row, raw MIME and attachment objects) and audit
@@ -19,15 +19,20 @@ export async function permanentlyDeleteMessages(
 	db: AppDatabase,
 	actorUserId: string,
 	rows: DeletableMessage[],
-	source: "bulk" | "empty" | "retention",
+	source: "bulk" | "empty" | "retention"
 ): Promise<number> {
 	for (const row of rows) {
 		await deleteMessageWithObjects(env, db, row.id, row.rawR2Key);
 		await createAuditLog(env, {
+			action: "email.delete",
 			actorUserId,
 			mailboxId: row.mailboxId,
-			action: "email.delete",
-			metadata: { permanent: true, source, messageId: row.id, previousStatus: row.status },
+			metadata: {
+				messageId: row.id,
+				permanent: true,
+				previousStatus: row.status,
+				source,
+			},
 		});
 	}
 	return rows.length;

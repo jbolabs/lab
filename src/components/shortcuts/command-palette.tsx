@@ -1,13 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+
 import { useLanguage } from "@/components/language-provider";
-import {
-	Dialog,
-	DialogContent,
-	DialogTitle,
-	DialogDescription,
-} from "@/components/ui/dialog";
 import {
 	Command,
 	CommandInput,
@@ -17,13 +12,20 @@ import {
 	CommandItem,
 	CommandShortcut,
 } from "@/components/ui/command";
+import {
+	Dialog,
+	DialogContent,
+	DialogTitle,
+	DialogDescription,
+} from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
-import type { CommandItem as PaletteCommand } from "./types";
 import type { TranslationKey } from "@/lib/i18n/types";
+
 import {
 	filterCommands,
 	groupCommandsByCategory,
 } from "./command-palette-utils";
+import type { CommandItem as PaletteCommand } from "./types";
 
 interface CommandPaletteProps {
 	isOpen: boolean;
@@ -40,7 +42,7 @@ export function CommandPalette({
 	const [query, setQuery] = useState("");
 	const grouped = useMemo(
 		() => groupCommandsByCategory(filterCommands(commands, query)),
-		[commands, query],
+		[commands, query]
 	);
 	return (
 		<Dialog
@@ -52,7 +54,7 @@ export function CommandPalette({
 				}
 			}}
 		>
-			<DialogContent className="overflow-hidden p-0" showCloseButton={false}>
+			<DialogContent className="overflow-hidden" showCloseButton={false}>
 				<DialogTitle className="sr-only">
 					{t("palette.placeholder")}
 				</DialogTitle>
@@ -66,7 +68,7 @@ export function CommandPalette({
 						placeholder={t("palette.placeholder")}
 						aria-label={t("palette.placeholder")}
 					/>
-					<CommandList className="max-h-[60dvh] overscroll-contain">
+					<CommandList className="overscroll-contain">
 						<CommandEmpty>{t("palette.noMatch", { query })}</CommandEmpty>
 						{Object.entries(grouped).map(([category, items]) => (
 							<CommandGroup
@@ -84,7 +86,6 @@ export function CommandPalette({
 												setQuery("");
 												onClose();
 											}}
-											className="min-h-11"
 										>
 											{Icon && <Icon />}
 											<span className="min-w-0 flex-1">

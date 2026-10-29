@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+
 import { useBranding } from "@/components/branding-provider";
 import { useLanguage } from "@/components/language-provider";
+
 import { getRouteTitleKey } from "./route-title-utils";
 
 export function RouteTitle() {
@@ -14,7 +16,9 @@ export function RouteTitle() {
 	const title = key ? `${t(key)} - ${appName}` : null;
 
 	useEffect(() => {
-		if (title) document.title = title;
+		if (title) {
+			document.title = title;
+		}
 	}, [title]);
 
 	return null;

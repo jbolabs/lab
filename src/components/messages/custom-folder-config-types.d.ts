@@ -1,5 +1,5 @@
-export type CustomFolderSummary = {
+export interface CustomFolderSummary {
 	id: string;
 	name: string;
 	color: string;
-};
+}
