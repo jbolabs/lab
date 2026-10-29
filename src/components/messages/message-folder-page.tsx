@@ -283,6 +283,27 @@ function useMessageListRow({
 	};
 }
 
+function MessageRowAvatar({
+	row,
+	className,
+}: {
+	row: ReturnType<typeof useMessageListRow>;
+	className: string;
+}) {
+	const { message, avatarAddress, party } = row;
+	return (
+		<MessageAvatar
+			mailboxId={message.mailboxId}
+			address={avatarAddress}
+			name={party}
+			hasManagedAvatar={
+				message.direction === "inbound" && !!message.fromContactHasAvatar
+			}
+			className={className}
+		/>
+	);
+}
+
 function CompactMessageListRow({
 	row,
 }: {
@@ -307,7 +328,6 @@ function CompactMessageListRow({
 		href,
 		navigation,
 		swipeable,
-		avatarAddress,
 		longPress,
 		toggleStar,
 		archiveFromSwipe,
@@ -356,15 +376,7 @@ function CompactMessageListRow({
 						<Check strokeWidth={2.5} />
 					</span>
 				) : (
-					<MessageAvatar
-						mailboxId={message.mailboxId}
-						address={avatarAddress}
-						name={party}
-						hasManagedAvatar={
-							message.direction === "inbound" && !!message.fromContactHasAvatar
-						}
-						className="size-10"
-					/>
+					<MessageRowAvatar row={row} className="size-10" />
 				)}
 			</Button>
 			{/* The link's ::after covers the row, so anywhere outside the avatar and star opens the message. */}
@@ -518,6 +530,7 @@ function DesktopMessageContent({
 			{message.direction !== "inbound" && (
 				<Icon className="size-4 text-foreground/50" />
 			)}
+			<MessageRowAvatar row={row} className="size-8" />
 			<span
 				className={clsx(
 					unread && "font-semibold",
@@ -588,7 +601,7 @@ function DesktopMessageListRow({
 		navigation,
 		runRowAction,
 	} = row;
-	const className = `group relative grid min-h-16 w-full grid-cols-[24px_36px_minmax(160px,190px)_1fr_auto] items-center gap-3 px-6 text-left text-sm hover:bg-accent/60 has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-inset has-[a:focus-visible]:ring-ring ${
+	const className = `group relative grid min-h-16 w-full grid-cols-[24px_36px_32px_minmax(160px,190px)_1fr_auto] items-center gap-3 px-6 text-left text-sm hover:bg-accent/60 has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-inset has-[a:focus-visible]:ring-ring ${
 		active || selected ? "bg-signal-soft" : ""
 	} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`;
 
