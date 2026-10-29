@@ -14,7 +14,6 @@ import {
 	parseNewMessageEvent,
 	REALTIME_FALLBACK_INTERVAL_MS,
 	REALTIME_HEARTBEAT_INTERVAL_MS,
-	showBrowserNewMessageNotification,
 } from "./message-realtime-utils";
 
 export function useMessagePolling(): MessageRealtimeState {
@@ -88,7 +87,6 @@ export function useMessagePolling(): MessageRealtimeState {
 			dispatchMessagesChanged();
 			setNotification(event);
 			if (fromSocket) {
-				void showBrowserNewMessageNotification(event);
 				channel?.postMessage({ type: "notification", payload } satisfies RealtimeChannelMessage);
 			}
 		}

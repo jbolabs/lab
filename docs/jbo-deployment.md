@@ -39,3 +39,13 @@ The repository is `jbolabs/lab`; the app is Lab and the primary URL is `https://
 Do not mechanically replace `mailflare` in physical resource names, Alchemy `mail` / `prod`, logical resource IDs, cookies/storage keys, backup format identifiers, calendar event UIDs, or email loop-prevention headers. These are persisted identifiers, not display branding. D1, R2, queues, the realtime namespace, API keys and stored records are reused in place. No database migration or data move is part of the rename. The CI stack retains its `mailflare-ci` / `ci` identity; GitHub resources follow the same repository ID after its rename.
 
 Rollback uses a reviewed revert deployed through the same stack. Never destroy/recreate the stack or restore an older database for a branding rollback; that could discard newly delivered mail. Upstream Mailflare attribution and AGPL licensing remain in this repository.
+
+## iPhone web app notifications
+
+The runtime stack declares a retained `WebPushKeys` P-256 key pair. Alchemy keeps it in state across releases, converts the public key to Web Push format, and binds the private key as a Worker secret. `VAPID_SUBJECT` is the installation HTTPS origin. No extra CI secret or raw Cloudflare write is needed. Do not replace or rename this resource: that would invalidate browser subscriptions.
+
+Before the first authorized rollout of this resource, verify whether the existing Worker has VAPID keys configured outside this stack. If it does, stop and preserve/import that pair rather than silently rotating it. Review the production plan: the new key resource and the existing Worker update are expected; existing storage and mail resource identities must stay unchanged. Planning and deployment still require the operator authorization described above.
+
+On iPhone, add the Lab to the Home Screen from Safari's Share menu, open that icon, and enable **Settings → Inbox → Notifications → New email notifications**. Permission is requested only from that switch. Existing opt-ins refresh on app launch, resume, reconnect and account changes. Turning the switch off prevents automatic renewal. Each received push displays an alert even when the app is open, as Safari requires.
+
+After an authorized deployment, verify the authenticated `/api/push/config` reports `enabled: true` without exposing private keys. On a physical iPhone, enable notifications, lock the phone with the app closed, and deliver a controlled non-spam email. Confirm the alert, unread badge, and tap-through to the message; repeat with the app open, after relaunch, and after toggling off (no alerts). Also verify blocked permission and the Safari-tab installation guidance. Local tests do not establish physical-device delivery or delivery latency.

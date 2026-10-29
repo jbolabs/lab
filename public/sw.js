@@ -22,8 +22,7 @@ async function syncAppBadge() {
 self.addEventListener("push", (event) => {
 	event.waitUntil(
 		(async () => {
-			const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-			if (windows.some((client) => client.visibilityState === "visible")) return;
+			// Every push must display an alert, including while open, or Safari can revoke permission.
 
 			let payload = DEFAULT_NOTIFICATION;
 			try {

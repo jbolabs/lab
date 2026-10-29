@@ -16,7 +16,6 @@ import { MailboxAutoReplyForm } from "@/components/settings/mailbox-auto-reply-f
 import { SpamFilterSettings } from "@/components/settings/spam-filter-settings";
 import { TrashRetentionSettings } from "@/components/settings/trash-retention-settings";
 import { PushNotificationSettings } from "@/components/settings/push-notification-settings";
-import { BrowserNotificationSettings } from "@/components/settings/browser-notification-settings";
 export default async function SettingsInboxPage() {
 	const t = await getServerTranslator();
 	return (
@@ -96,10 +95,7 @@ export default async function SettingsInboxPage() {
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
-								<BrowserNotificationSettings />
-								<div className="mt-4">
-									<PushNotificationSettings />
-								</div>
+								<PushNotificationSettings />
 							</CardContent>
 						</Card>
 					</div>

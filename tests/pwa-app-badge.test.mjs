@@ -15,7 +15,7 @@ function countsResponse(unread) {
 	});
 }
 
-async function push({ fetchImpl, visible = false }) {
+async function push({ fetchImpl, visible = false, malformed = false }) {
 	const listeners = new Map();
 	const calls = { fetch: [], notifications: [], badge: [] };
 	const self = {
@@ -44,7 +44,7 @@ async function push({ fetchImpl, visible = false }) {
 
 	let pending;
 	listeners.get("push")({
-		data: { json: () => ({ title: "Ada", body: "Lunch?" }) },
+		data: { json: () => { if (malformed) throw new SyntaxError("Invalid JSON"); return { title: "Ada", body: "Lunch?" }; } },
 		waitUntil: (promise) => {
 			pending = promise;
 		},
@@ -87,9 +87,16 @@ test("a failed counts fetch leaves the badge untouched", async () => {
 	assert.equal(calls.notifications.length, 1);
 });
 
-test("a visible window skips the notification, the fetch and the badge", async () => {
+test("a visible window still displays a notification and updates the badge", async () => {
 	const calls = await push({ fetchImpl: () => countsResponse(3), visible: true });
-	assert.deepEqual(calls.fetch, []);
-	assert.deepEqual(calls.badge, []);
-	assert.deepEqual(calls.notifications, []);
+	assert.equal(calls.fetch.length, 1);
+	assert.deepEqual(calls.badge, [["set", 3]]);
+	assert.equal(calls.notifications.length, 1);
+});
+
+test("a malformed push still displays a generic notification as Safari requires", async () => {
+	const calls = await push({ fetchImpl: () => countsResponse(1), malformed: true });
+	assert.equal(calls.notifications.length, 1);
+	assert.equal(calls.notifications[0].title, "New email");
+	assert.equal(calls.notifications[0].options.data.url, "/inbox");
 });
