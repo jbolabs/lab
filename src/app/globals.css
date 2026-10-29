@@ -572,7 +572,7 @@ pre {
 	}
 }
 
-/* Signed-out landing: content settles up into place once, as on jbolabs.com. */
+/* Home: content settles up into place once, as on jbolabs.com. */
 @keyframes home-rise {
 	from {
 		opacity: 0;

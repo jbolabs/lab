@@ -1,29 +1,18 @@
-import { CalendarDays, FileText, HardDrive, Inbox, Send } from "lucide-react";
-import type { HomeAction, MailPreview, SidebarItem } from "./types";
+import { CalendarDays, CalendarClock, HardDrive, Inbox, Settings, ShieldCheck, SquarePen } from "lucide-react";
+import type { QuickLink } from "./types";
 
-export const sidebarItems: SidebarItem[] = [
-	{ labelKey: "navigation.inbox", icon: Inbox, active: true, count: "3" },
-	{ labelKey: "navigation.sent", icon: Send },
-	{ labelKey: "navigation.drafts", icon: FileText, count: "1" },
-	{ labelKey: "calendar.calendar", icon: CalendarDays },
-	{ labelKey: "drive.title", icon: HardDrive },
+/** The signed-in home: one tap to each part of Lab. Admin is shown to admins only. */
+export const quickLinks: QuickLink[] = [
+	{ href: "/inbox", labelKey: "navigation.inbox", icon: Inbox },
+	{ href: "/compose", labelKey: "navigation.compose", icon: SquarePen },
+	{ href: "/calendar", labelKey: "calendar.calendar", icon: CalendarDays },
+	{ href: "/drive", labelKey: "drive.title", icon: HardDrive },
+	{ href: "/booking", labelKey: "calendar.bookings", icon: CalendarClock },
+	{ href: "/settings", labelKey: "account.settings", icon: Settings },
+	{ href: "/admin", labelKey: "account.admin", icon: ShieldCheck, adminOnly: true },
 ];
 
-/** Decorative sample rows for the signed-out preview. */
-export const heroMessages: MailPreview[] = [
-	{ sender: "Maya Chen", subject: "Kickoff notes", preview: "Thanks for today. Attached the brief and the timeline we sketched.", time: "9:41", unread: true },
-	{ sender: "Northwind", subject: "Invoice 1042 paid", preview: "Payment received. A receipt is attached for your records.", time: "8:15", unread: true },
-	{ sender: "Sam Ortiz", subject: "Launch checklist", preview: "DNS is live, redirects are in. Two small copy edits left.", time: "Tue" },
-	{ sender: "Priya Raman", subject: "Coffee next week?", preview: "I'm around Thursday morning if that works for you.", time: "Mon" },
-];
-
-export function getHomeActions(isLoggedIn: boolean): HomeAction[] {
-	if (isLoggedIn) {
-		return [{ href: "/inbox", labelKey: "home.dashboard", variant: "default" }];
-	}
-
-	return [
-		{ href: "/setup", labelKey: "home.createAccount", variant: "ghost" },
-		{ href: "/login", labelKey: "home.logIn", variant: "default" },
-	];
+/** The name to greet: the first word of the account name, else the address's local part. */
+export function greetingName(name: string, email: string): string {
+	return name.trim().split(/\s+/)[0] || email.split("@")[0];
 }
