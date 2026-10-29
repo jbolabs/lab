@@ -97,7 +97,7 @@ export function MessageAttachmentViewer({
 								{textError || textContent}
 							</pre>
 						) : (
-							<div className="h-full w-full space-y-3 bg-card p-5">
+							<div className="h-full w-full flex flex-col gap-3 bg-card p-5">
 								<Skeleton className="h-4 w-full" />
 								<Skeleton className="h-4 w-11/12" />
 								<Skeleton className="h-4 w-4/5" />

@@ -110,7 +110,7 @@ export function AdminUpdateCard() {
 
 	return (
 		<Card className="rounded-3xl border-0 bg-card p-6">
-			<CardHeader className="flex-row items-center gap-4 space-y-0 py-0">
+			<CardHeader className="flex-row items-center gap-4 py-0">
 				<div className="flex h-10 w-10 items-center justify-center rounded-full bg-signal-soft text-signal">
 					<RefreshCw className="h-5 w-5" />
 				</div>
@@ -121,11 +121,11 @@ export function AdminUpdateCard() {
 					</p>
 				</div>
 			</CardHeader>
-			<CardContent className="space-y-5 pt-5">
+			<CardContent className="flex flex-col gap-5 pt-5">
 				{isChecking && <Skeleton className="h-20 w-full rounded-2xl" />}
 
 				{!isChecking && status?.configured === false && (
-					<div className="space-y-3">
+					<div className="flex flex-col gap-3">
 						<p className="text-sm text-muted-foreground">
 							{status.configuration?.length
 								? t("update.completeConfig")

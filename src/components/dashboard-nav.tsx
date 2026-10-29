@@ -7,6 +7,8 @@ import type { TranslationKey } from "@/lib/i18n/types";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
+	ChevronUp,
+	ChevronDown,
 	Archive,
 	CalendarClock,
 	Clock,
@@ -152,8 +154,9 @@ function NavToggle({
 			type="button"
 			onClick={onClick}
 			aria-expanded={expanded}
-			className="h-9 w-full justify-start pl-10 max-md:min-h-11"
+			className="h-9 w-full justify-start gap-3 px-3 font-normal text-muted-foreground max-md:min-h-11"
 		>
+			{expanded ? <ChevronUp data-icon="inline-start" /> : <ChevronDown data-icon="inline-start" />}
 			{expanded
 				? (expandedLabel ?? t("navigation.less"))
 				: (collapsedLabel ?? t("navigation.more"))}

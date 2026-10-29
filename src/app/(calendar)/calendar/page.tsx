@@ -120,8 +120,8 @@ export default function CalendarPage() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    const start = new Date(Math.min(today.getTime(), weekStart.getTime(), startOfWeek(startOfMonth(visibleDate)).getTime()));
-    const end = new Date(Math.max(addDays(today, 90).getTime(), addDays(weekStart, 7).getTime(), addDays(startOfMonth(addMonths(visibleDate, 1)), 7).getTime()));
+    const start = new Date(Math.min(today.getTime(), weekStart.getTime(), startOfDay(visibleDate).getTime()));
+    const end = new Date(Math.max(addDays(today, 90).getTime(), addDays(weekStart, 7).getTime(), addDays(visibleDate, 1).getTime()));
     void authFetch(`/api/calendar/events?start=${start.toISOString()}&end=${end.toISOString()}`)
       .then((response) => {
         if (!response.ok) throw new Error(t("calendar.loadFailed"));
@@ -425,8 +425,8 @@ export default function CalendarPage() {
               </PopoverContent></Popover>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
-            <Button variant="ghost" type="button" aria-label={t(view === "week" ? "calendar.previousView.week" : "calendar.previousView.day")} onClick={() => setVisibleDate(view === "month" ? addMonths(visibleDate, -1) : addDays(visibleDate, view === "week" ? -7 : -1))} className= "flex size-10 items-center justify-center [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"><ChevronLeft data-icon="inline-start" /></Button>
-            <Button variant="ghost" type="button" aria-label={t(view === "week" ? "calendar.nextView.week" : "calendar.nextView.day")} onClick={() => setVisibleDate(view === "month" ? addMonths(visibleDate, 1) : addDays(visibleDate, view === "week" ? 7 : 1))} className= "flex size-10 items-center justify-center [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"><ChevronRight data-icon="inline-start" /></Button>
+            <Button variant="ghost" type="button" aria-label={t(view === "week" ? "calendar.previousView.week" : "calendar.previousView.day")} onClick={() => setVisibleDate(addDays(visibleDate, view === "week" ? -7 : -1))} className= "flex size-10 items-center justify-center [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"><ChevronLeft data-icon="inline-start" /></Button>
+            <Button variant="ghost" type="button" aria-label={t(view === "week" ? "calendar.nextView.week" : "calendar.nextView.day")} onClick={() => setVisibleDate(addDays(visibleDate, view === "week" ? 7 : 1))} className= "flex size-10 items-center justify-center [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"><ChevronRight data-icon="inline-start" /></Button>
             <Button variant="ghost" type="button" onClick={() => setVisibleDate(new Date())} className= "h-10 max-md:hidden px-4 text-sm font-medium [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11">{t("calendar.today")}</Button>
             <DropdownMenu.DropdownMenu>
               <DropdownMenu.DropdownMenuTrigger asChild>
@@ -436,12 +436,12 @@ export default function CalendarPage() {
                 <DropdownMenu.DropdownMenuContent align="end" sideOffset={4}><DropdownMenu.DropdownMenuGroup>
                   <DropdownMenu.DropdownMenuItem onSelect={() => setVisibleDate(new Date())} className="cursor-pointer rounded-lg px-3 py-2 text-foreground/80 outline-none data-[highlighted]:bg-accent">{t("calendar.today")}</DropdownMenu.DropdownMenuItem>
                   <DropdownMenu.DropdownMenuSeparator />
-                  {(["month", "week", "day"] as const).map((option) => <DropdownMenu.DropdownMenuItem key={option} onSelect={() => setView(option)} className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-foreground/80 outline-none data-[highlighted]:bg-accent">{option === "month" ? formatUserDate(visibleDate, { month: "long" }) : t(`calendar.${option}` as TranslationKey)}{view === option && <Check className="size-4 text-signal" />}</DropdownMenu.DropdownMenuItem>)}
+                  {(["week", "day"] as const).map((option) => <DropdownMenu.DropdownMenuItem key={option} onSelect={() => setView(option)} className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-foreground/80 outline-none data-[highlighted]:bg-accent">{t(`calendar.${option}` as TranslationKey)}{view === option && <Check className="size-4 text-signal" />}</DropdownMenu.DropdownMenuItem>)}
                 </DropdownMenu.DropdownMenuGroup></DropdownMenu.DropdownMenuContent>
               </DropdownMenu.DropdownMenuPortal>
             </DropdownMenu.DropdownMenu>
             <Tabs value={view} onValueChange={(value) => setView(value as CalendarView)} className="max-md:hidden">
-              <TabsList>{(["month", "week", "day"] as const).map((option) => <TabsTrigger key={option} value={option}>{option === "month" ? formatUserDate(visibleDate, { month: "long" }) : t(`calendar.${option}` as TranslationKey)}</TabsTrigger>)}</TabsList>
+              <TabsList>{(["week", "day"] as const).map((option) => <TabsTrigger key={option} value={option}>{t(`calendar.${option}` as TranslationKey)}</TabsTrigger>)}</TabsList>
             </Tabs>
             <Button disabled={pendingAction !== null} onClick={() => openNewEvent()} className={clsx("ml-1 max-md:ml-0 h-10 rounded-full bg-primary px-4 text-primary-foreground hover:bg-primary/90", mobilePrimaryActionClass)}><Plus data-icon="inline-start" />{t("calendar.newEvent")}</Button>
           </div>
@@ -452,12 +452,6 @@ export default function CalendarPage() {
 
       <section aria-busy={loading} className="min-h-0 min-w-0 flex-1 rounded-t-3xl bg-card flex flex-col overflow-hidden">
         <div className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain">
-          {view === "month" ? <div className="flex min-h-full flex-col"><div className="sticky top-0 grid grid-cols-7 border-b bg-card">{([0, 1, 2, 3, 4, 5, 6] as const).map((day) => <div key={day} className="px-2 py-3 text-center text-xs text-muted-foreground">{t(`calendar.weekdayShort.${day}`)}</div>)}</div><div className="grid flex-1 grid-cols-7 auto-rows-fr">
-            {monthGridDates(visibleDate).map((day) => <div key={dateKey(day)} className="min-h-28 min-w-0 border-b border-r p-1 sm:min-h-36 sm:p-2">
-              <Button variant="ghost" size="icon" aria-label={formatUserDate(day, { dateStyle: "full" })} onClick={() => openNewEvent(day)} className={clsx("size-9", dateKey(day) === dateKey(today) && "ring-1 ring-ring", day.getMonth() !== visibleDate.getMonth() && "text-muted-foreground")}>{formatUserDate(day, { day: "numeric" })}</Button>
-              <div className="mt-1 flex flex-col gap-1">{events.filter((event) => dateKey(new Date(event.startsAt)) === dateKey(day)).map((event) => <Button key={event.id} variant="ghost" onClick={() => editEvent(event)} className={clsx("h-auto min-h-7 justify-start overflow-hidden px-1 text-xs", EVENT_COLOR_CLASSES[normalizeCalendarColor(event.color)])}><span className="truncate">{event.title}</span></Button>)}</div>
-            </div>)}
-          </div></div> : <>
           <div className={clsx("w-full", view === "week" ? "min-w-190" : "min-w-90")}>
             <div className="sticky top-0 z-30 grid h-14 border-b border-border bg-card" style={{ gridTemplateColumns: `64px repeat(${days.length}, minmax(0, 1fr))` }}>
               <div />
@@ -507,14 +501,14 @@ export default function CalendarPage() {
                 )}
                 {dateKey(day) === dateKey(now) && (
                   <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 z-30" style={{ top: currentTimePosition(now) }}>
-                    <div className="h-1 w-full bg-primary" />
-                    <div className="absolute -left-2.5 -top-2 size-5 rounded-full bg-primary" />
+                    <div className="h-0.5 w-full bg-signal" />
+                    <div className="absolute -left-1.5 -top-[5px] size-3 rounded-full bg-signal" />
                   </div>
                 )}
               </div>
             ))}
           </div>
-          </div></>}
+          </div>
         </div>
       </section>
 

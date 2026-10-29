@@ -14,7 +14,7 @@ export function SpamScoreDetails({ score, verdict, signals, analysisError }: Spa
 			{analysisError ? (
 				<p className="mt-2 text-sm text-muted-foreground">{t("message.spam.failed")}</p>
 			) : parsedSignals.length > 0 ? (
-				<div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+				<div className="mt-3 flex flex-col gap-1.5 text-sm text-muted-foreground">
 					<p className="font-medium text-foreground">{t("message.spam.why")}</p>
 					{parsedSignals.map((signal) => (
 						<p key={signal.id}><span className={signal.score > 0 ? "text-red-600" : "text-green-700"}>{signal.score > 0 ? "+" : ""}{signal.score}</span>{" "}{signal.reason}</p>

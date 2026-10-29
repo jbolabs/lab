@@ -747,7 +747,7 @@ export function ComposeForm({
 				)}
 				<div
 					{...sheetDrag}
-					className="flex h-9 shrink-0 items-center justify-between max-md:h-12 max-md:touch-none border-b bg-card text-foreground px-3 text-sm font-medium"
+					className="flex h-9 shrink-0 items-center justify-between max-md:h-auto max-md:min-h-14 max-md:touch-none max-md:pt-[env(safe-area-inset-top)] border-b bg-card text-foreground px-3 text-sm font-medium"
 				>
 					<Button
 						type="button"
@@ -870,8 +870,8 @@ export function ComposeForm({
 							// placeholder="Select a mailbox first"
 							required
 							disabled={loadingDraft || senderOptions.length === 0}
-							className="h-8 px-0 py-1 text-sm shadow-none focus-visible:ring-0"
-							containerClassName="border-0 flex-1"
+							className="h-8 border-0 bg-transparent px-0 py-1 text-sm shadow-none focus-visible:ring-0 dark:bg-transparent dark:hover:bg-transparent"
+							containerClassName="flex-1"
 						>
 							{senderOptions.length === 0 && (
 								<option value="">{t("compose.selectMailboxFirst")}</option>

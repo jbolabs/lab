@@ -32,7 +32,7 @@ export function LicenseIndicator() {
 	if (!license || license.active) return null;
 
 	return (
-		<Button variant="ghost" size="sm" asChild className="max-md:min-h-11">
+		<Button variant="ghost" size="sm" asChild className="max-md:hidden">
 			<Link href="/licenses">{t("license.upgrade")}</Link>
 		</Button>
 	);

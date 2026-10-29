@@ -291,7 +291,7 @@ export default function MessageDetailPage() {
               />
             </div>
             {detailsOpen && (
-              <dl className="sm:hidden w-full space-y-0.5 break-words pt-2 text-xs text-muted-foreground">
+              <dl className="sm:hidden w-full flex flex-col gap-0.5 break-words pt-2 text-xs text-muted-foreground">
                 <div><dt className="inline font-medium">{t("source.from")}:</dt> <dd className="inline">{fromName} &lt;{fromAddress}&gt;</dd></div>
                 <div><dt className="inline font-medium">{t("source.to")}:</dt> <dd className="inline">{toEntries.join(", ")}</dd></div>
                 <div><dt className="inline font-medium">{t("message.date")}:</dt> <dd className="inline">{messageDate(true)}</dd></div>

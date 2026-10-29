@@ -423,7 +423,7 @@ function MailboxSettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 pt-5">
-          <div className="space-y-1">
+          <div className="flex flex-col gap-1">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Email
             </p>
@@ -431,7 +431,7 @@ function MailboxSettingsPage() {
               {address || "-"}
             </p>
           </div>
-          <div className="space-y-1">
+          <div className="flex flex-col gap-1">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Username
             </p>
@@ -439,7 +439,7 @@ function MailboxSettingsPage() {
               {mailbox.data?.localPart ?? "-"}
             </p>
           </div>
-          <div className="space-y-1">
+          <div className="flex flex-col gap-1">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Domain
             </p>
@@ -447,7 +447,7 @@ function MailboxSettingsPage() {
               {mailbox.data?.hostname ?? "-"}
             </p>
           </div>
-          <div className="space-y-1">
+          <div className="flex flex-col gap-1">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Routing
             </p>

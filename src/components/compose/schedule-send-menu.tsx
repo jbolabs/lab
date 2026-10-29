@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, Clock, X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { NewTemplateDialog } from "./new-template-dialog";
 import { TemplateMenu } from "./template-menu";
@@ -60,10 +60,11 @@ export function ScheduleSendMenu({
 					disabled={disabled}
 					aria-label={t("schedule.optionsLabel")}
 					onClick={() => setSheetOpen(true)}
-					size="icon"
-					className="size-8 rounded-l-none border-l border-primary-foreground/20 max-md:rounded-md [@media(pointer:coarse)]:size-11"
+					variant="ghost"
+					size="icon-lg"
+					className="[@media(pointer:coarse)]:size-11"
 				>
-					<ChevronDown data-icon="inline-start" />
+					<Clock />
 				</Button>
 				<ScheduleSendSheet
 					open={sheetOpen}

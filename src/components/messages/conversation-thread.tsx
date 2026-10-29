@@ -208,7 +208,7 @@ export function ConversationMessageCard({
 						</Button>
 					</div>
 					{detailsOpen && (
-						<dl className="sm:hidden w-full space-y-0.5 break-words pt-2 text-xs text-muted-foreground">
+						<dl className="sm:hidden w-full flex flex-col gap-0.5 break-words pt-2 text-xs text-muted-foreground">
 							<div><dt className="inline font-medium">{t("source.from")}:</dt> <dd className="inline">{sender} &lt;{senderEmail}&gt;</dd></div>
 							{recipients && <div><dt className="inline font-medium">{t("source.to")}:</dt> <dd className="inline">{recipients}</dd></div>}
 							<div><dt className="inline font-medium">{t("message.date")}:</dt> <dd className="inline">{formatUserDate(message.createdAt, { month: "short", day: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</dd></div>

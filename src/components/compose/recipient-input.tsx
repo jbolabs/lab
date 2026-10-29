@@ -104,7 +104,7 @@ export function RecipientInput({
 						</Badge>
 					);
 				})}
-				<InputGroup className="h-auto min-w-32 flex-1">
+				<InputGroup className="h-auto min-w-32 flex-1 border-0 bg-transparent shadow-none dark:bg-transparent has-[[data-slot=input-group-control]:focus-visible]:ring-0">
 					<InputGroupInput
 						ref={inputRef}
 						id={id}
