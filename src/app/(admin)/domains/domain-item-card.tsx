@@ -101,8 +101,12 @@ export default function DomainItemCard({
 							}
 							if (item.receivingProvider === "none") {
 								return (
-									<Badge variant="secondary" className="">
-										{t("domains.badge.sendingOnly")}
+									<Badge variant="secondary">
+										{t(
+											item.sendingProvider === "none"
+												? "domains.badge.noProviders"
+												: "domains.badge.sendingOnly"
+										)}
 									</Badge>
 								);
 							}
@@ -135,8 +139,9 @@ export default function DomainItemCard({
 								);
 							}
 							if (item.sendingProvider === "none") {
-								return (
-									<Badge variant="secondary" className="">
+								// Neither provider: the receiving badge already says so.
+								return item.receivingProvider === "none" ? null : (
+									<Badge variant="secondary">
 										{t("domains.badge.receivingOnly")}
 									</Badge>
 								);

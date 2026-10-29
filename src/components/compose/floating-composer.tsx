@@ -12,7 +12,7 @@ import { useSidebar } from "@/components/sidebar-state";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-import { isMessageReaderPath } from "./utils";
+import { hidesComposeButton } from "./utils";
 
 // Gmail's extended button: it folds to its icon while you scroll down a list and opens back out
 // when you scroll up. Listens in the capture phase because every list scrolls its own container.
@@ -80,7 +80,7 @@ export function FloatingComposer({
 	return (
 		<>
 			{/* Hidden while reading, and (via data-selection-active on a list header) while selecting, as in Gmail. */}
-			{showButton && !open && !mobileOpen && !isMessageReaderPath(pathname) && (
+			{showButton && !open && !mobileOpen && !hidesComposeButton(pathname) && (
 				<Button
 					type="button"
 					variant="floating"

@@ -25,6 +25,8 @@ await build({
 		contents: `
 			export { hasMx } from "./src/lib/domains/receiving-dns.ts";
 			export { auditDomainDns } from "./src/lib/domains/dns-audit.ts";
+			export { preflightDomain } from "./src/lib/domains/preflight.ts";
+			export { hasConflictingMxRecords } from "./src/lib/domains/mx-records.ts";
 		`,
 		resolveDir: root,
 		sourcefile: "dns-test-entry.ts",
@@ -32,9 +34,8 @@ await build({
 	target: "node24",
 	tsconfig: join(root, "tsconfig.json"),
 });
-const { hasMx, auditDomainDns } = await import(
-	pathToFileURL(join(bundleDirectory, "entry.mjs")).href
-);
+const { auditDomainDns, hasConflictingMxRecords, hasMx, preflightDomain } =
+	await import(pathToFileURL(join(bundleDirectory, "entry.mjs")).href);
 rmSync(bundleDirectory, { force: true, recursive: true });
 
 const manualDomain = { hostname: "example.com", zoneId: "manual" };
@@ -101,4 +102,22 @@ test("DKIM for a Resend domain is checked at Resend's selector when nothing else
 	assert.ok(asked.includes("resend._domainkey.example.com"));
 	const other = await auditDomainDns("example.com", view, "none");
 	assert.equal(other.dkim.status, "unknown");
+});
+
+test("setup checks a domain without Cloudflare credentials as a manual zone", async () => {
+	globalThis.fetch = () => {
+		throw new Error("no Cloudflare API call expected");
+	};
+	const domain = await preflightDomain(
+		{ MAILFLARE_RUNTIME: "node" },
+		" Lab.Test "
+	);
+	assert.deepEqual(domain, {
+		hostname: "lab.test",
+		zone: { id: "manual", name: "lab.test" },
+	});
+	assert.equal(
+		await hasConflictingMxRecords({}, domain.zone.id, domain.hostname),
+		false
+	);
 });

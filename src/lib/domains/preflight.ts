@@ -1,11 +1,20 @@
 import { findZoneByHostname } from "@/lib/cloudflare-api";
+import { MANUAL_ZONE_ID } from "@/lib/domains/manual-zone";
 import type { DomainPreflightResult } from "@/lib/domains/types";
+import { hasCloudflareCredentials } from "@/lib/runtime";
 
 export async function preflightDomain(
 	env: CloudflareEnv,
 	hostname: string
 ): Promise<DomainPreflightResult> {
 	const normalized = hostname.toLowerCase().trim();
+	// Without API credentials (self-hosted) the operator sets DNS by hand, as provisioning does.
+	if (!hasCloudflareCredentials(env)) {
+		return {
+			hostname: normalized,
+			zone: { id: MANUAL_ZONE_ID, name: normalized },
+		};
+	}
 	const zone = await findZoneByHostname(env, normalized);
 	if (!zone) {
 		throw new Error(

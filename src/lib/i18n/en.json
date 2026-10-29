@@ -1141,6 +1141,7 @@
 	"domains.badge.receivingVia": "receiving via {provider}",
 	"domains.badge.sendingVia": "sending via {provider}",
 	"domains.badge.receivingOnly": "receiving only",
+	"domains.badge.noProviders": "no mail provider",
 	"domains.badge.sending": "sending",
 	"domains.providerSes": "Amazon SES",
 	"domains.providerResend": "Resend",
