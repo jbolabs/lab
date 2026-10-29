@@ -1,7 +1,7 @@
-import { DnsValue } from "./dns-value";
 "use client";
 
 import { useEffect, useState } from "react";
+import { DnsValue } from "./dns-value";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/language-provider";
 import { authFetch } from "@/lib/auth/client";
