@@ -127,3 +127,8 @@ const readerPath =
 export function isMessageReaderPath(pathname: string) {
 	return readerPath.test(pathname);
 }
+
+/** The phone Compose button opens a composer, so it hides where one is already on screen. */
+export function hidesComposeButton(pathname: string) {
+	return isMessageReaderPath(pathname) || /^\/compose\/?$/u.test(pathname);
+}

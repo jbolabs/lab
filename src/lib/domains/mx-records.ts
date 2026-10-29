@@ -5,6 +5,7 @@ import {
 	listMxRecords,
 } from "@/lib/cloudflare-dns";
 import type { CloudflareDnsRecordCreate } from "@/lib/cloudflare-dns.types";
+import { isManualZone } from "@/lib/domains/manual-zone";
 
 function isCloudflareEmailRoutingMx(record: CfDnsRecord): boolean {
 	return record.content?.toLowerCase().endsWith(".mx.cloudflare.net") ?? false;
@@ -61,6 +62,10 @@ export async function hasConflictingMxRecords(
 	zoneId: string,
 	hostname: string
 ): Promise<boolean> {
+	// A manual zone's DNS is not visible to the app.
+	if (isManualZone(zoneId)) {
+		return false;
+	}
 	const records = await listMxRecords(env, zoneId, hostname);
 	return records.some((record) => !isCloudflareEmailRoutingMx(record));
 }

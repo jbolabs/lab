@@ -60,8 +60,8 @@ jobs:
         run: npm run lint
       - name: Format
         run: npm run format:check
-      - name: OAuth, Drive editor, backup, admin, web push and UI consistency tests
-        run: node --test tests/drive-document-editor.test.mjs tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs tests/account-alias-selection.test.mjs tests/pwa-app-badge.test.mjs tests/pwa-push-client.test.mjs tests/pwa-notification-ui.test.mjs tests/ui-consistency.test.mjs tests/domain-routing-rule-validation.test.mjs
+      - name: OAuth, Drive editor, backup, admin, web push, UI consistency, i18n and manual DNS tests
+        run: node --test tests/drive-document-editor.test.mjs tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs tests/account-alias-selection.test.mjs tests/pwa-app-badge.test.mjs tests/pwa-push-client.test.mjs tests/pwa-notification-ui.test.mjs tests/ui-consistency.test.mjs tests/domain-routing-rule-validation.test.mjs tests/i18n.test.mjs tests/manual-dns-checks.test.mjs
       - run: npx tsc --noEmit
 
   build:
