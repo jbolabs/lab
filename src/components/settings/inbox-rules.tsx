@@ -92,7 +92,8 @@ export function InboxRules() {
 		setDialogOpen(true);
 	}
 	function onRuleKeyDown(event: KeyboardEvent<HTMLDivElement>, rule: InboxRule) {
-		if (event.key !== "Enter" && event.key !== " ")
+		// Only the row itself: keys pressed on its action menu trigger belong to the menu.
+		if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " "))
 			return;
 		event.preventDefault();
 		openEditDialog(rule);

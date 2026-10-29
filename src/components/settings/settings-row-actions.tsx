@@ -19,6 +19,8 @@ export function SettingsRowActions({ children }: { children: ReactNode }) {
 					variant="ghost"
 					size="icon"
 					aria-label={t("common.moreActions")}
+					// Rows open their editor on click; the menu trigger must not.
+					onClick={(event) => event.stopPropagation()}
 				>
 					<MoreHorizontal data-icon="inline-start" />
 				</Button>

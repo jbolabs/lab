@@ -98,6 +98,11 @@ export function AgentPanel({ open, fullSize, onClose, onToggleFullSize }: AgentP
 	const { selectedMailbox } = useSelectedMailbox();
 	const pathname = usePathname();
 	const { openDraftComposer } = useCompose();
+	// On phones the assistant is a modal sheet; close it so the composer is not trapped behind it.
+	const openDraft = (draftId: string) => {
+		if (isMobile) onClose();
+		openDraftComposer(draftId);
+	};
 	const [view, setView] = useState<AgentPanelView>("chat");
 	const [settings, setSettings] = useState<AgentSettings | null>(null);
 	const [availableModels, setAvailableModels] = useState<string[]>([]);
@@ -639,7 +644,7 @@ export function AgentPanel({ open, fullSize, onClose, onToggleFullSize }: AgentP
 										key={turn.id}
 										turn={turn}
 										draftActions={draftActions}
-										onOpenDraft={openDraftComposer}
+										onOpenDraft={openDraft}
 										onApproveDraft={(draftId, revision) =>
 											void startDraftReview(draftId, revision)
 										}
@@ -661,7 +666,7 @@ export function AgentPanel({ open, fullSize, onClose, onToggleFullSize }: AgentP
 													variant="ghost"
 													size="sm"
 													type="button"
-													onClick={() => openDraftComposer(job.draftId!)}
+													onClick={() => openDraft(job.draftId!)}
 												>
 													{t("agent.panel.openDraft")}
 												</Button>
