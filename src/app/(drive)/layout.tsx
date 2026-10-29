@@ -36,7 +36,8 @@ function DriveFrame({ children }: { children: React.ReactNode }) {
 					<MailboxSelector />
 				</header>
 				<main id="main-content" tabIndex={-1} className="focus:outline-none min-h-0 min-w-0 flex-1 overflow-hidden md:pr-4">{children}</main>
-				{mobile && <Suspense fallback={null}><DriveMobileNew /></Suspense>}
+				{/* Always mounted (hidden from md up) so it keeps the folder permissions it has heard across rotations. */}
+				<Suspense fallback={null}><DriveMobileNew /></Suspense>
 			</div>
 		</div>
 	);
