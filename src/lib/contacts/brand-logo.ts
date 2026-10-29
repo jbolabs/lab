@@ -111,6 +111,21 @@ async function lookupBimiRecord(domain: string): Promise<string | null> {
 	return null;
 }
 
+/**
+ * Serves a third-party image only as a data URI inside our own SVG. An SVG
+ * loaded through <image> cannot run script, so a hostile logo stays inert
+ * even when the URL is opened directly and the route's CSP is dropped, as
+ * Next does on the Node runtime.
+ */
+function wrapInSvg(logo: BrandLogo, inset: number): BrandLogo {
+	const size = 100 - inset * 2;
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#fff"/><image href="data:${logo.contentType};base64,${toBase64(logo.bytes)}" x="${inset}" y="${inset}" width="${size}" height="${size}"/></svg>`;
+	return {
+		bytes: new TextEncoder().encode(svg),
+		contentType: "image/svg+xml",
+	};
+}
+
 /** BIMI logos are the square SVG marks Gmail and Apple Mail show for verified senders. */
 async function fetchBimiLogo(domain: string): Promise<BrandLogo | null> {
 	const record = await lookupBimiRecord(domain);
@@ -124,7 +139,9 @@ async function fetchBimiLogo(domain: string): Promise<BrandLogo | null> {
 			type === "image/svg+xml" ||
 			type === "text/xml" ||
 			type === "application/xml"
-	).then((logo) => logo && { ...logo, contentType: "image/svg+xml" });
+	).then(
+		(logo) => logo && wrapInSvg({ ...logo, contentType: "image/svg+xml" }, 0)
+	);
 }
 
 /** A site's touch icon is a full-bleed square made to be shown rounded, so it fills the avatar. */
@@ -150,11 +167,7 @@ async function fetchFavicon(domain: string): Promise<BrandLogo | null> {
 	if (width !== null && width < 32) {
 		return null;
 	}
-	const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#fff"/><image href="data:${logo.contentType};base64,${toBase64(logo.bytes)}" x="22" y="22" width="56" height="56"/></svg>`;
-	return {
-		bytes: new TextEncoder().encode(svg),
-		contentType: "image/svg+xml",
-	};
+	return wrapInSvg(logo, 22);
 }
 
 async function findBrandLogo(
