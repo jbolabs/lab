@@ -589,3 +589,35 @@ pre {
 		animation: none;
 	}
 }
+
+/* Launch splash (src/components/launch-splash.tsx): only in the installed app, once per launch. The ink
+   and mark size match the iOS startup images (src/lib/launch/startup-screens.json); the exit animation
+   runs in the component. */
+.launch-splash {
+	display: none;
+}
+
+@media (display-mode: standalone) {
+	html:not([data-launched]) .launch-splash {
+		position: fixed;
+		inset: 0;
+		z-index: 100;
+		display: grid;
+		place-items: center;
+		background: #101218;
+		/* Failsafe: never trap the app behind the splash if script never runs. */
+		animation: launch-splash-failsafe 300ms ease-out 6s forwards;
+	}
+}
+
+.launch-splash-mark {
+	width: 160px;
+	height: 160px;
+}
+
+@keyframes launch-splash-failsafe {
+	to {
+		opacity: 0;
+		visibility: hidden;
+	}
+}

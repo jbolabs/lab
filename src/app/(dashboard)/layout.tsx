@@ -15,6 +15,7 @@ import { AgentPanel } from "@/components/agent/agent-panel";
 import { AssistantOpenContext } from "@/components/agent/assistant-open-state";
 import { Button } from "@/components/ui/button";
 import { DnsSkippedBanner } from "@/components/dns-skipped-banner";
+import { OfflineBanner } from "@/components/offline-banner";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { SidebarProvider } from "@/components/sidebar-state";
 import { SidebarAside, MobileMenuButton } from "@/components/sidebar-aside";
@@ -119,6 +120,7 @@ export default function DashboardLayout({
 											)}
 											<MailboxSelector />
 										</header>
+										<OfflineBanner />
 										<DnsSkippedBanner />
 										<div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
 											<AssistantOpenContext.Provider value={assistantVisible}>

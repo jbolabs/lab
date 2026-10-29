@@ -2,6 +2,7 @@
 
 import { getUserTimeZone } from "@/lib/time/utils";
 import { clearUserTimeZonePreference } from "@/lib/time/client";
+import { clearOfflineCaches, clearOfflinePages } from "@/lib/offline/cache-client";
 import type {
 	AuthFetchOptions,
 	AuthSessionChangedDetail,
@@ -29,12 +30,16 @@ export function setClientSessionToken(token: string): void {
 	const previousToken = localStorage.getItem(SESSION_STORAGE_KEY);
 	localStorage.setItem(SESSION_STORAGE_KEY, token);
 	if (previousToken !== token) clearUserTimeZonePreference();
-	if (previousToken !== token) dispatchAuthSessionChanged(true);
+	if (previousToken !== token) {
+		void clearOfflinePages();
+		dispatchAuthSessionChanged(true);
+	}
 }
 
 export function clearClientSessionToken(): void {
 	localStorage.removeItem(SESSION_STORAGE_KEY);
 	clearUserTimeZonePreference();
+	void clearOfflineCaches();
 	dispatchAuthSessionChanged(false);
 }
 

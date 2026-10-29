@@ -8,6 +8,8 @@ import { getRequestLocale, loadServerMessages } from "@/lib/i18n/server";
 import { sidebarBootstrapScript } from "@/components/sidebar-state-utils";
 import { THEME_COLORS, themeBootstrapScript } from "@/components/theme-utils";
 import { getHomeBranding } from "./home-server-utils";
+import { getStartupImages, launchSeenScript } from "@/lib/launch/startup-screens-utils";
+import { LaunchSplash } from "@/components/launch-splash";
 import "./globals.css";
 
 // JBO Labs type: Figtree for the interface, Montserrat for the wordmark, Geist Mono for codes.
@@ -48,6 +50,7 @@ export async function generateMetadata(): Promise<Metadata> {
 			capable: true,
 			title: appName,
 			statusBarStyle: "default",
+			startupImage: getStartupImages(),
 		},
 		robots: {
 			index: false,
@@ -75,9 +78,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 			<head>
 				<script dangerouslySetInnerHTML={{ __html: sidebarBootstrapScript }} />
 				<script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
+				<script dangerouslySetInnerHTML={{ __html: launchSeenScript }} />
 				<link rel="icon" href="/api/branding/icon"></link>
 			</head>
 			<body className={`${figtree.variable} ${montserrat.variable} ${geistMono.variable} antialiased`}>
+				<LaunchSplash />
 				<LanguageProvider initialLocale={locale} initialMessages={messages}><Providers initialBranding={branding}>{children}</Providers></LanguageProvider>
 			</body>
 		</html>

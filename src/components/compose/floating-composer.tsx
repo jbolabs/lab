@@ -18,16 +18,26 @@ function useCondensedOnScroll(enabled: boolean) {
 	const [condensed, setCondensed] = useState(false);
 	useEffect(() => {
 		if (!enabled) return;
-		const last = new WeakMap<EventTarget, number>();
+		// Measured from where the scroll last turned, not event to event: iOS reports smooth scrolling as
+		// many 2-3px steps, which no per-event threshold would ever see.
+		const anchors = new WeakMap<EventTarget, number>();
 		function onScroll(event: Event) {
 			const target = event.target;
 			if (!(target instanceof HTMLElement)) return;
 			const top = target.scrollTop;
-			const previous = last.get(target) ?? top;
-			last.set(target, top);
-			if (top <= 0) setCondensed(false);
-			else if (top - previous > 4) setCondensed(true);
-			else if (previous - top > 4) setCondensed(false);
+			const anchor = anchors.get(target) ?? top;
+			if (top <= 0) {
+				anchors.set(target, 0);
+				setCondensed(false);
+			} else if (top - anchor > 12) {
+				anchors.set(target, top);
+				setCondensed(true);
+			} else if (anchor - top > 12) {
+				anchors.set(target, top);
+				setCondensed(false);
+			} else if (!anchors.has(target)) {
+				anchors.set(target, top);
+			}
 		}
 		document.addEventListener("scroll", onScroll, { capture: true, passive: true });
 		return () => document.removeEventListener("scroll", onScroll, { capture: true });
