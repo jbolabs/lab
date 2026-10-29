@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BrandMark, Wordmark } from "@/components/brand";
+import { Wordmark } from "@/components/brand";
 import { LanguageSelector } from "@/components/language-selector";
 import { cn } from "@/lib/utils";
 import type { AuthShellProps } from "./types";
@@ -20,7 +20,6 @@ export function AuthShell({
 					href="/"
 					className="flex min-h-20 items-center gap-2.5 rounded-md focus-visible:outline-ring"
 				>
-					<BrandMark size={30} />
 					<Wordmark />
 				</Link>
 				<LanguageSelector variant="text" />

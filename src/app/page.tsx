@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { Item, ItemActions, ItemContent, ItemMedia, ItemTitle } from "@/components/ui/item";
+import { BrandName } from "@/components/brand-name";
 import { APP_NAME } from "@/lib/app-identity";
 import { getUserFromSession, SESSION_COOKIE } from "@/lib/auth/session";
 import { getEnv } from "@/lib/cloudflare";
@@ -44,10 +45,7 @@ export default async function HomePage() {
 				<Link href="/" className="flex h-16 items-center gap-2.5" aria-label={t("home.homeLabel", { app: branding.appName })}>
 					<img src={iconUrl} height={30} width={30} alt="" className="rounded-[24%] ring-1 ring-foreground/10" />
 					{branding.appName === APP_NAME ? (
-						<span aria-hidden="true" className="font-display text-xl leading-none tracking-[-0.03em]">
-							<span className="font-bold">jbo</span>
-							<span className="font-extralight">the lab</span>
-						</span>
+						<BrandName />
 					) : (
 						<span className="font-display text-lg font-semibold tracking-tight">{branding.appName}</span>
 					)}

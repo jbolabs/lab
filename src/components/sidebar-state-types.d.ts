@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { BrandApp } from "./brand-name";
 
 export type SidebarState = {
 	minimal: boolean;
@@ -19,9 +20,8 @@ export type SidebarProviderProps = {
 
 export type SidebarHeaderProps = {
 	href: string;
-	label?: string;
-	/** The app the sidebar belongs to, shown after "jbo" in the wordmark. */
-	app?: "inbox" | "drive" | "calendar";
+	/** The app the sidebar belongs to, named beside the tile ("the inbox"); the suite otherwise. */
+	app?: BrandApp;
 };
 
 export type SidebarScaffoldProps = {
