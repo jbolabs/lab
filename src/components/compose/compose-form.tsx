@@ -37,6 +37,7 @@ import { RecipientInput } from "./recipient-input";
 import { RichTextEditor } from "./rich-text-editor";
 import { ScheduleSendMenu } from "./schedule-send-menu";
 import { isPastSchedule } from "./schedule-send-utils";
+import { haptic } from "@/lib/haptics";
 import {
 	applyMailboxSignatureHtml,
 	hasMeaningfulHtml,
@@ -352,6 +353,8 @@ export function ComposeForm({
 			setToast({ type: "error", message: t("schedule.pastTime") });
 			return;
 		}
+		// Still inside the tap, which iOS needs for the haptic to play.
+		if (!(draftId && agentRevision !== null)) haptic("impact");
 		if (saveTimer.current) clearTimeout(saveTimer.current);
 		pendingSave.current = null;
 		setLoading(true);
@@ -955,7 +958,7 @@ export function ComposeForm({
 							placeholder={t("compose.subject")}
 							required
 							disabled={loadingDraft}
-							className="h-8 border-0 px-0 py-1 shadow-none focus-visible:ring-0"
+							className="h-8 rounded-none border-0 bg-transparent px-0 py-1 shadow-none focus-visible:ring-0 max-md:h-11 dark:bg-transparent"
 						/>
 					</div>
 					<Label htmlFor={`${mode}-text`} className="sr-only">

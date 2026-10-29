@@ -23,7 +23,7 @@ export function MessageReadingHeaderButton({ assistantVisible }: MessageReadingH
 
 	return (
 		<>
-		<Button variant="ghost" size="icon" className="shrink-0 lg:hidden pointer-coarse:size-11" aria-label={t("message.nav.backTo", { folder: backLabel })} onClick={() => router.push(backHref)}><ArrowLeft data-icon="inline-start" /></Button>
+		<Button variant="ghost" size="icon" className="shrink-0 lg:hidden pointer-coarse:size-11" data-edge-swipe-back aria-label={t("message.nav.backTo", { folder: backLabel })} onClick={() => router.push(backHref)}><ArrowLeft data-icon="inline-start" /></Button>
 		<HintTooltip label={label} className="hidden lg:inline-flex">
 			<Button variant="ghost" size="icon"
 				type="button"

@@ -76,3 +76,10 @@ function formatSignatureBlock(signature: string | null | undefined): string {
 	const value = signature?.trim() ?? "";
 	return value ? `\n\n${value}` : "";
 }
+
+const readerPath = /^\/(?:(?:inbox|starred|snoozed|sent|scheduled|archived|spam|trash)\/[^/]+|folders\/[^/]+\/[^/]+)\/?$/;
+
+/** An open message, where the phone Compose button would sit on the reader's Reply bar (Gmail hides it there too). */
+export function isMessageReaderPath(pathname: string) {
+	return readerPath.test(pathname);
+}

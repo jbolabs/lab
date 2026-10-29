@@ -151,6 +151,7 @@ The admin overview dispatches `deploy-update.yml` (constant in `src/app/api/admi
 - Server code reaches bindings through `getEnv()` / `getEnvAsync()` in `src/lib/cloudflare.ts`, then `getDb(env)` from `src/db`. Keep binding access centralized here.
 - API routes return `NextResponse.json({ error: "..." }, { status })` for failures; there is no shared error envelope helper.
 - UI is Tailwind v4 + shadcn/Radix primitives in `src/components/ui/`. `DialogContent` sets no max height, so a tall dialog overflows the viewport with an unreachable submit button — add `max-h-[calc(100vh-4rem)] overflow-y-auto` on any dialog with more than a few fields.
+- On phones the app is used as a home-screen web app (`display: "standalone"` in `src/app/manifest.ts`), not in Safari, so design and test for that mode. It has no URL bar, no browser back button or edge-swipe back, and no browser pull-to-refresh (the root sets `overscroll-behavior: none`), so every screen needs its own way back (mark its back button `data-edge-swipe-back`; the left-edge swipe in `src/components/edge-swipe.tsx` clicks it, or opens the drawer when there is none) and every list its own refresh. The page draws under the status bar (`viewportFit: "cover"`), so fixed headers, bars and sheets pad with `env(safe-area-inset-*)`. Use `haptic()` from `src/lib/haptics.ts` for touch feedback.
 - `cloudflare-env.d.ts` is generated (500KB) — regenerate with `cf-typegen`, never hand-edit.
 
 <!-- BEGIN:nextjs-agent-rules -->

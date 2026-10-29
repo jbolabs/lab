@@ -25,6 +25,8 @@ import { useDashboardState } from "./dashboard-state";
 import { useAssistantAvailability } from "./use-assistant-availability";
 import { RouteTitle } from "@/components/route-title";
 import { useAppBadge } from "@/hooks/use-app-badge";
+import { usePathname } from "next/navigation";
+import { isMessageReaderPath } from "@/components/compose/utils";
 
 export default function DashboardLayout({
 	children,
@@ -41,6 +43,8 @@ export default function DashboardLayout({
 	const assistantEnabled = useAssistantAvailability();
 	const assistantVisible = assistantEnabled === true && assistantOpen;
 	useAppBadge();
+	// Phones read a message full screen: its own toolbar (back, actions) replaces the app header.
+	const reading = isMessageReaderPath(usePathname());
 
 	useEffect(() => {
 		if (assistantEnabled === false && (assistantOpen || assistantFullSize)) {
@@ -77,7 +81,7 @@ export default function DashboardLayout({
 										<SidebarResizeBoundary />
 									</SidebarAside>
 									<div className="flex min-h-0 min-w-0 flex-col">
-										<header className="flex min-h-14 w-full shrink-0 items-center gap-1 border-b border-sidebar-border px-2 pt-[env(safe-area-inset-top)] text-sm md:h-16 md:gap-3 md:px-5">
+										<header className={clsx("flex min-h-14 w-full shrink-0 items-center gap-1 border-b border-sidebar-border px-2 pt-[env(safe-area-inset-top)] text-sm md:h-16 md:gap-3 md:px-5", reading && "max-md:hidden")}>
 											<MobileMenuButton className="ml-2" />
 											<MailSearchInput mobileEnd />
 											{/* <Link
