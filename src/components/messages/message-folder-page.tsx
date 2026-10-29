@@ -74,6 +74,7 @@ import {
 	useMessageNavigation,
 } from "./message-navigation";
 import { PullToRefresh } from "./pull-to-refresh";
+import { reloadPage } from "./pull-to-refresh-utils";
 import { formatScheduledSendTime } from "./scheduled-send-utils";
 import { SwipeableRow } from "./swipeable-row";
 import type {
@@ -1375,7 +1376,6 @@ export function MessageFolderPage(props: MessageFolderPageProps) {
 		messages,
 		isLoading,
 		actionError,
-		refresh,
 		currentAccountName,
 		updateSelectedMessage,
 		runRowActionReportingErrors,
@@ -1395,7 +1395,7 @@ export function MessageFolderPage(props: MessageFolderPageProps) {
 				</Alert>
 			)}
 
-			<PullToRefresh scroller={listScroller} onRefresh={refresh}>
+			<PullToRefresh scroller={listScroller} onRefresh={reloadPage}>
 				<div
 					ref={listScroller}
 					className="min-h-0 flex-1 scrollbar-gutter-stable overflow-y-auto overscroll-contain"
