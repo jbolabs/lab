@@ -10,9 +10,7 @@ import type { SidebarHeaderProps } from "./sidebar-state-types";
 import { HintTooltip } from "@/components/hint-tooltip";
 import { useLanguage } from "./language-provider";
 
-const APP_LABEL_KEYS = { inbox: "navigation.inbox", drive: "drive.title", calendar: "calendar.calendar" } as const;
-
-export function SidebarHeader({ href, label, app }: SidebarHeaderProps) {
+export function SidebarHeader({ href, app }: SidebarHeaderProps) {
 	const { t } = useLanguage();
 	const { minimal, toggle } = useSidebar();
 	const toggleButton = (
@@ -40,8 +38,7 @@ export function SidebarHeader({ href, label, app }: SidebarHeaderProps) {
 			)}
 			{!minimal && (
 				<Link href={href} className="flex min-w-0 items-center gap-2.5">
-					<BrandMark size={30} />
-					<Wordmark product={label ?? (app && t(APP_LABEL_KEYS[app]))} />
+					<Wordmark app={app} />
 				</Link>
 			)}
 		</div>

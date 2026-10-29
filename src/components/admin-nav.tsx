@@ -167,7 +167,7 @@ export function AdminNav({ className }: { className?: string }) {
 	return (
 		<SidebarScaffold
 			className={className}
-			header={<SidebarHeader href="/" label={t("account.admin")} />}
+			header={<SidebarHeader href="/" />}
 			footer={<SidebarFooter />}
 		>
 			<div className={cn("flex flex-col gap-4", minimal && "gap-2")}>
