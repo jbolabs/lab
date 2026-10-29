@@ -319,7 +319,7 @@ export function DashboardNav({ className }: { className?: string }) {
 	return (
 		<SidebarScaffold
 			className={className}
-			header={<SidebarHeader href="/inbox" />}
+			header={<SidebarHeader href="/" />}
 			footer={<SidebarFooter />}
 		>
 			{composeLink && !mobile && (

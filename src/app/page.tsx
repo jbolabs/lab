@@ -39,7 +39,7 @@ export default async function HomePage() {
 	const links = quickLinks.filter((link) => !link.adminOnly || user.role === "admin");
 
 	return (
-		<div className="flex min-h-svh flex-col bg-background text-foreground">
+		<div className="flex min-h-svh flex-col bg-sidebar text-foreground">
 			<header className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 pt-[env(safe-area-inset-top)] sm:px-8">
 				<Link href="/" className="flex h-16 items-center gap-2.5" aria-label={t("home.homeLabel", { app: branding.appName })}>
 					<img src={iconUrl} height={30} width={30} alt="" className="rounded-[24%] ring-1 ring-foreground/10" />

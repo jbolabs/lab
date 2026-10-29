@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useSidebar } from "./sidebar-state";
 import { useLanguage } from "./language-provider";
 import { BrandMark } from "./brand";
+import { APP_NAME } from "@/lib/app-identity";
 
 export function SidebarAside({
 	children,
@@ -86,7 +87,8 @@ export function MobileMenuButton({ className }: { className?: string }) {
 				asChild
 				className="size-11 shrink-0 md:hidden"
 			>
-				<Link href="/inbox" aria-label={t("navigation.inbox")}>
+				{/* Home: the launcher. On the home-screen web app there is no browser chrome, so this is the way back. */}
+				<Link href="/" aria-label={t("home.homeLabel", { app: APP_NAME })}>
 					<BrandMark size={26} />
 				</Link>
 			</Button>

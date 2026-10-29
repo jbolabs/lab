@@ -14,7 +14,7 @@ export function CalendarMobileUpcoming() {
 	if (!mobile) return null;
 	return (
 		<div className="flex h-full min-h-0 flex-col">
-			<div className="shrink-0 px-3 pt-4"><SidebarHeader href="/inbox" /></div>
+			<div className="shrink-0 px-3 pt-4"><SidebarHeader href="/" /></div>
 			<div className="min-h-0 flex-1">
 				<UpcomingSidebar drawer refreshKey={mobileOpen} onSelect={(event) => {
 					toggle();
