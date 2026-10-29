@@ -45,8 +45,8 @@ export default async function HomePage() {
 					<img src={iconUrl} height={30} width={30} alt="" className="rounded-[24%] ring-1 ring-foreground/10" />
 					{branding.appName === APP_NAME ? (
 						<span aria-hidden="true" className="font-display text-xl leading-none tracking-[-0.03em]">
-							<span className="font-bold">jbo</span>
-							<span className="font-extralight">{APP_NAME.toLowerCase()}</span>
+							<span className="font-extralight">the </span>
+							<span className="font-bold">lab</span>
 						</span>
 					) : (
 						<span className="font-display text-lg font-semibold tracking-tight">{branding.appName}</span>

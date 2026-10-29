@@ -1,8 +1,8 @@
-<img src="/public/icon-96.png" alt="Lab" width="72" />
+<img src="/public/icon-96.png" alt="The Lab" width="72" />
 
-# Lab
+# The Lab
 
-Lab is my personal mail, calendar, files, booking, and agent workspace at **https://lab.jbolabs.com**. It is a maintained fork of [Mailflare](https://github.com/hieunc229/mailflare), licensed under AGPLv3.
+The Lab is my personal mail, calendar, files, booking, and agent workspace at **https://lab.jbolabs.com**. It is a maintained fork of [Mailflare](https://github.com/hieunc229/mailflare), licensed under AGPLv3.
 
 For this installation, use the [Alchemy deployment guide](docs/jbo-deployment.md). The original Mailflare documentation below is retained for reference; do not use its standalone deploy instructions for the existing installation.
 

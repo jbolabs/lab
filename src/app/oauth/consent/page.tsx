@@ -9,7 +9,7 @@ import { EMAIL_SCOPES } from "@/lib/oauth/config";
 import { ConsentForm } from "@/components/settings/oauth-consent";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Connect an assistant · Lab", robots: { index: false, follow: false }, referrer: "no-referrer" as const };
+export const metadata = { title: "Connect an assistant · The Lab", robots: { index: false, follow: false }, referrer: "no-referrer" as const };
 export default async function ConsentPage({ searchParams }: { searchParams: Promise<{ request?: string }> }) {
 	const env = getEnv();
 	const ticket = (await searchParams).request || "";
