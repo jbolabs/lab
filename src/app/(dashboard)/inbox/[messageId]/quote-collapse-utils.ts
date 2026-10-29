@@ -1,16 +1,27 @@
-export function collapseQuotedEmailHtml(html: string | null, preserveLeadingQuote = false, toggleLabel = "Toggle quoted email"): string | null {
-	if (!html) return null;
+export function collapseQuotedEmailHtml(
+	html: string | null,
+	preserveLeadingQuote = false,
+	toggleLabel = "Toggle quoted email"
+): string | null {
+	if (!html) {
+		return null;
+	}
 	const template = window.document.createElement("template");
 	template.innerHTML = html;
-	const document = { body: template.content, createElement: window.document.createElement.bind(window.document) };
+	const document = {
+		body: template.content,
+		createElement: window.document.createElement.bind(window.document),
+	};
 
 	let skippedLeading = false;
-	for (const blockquote of Array.from(document.body.querySelectorAll("blockquote"))) {
+	for (const blockquote of document.body.querySelectorAll("blockquote")) {
 		const introduction = blockquote.previousElementSibling;
 		if (
 			!(introduction instanceof HTMLElement) ||
-			!/^On\b[\s\S]*\bwrote:\s*$/i.test(introduction.textContent?.trim() ?? "")
-		) continue;
+			!/^On\b[\s\S]*\bwrote:\s*$/iu.test(introduction.textContent?.trim() ?? "")
+		) {
+			continue;
+		}
 		// The outer toggle already folded this quote, so its first attribution
 		// stays open. It need not be the first element: sanitising can leave
 		// a leading <br> or wrapper before it.
@@ -27,10 +38,8 @@ export function collapseQuotedEmailHtml(html: string | null, preserveLeadingQuot
 		const content = document.createElement("div");
 		content.className = "email-quote-content";
 		introduction.parentNode?.insertBefore(details, introduction);
-		content.appendChild(introduction);
-		content.appendChild(blockquote);
-		details.appendChild(summary);
-		details.appendChild(content);
+		content.replaceChildren(introduction, blockquote);
+		details.replaceChildren(summary, content);
 	}
 
 	return template.innerHTML;

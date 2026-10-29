@@ -1,6 +1,6 @@
-export type ProgressiveAvatarImageProps = {
+export interface ProgressiveAvatarImageProps {
 	src: string;
 	alt: string;
 	className?: string;
 	onError?: () => void;
-};
+}

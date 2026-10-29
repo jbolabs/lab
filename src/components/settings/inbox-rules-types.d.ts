@@ -1,9 +1,9 @@
-export type RuleFolder = {
+export interface RuleFolder {
 	id: string;
 	name: string;
-};
+}
 
-export type InboxRule = {
+export interface InboxRule {
 	id: string;
 	pattern: string;
 	matchField: "email" | "content" | "title";
@@ -12,23 +12,23 @@ export type InboxRule = {
 	action: "store" | "forward" | "reject" | "spam" | "trash";
 	folderId: string | null;
 	priority: number;
-};
+}
 
-export type InboxRuleInput = {
+export interface InboxRuleInput {
 	mailboxId: string;
 	matchField: "email" | "content" | "title";
 	matchOperator: "contains" | "exact";
 	matchValue: string;
 	destination: string;
 	priority: number;
-};
+}
 
-export type InboxRulesResponse = {
+export interface InboxRulesResponse {
 	rules: InboxRule[];
 	error?: string;
-};
+}
 
-export type RuleFoldersResponse = {
+export interface RuleFoldersResponse {
 	folders: RuleFolder[];
 	error?: string;
-};
+}

@@ -1,44 +1,63 @@
-import type { TranslationKey } from "@/lib/i18n/types";
-import { defaultTranslator, type Translator } from "@/lib/i18n/utils";
 import { authFetch } from "@/lib/auth/client";
-import type { DnsAuthRecord, DnsAuthStatus, DomainPreflightResponse } from "./types";
+import type { TranslationKey } from "@/lib/i18n/types";
+import { defaultTranslator } from "@/lib/i18n/utils";
+import type { Translator } from "@/lib/i18n/utils";
+
+import type {
+	DnsAuthRecord,
+	DnsAuthStatus,
+	DomainPreflightResponse,
+} from "./types";
 
 export const dnsAuthRecords: DnsAuthRecord[] = ["mx", "spf", "dkim", "dmarc"];
 
 export const dnsAuthDescriptions = {
-	mx: "dns.mx",
-	spf: "dns.spf",
 	dkim: "dns.dkim",
 	dmarc: "dns.dmarc",
+	mx: "dns.mx",
+	spf: "dns.spf",
 } satisfies Record<DnsAuthRecord, TranslationKey>;
 
-export function getDnsAuthStatusLabel(status: DnsAuthStatus, t: Translator = defaultTranslator): string {
+export function getDnsAuthStatusLabel(
+	status: DnsAuthStatus,
+	t: Translator = defaultTranslator
+): string {
 	switch (status) {
-		case "ok":
+		case "ok": {
 			return t("dns.found");
-		case "missing":
+		}
+		case "missing": {
 			return t("dns.missing");
-		default:
+		}
+		default: {
 			return t("dns.notVerified");
+		}
 	}
 }
 
-export function getDnsAuthItemClass(status: DnsAuthStatus): string {
+export function getDnsAuthBadgeVariant(
+	status: DnsAuthStatus
+): "success" | "destructive-soft" | "secondary" {
 	switch (status) {
-		case "ok":
-			return "bg-green-50 text-green-800";
-		case "missing":
-			return "bg-red-50 text-red-800";
-		default:
-			return "bg-muted text-muted-foreground";
+		case "ok": {
+			return "success";
+		}
+		case "missing": {
+			return "destructive-soft";
+		}
+		default: {
+			return "secondary";
+		}
 	}
 }
 
-export async function checkDomain(hostname: string): Promise<DomainPreflightResponse> {
+export async function checkDomain(
+	hostname: string
+): Promise<DomainPreflightResponse> {
 	const response = await authFetch("/api/domains/check", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ hostname }),
+		headers: { "Content-Type": "application/json" },
+		method: "POST",
 	});
 	const data = (await response.json()) as Omit<DomainPreflightResponse, "ok">;
 	return { ok: response.ok, ...data };

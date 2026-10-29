@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { CircleX, Database } from "lucide-react";
+import { useEffect, useState } from "react";
+
 import { useLanguage } from "@/components/language-provider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { applyDatabaseMigrations, getMigrationStatus } from "./database-migrations-notice-utils";
+import { withCleanup } from "@/lib/async-cleanup";
+
 import type { MigrationStatusResponse } from "./database-migrations-notice-types";
+import {
+	applyDatabaseMigrations,
+	getMigrationStatus,
+} from "./database-migrations-notice-utils";
 
 /** Shown only when the database schema needs an operator: pending migrations, or ones this release does not know. */
 export function DatabaseMigrationsNotice() {
@@ -19,21 +25,44 @@ export function DatabaseMigrationsNotice() {
 	useEffect(() => {
 		let active = true;
 		getMigrationStatus()
-			.then((next) => { if (active) setStatus(next); })
-			.catch((failure) => { if (active) setError(failure instanceof Error ? failure.message : t("update.migrationCheckFailed")); });
-		return () => { active = false; };
-	}, []);
+			.then((loadedState) => {
+				if (active) {
+					setStatus(loadedState);
+				}
+
+				return null;
+			})
+			.catch((error_) => {
+				if (active) {
+					setError(
+						error_ instanceof Error
+							? error_.message
+							: t("update.migrationCheckFailed")
+					);
+				}
+			});
+		return () => {
+			active = false;
+		};
+	}, [t]);
 
 	async function migrate() {
 		setError("");
 		setIsMigrating(true);
-		try {
-			setStatus(await applyDatabaseMigrations());
-		} catch (failure) {
-			setError(failure instanceof Error ? failure.message : t("update.migrateFailed"));
-		} finally {
-			setIsMigrating(false);
-		}
+		return await withCleanup(
+			async () => {
+				try {
+					setStatus(await applyDatabaseMigrations());
+				} catch (error_) {
+					setError(
+						error_ instanceof Error ? error_.message : t("update.migrateFailed")
+					);
+				}
+			},
+			() => {
+				setIsMigrating(false);
+			}
+		);
 	}
 
 	if (error) {
@@ -52,15 +81,19 @@ export function DatabaseMigrationsNotice() {
 			</Alert>
 		);
 	}
-	if (!status?.pending.length) return null;
+	if (!status?.pending.length) {
+		return null;
+	}
 	return (
 		<Alert>
 			<Database />
-			<AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+			<AlertDescription className="flex flex-col flex-wrap items-center justify-between gap-3">
 				{t("update.pendingMigrations", { count: status.pending.length })}
 				<Button size="sm" onClick={migrate} disabled={isMigrating}>
 					{isMigrating && <Spinner data-icon="inline-start" />}
-					{isMigrating ? t("update.updatingDatabase") : t("update.updateDatabase")}
+					{isMigrating
+						? t("update.updatingDatabase")
+						: t("update.updateDatabase")}
 				</Button>
 			</AlertDescription>
 		</Alert>

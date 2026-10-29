@@ -1,16 +1,16 @@
-export type Domain = {
+export interface Domain {
 	id: string;
 	hostname: string;
 	status?: string;
-};
+}
 
-export type AccountAliasDraft = {
+export interface AccountAliasDraft {
 	id: string;
 	domainId: string;
 	localPart: string;
-};
+}
 
-export type AccountAliasesProps = {
+export interface AccountAliasesProps {
 	domains: Domain[];
 	domainId: string;
 	username: string;
@@ -18,9 +18,9 @@ export type AccountAliasesProps = {
 	onUseAllDomainsChange: (value: boolean) => void;
 	aliases: AccountAliasDraft[];
 	onAliasesChange: (aliases: AccountAliasDraft[]) => void;
-};
+}
 
-export type Account = {
+export interface Account {
 	id: string;
 	email: string;
 	name: string;
@@ -38,10 +38,10 @@ export type Account = {
 	mailboxId?: string | null;
 	localPart?: string | null;
 	hostname?: string | null;
-};
+}
 
-export type AccountResponse = {
+export interface AccountResponse {
 	accounts?: Account[];
 	account?: Account;
 	error?: string;
-};
+}

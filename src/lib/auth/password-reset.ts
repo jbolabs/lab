@@ -1,14 +1,15 @@
 import { and, eq, gt, isNull } from "drizzle-orm";
+
 import { getDb } from "@/db";
 import { passwordResetTokens, users } from "@/db/schema";
-import { newId } from "@/lib/ids";
 import { hashPassword } from "@/lib/auth/password";
+import { buildPasswordResetEmail } from "@/lib/auth/password-reset-utils";
 import { deleteUserSessions, hashSessionToken } from "@/lib/auth/session";
 import { getBranding } from "@/lib/branding/service";
 import { sendSystemEmail } from "@/lib/email/system-mail";
-import { createAuditLog } from "@/lib/mailboxes/audit";
-import { buildPasswordResetEmail } from "@/lib/auth/password-reset-utils";
 import type { Translator } from "@/lib/i18n/utils";
+import { newId } from "@/lib/ids";
+import { createAuditLog } from "@/lib/mailboxes/audit";
 
 const TOKEN_MINUTES = 30;
 
@@ -17,26 +18,46 @@ const TOKEN_MINUTES = 30;
  * the account exists or has one: the caller always answers the same way, so
  * the form cannot be used to probe for addresses.
  */
-export async function requestPasswordReset(env: CloudflareEnv, email: string, origin: string, t: Translator): Promise<void> {
+export async function requestPasswordReset(
+	env: CloudflareEnv,
+	email: string,
+	origin: string,
+	t: Translator
+): Promise<void> {
 	const db = getDb(env);
-	const [user] = await db.select().from(users).where(eq(users.email, email.trim().toLowerCase())).limit(1);
-	if (!user || user.disabled || !user.resetEmail) return;
+	const [user] = await db
+		.select()
+		.from(users)
+		.where(eq(users.email, email.trim().toLowerCase()))
+		.limit(1);
+	if (!user || user.disabled || !user.resetEmail) {
+		return;
+	}
 
 	const token = newId("prt");
 	await db.insert(passwordResetTokens).values({
-		id: newId(),
-		userId: user.id,
-		tokenHash: await hashSessionToken(token),
 		expiresAt: new Date(Date.now() + TOKEN_MINUTES * 60 * 1000),
+		id: newId(),
+		tokenHash: await hashSessionToken(token),
+		userId: user.id,
 	});
 
 	const link = `${origin}/reset-password?token=${encodeURIComponent(token)}`;
 	const { appName } = await getBranding(env);
 	const sent = await sendSystemEmail(env, {
 		to: user.resetEmail,
-		...buildPasswordResetEmail(t, { email: user.email, appName, link, minutes: TOKEN_MINUTES }),
+		...buildPasswordResetEmail(t, {
+			appName,
+			email: user.email,
+			link,
+			minutes: TOKEN_MINUTES,
+		}),
 	});
-	if (!sent) console.warn("Password reset requested but no domain can send mail; link not delivered");
+	if (!sent) {
+		console.warn(
+			"Password reset requested but no domain can send mail; link not delivered"
+		);
+	}
 }
 
 /** Redeem a link: sets the password, burns the token, and signs the user out everywhere. */
@@ -44,7 +65,7 @@ export async function completePasswordReset(
 	env: CloudflareEnv,
 	token: string,
 	newPassword: string,
-	request: Request,
+	request: Request
 ): Promise<{ ok: true } | { ok: false; error: string }> {
 	const db = getDb(env);
 	const [row] = await db
@@ -54,20 +75,33 @@ export async function completePasswordReset(
 			and(
 				eq(passwordResetTokens.tokenHash, await hashSessionToken(token)),
 				gt(passwordResetTokens.expiresAt, new Date()),
-				isNull(passwordResetTokens.usedAt),
-			),
+				isNull(passwordResetTokens.usedAt)
+			)
 		)
 		.limit(1);
-	if (!row) return { ok: false, error: "This reset link is invalid or has expired. Request a new one." };
+	if (!row) {
+		return {
+			error: "This reset link is invalid or has expired. Request a new one.",
+			ok: false,
+		};
+	}
 
-	await db.update(users).set({ passwordHash: hashPassword(newPassword) }).where(eq(users.id, row.userId));
-	await db.update(passwordResetTokens).set({ usedAt: new Date() }).where(eq(passwordResetTokens.id, row.id));
+	await db
+		.update(users)
+		.set({ passwordHash: hashPassword(newPassword) })
+		.where(eq(users.id, row.userId));
+	await db
+		.update(passwordResetTokens)
+		.set({ usedAt: new Date() })
+		.where(eq(passwordResetTokens.id, row.id));
 	await deleteUserSessions(env, row.userId);
 	await createAuditLog(env, {
-		actorUserId: row.userId,
-		targetUserId: row.userId,
 		action: "auth.password_reset",
-		metadata: { ipAddress: request.headers.get("cf-connecting-ip") ?? "unknown" },
+		actorUserId: row.userId,
+		metadata: {
+			ipAddress: request.headers.get("cf-connecting-ip") ?? "unknown",
+		},
+		targetUserId: row.userId,
 	});
 	return { ok: true };
 }

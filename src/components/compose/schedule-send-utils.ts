@@ -1,5 +1,13 @@
+import {
+	dateFromZonedFields,
+	formatUserDate,
+	formatUserDateTimeLocal,
+	getUserTimeZone,
+	parseUserDateTimeLocal,
+	zonedDateFields,
+} from "@/lib/time/utils";
+
 import type { ScheduleSendOption } from "./schedule-send-types";
-import { dateFromZonedFields, formatUserDate, formatUserDateTimeLocal, getUserTimeZone, parseUserDateTimeLocal, zonedDateFields } from "@/lib/time/utils";
 
 function atTime(date: Date, hours: number): Date {
 	const fields = new Date(date);
@@ -13,11 +21,19 @@ export function getScheduleSendOptions(now = new Date()): ScheduleSendOption[] {
 	const tomorrow = new Date(today);
 	tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 	const monday = new Date(today);
-	const daysUntilMonday = ((8 - monday.getUTCDay()) % 7) || 7;
+	const daysUntilMonday = (8 - monday.getUTCDay()) % 7 || 7;
 	monday.setUTCDate(monday.getUTCDate() + daysUntilMonday);
 
 	return [
-		{ labelKey: zonedDateFields(laterToday, getUserTimeZone()).toISOString().slice(0, 10) === today.toISOString().slice(0, 10) ? "schedule.laterToday" : "schedule.in3Hours", value: laterToday },
+		{
+			labelKey:
+				zonedDateFields(laterToday, getUserTimeZone())
+					.toISOString()
+					.slice(0, 10) === today.toISOString().slice(0, 10)
+					? "schedule.laterToday"
+					: "schedule.in3Hours",
+			value: laterToday,
+		},
 		{ labelKey: "schedule.tomorrowMorning", value: atTime(tomorrow, 8) },
 		{ labelKey: "schedule.mondayMorning", value: atTime(monday, 8) },
 	];
@@ -25,11 +41,11 @@ export function getScheduleSendOptions(now = new Date()): ScheduleSendOption[] {
 
 export function formatScheduledSend(value: Date): string {
 	return formatUserDate(value, {
-		weekday: "short",
-		month: "short",
 		day: "numeric",
 		hour: "numeric",
 		minute: "2-digit",
+		month: "short",
+		weekday: "short",
 	});
 }
 

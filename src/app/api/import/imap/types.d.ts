@@ -1,4 +1,4 @@
-export type ImapImportRequest = {
+export interface ImapImportRequest {
 	mailboxId?: string;
 	host?: string;
 	port?: number;
@@ -9,4 +9,4 @@ export type ImapImportRequest = {
 	limit?: number;
 	offset?: number;
 	destination?: string;
-};
+}

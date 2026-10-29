@@ -1,1 +1,3 @@
-export type DriveItemParams = { params: Promise<{ id: string }> };
+export interface DriveItemParams {
+	params: Promise<{ id: string }>;
+}

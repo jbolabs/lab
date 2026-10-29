@@ -6,16 +6,29 @@ import type { DomainDnsView } from "@/lib/domains/service";
  * cannot read their DNS; the records are what the SMTP listener and an
  * SMTP relay expect.
  */
-export async function getManualDomainDns(env: CloudflareEnv, hostname: string): Promise<DomainDnsView> {
+export async function getManualDomainDns(
+	env: CloudflareEnv,
+	hostname: string
+): Promise<DomainDnsView> {
 	const mailHost = process.env.MAIL_HOSTNAME?.trim() || `mail.${hostname}`;
 	const records = [
-		{ type: "MX", name: hostname, content: `10 ${mailHost}`, ttl: 3600 },
-		{ type: "TXT", name: hostname, content: `v=spf1 a:${mailHost} ~all`, ttl: 3600 },
-		{ type: "TXT", name: `_dmarc.${hostname}`, content: "v=DMARC1; p=none", ttl: 3600 },
+		{ content: `10 ${mailHost}`, name: hostname, ttl: 3600, type: "MX" },
+		{
+			content: `v=spf1 a:${mailHost} ~all`,
+			name: hostname,
+			ttl: 3600,
+			type: "TXT",
+		},
+		{
+			content: "v=DMARC1; p=none",
+			name: `_dmarc.${hostname}`,
+			ttl: 3600,
+			type: "TXT",
+		},
 	];
 	const mailer = env.EMAIL as unknown as { configured?: boolean };
-	return {
-		routing: { records: [], missing: records, status: "manual" },
+	return await {
+		routing: { missing: records, records: [], status: "manual" },
 		sending: [],
 		sendingEnabled: mailer?.configured === true,
 	};

@@ -1,10 +1,10 @@
-export type SetupRequirementCheck = {
+export interface SetupRequirementCheck {
 	key: string;
 	configured: boolean;
 	message: string;
-};
+}
 
-export type SetupPreparationResult = {
+export interface SetupPreparationResult {
 	checks: SetupRequirementCheck[];
 	migrated: boolean;
-};
+}

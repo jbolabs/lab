@@ -1,16 +1,25 @@
 import type { JmapMethodError } from "./types";
 
 export class JmapError extends Error {
+	override name = "JmapError";
+	public readonly type: string;
+	public readonly extra: Record<string, unknown>;
 	constructor(
-		public readonly type: string,
+		type: string,
 		description?: string,
-		public readonly extra: Record<string, unknown> = {},
+		extra: Record<string, unknown> = {}
 	) {
 		super(description ?? type);
+		this.type = type;
+		this.extra = extra;
 	}
 
 	toMethodError(): JmapMethodError {
-		return { type: this.type, ...(this.message !== this.type ? { description: this.message } : {}), ...this.extra };
+		return {
+			type: this.type,
+			...(this.message === this.type ? {} : { description: this.message }),
+			...this.extra,
+		};
 	}
 }
 
@@ -23,19 +32,32 @@ export function unsupportedFilter(description: string): JmapError {
 	return new JmapError("unsupportedFilter", description);
 }
 
-/** RFC 7807 problem document for request-level failures. */
-export function problemResponse(type: string, status: number, detail: string, extra: Record<string, unknown> = {}): Response {
-	return new Response(JSON.stringify({ type: `urn:ietf:params:jmap:error:${type}`, status, detail, ...extra }), {
-		status,
-		headers: { "Content-Type": "application/problem+json", ...corsHeaders() },
-	});
-}
-
 export function corsHeaders(): Record<string, string> {
 	return {
-		"Access-Control-Allow-Origin": "*",
-		"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 		"Access-Control-Allow-Headers": "Authorization, Content-Type",
+		"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+		"Access-Control-Allow-Origin": "*",
 		"Access-Control-Max-Age": "86400",
 	};
+}
+
+/** RFC 7807 problem document for request-level failures. */
+export function problemResponse(
+	type: string,
+	status: number,
+	detail: string,
+	extra: Record<string, unknown> = {}
+): Response {
+	return Response.json(
+		{
+			detail,
+			status,
+			type: `urn:ietf:params:jmap:error:${type}`,
+			...extra,
+		},
+		{
+			headers: { "Content-Type": "application/problem+json", ...corsHeaders() },
+			status,
+		}
+	);
 }

@@ -9,7 +9,11 @@ const MAX_IMPORT_MESSAGES = 100;
 
 function isMboxFile(filename: string, type: string): boolean {
 	const name = filename.toLowerCase();
-	return name.endsWith(".mbox") || name.endsWith(".mbx") || type === "application/mbox";
+	return (
+		name.endsWith(".mbox") ||
+		name.endsWith(".mbx") ||
+		type === "application/mbox"
+	);
 }
 
 function isEmlFile(filename: string, type: string): boolean {
@@ -19,7 +23,10 @@ function isEmlFile(filename: string, type: string): boolean {
 
 function stringToArrayBuffer(value: string): ArrayBuffer {
 	const bytes = new TextEncoder().encode(value);
-	return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+	return bytes.buffer.slice(
+		bytes.byteOffset,
+		bytes.byteOffset + bytes.byteLength
+	) as ArrayBuffer;
 }
 
 export async function parseImportForm(request: Request): Promise<{
@@ -30,25 +37,34 @@ export async function parseImportForm(request: Request): Promise<{
 	const form = await readFormDataBody(request, MAX_IMPORT_REQUEST_SIZE);
 	const mailboxId = String(form.get("mailboxId") ?? "");
 	const destination = parseImportDestination(form.get("destination"));
-	const files = form.getAll("files").filter((value): value is File => value instanceof File && value.size > 0);
+	const files = form
+		.getAll("files")
+		.filter((value): value is File => value instanceof File && value.size > 0);
 	const messages: ImportMessageInput[] = [];
 
-	for (const file of files) {
+	const contents = await Promise.all(
+		files.map(async (file) => ({ file, raw: await file.arrayBuffer() }))
+	);
+	for (const { file, raw } of contents) {
 		if (isMboxFile(file.name, file.type)) {
-			const content = await file.text();
-			for (const [index, raw] of splitMboxMessages(content).entries()) {
+			const content = new TextDecoder().decode(raw);
+			for (const [index, message] of splitMboxMessages(content).entries()) {
 				messages.push({
 					filename: `${file.name}#${index + 1}`,
-					raw: stringToArrayBuffer(raw),
+					raw: stringToArrayBuffer(message),
 				});
 			}
 			continue;
 		}
 
 		if (isEmlFile(file.name, file.type) || file.type === "") {
-			messages.push({ filename: file.name, raw: await file.arrayBuffer() });
+			messages.push({ filename: file.name, raw });
 		}
 	}
 
-	return { mailboxId, destination, messages: messages.slice(0, MAX_IMPORT_MESSAGES) };
+	return {
+		destination,
+		mailboxId,
+		messages: messages.slice(0, MAX_IMPORT_MESSAGES),
+	};
 }

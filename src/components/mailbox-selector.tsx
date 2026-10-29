@@ -1,26 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import {
-	DropdownMenu,
-	DropdownMenuTrigger,
-	DropdownMenuContent,
-	DropdownMenuGroup,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import {
-	Drawer,
-	DrawerTrigger,
-	DrawerContent,
-	DrawerHeader,
-	DrawerTitle,
-} from "@/components/ui/drawer";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useRouter } from "next/navigation";
 import {
 	CalendarDays,
 	HardDrive,
@@ -31,24 +10,46 @@ import {
 	UserPlus,
 	UsersRound,
 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useLanguage } from "@/components/language-provider";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
-
 import { isIdentityMailbox } from "@/components/mailbox-provider-utils";
-import { useMessageCounts } from "@/hooks/use-message-counts";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Drawer,
+	DrawerTrigger,
+	DrawerContent,
+	DrawerHeader,
+	DrawerTitle,
+} from "@/components/ui/drawer";
+import {
+	DropdownMenu,
+	DropdownMenuTrigger,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
 	clearCurrentUserCache,
 	fetchCurrentUser,
 } from "@/hooks/use-current-user";
-
-import { logoutClientSession } from "@/lib/auth/logout";
+import { useMessageCounts } from "@/hooks/use-message-counts";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
 	fetchBrowserAccounts,
 	switchBrowserAccount,
-	type BrowserAccount,
 } from "@/lib/auth/accounts-client";
+import type { BrowserAccount } from "@/lib/auth/accounts-client";
+import { logoutClientSession } from "@/lib/auth/logout";
+import { MAILBOX_AVATAR_CHANGED_EVENT } from "@/lib/mailboxes/avatar-client";
+import type { MailboxAvatarChangedDetail } from "@/lib/mailboxes/avatar-client-types";
 import {
 	PROFILE_AVATAR_CHANGED_EVENT,
 	getProfileAvatarUrl,
@@ -58,9 +59,6 @@ import type {
 	ProfileAvatarChangedDetail,
 	ProfileNameChangedDetail,
 } from "@/lib/profile/types";
-import { MAILBOX_AVATAR_CHANGED_EVENT } from "@/lib/mailboxes/avatar-client";
-import type { MailboxAvatarChangedDetail } from "@/lib/mailboxes/avatar-client-types";
-import { Skeleton } from "@/components/ui/skeleton";
 
 import type {
 	AccountAvatarProps,
@@ -82,7 +80,7 @@ function AccountAvatar({
 }: AccountAvatarProps) {
 	const { t } = useLanguage();
 	return (
-		<Avatar className={size === "large" ? "size-12" : "size-8"}>
+		<Avatar size={size === "large" ? "lg" : "sm"}>
 			{hasAvatar && (
 				<AvatarImage
 					src={avatarUrl}
@@ -102,7 +100,7 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
 	const [user, setUser] = useState<MailboxSelectorUser | null>(
-		initialUser ?? null,
+		initialUser ?? null
 	);
 	const [hasAvatar, setHasAvatar] = useState(!!initialUser?.hasAvatar);
 	const [avatarUrl, setAvatarUrl] = useState("/api/profile/avatar");
@@ -113,17 +111,23 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 	const [browserAccounts, setBrowserAccounts] = useState<BrowserAccount[]>([]);
 
 	useEffect(() => {
-		if (!open) return;
+		if (!open) {
+			return;
+		}
 		let active = true;
 		void fetchBrowserAccounts().then((accounts) => {
-			if (active) setBrowserAccounts(accounts);
+			if (active) {
+				setBrowserAccounts(accounts);
+			}
+
+			return null;
 		});
 		return () => {
 			active = false;
 		};
 	}, [open]);
 	const otherAccounts = browserAccounts.filter(
-		(account) => !account.active && account.userId !== user?.id,
+		(account) => !account.active && account.userId !== user?.id
 	);
 
 	const { counts } = useMessageCounts(null, open);
@@ -131,13 +135,19 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 	useEffect(() => {
 		let active = true;
 		void fetchCurrentUser()
-			.then((user) => {
-				if (!active) return;
-				setUser(user);
-				setHasAvatar(!!user?.hasAvatar);
+			.then((currentUser) => {
+				if (!active) {
+					return null;
+				}
+				setUser(currentUser);
+				setHasAvatar(!!currentUser?.hasAvatar);
+
+				return null;
 			})
 			.catch(() => {
-				if (active) setUser(null);
+				if (active) {
+					setUser(null);
+				}
 			});
 		return () => {
 			active = false;
@@ -147,7 +157,7 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 	useEffect(() => {
 		function onAvatarChanged(event: Event) {
 			clearCurrentUserCache();
-			const detail = (event as CustomEvent<ProfileAvatarChangedDetail>).detail;
+			const { detail } = event as CustomEvent<ProfileAvatarChangedDetail>;
 			setAvatarUrl(detail?.url ?? getProfileAvatarUrl());
 			setHasAvatar(true);
 			setMailboxAvatarUrls((current) => {
@@ -182,8 +192,10 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 
 	useEffect(() => {
 		function onMailboxAvatarChanged(event: Event) {
-			const detail = (event as CustomEvent<MailboxAvatarChangedDetail>).detail;
-			if (!detail?.mailboxId || !detail.url) return;
+			const { detail } = event as CustomEvent<MailboxAvatarChangedDetail>;
+			if (!detail?.mailboxId || !detail.url) {
+				return;
+			}
 			setMailboxAvatarUrls((current) => ({
 				...current,
 				[detail.mailboxId]: detail.url,
@@ -192,12 +204,12 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 
 		window.addEventListener(
 			MAILBOX_AVATAR_CHANGED_EVENT,
-			onMailboxAvatarChanged,
+			onMailboxAvatarChanged
 		);
 		return () =>
 			window.removeEventListener(
 				MAILBOX_AVATAR_CHANGED_EVENT,
-				onMailboxAvatarChanged,
+				onMailboxAvatarChanged
 			);
 	}, []);
 
@@ -222,7 +234,7 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 			`/api/mailboxes/${selectedMailbox.id}/avatar`)
 		: avatarUrl;
 	const otherMailboxes = mailboxes.filter(
-		(mailbox) => mailbox.id !== selectedMailbox?.id,
+		(mailbox) => mailbox.id !== selectedMailbox?.id
 	);
 
 	async function logout() {
@@ -246,8 +258,8 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 	const trigger = (
 		<Button
 			variant="ghost"
-			size="icon"
-			className="size-11 shrink-0"
+			size="icon-lg"
+			className="shrink-0"
 			aria-label={t("account.openMenu")}
 			aria-expanded={open}
 		>
@@ -256,20 +268,22 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 				hasAvatar={selectedHasAvatar}
 				avatarUrl={selectedAvatarUrl}
 				onAvatarError={() => {
-					if (!selectedMailbox) setHasAvatar(false);
+					if (!selectedMailbox) {
+						setHasAvatar(false);
+					}
 				}}
 			/>
 		</Button>
 	);
 	const destinations = [
-		{ href: "/inbox", label: t("navigation.inbox"), icon: Inbox },
-		{ href: "/calendar", label: t("account.calendar"), icon: CalendarDays },
-		{ href: "/drive", label: t("account.drive"), icon: HardDrive },
-		{ href: "/settings/account", label: t("account.settings"), icon: Settings },
+		{ href: "/inbox", icon: Inbox, label: t("navigation.inbox") },
+		{ href: "/calendar", icon: CalendarDays, label: t("account.calendar") },
+		{ href: "/drive", icon: HardDrive, label: t("account.drive") },
+		{ href: "/settings/account", icon: Settings, label: t("account.settings") },
 		...(user?.role === "admin"
-			? [{ href: "/admin", label: t("account.admin"), icon: ShieldCheck }]
+			? [{ href: "/admin", icon: ShieldCheck, label: t("account.admin") }]
 			: []),
-		{ href: "/login?add=1", label: t("account.addAnother"), icon: UserPlus },
+		{ href: "/login?add=1", icon: UserPlus, label: t("account.addAnother") },
 	];
 	// Both surfaces share actions; Radix owns desktop menu keyboard navigation, Vaul owns phone focus and dismissal.
 	const actions = (phone: boolean) => (
@@ -280,7 +294,7 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 						key={href}
 						variant="ghost"
 						asChild
-						className="min-h-11 w-full justify-start"
+						className="w-full justify-start"
 					>
 						<Link href={href} onClick={() => setOpen(false)}>
 							<Icon data-icon="inline-start" />
@@ -294,19 +308,19 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 							{label}
 						</Link>
 					</DropdownMenuItem>
-				),
+				)
 			)}
 			{phone ? (
 				<Button
 					variant="ghost"
 					onClick={logout}
-					className="min-h-11 w-full justify-start"
+					className="w-full justify-start"
 				>
 					<LogOut data-icon="inline-start" />
 					{t("account.signOut")}
 				</Button>
 			) : (
-				<DropdownMenuItem onSelect={() => void logout()}>
+				<DropdownMenuItem onSelect={() => logout()}>
 					<LogOut />
 					{t("account.signOut")}
 				</DropdownMenuItem>
@@ -357,10 +371,13 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 					<Button
 						key={mailbox.id}
 						variant="ghost"
-						className="h-auto min-h-11 w-full justify-start py-2"
+						size="none"
+						className="w-full justify-start"
 						onClick={select}
 					>
-						{content}
+						<span className="flex w-full items-center gap-3 px-3 py-2">
+							{content}
+						</span>
 					</Button>
 				) : (
 					<DropdownMenuItem key={mailbox.id} onSelect={select}>
@@ -393,15 +410,18 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 					<Button
 						key={account.userId}
 						variant="ghost"
-						className="h-auto min-h-11 w-full justify-start py-2"
-						onClick={() => void switchAccount(account.userId)}
+						size="none"
+						className="w-full justify-start"
+						onClick={() => switchAccount(account.userId)}
 					>
-						{content}
+						<span className="flex w-full items-center gap-3 px-3 py-2">
+							{content}
+						</span>
 					</Button>
 				) : (
 					<DropdownMenuItem
 						key={account.userId}
-						onSelect={() => void switchAccount(account.userId)}
+						onSelect={() => switchAccount(account.userId)}
 					>
 						{content}
 					</DropdownMenuItem>
@@ -425,7 +445,7 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 			</div>
 		</div>
 	);
-	if (mobile)
+	if (mobile) {
 		return (
 			<Drawer open={open} onOpenChange={setOpen}>
 				<DrawerTrigger asChild>{trigger}</DrawerTrigger>
@@ -433,7 +453,7 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 					<DrawerHeader>
 						<DrawerTitle>{t("account.openMenu")}</DrawerTitle>
 					</DrawerHeader>
-					<div className="max-h-[75dvh] overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+					<div className="max-h-[75dvh] overflow-y-auto overscroll-contain px-4 pb-safe-add-4">
 						{identity}
 						{accounts(true)}
 						{actions(true)}
@@ -441,6 +461,7 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 				</DrawerContent>
 			</Drawer>
 		);
+	}
 	return (
 		<DropdownMenu open={open} onOpenChange={setOpen}>
 			<DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>

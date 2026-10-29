@@ -1,10 +1,11 @@
-import type { TranslationKey } from "@/lib/i18n/types";
 import type { LucideIcon } from "lucide-react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import type { Message, MessageFolder } from "@/hooks/types";
-import type { BulkMessageAction } from "@/app/api/messages/bulk/types";
 
-export type MessageFolderConfig = {
+import type { BulkMessageAction } from "@/app/api/messages/bulk/types";
+import type { Message, MessageFolder } from "@/hooks/types";
+import type { TranslationKey } from "@/lib/i18n/types";
+
+export interface MessageFolderConfig {
 	folder: MessageFolder;
 	title: string;
 	/** Translation keys for built-in folders; custom folders show `title` as typed by the user. */
@@ -17,9 +18,9 @@ export type MessageFolderConfig = {
 	headerIcons?: LucideIcon[];
 	badgeVariant?: "default" | "secondary" | "outline";
 	showRowBadge?: boolean;
-};
+}
 
-export type MessageListRowProps = {
+export interface MessageListRowProps {
 	message: Message;
 	config: MessageFolderConfig;
 	selected: boolean;
@@ -27,40 +28,48 @@ export type MessageListRowProps = {
 	compact?: boolean;
 	currentAccountName?: string;
 	onSelectedChange: (messageId: string, selected: boolean) => void;
-	onMessageAction: (messageId: string, action: RowMessageAction) => Promise<void>;
+	onMessageAction: (
+		messageId: string,
+		action: RowMessageAction
+	) => Promise<void>;
 	// While anything is selected on a phone, tapping a row toggles it instead of opening it.
 	selectionMode?: boolean;
 	dragMessageIds: string[];
-};
+}
 
-export type RowMessageAction = "archive" | "trash" | "read" | "unread" | "inbox";
+export type RowMessageAction =
+	| "archive"
+	| "trash"
+	| "read"
+	| "unread"
+	| "inbox";
 
-export type MessageListRowActionsProps = {
+export interface MessageListRowActionsProps {
 	message: Message;
 	onAction: (action: RowMessageAction) => Promise<void>;
-};
+}
 
-export type MessageFolderPageProps = {
+export interface MessageFolderPageProps {
 	config: MessageFolderConfig;
 	compact?: boolean;
 	selectedMessageId?: string;
 	selection?: MessageSelectionControl;
-};
+}
 
-export type MessageSplitLayoutProps = {
+export interface MessageSplitLayoutProps {
 	children: ReactNode;
 	config: MessageFolderConfig;
-};
+}
 
-export type MessageListVisibility = {
+export interface MessageListVisibility {
 	visible: boolean;
 	toggle: () => void;
 	singleColumn: boolean;
 	backHref: string;
 	backLabel: string;
-};
+}
 
-export type BulkMessageToolbarProps = {
+export interface BulkMessageToolbarProps {
 	selectedCount: number;
 	hasUnreadSelection: boolean;
 	hideSelectedCount?: boolean;
@@ -69,32 +78,32 @@ export type BulkMessageToolbarProps = {
 	pending: boolean;
 	/** Folder being listed; archived, spam and trash offer a way back instead of the same move. */
 	folder?: MessageFolder;
-};
+}
 
 export type SelectedMessage = Pick<Message, "id" | "read">;
 
-export type MessageSelectionControl = {
+export interface MessageSelectionControl {
 	selectedMessages: SelectedMessage[];
 	setSelectedMessages: Dispatch<SetStateAction<SelectedMessage[]>>;
-};
+}
 
-export type BulkMessageSelectionPaneProps = {
+export interface BulkMessageSelectionPaneProps {
 	folder?: MessageFolder;
 	selectedMessages: SelectedMessage[];
 	onClearSelection: () => void;
-};
+}
 
-export type PageRange = {
+export interface PageRange {
 	start: number;
 	end: number;
 	total: number;
-};
+}
 
-export type EmailPageTitleInput = {
+export interface EmailPageTitleInput {
 	location: string;
 	total: number;
 	unread: number;
 	emailAddress: string | null;
 	/** Set for the Inbox, which shows only the unread count. */
 	inbox?: boolean;
-};
+}

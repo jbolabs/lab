@@ -1,3 +1,3 @@
-export type SanitizeEmailHtmlOptions = {
+export interface SanitizeEmailHtmlOptions {
 	forOutgoing?: boolean;
-};
+}

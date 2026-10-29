@@ -1,10 +1,10 @@
-export type ProfileFormProps = {
+export interface ProfileFormProps {
 	initialName: string;
 	initialResetEmail: string;
 	email: string;
-};
+}
 
-export type ProfileFormResponse = {
+export interface ProfileFormResponse {
 	user?: {
 		name: string;
 		timeZone: string | null;
@@ -13,9 +13,9 @@ export type ProfileFormResponse = {
 		canForwardEmail: boolean;
 	};
 	error?: unknown;
-};
+}
 
-export type AccountSettingsResponse = {
+export interface AccountSettingsResponse {
 	user?: {
 		id: string;
 		email: string;
@@ -26,37 +26,37 @@ export type AccountSettingsResponse = {
 		canForwardEmail: boolean;
 	};
 	error?: unknown;
-};
+}
 
-export type MfaStatusResponse = {
+export interface MfaStatusResponse {
 	enabled: boolean;
 	confirmedAt: string | null;
 	recoveryCodesLeft: number;
 	error?: unknown;
-};
+}
 
-export type MfaEnrollmentResponse = {
+export interface MfaEnrollmentResponse {
 	secret?: string;
 	otpauthUrl?: string;
 	qrSvg?: string;
 	error?: unknown;
-};
+}
 
-export type MfaRecoveryCodesResponse = {
+export interface MfaRecoveryCodesResponse {
 	recoveryCodes?: string[];
 	error?: unknown;
-};
+}
 
-export type ForwardingEmailFormProps = {
+export interface ForwardingEmailFormProps {
 	initialForwardingEmail: string;
-};
+}
 
-export type ForwardingEmailResponse = {
+export interface ForwardingEmailResponse {
 	forwardingEmail?: string | null;
 	error?: unknown;
-};
+}
 
-export type MailboxSignatureResponse = {
+export interface MailboxSignatureResponse {
 	mailbox?: {
 		id: string;
 		localPart: string;
@@ -67,45 +67,45 @@ export type MailboxSignatureResponse = {
 		isPrimary?: boolean;
 	};
 	error?: unknown;
-};
+}
 
-export type MailboxAutoReplySettings = {
+export interface MailboxAutoReplySettings {
 	enabled: boolean;
 	subject: string;
 	body: string;
-};
+}
 
-export type MailboxAutoReplyResponse = {
+export interface MailboxAutoReplyResponse {
 	mailbox?: {
 		autoReplyEnabled: boolean;
 		autoReplySubject: string;
 		autoReplyBody: string;
 	};
 	error?: unknown;
-};
+}
 
-export type ChangePasswordResponse = {
+export interface ChangePasswordResponse {
 	error?: unknown;
-};
+}
 
-export type ProfileAvatarSessionResponse = {
+export interface ProfileAvatarSessionResponse {
 	user?: {
 		hasAvatar?: boolean;
 	};
-};
+}
 
-export type ProfileAvatarUploadResponse = {
+export interface ProfileAvatarUploadResponse {
 	error?: string;
-};
+}
 
-export type ProfileAvatarFormProps = {
+export interface ProfileAvatarFormProps {
 	mailboxId?: string;
 	initialHasAvatar?: boolean;
 	name?: string;
 	colorSeed?: string;
-};
+}
 
-export type CurrentMailboxFormResponse = {
+export interface CurrentMailboxFormResponse {
 	mailbox?: {
 		id: string;
 		domainId: string;
@@ -117,4 +117,4 @@ export type CurrentMailboxFormResponse = {
 		isPrimary?: boolean;
 	};
 	error?: unknown;
-};
+}

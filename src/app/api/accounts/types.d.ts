@@ -1,4 +1,8 @@
-export type AccountListItem = {
+import type { output } from "zod";
+
+import type { createUserAccountSchema } from "@/lib/validators";
+
+export interface AccountListItem {
 	id: string;
 	email: string;
 	name: string;
@@ -10,18 +14,18 @@ export type AccountListItem = {
 	mailboxId: string | null;
 	localPart: string | null;
 	hostname: string | null;
-};
+}
 
-export type CreateAccountResult = {
+export interface CreateAccountResult {
 	id?: string;
 	email?: string;
 	mailboxId?: string;
 	error?: unknown;
-};
+}
 
-export type CreateUserAccountInput = import("zod").output<typeof import("@/lib/validators").createUserAccountSchema>;
+export type CreateUserAccountInput = output<typeof createUserAccountSchema>;
 
-export type AccountListResponse = {
+export interface AccountListResponse {
 	accounts?: AccountListItem[];
 	error?: string;
-};
+}

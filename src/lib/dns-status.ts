@@ -1,9 +1,13 @@
 import type { CfDnsRecord } from "@/lib/cloudflare-api";
-import type { DnsAuthRecord, DnsAuthStatus, DomainDnsAudit } from "@/lib/domains/dns-audit";
+import type {
+	DnsAuthRecord,
+	DnsAuthStatus,
+	DomainDnsAudit,
+} from "@/lib/domains/dns-audit";
 
 export type DnsAuthSummary = Record<DnsAuthRecord, DnsAuthStatus>;
 
-export type DnsStatusSummary = {
+export interface DnsStatusSummary {
 	routing: {
 		configured: boolean;
 		missing: string[];
@@ -13,7 +17,7 @@ export type DnsStatusSummary = {
 		records: string[];
 	};
 	auth?: DnsAuthSummary;
-};
+}
 
 export function summariseDns(
 	routingRecords: CfDnsRecord[],
@@ -21,36 +25,41 @@ export function summariseDns(
 	sendingRecords: CfDnsRecord[],
 	routingEnabled = false,
 	sendingEnabled?: boolean,
-	audit?: DomainDnsAudit,
+	audit?: DomainDnsAudit
 ): DnsStatusSummary {
 	const recordTypes = (
-		type: "routing-records" | "routing-missing" | "sending",
+		type: "routing-records" | "routing-missing" | "sending"
 	) => {
-		const list =
-			type === "routing-records"
-				? routingRecords
-				: type === "routing-missing"
-					? routingMissing
-					: sendingRecords;
-		return Array.from(new Set(list.map((r) => r.type).filter(Boolean))) as string[];
+		const list = (() => {
+			if (type === "routing-records") {
+				return routingRecords;
+			}
+			if (type === "routing-missing") {
+				return routingMissing;
+			}
+			return sendingRecords;
+		})();
+		return [...new Set(list.map((r) => r.type).filter(Boolean))] as string[];
 	};
 
 	return {
+		auth: audit
+			? {
+					dkim: audit.dkim.status,
+					dmarc: audit.dmarc.status,
+					mx: audit.mx.status,
+					spf: audit.spf.status,
+				}
+			: undefined,
 		routing: {
-			configured: routingMissing.length === 0 && (routingRecords.length > 0 || routingEnabled),
+			configured:
+				routingMissing.length === 0 &&
+				(routingRecords.length > 0 || routingEnabled),
 			missing: recordTypes("routing-missing"),
 		},
 		sending: {
 			configured: sendingEnabled ?? sendingRecords.length > 0,
 			records: recordTypes("sending"),
 		},
-		auth: audit
-			? {
-					mx: audit.mx.status,
-					spf: audit.spf.status,
-					dkim: audit.dkim.status,
-					dmarc: audit.dmarc.status,
-				}
-			: undefined,
 	};
 }

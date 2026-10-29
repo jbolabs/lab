@@ -1,8 +1,9 @@
 import { eq } from "drizzle-orm";
+
 import { getDb } from "@/db";
 import { domains, mailboxes, users } from "@/db/schema";
-import { getMailboxAccessLevel } from "@/lib/mailboxes/access";
 import { formatEmailAddress, getEmailAddress } from "@/lib/email/address";
+import { getMailboxAccessLevel } from "@/lib/mailboxes/access";
 import { getMailboxDomainAddresses } from "@/lib/mailboxes/domain-addresses";
 import { resolveMailboxDisplayName } from "@/lib/profile/identity-utils";
 
@@ -12,22 +13,24 @@ export async function getAuthorizedSenderAddress(
 		userId: string;
 		from: string;
 		mailboxId?: string | null;
-	},
+	}
 ): Promise<{ fromAddr: string; mailboxId: string }> {
-	if (!input.mailboxId) throw new Error("Mailbox is required");
+	if (!input.mailboxId) {
+		throw new Error("Mailbox is required");
+	}
 
 	const db = getDb(env);
 	const [mailbox] = await db
 		.select({
-		localPart: mailboxes.localPart,
-		displayName: mailboxes.displayName,
-		type: mailboxes.type,
-		ownerName: users.name,
-		ownerEmail: users.email,
-		hostname: domains.hostname,
-		domainId: mailboxes.domainId,
-		useAllDomains: mailboxes.useAllDomains,
+			displayName: mailboxes.displayName,
+			domainId: mailboxes.domainId,
+			hostname: domains.hostname,
 			id: mailboxes.id,
+			localPart: mailboxes.localPart,
+			ownerEmail: users.email,
+			ownerName: users.name,
+			type: mailboxes.type,
+			useAllDomains: mailboxes.useAllDomains,
 		})
 		.from(mailboxes)
 		.innerJoin(domains, eq(mailboxes.domainId, domains.id))
@@ -35,9 +38,17 @@ export async function getAuthorizedSenderAddress(
 		.where(eq(mailboxes.id, input.mailboxId))
 		.limit(1);
 
-	if (!mailbox) throw new Error("Mailbox not found");
-	const [actor] = await db.select().from(users).where(eq(users.id, input.userId)).limit(1);
-	if (!actor || actor.disabled) throw new Error("Sender account not found");
+	if (!mailbox) {
+		throw new Error("Mailbox not found");
+	}
+	const [actor] = await db
+		.select()
+		.from(users)
+		.where(eq(users.id, input.userId))
+		.limit(1);
+	if (!actor || actor.disabled) {
+		throw new Error("Sender account not found");
+	}
 
 	const access = await getMailboxAccessLevel(db, actor, mailbox.id);
 	if (!access?.canSendOnBehalf) {
@@ -52,7 +63,11 @@ export async function getAuthorizedSenderAddress(
 	const senderAddress = requestedAddress.toLowerCase();
 	// The primary mailbox sends under the account name; every other mailbox
 	// sends under its own.
-	const senderName = resolveMailboxDisplayName(mailbox, mailbox.ownerEmail, mailbox.ownerName);
+	const senderName = resolveMailboxDisplayName(
+		mailbox,
+		mailbox.ownerEmail,
+		mailbox.ownerName
+	);
 
 	if (access.canSendAs) {
 		return {
@@ -63,7 +78,10 @@ export async function getAuthorizedSenderAddress(
 
 	const mailboxName = senderName || senderAddress;
 	return {
-		fromAddr: formatEmailAddress(senderAddress, `${actor.name} on behalf of ${mailboxName}`),
+		fromAddr: formatEmailAddress(
+			senderAddress,
+			`${actor.name} on behalf of ${mailboxName}`
+		),
 		mailboxId: mailbox.id,
 	};
 }

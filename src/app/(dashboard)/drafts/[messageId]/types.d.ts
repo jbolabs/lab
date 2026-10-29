@@ -1,2 +1,6 @@
-export type DraftRoutePageProps = { params: Promise<{ messageId: string }> };
-export type OpenDraftOnRouteProps = { draftId: string };
+export interface DraftRoutePageProps {
+	params: Promise<{ messageId: string }>;
+}
+export interface OpenDraftOnRouteProps {
+	draftId: string;
+}

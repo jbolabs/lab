@@ -1,10 +1,13 @@
 import { eq } from "drizzle-orm";
+
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
 import { isMissingUsersTableError } from "@/lib/auth/setup-utils";
 
 export async function hasAdminAccount(env: CloudflareEnv): Promise<boolean> {
-	if (!env.DB) return false;
+	if (!env.DB) {
+		return false;
+	}
 
 	try {
 		const db = getDb(env);
@@ -16,7 +19,9 @@ export async function hasAdminAccount(env: CloudflareEnv): Promise<boolean> {
 
 		return !!admin;
 	} catch (error) {
-		if (isMissingUsersTableError(error)) return false;
+		if (isMissingUsersTableError(error)) {
+			return false;
+		}
 		throw error;
 	}
 }

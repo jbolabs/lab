@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
-import { getEnv } from "@/lib/cloudflare";
+
 import { authenticateAdminApiKey } from "@/lib/api/admin-auth";
-import { addDomainSchema } from "@/lib/validators";
-import { addDomainForUser, listUserDomains } from "@/lib/domains/service";
+import { getEnv } from "@/lib/cloudflare";
+import type { DnsStatusSummary } from "@/lib/dns-status";
 import { getDomainDnsView, summariseDomainDns } from "@/lib/domains/dns-view";
 import { getDomainProvisioningError } from "@/lib/domains/errors";
-import type { DnsStatusSummary } from "@/lib/dns-status";
+import { addDomainForUser, listUserDomains } from "@/lib/domains/service";
+import { addDomainSchema } from "@/lib/validators";
 
-function ownerId(user: { id: string; canManageMailboxes: boolean; createdByUserId: string | null }) {
-	return user.canManageMailboxes && user.createdByUserId ? user.createdByUserId : user.id;
+function ownerId(user: {
+	id: string;
+	canManageMailboxes: boolean;
+	createdByUserId: string | null;
+}) {
+	return user.canManageMailboxes && user.createdByUserId
+		? user.createdByUserId
+		: user.id;
 }
 
 export async function GET(request: Request) {
@@ -20,18 +27,20 @@ export async function GET(request: Request) {
 
 	const domains = await listUserDomains(env, ownerId(auth.user));
 	const results = await Promise.allSettled(
-		domains.map((domain) => summariseDomainDns(env, domain)),
+		domains.map((domain) => summariseDomainDns(env, domain))
 	);
 
 	const dns: Record<string, DnsStatusSummary> = {};
 	const domainViews = domains.map((domain, index) => {
 		const result = results[index];
-		if (result.status !== "fulfilled") return domain;
+		if (result.status !== "fulfilled") {
+			return domain;
+		}
 		dns[domain.id] = result.value.summary;
 		return { ...domain, sendingEnabled: result.value.sendingEnabled };
 	});
 
-	return NextResponse.json({ domains: domainViews, dns });
+	return NextResponse.json({ dns, domains: domainViews });
 }
 
 export async function POST(request: Request) {
@@ -41,31 +50,44 @@ export async function POST(request: Request) {
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
-	const parsed = addDomainSchema.safeParse(await request.json().catch(() => null));
+	const parsed = addDomainSchema.safeParse(
+		await request.json().catch(() => null)
+	);
 	if (!parsed.success) {
-		return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+		return NextResponse.json(
+			{ error: parsed.error.flatten() },
+			{ status: 400 }
+		);
 	}
 
 	try {
-		const result = await addDomainForUser(env, auth.userId, parsed.data.hostname, {
-			enableRouting: parsed.data.enableRouting,
-			enableSending: parsed.data.enableSending,
-			replaceMxRecords: parsed.data.replaceMxRecords,
-			receivingProvider: parsed.data.receivingProvider,
-			sendingProvider: parsed.data.sendingProvider,
-		});
-		let dns = result.dns;
+		const result = await addDomainForUser(
+			env,
+			auth.userId,
+			parsed.data.hostname,
+			{
+				enableRouting: parsed.data.enableRouting,
+				enableSending: parsed.data.enableSending,
+				receivingProvider: parsed.data.receivingProvider,
+				replaceMxRecords: parsed.data.replaceMxRecords,
+				sendingProvider: parsed.data.sendingProvider,
+			}
+		);
+		let { dns } = result;
 		try {
 			dns = await getDomainDnsView(env, result.domain);
 		} catch (error) {
-			console.warn("v1 addDomain: failed to read DNS after provisioning", error);
+			console.warn(
+				"v1 addDomain: failed to read DNS after provisioning",
+				error
+			);
 		}
 		return NextResponse.json({ ...result, dns });
-	} catch (err) {
-		const failure = getDomainProvisioningError(err, "Failed to add domain");
+	} catch (error) {
+		const failure = getDomainProvisioningError(error, "Failed to add domain");
 		return NextResponse.json(
-			{ error: failure.message, code: failure.code },
-			{ status: failure.status },
+			{ code: failure.code, error: failure.message },
+			{ status: failure.status }
 		);
 	}
 }

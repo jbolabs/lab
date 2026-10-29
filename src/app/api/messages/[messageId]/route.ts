@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+
 import { getCurrentUser } from "@/lib/auth/cookies";
 import { getEnv } from "@/lib/cloudflare";
 import { getMessageWithBodyForUser } from "@/lib/email/inbound";
 
-type MessageRouteParams = {
+interface MessageRouteParams {
 	params: Promise<{ messageId: string }>;
-};
+}
 
 export async function GET(request: Request, { params }: MessageRouteParams) {
 	const env = getEnv();

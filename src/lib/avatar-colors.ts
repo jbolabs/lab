@@ -11,14 +11,19 @@ const avatarColors = [
 	{ background: "#CFD8DC", foreground: "#202124" },
 ];
 
-export function getAvatarColorStyle(identity: string): { backgroundColor: string; color: string } {
+export function getAvatarColorStyle(identity: string): {
+	backgroundColor: string;
+	color: string;
+} {
 	let hash = 0;
 	const stableIdentity = identity.trim().toLowerCase();
 
-	for (let i = 0; i < stableIdentity.length; i++) {
-		hash = (Math.imul(hash, 31) + stableIdentity.charCodeAt(i)) | 0;
+	for (let i = 0; i < stableIdentity.length; i += 1) {
+		// oxlint-disable-next-line unicorn/prefer-code-point -- Binary encoding and persisted hashes operate on UTF-16 code units or bytes; code points would change their representation.
+		hash = Math.trunc(Math.imul(hash, 31) + stableIdentity.charCodeAt(i));
 	}
 
+	// oxlint-disable-next-line eslint/no-bitwise -- The persisted hash uses exact 32-bit integer arithmetic; changing it changes stable CSS or avatar identities.
 	const color = avatarColors[(hash >>> 0) % avatarColors.length];
 	return { backgroundColor: color.background, color: color.foreground };
 }

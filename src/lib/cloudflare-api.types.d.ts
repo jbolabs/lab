@@ -1,4 +1,4 @@
-export type CfDnsRecord = {
+export interface CfDnsRecord {
 	id?: string;
 	type?: string;
 	name?: string;
@@ -8,21 +8,21 @@ export type CfDnsRecord = {
 	proxied?: boolean;
 	comment?: string;
 	tags?: string[];
-};
+}
 
-export type CfApiError = {
+export interface CfApiError {
 	code?: number;
 	message: string;
 	documentation_url?: string;
 	source?: unknown;
-};
+}
 
-export type CfResponse<T> = {
+export interface CfResponse<T> {
 	success: boolean;
 	errors: CfApiError[];
 	messages?: CfApiError[];
 	result: T;
-};
+}
 
 export type CfAuth =
 	| {
@@ -35,7 +35,7 @@ export type CfAuth =
 			key: string;
 	  };
 
-export type CfEmailRoutingRule = {
+export interface CfEmailRoutingRule {
 	id?: string;
 	actions?: {
 		type: "drop" | "forward" | "worker";
@@ -50,9 +50,9 @@ export type CfEmailRoutingRule = {
 	name?: string;
 	priority?: number;
 	tag?: string;
-};
+}
 
-export type CfSendingSubdomain = {
+export interface CfSendingSubdomain {
 	tag: string;
 	name: string;
 	enabled: boolean;
@@ -61,10 +61,10 @@ export type CfSendingSubdomain = {
 	return_path_domain?: string;
 	created?: string;
 	modified?: string;
-};
+}
 
-export type CfEmailRoutingRuleChange = {
+export interface CfEmailRoutingRuleChange {
 	zoneId: string;
 	ruleId: string;
 	previous?: CfEmailRoutingRule;
-};
+}

@@ -1,3 +1,3 @@
-export type DomainRoutingRuleRouteParams = {
+export interface DomainRoutingRuleRouteParams {
 	params: Promise<{ id: string }>;
-};
+}

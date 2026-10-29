@@ -1,29 +1,29 @@
 import type { MailboxOption } from "./mailbox-provider";
 
-export type MailboxSelectorUser = {
+export interface MailboxSelectorUser {
 	id: string;
 	email: string;
 	name: string;
 	role: "admin" | "user";
 	hasAvatar: boolean;
-};
+}
 
-export type MailboxSelectorProps = {
+export interface MailboxSelectorProps {
 	initialUser?: MailboxSelectorUser;
-};
+}
 
-export type AccountAvatarProps = {
+export interface AccountAvatarProps {
 	name: string;
 	colorSeed?: string;
 	hasAvatar?: boolean;
 	avatarUrl?: string;
 	size?: "small" | "large";
 	onAvatarError?: () => void;
-};
+}
 
-export type MailboxAccountRowProps = {
+export interface MailboxAccountRowProps {
 	mailbox: MailboxOption;
 	unread: number;
 	avatarUrl?: string;
 	onSelect: () => void;
-};
+}

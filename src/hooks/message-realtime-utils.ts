@@ -9,7 +9,7 @@ export function getRealtimeWebSocketUrl(): string {
 }
 
 export function getReconnectDelay(attempt: number): number {
-	return Math.min(1_000 * 2 ** attempt, REALTIME_RECONNECT_MAX_MS);
+	return Math.min(1000 * 2 ** attempt, REALTIME_RECONNECT_MAX_MS);
 }
 
 export function parseNewMessageEvent(value: string): NewMessageEvent | null {
@@ -25,12 +25,12 @@ export function parseNewMessageEvent(value: string): NewMessageEvent | null {
 		}
 
 		return {
-			type: "new_message",
-			messageId: payload.messageId,
-			mailboxId: payload.mailboxId,
 			from: payload.from,
 			fromName: typeof payload.fromName === "string" ? payload.fromName : null,
+			mailboxId: payload.mailboxId,
+			messageId: payload.messageId,
 			subject: typeof payload.subject === "string" ? payload.subject : null,
+			type: "new_message",
 		};
 	} catch {
 		return null;

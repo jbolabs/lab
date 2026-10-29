@@ -1,8 +1,11 @@
 "use client";
-import { createContext, useContext, type ComponentProps } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { createContext, useContext } from "react";
+import type { ComponentProps } from "react";
+
 import * as Desktop from "@/components/ui/dialog";
 import * as Mobile from "@/components/ui/drawer";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 const MobileContext = createContext(false);
 export function Dialog(props: ComponentProps<typeof Desktop.Dialog>) {
 	const mobile = useIsMobile();
@@ -13,7 +16,7 @@ export function Dialog(props: ComponentProps<typeof Desktop.Dialog>) {
 	);
 }
 export function DialogTrigger(
-	props: ComponentProps<typeof Desktop.DialogTrigger>,
+	props: ComponentProps<typeof Desktop.DialogTrigger>
 ) {
 	return useContext(MobileContext) ? (
 		<Mobile.DrawerTrigger {...props} />
@@ -28,7 +31,7 @@ export function DialogContent({
 }: ComponentProps<typeof Desktop.DialogContent>) {
 	return useContext(MobileContext) ? (
 		<Mobile.DrawerContent>
-			<div className="flex max-h-[80dvh] flex-col gap-5 overflow-y-auto overscroll-contain px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 [&_button:not([role=switch]):not([role=checkbox]):not([role=radio])]:min-h-11 [&_input]:text-base">
+			<div className="flex max-h-[80dvh] flex-col gap-5 overflow-y-auto overscroll-contain px-5 pt-4 pb-safe-6">
 				{children}
 			</div>
 		</Mobile.DrawerContent>
@@ -39,7 +42,7 @@ export function DialogContent({
 	);
 }
 export function DialogHeader(
-	props: ComponentProps<typeof Desktop.DialogHeader>,
+	props: ComponentProps<typeof Desktop.DialogHeader>
 ) {
 	return useContext(MobileContext) ? (
 		<Mobile.DrawerHeader {...props} />
@@ -55,7 +58,7 @@ export function DialogTitle(props: ComponentProps<typeof Desktop.DialogTitle>) {
 	);
 }
 export function DialogDescription(
-	props: ComponentProps<typeof Desktop.DialogDescription>,
+	props: ComponentProps<typeof Desktop.DialogDescription>
 ) {
 	return useContext(MobileContext) ? (
 		<Mobile.DrawerDescription {...props} />

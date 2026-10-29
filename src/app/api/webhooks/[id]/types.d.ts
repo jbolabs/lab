@@ -1,7 +1,7 @@
-export type WebhookRouteParams = {
+export interface WebhookRouteParams {
 	params: Promise<{ id: string }>;
-};
+}
 
-export type WebhookDeliveryRouteParams = {
+export interface WebhookDeliveryRouteParams {
 	params: Promise<{ id: string; deliveryId: string }>;
-};
+}

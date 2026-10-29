@@ -1,15 +1,15 @@
-const FROM_LINE = /^From /;
+const FROM_LINE = /^From /u;
 
 function trimTrailingLineBreaks(value: string): string {
-	return value.replace(/\r?\n$/, "");
+	return value.replace(/\r?\n$/u, "");
 }
 
 function unescapeMboxBody(value: string): string {
-	return value.replace(/\n>From /g, "\nFrom ");
+	return value.replaceAll("\n>From ", "\nFrom ");
 }
 
 export function splitMboxMessages(content: string): string[] {
-	const normalized = content.replace(/\r\n/g, "\n");
+	const normalized = content.replaceAll("\r\n", "\n");
 	const lines = normalized.split("\n");
 	const messages: string[] = [];
 	let current: string[] = [];
@@ -17,7 +17,9 @@ export function splitMboxMessages(content: string): string[] {
 	for (const line of lines) {
 		if (FROM_LINE.test(line)) {
 			if (current.length > 0) {
-				messages.push(unescapeMboxBody(trimTrailingLineBreaks(current.join("\n"))));
+				messages.push(
+					unescapeMboxBody(trimTrailingLineBreaks(current.join("\n")))
+				);
 				current = [];
 			}
 			continue;

@@ -15,13 +15,13 @@ export function assertAdmin(user: Pick<SessionUser, "role">): void {
  * manage other admins and reach owner-only administration pages.
  */
 export function isPrimaryAdmin(
-	user: Pick<SessionUser, "role" | "isPrimaryAdmin">,
+	user: Pick<SessionUser, "role" | "isPrimaryAdmin">
 ): boolean {
 	return user.role === "admin" && user.isPrimaryAdmin;
 }
 
 export function assertPrimaryAdmin(
-	user: Pick<SessionUser, "role" | "isPrimaryAdmin">,
+	user: Pick<SessionUser, "role" | "isPrimaryAdmin">
 ): void {
 	if (!isPrimaryAdmin(user)) {
 		throw new Error("Forbidden");
@@ -30,14 +30,16 @@ export function assertPrimaryAdmin(
 
 /** Domains can be managed by the primary admin or an admin the primary granted it to. */
 export function canManageDomains(
-	user: Pick<SessionUser, "role" | "isPrimaryAdmin" | "canManageDomains">,
+	user: Pick<SessionUser, "role" | "isPrimaryAdmin" | "canManageDomains">
 ): boolean {
-	return isPrimaryAdmin(user) || (user.role === "admin" && user.canManageDomains);
+	return (
+		isPrimaryAdmin(user) || (user.role === "admin" && user.canManageDomains)
+	);
 }
 
 /** User accounts can be managed by the primary admin or an admin the primary granted it to. */
 export function canManageUsers(
-	user: Pick<SessionUser, "role" | "isPrimaryAdmin" | "canManageUsers">,
+	user: Pick<SessionUser, "role" | "isPrimaryAdmin" | "canManageUsers">
 ): boolean {
 	return isPrimaryAdmin(user) || (user.role === "admin" && user.canManageUsers);
 }

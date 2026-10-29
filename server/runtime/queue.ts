@@ -7,14 +7,19 @@
  */
 export type QueueConsumer = (body: unknown) => Promise<void>;
 
-type Pending = { body: unknown; attempts: number };
+interface Pending {
+	body: unknown;
+	attempts: number;
+}
 
 export class InProcessQueue {
 	private consumer: QueueConsumer | null = null;
 	private readonly maxRetries: number;
 	private readonly timers = new Set<ReturnType<typeof setTimeout>>();
 
-	constructor(readonly name: string, options?: { maxRetries?: number }) {
+	readonly name: string;
+	constructor(name: string, options?: { maxRetries?: number }) {
+		this.name = name;
 		this.maxRetries = options?.maxRetries ?? 3;
 	}
 
@@ -22,16 +27,30 @@ export class InProcessQueue {
 		this.consumer = consumer;
 	}
 
-	async send(body: unknown, options?: { delaySeconds?: number }) {
-		this.schedule({ body, attempts: 0 }, (options?.delaySeconds ?? 0) * 1000);
+	send(body: unknown, options?: { delaySeconds?: number }) {
+		try {
+			this.schedule({ attempts: 0, body }, (options?.delaySeconds ?? 0) * 1000);
+
+			return Promise.resolve();
+		} catch (error) {
+			return Promise.reject(error);
+		}
 	}
 
-	async sendBatch(messages: Iterable<{ body: unknown; delaySeconds?: number }>) {
-		for (const message of messages) await this.send(message.body, { delaySeconds: message.delaySeconds });
+	async sendBatch(
+		messages: Iterable<{ body: unknown; delaySeconds?: number }>
+	) {
+		for (const message of messages) {
+			await this.send(message.body, { delaySeconds: message.delaySeconds });
+		}
 	}
 
-	async metrics() {
-		return { backlogCount: this.timers.size };
+	metrics() {
+		try {
+			return Promise.resolve({ backlogCount: this.timers.size });
+		} catch (error) {
+			return Promise.reject(error);
+		}
 	}
 
 	private schedule(pending: Pending, delayMs: number) {
@@ -51,13 +70,24 @@ export class InProcessQueue {
 			await this.consumer(pending.body);
 		} catch (error) {
 			console.error(`Queue ${this.name}: job failed`, error);
-			if (pending.attempts < this.maxRetries) this.schedule({ body: pending.body, attempts: pending.attempts + 1 }, 10_000);
-			else console.error(`Queue ${this.name}: giving up after ${this.maxRetries} retries`, pending.body);
+			if (pending.attempts < this.maxRetries) {
+				this.schedule(
+					{ attempts: pending.attempts + 1, body: pending.body },
+					10_000
+				);
+			} else {
+				console.error(
+					`Queue ${this.name}: giving up after ${this.maxRetries} retries`,
+					pending.body
+				);
+			}
 		}
 	}
 
 	stop() {
-		for (const timer of this.timers) clearTimeout(timer);
+		for (const timer of this.timers) {
+			clearTimeout(timer);
+		}
 		this.timers.clear();
 	}
 }

@@ -1,10 +1,10 @@
-export type ImportMailboxResult = {
+export interface ImportMailboxResult {
 	imported: number;
 	skipped: number;
 	errors: string[];
-};
+}
 
-export type ImportMessageInput = {
+export interface ImportMessageInput {
 	filename: string;
 	raw: ArrayBuffer;
-};
+}

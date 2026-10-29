@@ -1,3 +1,3 @@
-export type SnoozeMessagePayload = {
+export interface SnoozeMessagePayload {
 	snoozedUntil?: string;
-};
+}

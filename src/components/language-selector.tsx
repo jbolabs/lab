@@ -1,12 +1,9 @@
 "use client";
 
-import { useId } from "react";
 import { ChevronDown } from "lucide-react";
-import { locales, supportedLocales } from "@/lib/i18n/locales";
-import { resolveLocale } from "@/lib/i18n/utils";
-import { useLanguage } from "./language-provider";
-import { Button } from "@/components/ui/button";
+import { useId } from "react";
 
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuTrigger,
@@ -14,6 +11,15 @@ import {
 	DropdownMenuRadioGroup,
 	DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
+import { Field, FieldLabel } from "@/components/ui/field";
+import {
+	NativeSelect,
+	NativeSelectOption,
+} from "@/components/ui/native-select";
+import { locales, supportedLocales } from "@/lib/i18n/locales";
+import { resolveLocale } from "@/lib/i18n/utils";
+
+import { useLanguage } from "./language-provider";
 
 export function LanguageSelector({
 	variant = "field",
@@ -22,20 +28,11 @@ export function LanguageSelector({
 }) {
 	const id = useId();
 	const { locale, setLocale, t } = useLanguage();
-	const options = supportedLocales.map((value) => (
-		<option key={value} value={value} lang={value}>
-			{locales[value].label}
-		</option>
-	));
-	if (variant === "text")
+	if (variant === "text") {
 		return (
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button
-						variant="ghost"
-						className="min-h-11"
-						aria-label={t("language.label")}
-					>
+					<Button variant="ghost" aria-label={t("language.label")}>
 						{locales[locale].label}
 						<ChevronDown data-icon="inline-end" />
 					</Button>
@@ -54,19 +51,22 @@ export function LanguageSelector({
 				</DropdownMenuContent>
 			</DropdownMenu>
 		);
+	}
 	return (
-		<div className="flex flex-col gap-1 px-1">
-			<label htmlFor={id} className="text-xs text-muted-foreground">
-				{t("language.label")}
-			</label>
-			<select
+		<Field className="gap-1 px-1">
+			<FieldLabel htmlFor={id}>{t("language.label")}</FieldLabel>
+			<NativeSelect
 				id={id}
 				value={locale}
 				onChange={(event) => setLocale(resolveLocale(event.target.value))}
-				className="min-h-11 w-full rounded-lg border border-input bg-card px-2 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+				containerClassName="w-full"
 			>
-				{options}
-			</select>
-		</div>
+				{supportedLocales.map((value) => (
+					<NativeSelectOption key={value} value={value} lang={value}>
+						{locales[value].label}
+					</NativeSelectOption>
+				))}
+			</NativeSelect>
+		</Field>
 	);
 }

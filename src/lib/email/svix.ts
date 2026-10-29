@@ -5,28 +5,62 @@
  */
 export async function verifySvixSignature(
 	secret: string,
-	headers: { id: string | null; timestamp: string | null; signature: string | null },
+	headers: {
+		id: string | null;
+		timestamp: string | null;
+		signature: string | null;
+	},
 	body: string,
 	toleranceSeconds = 5 * 60,
-	now = Date.now(),
+	now = Date.now()
 ): Promise<boolean> {
 	const { id, timestamp, signature } = headers;
-	if (!id || !timestamp || !signature) return false;
+	if (!id || !timestamp || !signature) {
+		return false;
+	}
 	const seconds = Number(timestamp);
-	if (!Number.isFinite(seconds) || Math.abs(now / 1000 - seconds) > toleranceSeconds) return false;
+	if (
+		!Number.isFinite(seconds) ||
+		Math.abs(now / 1000 - seconds) > toleranceSeconds
+	) {
+		return false;
+	}
 
 	const raw = secret.startsWith("whsec_") ? secret.slice(6) : secret;
 	let keyBytes: Uint8Array;
-	try { keyBytes = Uint8Array.from(atob(raw), (char) => char.charCodeAt(0)); } catch { return false; }
-	const key = await crypto.subtle.importKey("raw", keyBytes as BufferSource, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-	const expected = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${id}.${timestamp}.${body}`)));
+	try {
+		// oxlint-disable-next-line unicorn/prefer-code-point -- Binary encoding and persisted hashes operate on UTF-16 code units or bytes; code points would change their representation.
+		keyBytes = Uint8Array.from(atob(raw), (char) => char.charCodeAt(0));
+	} catch {
+		return false;
+	}
+	const key = await crypto.subtle.importKey(
+		"raw",
+		keyBytes as BufferSource,
+		{ hash: "SHA-256", name: "HMAC" },
+		false,
+		["sign"]
+	);
+	const expected = new Uint8Array(
+		await crypto.subtle.sign(
+			"HMAC",
+			key,
+			new TextEncoder().encode(`${id}.${timestamp}.${body}`)
+		)
+	);
+	// oxlint-disable-next-line unicorn/prefer-code-point -- Binary encoding and persisted hashes operate on UTF-16 code units or bytes; code points would change their representation.
 	const expectedB64 = btoa(String.fromCharCode(...expected));
 
 	return signature.split(" ").some((entry) => {
 		const [version, value] = entry.split(",");
-		if (version !== "v1" || !value || value.length !== expectedB64.length) return false;
+		if (version !== "v1" || !value || value.length !== expectedB64.length) {
+			return false;
+		}
 		let diff = 0;
-		for (let index = 0; index < value.length; index += 1) diff |= value.charCodeAt(index) ^ expectedB64.charCodeAt(index);
+		for (let index = 0; index < value.length; index += 1) {
+			// oxlint-disable-next-line eslint/no-bitwise, unicorn/prefer-code-point -- Compare every signature byte without data-dependent early exits. Binary encoding and persisted hashes operate on UTF-16 code units or bytes; code points would change their representation.
+			diff |= value.charCodeAt(index) ^ expectedB64.charCodeAt(index);
+		}
 		return diff === 0;
 	});
 }

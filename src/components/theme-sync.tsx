@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { applyTheme, readThemePreference, THEME_CHANGED_EVENT } from "@/components/theme-utils";
+
+import {
+	applyTheme,
+	readThemePreference,
+	THEME_CHANGED_EVENT,
+} from "@/components/theme-utils";
 
 // Keeps the html class in step with the saved preference and, for "system", with the OS setting.
 export function ThemeSync() {

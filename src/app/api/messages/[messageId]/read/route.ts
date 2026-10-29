@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { getEnv } from "@/lib/cloudflare";
+
 import { getCurrentUser } from "@/lib/auth/cookies";
+import { getEnv } from "@/lib/cloudflare";
 import { markMessageAsReadForUser } from "@/lib/user";
 
 export async function POST(
 	request: Request,
-	{ params }: { params: Promise<{ messageId: string }> },
+	{ params }: { params: Promise<{ messageId: string }> }
 ) {
 	const { messageId } = await params;
 	const env = getEnv();

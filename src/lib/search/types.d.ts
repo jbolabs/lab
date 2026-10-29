@@ -1,4 +1,4 @@
-export type ParsedSearchQuery = {
+export interface ParsedSearchQuery {
 	/** Free text after operators are removed; matched against every indexed column. */
 	text: string;
 	from?: string;
@@ -13,6 +13,10 @@ export type ParsedSearchQuery = {
 	before?: Date;
 	/** True when anything in the query needs the full-text index. */
 	needsFullText: boolean;
-};
+}
 
-export type SearchToken = { term: string; negate: boolean; phrase: boolean };
+export interface SearchToken {
+	term: string;
+	negate: boolean;
+	phrase: boolean;
+}

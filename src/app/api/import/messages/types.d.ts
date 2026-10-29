@@ -1,6 +1,6 @@
-export type ImportMessagesResponse = {
+export interface ImportMessagesResponse {
 	imported?: number;
 	skipped?: number;
 	errors?: string[];
 	error?: string;
-};
+}

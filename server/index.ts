@@ -1,19 +1,26 @@
 import { createServer } from "node:http";
-import { join, resolve } from "node:path";
+import nodePath from "node:path";
 import { parse } from "node:url";
-import next from "next";
+
+import createNextApp from "next";
 import { WebSocketServer } from "ws";
-import { getUserFromSession } from "@/lib/auth/session";
-import { getSessionTokenFromRequest } from "@/lib/realtime/utils";
-import { processInboundMessage } from "@/lib/email/inbound";
+
 import { processAgentDraftJob } from "@/lib/agent/jobs/utils";
-import { processOutboundQueue, type OutboundQueueMessage } from "@/lib/email/send";
-import { processWebhookRetry, type WebhookRetryMessage } from "@/lib/email/webhooks";
+import { getUserFromSession } from "@/lib/auth/session";
+import { processInboundMessage } from "@/lib/email/inbound";
+import { processOutboundQueue } from "@/lib/email/send";
+import type { OutboundQueueMessage } from "@/lib/email/send";
+import { processWebhookRetry } from "@/lib/email/webhooks";
+import type { WebhookRetryMessage } from "@/lib/email/webhooks";
+import { getSessionTokenFromRequest } from "@/lib/realtime/utils";
+
 import { isInboundQueueMessage, isWebhookRetryMessage } from "../worker-utils";
 import { createNodeRuntime } from "./runtime/env";
 import { applyMigrations } from "./runtime/migrate";
 import { startScheduler } from "./runtime/scheduler";
 import { startSmtpListener } from "./runtime/smtp";
+
+const { join, resolve } = nodePath;
 
 /**
  * The self-hosted entrypoint: one Node process serving the Next app, the
@@ -28,61 +35,95 @@ async function main() {
 	const { env } = runtime;
 	globalThis.__mailflareNodeEnv = env;
 
-	const migrated = await applyMigrations(runtime.database, resolve(process.env.MIGRATIONS_DIR ?? join(process.cwd(), "drizzle", "migrations")));
-	if (migrated.length) console.log(`Applied ${migrated.length} migration(s): ${migrated.join(", ")}`);
+	const migrated = await applyMigrations(
+		runtime.database,
+		resolve(
+			process.env.MIGRATIONS_DIR ?? join(process.cwd(), "drizzle", "migrations")
+		)
+	);
+	if (migrated.length) {
+		console.log(
+			`Applied ${migrated.length} migration(s): ${migrated.join(", ")}`
+		);
+	}
 
 	runtime.inboundQueue.setConsumer(async (body) => {
-		if (isInboundQueueMessage(body)) await processInboundMessage(env, body);
+		if (isInboundQueueMessage(body)) {
+			await processInboundMessage(env, body);
+		}
 	});
 	runtime.outboundQueue.setConsumer(async (body) => {
-		if (isWebhookRetryMessage(body)) await processWebhookRetry(env, body as WebhookRetryMessage);
-		else await processOutboundQueue(env, body as OutboundQueueMessage);
+		await (isWebhookRetryMessage(body)
+			? processWebhookRetry(env, body as WebhookRetryMessage)
+			: processOutboundQueue(env, body as OutboundQueueMessage));
 	});
 	runtime.agentQueue.setConsumer(async (body) => {
-		if (typeof body === "object" && body !== null && (body as { kind?: unknown }).kind === "agent.draft" && typeof (body as { jobId?: unknown }).jobId === "string") await processAgentDraftJob(env, (body as { jobId: string }).jobId);
+		if (
+			typeof body === "object" &&
+			body !== null &&
+			(body as { kind?: unknown }).kind === "agent.draft" &&
+			typeof (body as { jobId?: unknown }).jobId === "string"
+		) {
+			await processAgentDraftJob(env, (body as { jobId: string }).jobId);
+		}
 	});
 
-	const app = next({ dev, dir: process.cwd(), hostname: host, port });
+	const app = createNextApp({ dev, dir: process.cwd(), hostname: host, port });
 	const handle = app.getRequestHandler();
 	await app.prepare();
 
-	const server = createServer((request, response) => {
-		void handle(request, response, parse(request.url ?? "/", true));
-	});
+	const server = createServer((request, response) =>
+		handle(request, response, parse(request.url ?? "/", true))
+	);
 
 	const wss = new WebSocketServer({ noServer: true });
 	server.on("upgrade", (request, socket, head) => {
 		const { pathname } = parse(request.url ?? "/");
 		if (pathname !== "/api/realtime") {
 			// Next's own dev-mode HMR socket, or anything else, is not ours.
-			if (dev) app.getUpgradeHandler()(request, socket, head);
-			else socket.destroy();
+			if (dev) {
+				app.getUpgradeHandler()(request, socket, head);
+			} else {
+				socket.destroy();
+			}
 			return;
 		}
 		const cookie = request.headers.cookie ?? "";
-		const token = getSessionTokenFromRequest(new Request("http://localhost/", { headers: { cookie } }));
+		const token = getSessionTokenFromRequest(
+			new Request("http://localhost/", { headers: { cookie } })
+		);
 		void getUserFromSession(env, token).then((user) => {
 			if (!user || user.disabled) {
 				socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
 				socket.destroy();
 				return;
 			}
-			wss.handleUpgrade(request, socket, head, (ws) => runtime.realtime.attach(user.id, ws));
+			return wss.handleUpgrade(request, socket, head, (ws) =>
+				runtime.realtime.attach(user.id, ws)
+			);
 		});
 	});
 
 	server.listen(port, host, () => {
-		console.log(`Lab listening on http://${host}:${port} (data in ${runtime.dataDir})`);
+		console.log(
+			`Lab listening on http://${host}:${port} (data in ${runtime.dataDir})`
+		);
 	});
 
 	const smtpPort = Number(process.env.SMTP_INBOUND_PORT ?? 25);
 	if (smtpPort > 0) {
 		startSmtpListener(env, runtime.mailer, {
-			port: smtpPort,
 			host: process.env.SMTP_INBOUND_HOST,
-			maxSize: Number(process.env.SMTP_MAX_SIZE ?? 36 * 1024 * 1024),
 			hostname: process.env.MAIL_HOSTNAME,
-			tls: process.env.SMTP_TLS_KEY && process.env.SMTP_TLS_CERT ? { keyPath: process.env.SMTP_TLS_KEY, certPath: process.env.SMTP_TLS_CERT } : null,
+			maxSize: Number(process.env.SMTP_MAX_SIZE ?? 36 * 1024 * 1024),
+			port: smtpPort,
+			tls:
+				process.env.SMTP_TLS_KEY && process.env.SMTP_TLS_CERT
+					? {
+							certPath: process.env.SMTP_TLS_CERT,
+							keyPath: process.env.SMTP_TLS_KEY,
+						}
+					: null,
 		});
 	}
 	const stopScheduler = startScheduler(env);
@@ -99,7 +140,9 @@ async function main() {
 	process.on("SIGINT", shutdown);
 }
 
-main().catch((error) => {
+try {
+	await main();
+} catch (error) {
 	console.error("Lab failed to start", error);
 	process.exit(1);
-});
+}

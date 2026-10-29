@@ -1,9 +1,9 @@
-export type TimeZoneFormProps = {
+export interface TimeZoneFormProps {
 	userId: string;
 	initialTimeZone: string | null;
-};
+}
 
-export type TimeZoneUpdateResponse = {
+export interface TimeZoneUpdateResponse {
 	timeZone?: string | null;
 	error?: string;
-};
+}

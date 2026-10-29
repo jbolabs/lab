@@ -1,4 +1,4 @@
-export type IntakeInput = {
+export interface IntakeInput {
 	/** Envelope sender. */
 	from: string;
 	/** Envelope recipient (one message per recipient). */
@@ -6,14 +6,17 @@ export type IntakeInput = {
 	raw: ArrayBuffer;
 	/** Lower-cased header names to values, as the Worker handler receives them. */
 	headers: Record<string, string>;
-};
+}
 
-export type IntakeActions = {
+export interface IntakeActions {
 	/** Refuse the message at the edge; the SMTP listener answers 550, the relay tells the Worker to setReject. */
 	reject?: (reason: string) => Promise<void> | void;
 	/** Relay the raw message to another address; returns whether it went out. */
-	forward?: (destination: string, headers: Record<string, string>) => Promise<boolean>;
-};
+	forward?: (
+		destination: string,
+		headers: Record<string, string>
+	) => Promise<boolean>;
+}
 
 export type IntakeResult =
 	| { action: "reject"; reason: string }

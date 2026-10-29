@@ -1,10 +1,10 @@
-export type AdminRoutingDomain = {
+export interface AdminRoutingDomain {
 	id: string;
 	hostname: string;
 	status: string;
 	routingEnabled: boolean;
-};
+}
 
-export type AdminRoutingDomainsResponse = {
+export interface AdminRoutingDomainsResponse {
 	domains: AdminRoutingDomain[];
-};
+}

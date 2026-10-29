@@ -1,9 +1,9 @@
 import type { Message } from "@/hooks/types";
 
-export type CachedMessageDetail = {
+export interface CachedMessageDetail {
 	message?: Message;
 	body?: { htmlBody: string | null; textBody: string | null } | null;
-	attachments?: Array<{
+	attachments?: {
 		contentId: string | null;
 		disposition: "attachment" | "inline";
 		filename: string;
@@ -11,8 +11,8 @@ export type CachedMessageDetail = {
 		messageId: string;
 		size: number;
 		type: string;
-	}>;
+	}[];
 	unsubscribeUrl?: string | null;
 	scheduledAt?: string | null;
 	error?: string;
-};
+}

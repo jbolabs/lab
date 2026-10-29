@@ -1,35 +1,74 @@
 import { and, inArray, isNull } from "drizzle-orm";
-import { messageAttachments, messages } from "@/db/schema";
-import { parseEmailAddressParts, splitEmailAddressList } from "@/lib/email/address";
+
+import type { messages } from "@/db/schema";
+import { messageAttachments } from "@/db/schema";
+import {
+	parseEmailAddressParts,
+	splitEmailAddressList,
+} from "@/lib/email/address";
 import { htmlToReadableText } from "@/lib/email/reply-content-utils";
+import { requireValue } from "@/lib/require-value";
+
 import { KEYWORD_DRAFT, KEYWORD_FLAGGED, KEYWORD_SEEN } from "./constants";
-import { attachmentBlobId, encodeMailboxRef, messageBlobId, statusToRole } from "./ids";
+import {
+	attachmentBlobId,
+	encodeMailboxRef,
+	messageBlobId,
+	statusToRole,
+} from "./ids";
 import type { EmailAddressObject, EmailBodyPart, JmapContext } from "./types";
 
-type MessageRow = typeof messages.$inferSelect;
-type AttachmentRow = typeof messageAttachments.$inferSelect;
-
-export function toAddressObjects(value: string | null | undefined): EmailAddressObject[] | null {
+export function toAddressObjects(
+	value: string | null | undefined
+): EmailAddressObject[] | null {
 	const entries = splitEmailAddressList(value);
-	if (entries.length === 0) return null;
+	if (entries.length === 0) {
+		return null;
+	}
 	return entries.map((entry) => {
 		const parts = parseEmailAddressParts(entry);
-		return { name: parts.name, email: parts.address };
+		return { email: parts.address, name: parts.name };
 	});
 }
 
+type MessageRow = typeof messages.$inferSelect;
+
 export function mailboxIdsFor(row: MessageRow): Record<string, boolean> {
-	if (!row.mailboxId) return {};
-	if (row.folderId) return { [encodeMailboxRef({ kind: "folder", mailboxId: row.mailboxId, folderId: row.folderId })]: true };
+	if (!row.mailboxId) {
+		return {};
+	}
+	if (row.folderId) {
+		return {
+			[encodeMailboxRef({
+				folderId: row.folderId,
+				kind: "folder",
+				mailboxId: row.mailboxId,
+			})]: true,
+		};
+	}
 	const role = statusToRole(row.status);
-	return role ? { [encodeMailboxRef({ kind: "role", mailboxId: row.mailboxId, role })]: true } : {};
+	return role
+		? {
+				[encodeMailboxRef({
+					kind: "role",
+					mailboxId: row.mailboxId,
+					role,
+				})]: true,
+			}
+		: {};
 }
 
 export function keywordsFor(row: MessageRow): Record<string, boolean> {
 	const keywords: Record<string, boolean> = {};
-	if (row.read || row.direction === "outbound") keywords[KEYWORD_SEEN] = true;
-	if (row.starred) keywords[KEYWORD_FLAGGED] = true;
-	if (row.status === "draft") keywords[KEYWORD_DRAFT] = true;
+	if (row.read || row.direction === "outbound") {
+		keywords[KEYWORD_SEEN] = true;
+	}
+	if (row.starred) {
+		keywords[KEYWORD_FLAGGED] = true;
+	}
+	if (row.status === "draft") {
+		keywords[KEYWORD_DRAFT] = true;
+	}
 	return keywords;
 }
 
@@ -38,27 +77,43 @@ export function threadIdFor(row: Pick<MessageRow, "id" | "threadId">): string {
 }
 
 function stripBrackets(value: string | null): string | null {
-	const trimmed = value?.trim().replace(/^<|>$/g, "");
+	const trimmed = value?.trim().replaceAll(/^<|>$/gu, "");
 	return trimmed || null;
 }
 
 function bodyPart(partId: string, type: string, size: number): EmailBodyPart {
-	return { partId, blobId: null, size, headers: [], name: null, type, charset: "utf-8", disposition: null, cid: null, language: null, location: null };
+	return {
+		blobId: null,
+		charset: "utf-8",
+		cid: null,
+		disposition: null,
+		headers: [],
+		language: null,
+		location: null,
+		name: null,
+		partId,
+		size,
+		type,
+	};
 }
+
+type AttachmentRow = typeof messageAttachments.$inferSelect;
 
 function attachmentPart(attachment: AttachmentRow): EmailBodyPart {
 	return {
-		partId: null,
 		blobId: attachmentBlobId(attachment.id),
-		size: attachment.size,
-		headers: [],
-		name: attachment.filename,
-		type: attachment.contentType,
 		charset: null,
+		cid: attachment.contentId
+			? attachment.contentId.replaceAll(/^<|>$/gu, "")
+			: null,
 		disposition: attachment.disposition,
-		cid: attachment.contentId ? attachment.contentId.replace(/^<|>$/g, "") : null,
+		headers: [],
 		language: null,
 		location: null,
+		name: attachment.filename,
+		partId: null,
+		size: attachment.size,
+		type: attachment.contentType,
 	};
 }
 
@@ -67,7 +122,11 @@ function attachmentPart(attachment: AttachmentRow): EmailBodyPart {
  * text and HTML Mailflare keeps; attachments become parts with blob ids the
  * download endpoint understands. Property filtering happens in the caller.
  */
-export function buildEmailObject(row: MessageRow, attachments: AttachmentRow[], options: { fetchBodies: boolean; maxBodyValueBytes: number }) {
+export function buildEmailObject(
+	row: MessageRow,
+	attachments: AttachmentRow[],
+	options: { fetchBodies: boolean; maxBodyValueBytes: number }
+) {
 	const text = row.textBody ?? "";
 	const html = row.htmlBody ?? "";
 	const textSize = new TextEncoder().encode(text).length;
@@ -77,74 +136,157 @@ export function buildEmailObject(row: MessageRow, attachments: AttachmentRow[], 
 	const inline = attachments.filter((item) => item.disposition === "inline");
 	const attached = attachments.filter((item) => item.disposition !== "inline");
 
-	let structure: EmailBodyPart;
-	const bodyParts = [textPart, htmlPart].filter((part): part is EmailBodyPart => !!part);
+	const bodyParts = [textPart, htmlPart].filter(
+		(part): part is EmailBodyPart => !!part
+	);
 	const alternative: EmailBodyPart | null =
 		bodyParts.length > 1
-			? { partId: null, blobId: null, size: textSize + htmlSize, name: null, type: "multipart/alternative", charset: null, disposition: null, cid: null, language: null, location: null, subParts: bodyParts }
-			: bodyParts[0] ?? bodyPart("1", "text/plain", 0);
-	if (attachments.length > 0) {
-		structure = { partId: null, blobId: null, size: 0, name: null, type: "multipart/mixed", charset: null, disposition: null, cid: null, language: null, location: null, subParts: [alternative, ...inline.map(attachmentPart), ...attached.map(attachmentPart)] };
-	} else {
-		structure = alternative;
-	}
+			? {
+					blobId: null,
+					charset: null,
+					cid: null,
+					disposition: null,
+					language: null,
+					location: null,
+					name: null,
+					partId: null,
+					size: textSize + htmlSize,
+					subParts: bodyParts,
+					type: "multipart/alternative",
+				}
+			: (bodyParts[0] ?? bodyPart("1", "text/plain", 0));
+	const structure: EmailBodyPart =
+		attachments.length > 0
+			? {
+					blobId: null,
+					charset: null,
+					cid: null,
+					disposition: null,
+					language: null,
+					location: null,
+					name: null,
+					partId: null,
+					size: 0,
+					subParts: [
+						alternative,
+						...inline.map(attachmentPart),
+						...attached.map(attachmentPart),
+					],
+					type: "multipart/mixed",
+				}
+			: alternative;
 
-	const bodyValues: Record<string, { value: string; isEncodingProblem: boolean; isTruncated: boolean }> = {};
+	const bodyValues: Record<
+		string,
+		{ value: string; isEncodingProblem: boolean; isTruncated: boolean }
+	> = {};
 	if (options.fetchBodies) {
 		const clip = (value: string) => {
 			const limit = options.maxBodyValueBytes;
-			if (!limit || value.length <= limit) return { value, isEncodingProblem: false, isTruncated: false };
-			return { value: value.slice(0, limit), isEncodingProblem: false, isTruncated: true };
+			if (!limit || value.length <= limit) {
+				return { isEncodingProblem: false, isTruncated: false, value };
+			}
+			return {
+				isEncodingProblem: false,
+				isTruncated: true,
+				value: value.slice(0, limit),
+			};
 		};
-		if (textPart) bodyValues["1"] = clip(text);
-		if (htmlPart) bodyValues["2"] = clip(html);
+		if (textPart) {
+			bodyValues["1"] = clip(text);
+		}
+		if (htmlPart) {
+			bodyValues["2"] = clip(html);
+		}
 	}
 
-	const size = textSize + htmlSize + attachments.reduce((total, item) => total + item.size, 0);
-	const preview = (row.snippet ?? htmlToReadableText(html) ?? text).replace(/\s+/g, " ").trim().slice(0, 256);
-	const references = row.references ? row.references.split(/\s+/).filter(Boolean) : null;
+	const size =
+		textSize +
+		htmlSize +
+		attachments.reduce((total, item) => total + item.size, 0);
+	const preview = (row.snippet ?? htmlToReadableText(html) ?? text)
+		.replaceAll(/\s+/gu, " ")
+		.trim()
+		.slice(0, 256);
+	const references = row.references
+		? row.references.split(/\s+/u).filter(Boolean)
+		: null;
 	const from = toAddressObjects(row.fromAddr);
 	const sentAt = row.createdAt.toISOString();
 
 	return {
-		id: row.id,
-		blobId: messageBlobId(row.id),
-		threadId: threadIdFor(row),
-		mailboxIds: mailboxIdsFor(row),
-		keywords: keywordsFor(row),
-		size,
-		receivedAt: sentAt,
-		messageId: stripBrackets(row.providerMessageId) ? [stripBrackets(row.providerMessageId)!] : null,
-		inReplyTo: row.inReplyTo ? [row.inReplyTo] : null,
-		references,
-		sender: from,
-		from,
-		to: toAddressObjects(row.toAddr),
-		cc: toAddressObjects(row.ccAddr),
+		attachments: [...inline, ...attached].map(attachmentPart),
 		bcc: toAddressObjects(row.bccAddr),
-		replyTo: toAddressObjects(row.replyTo),
-		subject: row.subject,
-		sentAt,
-		hasAttachment: attached.length > 0,
-		preview,
+		blobId: messageBlobId(row.id),
 		bodyStructure: structure,
 		bodyValues,
-		textBody: textPart ? [textPart] : htmlPart ? [htmlPart] : [],
-		htmlBody: htmlPart ? [htmlPart] : textPart ? [textPart] : [],
-		attachments: [...inline, ...attached].map(attachmentPart),
+		cc: toAddressObjects(row.ccAddr),
+		from,
+		hasAttachment: attached.length > 0,
+		htmlBody: (() => {
+			if (htmlPart) {
+				return [htmlPart];
+			}
+			if (textPart) {
+				return [textPart];
+			}
+			return [];
+		})(),
+		id: row.id,
+		inReplyTo: row.inReplyTo ? [row.inReplyTo] : null,
+		keywords: keywordsFor(row),
+		mailboxIds: mailboxIdsFor(row),
+		messageId: stripBrackets(row.providerMessageId)
+			? [requireValue(stripBrackets(row.providerMessageId))]
+			: null,
+		preview,
+		receivedAt: sentAt,
+		references,
+		replyTo: toAddressObjects(row.replyTo),
+		sender: from,
+		sentAt,
+		size,
+		subject: row.subject,
+		textBody: (() => {
+			if (textPart) {
+				return [textPart];
+			}
+			if (htmlPart) {
+				return [htmlPart];
+			}
+			return [];
+		})(),
+		threadId: threadIdFor(row),
+		to: toAddressObjects(row.toAddr),
 	};
 }
 
 /** Attachment rows for many messages in one query, keyed by message id. */
-export async function loadAttachmentsByMessage(ctx: JmapContext, messageIds: string[]): Promise<Map<string, AttachmentRow[]>> {
+export async function loadAttachmentsByMessage(
+	ctx: JmapContext,
+	messageIds: string[]
+): Promise<Map<string, AttachmentRow[]>> {
 	const result = new Map<string, AttachmentRow[]>();
-	if (messageIds.length === 0) return result;
+	if (messageIds.length === 0) {
+		return result;
+	}
 	// D1 caps bound parameters per query at 100; this predicate binds only
 	// message ids, so slice at exactly 100 (mirroring the revision query).
 	// Dedupe so a repeated id cannot append its attachments twice.
 	const unique = [...new Set(messageIds)];
 	for (let offset = 0; offset < unique.length; offset += 100) {
-		const rows = await ctx.db.select().from(messageAttachments).where(and(inArray(messageAttachments.messageId, unique.slice(offset, offset + 100)), isNull(messageAttachments.trashedAt)));
+		const rows = await ctx.db
+			.select()
+			.from(messageAttachments)
+			.where(
+				and(
+					inArray(
+						messageAttachments.messageId,
+						unique.slice(offset, offset + 100)
+					),
+					isNull(messageAttachments.trashedAt)
+				)
+			);
 		for (const row of rows) {
 			const list = result.get(row.messageId) ?? [];
 			list.push(row);
@@ -155,44 +297,72 @@ export async function loadAttachmentsByMessage(ctx: JmapContext, messageIds: str
 }
 
 /** `header:Name[:asForm]` properties, answered from stored fields; unknown headers are null. */
-export function resolveHeaderProperty(row: MessageRow, property: string): unknown {
+export function resolveHeaderProperty(
+	row: MessageRow,
+	property: string
+): unknown {
 	const [, name, form] = property.split(":");
 	const lower = (name ?? "").toLowerCase();
 	const raw = (() => {
 		switch (lower) {
-			case "subject":
+			case "subject": {
 				return row.subject;
-			case "from":
+			}
+			case "from": {
 				return row.fromAddr;
-			case "to":
+			}
+			case "to": {
 				return row.toAddr;
-			case "cc":
+			}
+			case "cc": {
 				return row.ccAddr;
-			case "bcc":
+			}
+			case "bcc": {
 				return row.bccAddr;
-			case "message-id":
+			}
+			case "message-id": {
 				return row.providerMessageId;
-			case "in-reply-to":
+			}
+			case "in-reply-to": {
 				return row.inReplyTo ? `<${row.inReplyTo}>` : null;
-			case "references":
-				return row.references ? row.references.split(/\s+/).map((id) => `<${id}>`).join(" ") : null;
-			case "date":
+			}
+			case "references": {
+				return row.references
+					? row.references
+							.split(/\s+/u)
+							.map((id) => `<${id}>`)
+							.join(" ")
+					: null;
+			}
+			case "date": {
 				return row.createdAt.toUTCString();
-			default:
+			}
+			default: {
 				return null;
+			}
 		}
 	})();
-	if (raw == null) return null;
+	if (raw === null || raw === undefined) {
+		return null;
+	}
 	switch ((form ?? "asRaw").toLowerCase()) {
-		case "asaddresses":
+		case "asaddresses": {
 			return toAddressObjects(raw);
-		case "asmessageids":
-			return raw.split(/\s+/).map((id) => id.replace(/^<|>$/g, "")).filter(Boolean);
-		case "asdate":
+		}
+		case "asmessageids": {
+			return raw
+				.split(/\s+/u)
+				.map((id) => id.replaceAll(/^<|>$/gu, ""))
+				.filter(Boolean);
+		}
+		case "asdate": {
 			return row.createdAt.toISOString();
-		case "astext":
+		}
+		case "astext": {
 			return raw;
-		default:
+		}
+		default: {
 			return ` ${raw}`;
+		}
 	}
 }

@@ -1,1 +1,3 @@
-export type DriveTokenParams = { params: Promise<{ token: string }> };
+export interface DriveTokenParams {
+	params: Promise<{ token: string }>;
+}

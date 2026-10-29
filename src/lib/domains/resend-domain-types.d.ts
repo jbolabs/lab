@@ -1,4 +1,4 @@
-export type ResendDomainView = {
+export interface ResendDomainView {
 	registered: boolean;
 	/** Resend's status (verified, pending, failed, ...) or "not_registered". */
 	status: string;
@@ -14,4 +14,4 @@ export type ResendDomainView = {
 	dnsManaged: boolean;
 	/** Records Resend asked for that are not in the Cloudflare zone; null when DNS is manual or unchecked. */
 	missingDns: number | null;
-};
+}

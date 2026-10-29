@@ -1,5 +1,19 @@
 import { authFetch } from "@/lib/auth/client";
-import type { ComposeAttachment, ComposeDraft, ComposeThreading, DraftResponse } from "./types";
+
+import type {
+	ComposeAttachment,
+	ComposeDraft,
+	ComposeThreading,
+	DraftResponse,
+} from "./types";
+
+export function draftThreading(threading: ComposeThreading | null) {
+	return {
+		inReplyTo: threading?.inReplyTo ?? null,
+		references: threading?.references ?? null,
+		threadId: threading?.threadId ?? null,
+	};
+}
 
 export async function fetchDraft(draftId: string): Promise<ComposeDraft> {
 	const res = await authFetch(`/api/drafts/${draftId}`);
@@ -32,18 +46,37 @@ export function buildSendFormData(input: {
 	const form = new FormData();
 	form.set("from", input.from);
 	form.set("to", input.to);
-	if (input.cc) form.set("cc", input.cc);
-	if (input.bcc) form.set("bcc", input.bcc);
+	if (input.cc) {
+		form.set("cc", input.cc);
+	}
+	if (input.bcc) {
+		form.set("bcc", input.bcc);
+	}
 	form.set("subject", input.subject);
 	form.set("text", input.text);
-	if (input.html) form.set("html", input.html);
-	if (input.mailboxId) form.set("mailboxId", input.mailboxId);
-	if (input.threading?.inReplyTo) form.set("inReplyTo", input.threading.inReplyTo);
-	if (input.threading?.references) form.set("references", input.threading.references);
-	if (input.threading?.threadId) form.set("threadId", input.threading.threadId);
-	if (input.draftId) form.set("draftId", input.draftId);
-	if (input.scheduledAt) form.set("scheduledAt", input.scheduledAt.toISOString());
-	else if (input.undoSend) form.set("undoSend", "true");
+	if (input.html) {
+		form.set("html", input.html);
+	}
+	if (input.mailboxId) {
+		form.set("mailboxId", input.mailboxId);
+	}
+	if (input.threading?.inReplyTo) {
+		form.set("inReplyTo", input.threading.inReplyTo);
+	}
+	if (input.threading?.references) {
+		form.set("references", input.threading.references);
+	}
+	if (input.threading?.threadId) {
+		form.set("threadId", input.threading.threadId);
+	}
+	if (input.draftId) {
+		form.set("draftId", input.draftId);
+	}
+	if (input.scheduledAt) {
+		form.set("scheduledAt", input.scheduledAt.toISOString());
+	} else if (input.undoSend) {
+		form.set("undoSend", "true");
+	}
 	for (const attachment of input.attachments) {
 		form.append("attachments", attachment.file);
 	}
@@ -51,25 +84,13 @@ export function buildSendFormData(input: {
 }
 
 export function formatAttachmentSize(size: number): string {
-	if (size < 1024) return `${size} B`;
-	if (size < 1024 * 1024) return `${Math.ceil(size / 1024)} KB`;
-	return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-export function applyMailboxSignature(
-	text: string,
-	previousSignature: string | null | undefined,
-	nextSignature: string | null | undefined,
-): string {
-	const previousBlock = formatSignatureBlock(previousSignature);
-	const nextBlock = formatSignatureBlock(nextSignature);
-	if (previousBlock && text.includes(previousBlock)) {
-		return text.replace(previousBlock, nextBlock);
+	if (size < 1024) {
+		return `${size} B`;
 	}
-	if (!nextBlock || text.includes(nextBlock)) return text;
-	if (!text) return nextBlock;
-	if (/^\s*[^\n]+ wrote:\n>/i.test(text)) return `${nextBlock}${text}`;
-	return `${text}${nextBlock}`;
+	if (size < 1024 * 1024) {
+		return `${Math.ceil(size / 1024)} KB`;
+	}
+	return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function formatSignatureBlock(signature: string | null | undefined): string {
@@ -77,7 +98,30 @@ function formatSignatureBlock(signature: string | null | undefined): string {
 	return value ? `\n\n${value}` : "";
 }
 
-const readerPath = /^\/(?:(?:inbox|starred|snoozed|sent|scheduled|archived|spam|trash)\/[^/]+|folders\/[^/]+\/[^/]+)\/?$/;
+export function applyMailboxSignature(
+	text: string,
+	previousSignature: string | null | undefined,
+	nextSignature: string | null | undefined
+): string {
+	const previousBlock = formatSignatureBlock(previousSignature);
+	const nextBlock = formatSignatureBlock(nextSignature);
+	if (previousBlock && text.includes(previousBlock)) {
+		return text.replace(previousBlock, nextBlock);
+	}
+	if (!nextBlock || text.includes(nextBlock)) {
+		return text;
+	}
+	if (!text) {
+		return nextBlock;
+	}
+	if (/^\s*[^\n]+ wrote:\n>/iu.test(text)) {
+		return `${nextBlock}${text}`;
+	}
+	return `${text}${nextBlock}`;
+}
+
+const readerPath =
+	/^\/(?:(?:inbox|starred|snoozed|sent|scheduled|archived|spam|trash)\/[^/]+|folders\/[^/]+\/[^/]+)\/?$/u;
 
 /** An open message, where the phone Compose button would sit on the reader's Reply bar (Gmail hides it there too). */
 export function isMessageReaderPath(pathname: string) {

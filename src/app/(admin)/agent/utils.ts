@@ -1,7 +1,13 @@
-import { authFetch } from "@/lib/auth/client";
 import { PROVIDER_BASE_URLS } from "@/lib/agent/provider-constants";
 import type { AgentProviderPreset } from "@/lib/agent/provider-types";
-import type { AgentAdminForm, AgentAdminModelsResponse, AgentAdminSettingsResponse, AgentEnabledResponse } from "./types";
+import { authFetch } from "@/lib/auth/client";
+
+import type {
+	AgentAdminForm,
+	AgentAdminModelsResponse,
+	AgentAdminSettingsResponse,
+	AgentEnabledResponse,
+} from "./types";
 
 export const PROVIDER_PRESETS: { id: AgentProviderPreset; label: string }[] = [
 	{ id: "openai", label: "OpenAI" },
@@ -14,35 +20,74 @@ export function baseUrlForPreset(preset: AgentProviderPreset, current = "") {
 	return preset === "custom" ? current : PROVIDER_BASE_URLS[preset];
 }
 
-export function updateAgentModelRate(form: AgentAdminForm, model: string, kind: "input" | "output", value: string): AgentAdminForm {
+export function updateAgentModelRate(
+	form: AgentAdminForm,
+	model: string,
+	kind: "input" | "output",
+	value: string
+): AgentAdminForm {
 	const current = form.rates[model] ?? { input: null, output: null };
-	return { ...form, rates: { ...form.rates, [model]: { ...current, [kind]: value === "" ? null : Number(value) } } };
+	return {
+		...form,
+		rates: {
+			...form.rates,
+			[model]: { ...current, [kind]: value === "" ? null : Number(value) },
+		},
+	};
 }
 
 export async function loadAgentAdminSettings(): Promise<AgentAdminSettingsResponse> {
 	const response = await authFetch("/api/admin/agent");
-	const data = await response.json() as AgentAdminSettingsResponse;
-	if (!response.ok) throw new Error(data.error || "Could not load agent settings");
+	const data = (await response.json()) as AgentAdminSettingsResponse;
+	if (!response.ok) {
+		throw new Error(data.error || "Could not load agent settings");
+	}
 	return data;
 }
 
-export async function loadAgentModels(form: AgentAdminForm, signal?: AbortSignal): Promise<AgentAdminModelsResponse> {
-	const response = await authFetch("/api/admin/agent/models", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form), signal });
-	const data = await response.json() as AgentAdminModelsResponse;
-	if (!response.ok) throw new Error(data.error || "Could not load models");
+export async function loadAgentModels(
+	form: Pick<AgentAdminForm, "apiKey" | "baseUrl" | "preset" | "provider">,
+	signal?: AbortSignal
+): Promise<AgentAdminModelsResponse> {
+	const response = await authFetch("/api/admin/agent/models", {
+		body: JSON.stringify(form),
+		headers: { "Content-Type": "application/json" },
+		method: "POST",
+		signal,
+	});
+	const data = (await response.json()) as AgentAdminModelsResponse;
+	if (!response.ok) {
+		throw new Error(data.error || "Could not load models");
+	}
 	return data;
 }
 
-export async function saveAgentAdminSettings(form: AgentAdminForm): Promise<AgentAdminSettingsResponse> {
-	const response = await authFetch("/api/admin/agent", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-	const data = await response.json() as AgentAdminSettingsResponse;
-	if (!response.ok) throw new Error(data.error || "Could not save agent settings");
+export async function saveAgentAdminSettings(
+	form: AgentAdminForm
+): Promise<AgentAdminSettingsResponse> {
+	const response = await authFetch("/api/admin/agent", {
+		body: JSON.stringify(form),
+		headers: { "Content-Type": "application/json" },
+		method: "PUT",
+	});
+	const data = (await response.json()) as AgentAdminSettingsResponse;
+	if (!response.ok) {
+		throw new Error(data.error || "Could not save agent settings");
+	}
 	return data;
 }
 
-export async function saveAgentEnabled(enabled: boolean): Promise<AgentEnabledResponse> {
-	const response = await authFetch("/api/admin/agent", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ enabled }) });
-	const data = await response.json() as AgentEnabledResponse;
-	if (!response.ok) throw new Error(data.error || "Could not update assistant availability");
+export async function saveAgentEnabled(
+	enabled: boolean
+): Promise<AgentEnabledResponse> {
+	const response = await authFetch("/api/admin/agent", {
+		body: JSON.stringify({ enabled }),
+		headers: { "Content-Type": "application/json" },
+		method: "PUT",
+	});
+	const data = (await response.json()) as AgentEnabledResponse;
+	if (!response.ok) {
+		throw new Error(data.error || "Could not update assistant availability");
+	}
 	return data;
 }

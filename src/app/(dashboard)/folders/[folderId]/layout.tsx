@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+
 import { MessageSplitLayout } from "@/components/messages/message-split-layout";
 import { useCustomFolderConfig } from "@/components/messages/use-custom-folder-config";
 

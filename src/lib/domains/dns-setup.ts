@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+
 import { getDb } from "@/db";
 import { domains } from "@/db/schema";
 import { enableEmailRouting, getZone } from "@/lib/cloudflare-api";
@@ -25,7 +26,7 @@ export async function setupDomainDnsRecord(
 	env: CloudflareEnv,
 	domain: DomainRow,
 	record: DnsAuthRecord,
-	options: { replaceMx?: boolean } = {},
+	options: { replaceMx?: boolean } = {}
 ): Promise<void> {
 	if (isManualZone(domain.zoneId)) {
 		throw new Error("DNS for this domain is managed manually");
@@ -35,7 +36,9 @@ export async function setupDomainDnsRecord(
 		case "mx":
 		case "spf": {
 			const zone = await getZone(env, domain.zoneId);
-			const routingName = isZoneApex(domain.hostname, zone.name) ? undefined : domain.hostname;
+			const routingName = isZoneApex(domain.hostname, zone.name)
+				? undefined
+				: domain.hostname;
 			const result = await enableEmailRouting(env, domain.zoneId, routingName);
 			if (shouldBindEmailCatchAllToWorker(env)) {
 				await ensureEmailRoutingCatchAllToWorker(env, domain.zoneId);
@@ -53,30 +56,44 @@ export async function setupDomainDnsRecord(
 			// The stored tag can be stale or empty even though the subdomain exists
 			// on Cloudflare, so reuse what is there instead of creating a duplicate
 			// (which Cloudflare rejects with "Subdomain already exists").
-			const { subdomain } = await ensureSendingSubdomain(env, domain.zoneId, domain.hostname, {
-				replaceMx: options.replaceMx,
-			});
+			const { subdomain } = await ensureSendingSubdomain(
+				env,
+				domain.zoneId,
+				domain.hostname,
+				{
+					replaceMx: options.replaceMx,
+				}
+			);
 			await getDb(env)
 				.update(domains)
 				.set({
-					sendingSubdomainTag: subdomain.tag,
 					sendingEnabled: subdomain.enabled,
 					sendingRequested: true,
+					sendingSubdomainTag: subdomain.tag,
 				})
 				.where(eq(domains.id, domain.id));
 			return;
 		}
 		case "dmarc": {
 			const name = `_dmarc.${domain.hostname}`;
-			const existing = await listDnsRecords(env, domain.zoneId, { type: "TXT", name });
-			if (existing.some((item) => /v=dmarc1/i.test(item.content ?? ""))) return;
-			await createDnsRecord(env, domain.zoneId, {
-				type: "TXT",
+			const existing = await listDnsRecords(env, domain.zoneId, {
 				name,
-				content: "v=DMARC1; p=none",
-				ttl: 3600,
+				type: "TXT",
 			});
-			return;
+			if (existing.some((item) => /v=dmarc1/iu.test(item.content ?? ""))) {
+				return;
+			}
+			await createDnsRecord(env, domain.zoneId, {
+				content: "v=DMARC1; p=none",
+				name,
+				ttl: 3600,
+				type: "TXT",
+			});
+			break;
+		}
+
+		default: {
+			break;
 		}
 	}
 }

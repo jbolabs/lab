@@ -13,13 +13,15 @@ import {
 	Bot,
 	Palette,
 } from "lucide-react";
+
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
-import { useLanguage } from "./language-provider";
-import type { TranslationKey } from "@/lib/i18n/types";
-import type { NavLink } from "./components-nav-types";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import type { TranslationKey } from "@/lib/i18n/types";
+import { cn } from "@/lib/utils";
+
 import { NavItem } from "./components-nav";
+import type { NavLink } from "./components-nav-types";
+import { useLanguage } from "./language-provider";
 import { NavSectionHeader, useSectionOpen } from "./nav-section-header";
 import { SidebarFooter } from "./sidebar-footer";
 import { SidebarHeader } from "./sidebar-header";
@@ -28,12 +30,12 @@ import { useSidebar } from "./sidebar-state";
 
 type AdminLinkPermission = "primary" | "domains" | "users";
 
-type AdminNavLink = {
+interface AdminNavLink {
 	href: string;
 	labelKey: TranslationKey;
 	icon: typeof Settings;
 	permission?: AdminLinkPermission;
-};
+}
 
 // `id` names a section for its remembered open/closed state; it is not shown.
 const sections: {
@@ -43,29 +45,29 @@ const sections: {
 }[] = [
 	{
 		// label: "Overview",
-		links: [{ href: "/admin", labelKey: "admin.nav.overview", icon: Settings }],
+		links: [{ href: "/admin", icon: Settings, labelKey: "admin.nav.overview" }],
 	},
 	{
 		id: "Email",
 		labelKey: "admin.nav.email",
 		links: [
-			{ href: "/mailboxes", labelKey: "admin.nav.mailboxes", icon: Mail },
+			{ href: "/mailboxes", icon: Mail, labelKey: "admin.nav.mailboxes" },
 			{
 				href: "/domains",
-				labelKey: "admin.nav.domains",
 				icon: Globe2,
+				labelKey: "admin.nav.domains",
 				permission: "domains",
 			},
 			{
 				href: "/routing",
-				labelKey: "admin.nav.routing",
 				icon: Route,
+				labelKey: "admin.nav.routing",
 				permission: "domains",
 			},
 			{
 				href: "/webhooks",
-				labelKey: "admin.nav.webhooks",
 				icon: Webhook,
+				labelKey: "admin.nav.webhooks",
 				permission: "primary",
 			},
 		],
@@ -76,39 +78,39 @@ const sections: {
 		links: [
 			{
 				href: "/api-keys",
-				labelKey: "admin.nav.apiKeys",
 				icon: KeyRound,
+				labelKey: "admin.nav.apiKeys",
 				permission: "primary",
 			},
 			{
 				href: "/general",
-				labelKey: "admin.nav.general",
 				icon: Settings,
+				labelKey: "admin.nav.general",
 				permission: "primary",
 			},
 			{
 				href: "/agent",
-				labelKey: "admin.nav.agent",
 				icon: Bot,
+				labelKey: "admin.nav.agent",
 				permission: "primary",
 			},
-			{ href: "/accounts", labelKey: "admin.nav.accounts", icon: Users },
+			{ href: "/accounts", icon: Users, labelKey: "admin.nav.accounts" },
 			{
 				href: "/activity",
-				labelKey: "admin.nav.activity",
 				icon: Activity,
+				labelKey: "admin.nav.activity",
 				permission: "primary",
 			},
 			{
 				href: "/backups",
-				labelKey: "admin.nav.backups",
 				icon: DatabaseBackup,
+				labelKey: "admin.nav.backups",
 				permission: "primary",
 			},
 			{
 				href: "/branding",
-				labelKey: "admin.nav.branding",
 				icon: Palette,
+				labelKey: "admin.nav.branding",
 				permission: "primary",
 			},
 		],
@@ -129,7 +131,7 @@ function AdminSection({
 	minimal: boolean;
 }) {
 	const [open, toggle] = useSectionOpen(
-		`mailflare:nav:admin-section-open:${id ?? ""}`,
+		`mailflare:nav:admin-section-open:${id ?? ""}`
 	);
 	// Unlabelled sections have nothing to toggle; the icon rail always shows everything.
 	const expanded = minimal || !label || open;
@@ -156,11 +158,18 @@ export function AdminNav({ className }: { className?: string }) {
 	const user = useCurrentUser();
 
 	function canSee(link: AdminNavLink): boolean {
-		if (!link.permission) return true;
-		if (!user) return false;
-		if (link.permission === "primary") return user.isPrimaryAdmin;
-		if (link.permission === "domains")
+		if (!link.permission) {
+			return true;
+		}
+		if (!user) {
+			return false;
+		}
+		if (link.permission === "primary") {
+			return user.isPrimaryAdmin;
+		}
+		if (link.permission === "domains") {
 			return user.isPrimaryAdmin || user.canManageDomains;
+		}
 		return user.isPrimaryAdmin || user.canManageUsers;
 	}
 
@@ -178,7 +187,9 @@ export function AdminNav({ className }: { className?: string }) {
 							...link,
 							label: t(labelKey),
 						}));
-					if (links.length === 0) return null;
+					if (links.length === 0) {
+						return null;
+					}
 
 					return (
 						// The first section has no label, so fall back to its first href for a stable key.

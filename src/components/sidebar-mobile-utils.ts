@@ -16,6 +16,6 @@ export function useIsMobile(): boolean {
 			return () => media.removeEventListener("change", onChange);
 		},
 		isMobileViewport,
-		() => false,
+		() => false
 	);
 }

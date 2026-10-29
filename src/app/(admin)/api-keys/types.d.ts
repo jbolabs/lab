@@ -1,4 +1,4 @@
-export type ApiKey = {
+export interface ApiKey {
 	id: string;
 	name: string;
 	prefix: string;
@@ -6,4 +6,4 @@ export type ApiKey = {
 	scopes: string;
 	createdAt?: string;
 	lastUsedAt?: string | null;
-};
+}

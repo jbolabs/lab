@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { assertPrimaryAdmin } from "@/lib/auth/admin";
 import { requireUser } from "@/lib/auth/cookies";
 import { getBackupConfigurationStatus } from "@/lib/backups/export";
@@ -10,6 +11,7 @@ import {
 	updateBackupSettings,
 } from "@/lib/backups/service";
 import { getEnv } from "@/lib/cloudflare";
+
 import { parseBackupSettingsInput } from "./utils";
 
 async function requireAdmin(request: Request) {
@@ -27,9 +29,9 @@ export async function GET(request: Request) {
 			listBackups(env),
 		]);
 		return NextResponse.json({
-			settings,
 			backups: backupList,
 			configuration: getBackupConfigurationStatus(env),
+			settings,
 		});
 	} catch {
 		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -40,7 +42,12 @@ export async function PUT(request: Request) {
 	try {
 		const { env } = await requireAdmin(request);
 		const input = parseBackupSettingsInput(await request.json());
-		if (!input) return NextResponse.json({ error: "Invalid backup settings" }, { status: 400 });
+		if (!input) {
+			return NextResponse.json(
+				{ error: "Invalid backup settings" },
+				{ status: 400 }
+			);
+		}
 		await updateBackupSettings(env, input);
 		return NextResponse.json({ ok: true });
 	} catch {
@@ -55,7 +62,8 @@ export async function POST(request: Request) {
 		await runDatabaseBackup(env, backupId);
 		return NextResponse.json({ backupId });
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Failed to run backup";
+		const message =
+			error instanceof Error ? error.message : "Failed to run backup";
 		return NextResponse.json({ error: message }, { status: 400 });
 	}
 }

@@ -1,149 +1,175 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+
 import type { ShortcutDefinition } from "./types";
-import { findSequenceMatch, hasCommandModifier, isModifierKey } from "./use-hotkeys-utils";
+import {
+	findSequenceMatch,
+	hasCommandModifier,
+	isModifierKey,
+} from "./use-hotkeys-utils";
 
 interface UseHotkeysOptions {
-  enabled?: boolean;
+	enabled?: boolean;
 }
 
 export function isTypingInInput(target: EventTarget | null): boolean {
-  if (!target || !(target instanceof HTMLElement)) return false;
-  const tagName = target.tagName.toUpperCase();
-  const isInputOrTextarea =
-    tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT";
-  const isContentEditable =
-    target.isContentEditable ||
-    target.getAttribute("contenteditable") === "true";
-  return isInputOrTextarea || isContentEditable;
+	if (!target || !(target instanceof HTMLElement)) {
+		return false;
+	}
+	const tagName = target.tagName.toUpperCase();
+	const isInputOrTextarea =
+		tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT";
+	const isContentEditable =
+		target.isContentEditable ||
+		target.getAttribute("contenteditable") === "true";
+	return isInputOrTextarea || isContentEditable;
 }
 
 function matchModifiers(
-  e: KeyboardEvent,
-  shortcut: ShortcutDefinition
+	e: KeyboardEvent,
+	shortcut: ShortcutDefinition
 ): boolean {
-  const requiresCtrl = shortcut.modifiers?.includes("ctrl");
-  const requiresMeta = shortcut.modifiers?.includes("meta");
-  const requiresAlt = shortcut.modifiers?.includes("alt");
-  const requiresShift = shortcut.modifiers?.includes("shift");
-
-  const hasCtrl = e.ctrlKey;
-  const hasMeta = e.metaKey;
-  const hasAlt = e.altKey;
-  const hasShift = e.shiftKey;
-
-  if (requiresCtrl && requiresMeta) {
-    if (!hasCtrl && !hasMeta) return false;
-  } else if (requiresCtrl && !hasCtrl) {
-    return false;
-  } else if (requiresMeta && !hasMeta) {
-    return false;
-  }
-
-  if (requiresAlt && !hasAlt) return false;
-  if (requiresShift && !hasShift) return false;
-
-  if (!requiresCtrl && !requiresMeta && (hasCtrl || hasMeta)) return false;
-  if (!requiresAlt && hasAlt) return false;
-
-  return true;
+	const requiresCtrl = !!shortcut.modifiers?.includes("ctrl");
+	const requiresMeta = !!shortcut.modifiers?.includes("meta");
+	const requiresAlt = !!shortcut.modifiers?.includes("alt");
+	const requiresShift = !!shortcut.modifiers?.includes("shift");
+	if (requiresAlt !== e.altKey || (requiresShift && !e.shiftKey)) {
+		return false;
+	}
+	if (requiresCtrl && requiresMeta) {
+		return e.ctrlKey || e.metaKey;
+	}
+	if (requiresCtrl) {
+		return e.ctrlKey;
+	}
+	if (requiresMeta) {
+		return e.metaKey;
+	}
+	return !e.ctrlKey && !e.metaKey;
 }
 
+const DEFAULT_OPTIONS: UseHotkeysOptions = { enabled: true };
+
 export function useHotkeys(
-  shortcuts: ShortcutDefinition[],
-  options: UseHotkeysOptions = { enabled: true }
+	shortcuts: ShortcutDefinition[],
+	options: UseHotkeysOptions = DEFAULT_OPTIONS
 ) {
-  const sequenceBufferRef = useRef<string[]>([]);
-  const sequenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const shortcutsRef = useRef<ShortcutDefinition[]>(shortcuts);
+	const sequenceBufferRef = useRef<string[]>([]);
+	const sequenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const shortcutsRef = useRef<ShortcutDefinition[]>(shortcuts);
 
-  useEffect(() => {
-    shortcutsRef.current = shortcuts;
-  }, [shortcuts]);
+	useEffect(() => {
+		shortcutsRef.current = shortcuts;
+	}, [shortcuts]);
 
-  useEffect(() => {
-    if (options.enabled === false) return;
+	useEffect(() => {
+		if (options.enabled === false) {
+			return;
+		}
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const isInput = isTypingInInput(e.target);
-      const key = e.key.toLowerCase();
+		const handleKeyDown = (e: KeyboardEvent) => {
+			const isInput = isTypingInInput(e.target);
+			const key = e.key.toLowerCase();
 
-      // Always allow Cmd+K / Ctrl+K
-      if ((e.metaKey || e.ctrlKey) && key === "k") {
-        const cmdK = shortcutsRef.current.find(
-          (s) =>
-            s.key.toLowerCase() === "k" &&
-            (s.modifiers?.includes("meta") || s.modifiers?.includes("ctrl"))
-        );
-        if (cmdK) {
-          e.preventDefault();
-          cmdK.action();
-          return;
-        }
-      }
+			// Always allow Cmd+K / Ctrl+K
+			if ((e.metaKey || e.ctrlKey) && key === "k") {
+				const cmdK = shortcutsRef.current.find(
+					(s) =>
+						s.key.toLowerCase() === "k" &&
+						(s.modifiers?.includes("meta") || s.modifiers?.includes("ctrl"))
+				);
+				if (cmdK) {
+					e.preventDefault();
+					cmdK.action();
+					return;
+				}
+			}
 
-      if (isInput) {
-        if (e.key === "Escape") {
-          const esc = shortcutsRef.current.find(
-            (s) => s.key.toLowerCase() === "escape" || s.key.toLowerCase() === "esc"
-          );
-          if (esc) esc.action();
-        }
-        return;
-      }
+			if (isInput) {
+				if (e.key === "Escape") {
+					const esc = shortcutsRef.current.find(
+						(s) =>
+							s.key.toLowerCase() === "escape" || s.key.toLowerCase() === "esc"
+					);
+					if (esc) {
+						esc.action();
+					}
+				}
+				return;
+			}
 
-      if (isModifierKey(key)) return;
+			if (isModifierKey(key)) {
+				return;
+			}
 
-      // Cmd/Ctrl/Alt combos belong to the browser and the OS. Sequences and
-      // bare-key shortcuts are matched on the bare key, so buffering "c" out of
-      // Cmd+C would fire the compose shortcut instead of copying.
-      if (hasCommandModifier(e)) return;
+			// Cmd/Ctrl/Alt combos belong to the browser and the OS. Sequences and
+			// bare-key shortcuts are matched on the bare key, so buffering "c" out of
+			// Cmd+C would fire the compose shortcut instead of copying.
+			if (hasCommandModifier(e)) {
+				return;
+			}
 
-      if (e.target instanceof Element && e.target.closest('[role="dialog"], [role="menu"], [role="listbox"]')) return;
+			if (
+				e.target instanceof Element &&
+				e.target.closest('[role="dialog"], [role="menu"], [role="listbox"]')
+			) {
+				return;
+			}
 
-      // Handle sequence buffer
-      sequenceBufferRef.current.push(key);
+			// Handle sequence buffer
+			sequenceBufferRef.current.push(key);
 
-      if (sequenceTimerRef.current) {
-        clearTimeout(sequenceTimerRef.current);
-      }
+			if (sequenceTimerRef.current) {
+				clearTimeout(sequenceTimerRef.current);
+			}
 
-      sequenceTimerRef.current = setTimeout(() => {
-        sequenceBufferRef.current = [];
-      }, 800);
+			sequenceTimerRef.current = setTimeout(() => {
+				sequenceBufferRef.current = [];
+			}, 800);
 
-      const sequenceMatch = findSequenceMatch(sequenceBufferRef.current, shortcutsRef.current);
+			const sequenceMatch = findSequenceMatch(
+				sequenceBufferRef.current,
+				shortcutsRef.current
+			);
 
-      if (sequenceMatch) {
-        e.preventDefault();
-        sequenceBufferRef.current = [];
-        sequenceMatch.action();
-        return;
-      }
+			if (sequenceMatch) {
+				e.preventDefault();
+				sequenceBufferRef.current = [];
+				sequenceMatch.action();
+				return;
+			}
 
-      const singleMatch = shortcutsRef.current.find((s) => {
-        if (s.key === "?" && e.key === "?") return true;
-        if (s.key === "/" && e.key === "/") return true;
-        if (s.key === "#" && e.key === "#") return true;
+			const singleMatch = shortcutsRef.current.find((s) => {
+				if (s.key === "?" && e.key === "?") {
+					return true;
+				}
+				if (s.key === "/" && e.key === "/") {
+					return true;
+				}
+				if (s.key === "#" && e.key === "#") {
+					return true;
+				}
 
-        if (s.key.toLowerCase() !== key) return false;
-        return matchModifiers(e, s);
-      });
+				if (s.key.toLowerCase() !== key) {
+					return false;
+				}
+				return matchModifiers(e, s);
+			});
 
-      if (singleMatch) {
-        e.preventDefault();
-        sequenceBufferRef.current = [];
-        singleMatch.action();
-      }
-    };
+			if (singleMatch) {
+				e.preventDefault();
+				sequenceBufferRef.current = [];
+				singleMatch.action();
+			}
+		};
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      if (sequenceTimerRef.current) {
-        clearTimeout(sequenceTimerRef.current);
-      }
-    };
-  }, [options.enabled]);
+		window.addEventListener("keydown", handleKeyDown);
+		return () => {
+			window.removeEventListener("keydown", handleKeyDown);
+			if (sequenceTimerRef.current) {
+				clearTimeout(sequenceTimerRef.current);
+			}
+		};
+	}, [options.enabled]);
 }

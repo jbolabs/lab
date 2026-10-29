@@ -1,3 +1,3 @@
-export type MailboxAvatarRouteParams = {
+export interface MailboxAvatarRouteParams {
 	params: Promise<{ id: string }>;
-};
+}

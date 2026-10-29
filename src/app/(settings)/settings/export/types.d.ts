@@ -1,4 +1,4 @@
-export type ExportState = {
+export interface ExportState {
 	error: string | null;
 	loading: boolean;
-};
+}

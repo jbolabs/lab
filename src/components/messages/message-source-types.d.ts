@@ -1,9 +1,9 @@
-export type AuthenticationSummary = {
+export interface AuthenticationSummary {
 	status: string;
 	detail: string | null;
-};
+}
 
-export type MessageSourceSummary = {
+export interface MessageSourceSummary {
 	messageId: string | null;
 	createdAt: string | null;
 	from: string | null;
@@ -12,4 +12,4 @@ export type MessageSourceSummary = {
 	spf: AuthenticationSummary | null;
 	dkim: AuthenticationSummary | null;
 	dmarc: AuthenticationSummary | null;
-};
+}

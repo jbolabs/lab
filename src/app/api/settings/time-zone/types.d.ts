@@ -1,1 +1,3 @@
-export type UpdateTimeZoneInput = { timeZone: string | null };
+export interface UpdateTimeZoneInput {
+	timeZone: string | null;
+}

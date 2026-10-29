@@ -1,4 +1,11 @@
 "use client";
+import { Download } from "lucide-react";
+import { useState } from "react";
+
+import { useLanguage } from "@/components/language-provider";
+import { useSelectedMailbox } from "@/components/mailbox-provider";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
 	CardHeader,
 	CardTitle,
@@ -6,13 +13,15 @@ import {
 	Card,
 	CardContent,
 } from "@/components/ui/card";
-import { useState } from "react";
-import { Download } from "lucide-react";
-import { useLanguage } from "@/components/language-provider";
-import { useSelectedMailbox } from "@/components/mailbox-provider";
-import { Button } from "@/components/ui/button";
+import {
+	PageHeader,
+	PageHeaderText,
+	PageTitle,
+} from "@/components/ui/page-header";
+
 import type { ExportState } from "./types";
 import { exportMailbox } from "./utils";
+
 export default function SettingsExportPage() {
 	const { t } = useLanguage();
 	const { selectedMailbox } = useSelectedMailbox();
@@ -21,12 +30,14 @@ export default function SettingsExportPage() {
 		loading: false,
 	});
 	async function onExport() {
-		if (!selectedMailbox?.id) return;
+		if (!selectedMailbox?.id) {
+			return;
+		}
 		setExportState({ error: null, loading: true });
 		try {
 			await exportMailbox(
 				selectedMailbox.id,
-				`${selectedMailbox.localPart}.mbox`,
+				`${selectedMailbox.localPart}.mbox`
 			);
 		} catch (error) {
 			setExportState({
@@ -39,33 +50,33 @@ export default function SettingsExportPage() {
 	}
 	return (
 		<div className="flex flex-col gap-6">
-			<h1 className="text-2xl font-semibold tracking-tight">
-				{t("settings.nav.export")}
-			</h1>
+			<PageHeader>
+				<PageHeaderText>
+					<PageTitle>{t("settings.nav.export")}</PageTitle>
+				</PageHeaderText>
+			</PageHeader>
 
 			<Card>
 				<CardHeader>
 					<CardTitle>{t("export.title")}</CardTitle>
 					<CardDescription>{t("export.description")}</CardDescription>
 				</CardHeader>
-				<CardContent>
-					<div className="flex flex-col gap-3 py-6">
-						<Button
-							type="button"
-							variant="outline"
-							disabled={!selectedMailbox || exportState.loading}
-							onClick={onExport}
-						>
-							{exportState.loading
-								? t("export.preparing")
-								: t("export.download")}
-						</Button>
-						{exportState.error && (
-							<p className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-destructive">
-								{exportState.error}
-							</p>
-						)}
-					</div>
+				<CardContent className="flex flex-col gap-3">
+					<Button
+						type="button"
+						variant="outline"
+						disabled={!selectedMailbox || exportState.loading}
+						onClick={onExport}
+						className="self-start"
+					>
+						<Download data-icon="inline-start" />
+						{exportState.loading ? t("export.preparing") : t("export.download")}
+					</Button>
+					{exportState.error && (
+						<Alert variant="error">
+							<AlertDescription>{exportState.error}</AlertDescription>
+						</Alert>
+					)}
 				</CardContent>
 			</Card>
 		</div>

@@ -1,11 +1,18 @@
 import PostalMime from "postal-mime";
-import { formatPostalAddress, formatPostalAddressList } from "@/lib/email/address";
-import { normalizeMessageId, parseMessageIdList } from "@/lib/email/threading";
-import { normalizeAttachmentContent } from "@/lib/email/attachments";
-import { getLatestEmailContent, htmlToReadableText } from "@/lib/email/reply-content-utils";
-import type { AttachmentContent } from "@/lib/email/attachment-types";
 
-export type ParsedEmail = {
+import {
+	formatPostalAddress,
+	formatPostalAddressList,
+} from "@/lib/email/address";
+import type { AttachmentContent } from "@/lib/email/attachment-types";
+import { normalizeAttachmentContent } from "@/lib/email/attachments";
+import {
+	getLatestEmailContent,
+	htmlToReadableText,
+} from "@/lib/email/reply-content-utils";
+import { normalizeMessageId, parseMessageIdList } from "@/lib/email/threading";
+
+export interface ParsedEmail {
 	subject: string | null;
 	text: string | null;
 	html: string | null;
@@ -23,35 +30,45 @@ export type ParsedEmail = {
 	references: string[];
 	date: Date | null;
 	attachments: AttachmentContent[];
-};
+}
 
 export async function parseRawMime(raw: ArrayBuffer): Promise<ParsedEmail> {
 	const email = await PostalMime.parse(raw);
 	const date = email.date ? new Date(email.date) : null;
 	return {
-		subject: email.subject ?? null,
-		text: email.text ?? null,
-		html: email.html ?? null,
-		messageId: email.messageId ?? null,
-		fromAddr: formatPostalAddress(email.from, null),
-		toAddr: formatPostalAddressList(email.to, null),
-		ccAddr: formatPostalAddressList(email.cc, null),
-		bccAddr: formatPostalAddressList(email.bcc, null),
-		replyTo: formatPostalAddressList(email.replyTo, null),
-		inReplyTo: normalizeMessageId(email.inReplyTo),
-		references: parseMessageIdList(email.references),
-		date: date && !Number.isNaN(date.getTime()) ? date : null,
 		attachments: email.attachments.map((attachment, index) => ({
+			content: normalizeAttachmentContent(
+				attachment.content,
+				attachment.encoding
+			),
+			contentId: attachment.contentId ?? null,
+			disposition:
+				attachment.disposition === "inline" ? "inline" : "attachment",
 			filename: attachment.filename ?? `attachment-${index + 1}`,
 			type: attachment.mimeType || "application/octet-stream",
-			content: normalizeAttachmentContent(attachment.content, attachment.encoding),
-			disposition: attachment.disposition === "inline" ? "inline" : "attachment",
-			contentId: attachment.contentId ?? null,
 		})),
+		bccAddr: formatPostalAddressList(email.bcc, null),
+		ccAddr: formatPostalAddressList(email.cc, null),
+		date: date && !Number.isNaN(date.getTime()) ? date : null,
+		fromAddr: formatPostalAddress(email.from, null),
+		html: email.html ?? null,
+		inReplyTo: normalizeMessageId(email.inReplyTo),
+		messageId: email.messageId ?? null,
+		references: parseMessageIdList(email.references),
+		replyTo: formatPostalAddressList(email.replyTo, null),
+		subject: email.subject ?? null,
+		text: email.text ?? null,
+		toAddr: formatPostalAddressList(email.to, null),
 	};
 }
 
-export function buildSnippet(text: string | null, html: string | null, max = 200): string {
-	const source = getLatestEmailContent(text?.trim() || htmlToReadableText(html));
-	return source.replace(/\s+/g, " ").trim().slice(0, max);
+export function buildSnippet(
+	text: string | null,
+	html: string | null,
+	max = 200
+): string {
+	const source = getLatestEmailContent(
+		text?.trim() || htmlToReadableText(html)
+	);
+	return source.replaceAll(/\s+/gu, " ").trim().slice(0, max);
 }

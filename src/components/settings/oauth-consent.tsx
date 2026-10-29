@@ -1,12 +1,29 @@
 "use client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { FieldLegend, FieldSet, FieldGroup } from "@/components/ui/field";
 import { useState } from "react";
+
 import { useLanguage } from "@/components/language-provider";
-import { DRIVE_SCOPES, EMAIL_SCOPES } from "@/lib/oauth/config";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+	Field,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+	FieldGroup,
+} from "@/components/ui/field";
+import {
+	PageDescription,
+	PageHeader,
+	PageHeaderText,
+	PageTitle,
+} from "@/components/ui/page-header";
+import {
+	requireSuccessfulResponse,
+	requireActionEntity,
+} from "@/lib/async-cleanup";
+import { DRIVE_SCOPES, EMAIL_SCOPES } from "@/lib/oauth/config";
+
 export function ConsentForm({
 	ticket,
 	name,
@@ -35,33 +52,39 @@ export function ConsentForm({
 		const submitter = (event.nativeEvent as SubmitEvent)
 			.submitter as HTMLButtonElement | null;
 		const body = new URLSearchParams();
-		for (const [key, value] of new FormData(event.currentTarget))
+		for (const [key, value] of new FormData(event.currentTarget)) {
 			body.append(key, String(value));
+		}
 		body.set("decision", submitter?.value ?? "deny");
 		setBusy(true);
 		setError(null);
 		try {
-			const response = await fetch("/oauth/approve", { method: "POST", body });
+			const response = await fetch("/oauth/approve", { body, method: "POST" });
 			const data = (await response.json()) as {
 				redirectTo?: string;
 				error_description?: string;
 			};
-			if (!response.ok || !data.redirectTo)
-				throw new Error(data.error_description || t("oauth.connectionError"));
-			window.location.assign(data.redirectTo);
-		} catch (cause) {
+			const failureMessage =
+				data.error_description || t("oauth.connectionError");
+			requireSuccessfulResponse(response, failureMessage);
+			const redirect = requireActionEntity(
+				data.redirectTo ? { url: data.redirectTo } : null,
+				failureMessage
+			);
+			window.location.assign(redirect.url);
+		} catch (error_) {
 			setError(
-				cause instanceof Error ? cause.message : t("oauth.connectionError"),
+				error_ instanceof Error ? error_.message : t("oauth.connectionError")
 			);
 			setBusy(false);
 		}
 	}
 	const needsMailbox = selectedScopes.some((scope) =>
-		EMAIL_SCOPES.includes(scope),
+		EMAIL_SCOPES.includes(scope)
 	);
 	const scopeBox = (scope: string) => (
 		<Field key={scope} orientation="horizontal">
-			<FieldLabel className="min-h-11 w-full items-center">
+			<FieldLabel className="w-full items-center pointer-coarse:min-h-11">
 				<Checkbox
 					name="scope"
 					value={scope}
@@ -71,7 +94,7 @@ export function ConsentForm({
 						setSelectedScopes((current) =>
 							checked
 								? [...current, scope]
-								: current.filter((item) => item !== scope),
+								: current.filter((item) => item !== scope)
 						);
 					}}
 				/>
@@ -96,7 +119,7 @@ export function ConsentForm({
 		{
 			key: "admin",
 			scopes: scopes.filter(
-				(scope) => !scope.startsWith("mcp:") && scope !== "offline_access",
+				(scope) => !scope.startsWith("mcp:") && scope !== "offline_access"
 			),
 		},
 		{
@@ -105,21 +128,23 @@ export function ConsentForm({
 		},
 	].filter((group) => group.scopes.length > 0);
 	return (
-		<main className="mx-auto w-full max-w-xl px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-8 sm:py-16 [&_button:not([role=checkbox])]:min-h-11">
-			<h1 className="text-2xl font-medium text-foreground">
-				{t("oauth.connectTitle", { name })}
-			</h1>
-			<p className="mt-3 break-words text-sm text-muted-foreground">
-				{t("oauth.signedInAs", { email })}
-			</p>
-			<p className="mt-5 text-sm text-foreground/80">
+		<main className="mx-auto flex w-full max-w-xl flex-col gap-6 px-5 pt-8 pb-safe-8 sm:py-16">
+			<PageHeader>
+				<PageHeaderText>
+					<PageTitle>{t("oauth.connectTitle", { name })}</PageTitle>
+					<PageDescription className="break-words">
+						{t("oauth.signedInAs", { email })}
+					</PageDescription>
+				</PageHeaderText>
+			</PageHeader>
+			<p className="text-sm text-foreground/80">
 				{t("oauth.requestDescription")}
 			</p>
 			<form
 				action="/oauth/approve"
 				method="post"
-				className="mt-6 flex flex-col gap-7"
-				onSubmit={(event) => void submit(event)}
+				className="flex flex-col gap-7"
+				onSubmit={(event) => submit(event)}
 			>
 				<FieldGroup>
 					<input type="hidden" name="request" value={ticket} />
@@ -127,15 +152,15 @@ export function ConsentForm({
 						<FieldLegend>{t("oauth.permissions")}</FieldLegend>
 						<div className="flex flex-col gap-6">
 							{groups.map((group) => (
-								<div
+								<fieldset
 									key={group.key}
-									role="group"
+
 									aria-labelledby={`oauth-group-${group.key}`}
 									className="flex flex-col gap-2 px-4 py-3"
 								>
 									<p
 										id={`oauth-group-${group.key}`}
-										className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+										className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
 									>
 										{t(`oauth.group.${group.key}` as Parameters<typeof t>[0])}
 									</p>
@@ -148,7 +173,7 @@ export function ConsentForm({
 												<FieldLegend>{t("oauth.chooseMailboxes")}</FieldLegend>
 												{mailboxes.map((mailbox) => (
 													<Field key={mailbox.id} orientation="horizontal">
-														<FieldLabel className="min-h-11 w-full items-center">
+														<FieldLabel className="w-full items-center pointer-coarse:min-h-11">
 															<Checkbox
 																name="mailbox"
 																value={mailbox.id}
@@ -159,8 +184,8 @@ export function ConsentForm({
 																		checked
 																			? [...current, mailbox.id]
 																			: current.filter(
-																					(item) => item !== mailbox.id,
-																				),
+																					(item) => item !== mailbox.id
+																				)
 																	);
 																}}
 															/>
@@ -179,7 +204,7 @@ export function ConsentForm({
 												{t("oauth.mailboxRequired")}
 											</p>
 										)}
-								</div>
+								</fieldset>
 							))}
 						</div>
 					</FieldSet>
@@ -191,11 +216,11 @@ export function ConsentForm({
 					<p className="text-sm text-muted-foreground">
 						{t("oauth.revokeHint")}
 					</p>
-					<p className="break-words text-sm text-muted-foreground">
+					<p className="text-sm break-words text-muted-foreground">
 						{t("oauth.returnTo", { host: redirectHost })}
 					</p>
 					{error && (
-						<Alert variant="destructive">
+						<Alert variant="error">
 							<AlertDescription>{error}</AlertDescription>
 						</Alert>
 					)}

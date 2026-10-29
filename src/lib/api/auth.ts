@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth/cookies";
-import { authenticateApiKeyValue, hasScope } from "@/lib/api/key-auth";
-import type { ApiAuthResult } from "@/lib/api/key-auth-types";
 
-export type { ApiAuthResult };
+import { authenticateApiKeyValue } from "@/lib/api/key-auth";
+import type { ApiAuthResult } from "@/lib/api/key-auth-types";
+import { getCurrentUser } from "@/lib/auth/cookies";
 
 export async function authenticateApiKey(
 	env: CloudflareEnv,
-	authorization: string | null,
+	authorization: string | null
 ): Promise<ApiAuthResult | null> {
-	if (!authorization?.startsWith("Bearer ")) return null;
-	return authenticateApiKeyValue(env, authorization.slice(7));
+	if (!authorization?.startsWith("Bearer ")) {
+		return null;
+	}
+	return await authenticateApiKeyValue(env, authorization.slice(7));
 }
-
-export const requireScope = hasScope;
 
 /**
  * Session auth for route handlers. `requireUser` throws a bare Error, which Next turns into
@@ -23,7 +22,14 @@ export const requireScope = hasScope;
 export async function requireSessionUser(env: CloudflareEnv, request: Request) {
 	const user = await getCurrentUser(env, request);
 	if (!user) {
-		return { user: null, error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) } as const;
+		return {
+			error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+			user: null,
+		} as const;
 	}
-	return { user, error: null } as const;
+	return { error: null, user } as const;
 }
+
+export { type ApiAuthResult } from "@/lib/api/key-auth-types";
+
+export { hasScope as requireScope } from "@/lib/api/key-auth";

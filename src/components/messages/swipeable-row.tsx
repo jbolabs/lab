@@ -1,22 +1,25 @@
 "use client";
 
-import clsx from "clsx";
-import { useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { clsx } from "clsx";
 import type { LucideIcon } from "lucide-react";
-import { haptic } from "@/lib/haptics";
-import { isEdgeSwipeStart } from "@/lib/edge-swipe-utils";
+import { useRef, useState } from "react";
+import type { CSSProperties, PointerEvent, ReactNode } from "react";
 
-type SwipeAction = {
+import { isEdgeSwipeStart } from "@/lib/edge-swipe-utils";
+import { haptic } from "@/lib/haptics";
+
+interface SwipeAction {
 	label: string;
 	icon: LucideIcon;
+	// Fill and text colour of the revealed action, e.g. "bg-primary text-primary-foreground".
 	className: string;
 	// Dismissing actions fly the row off and collapse it, as archiving does in Gmail;
 	// `restore` brings it back (on failure or undo).
 	dismisses?: boolean;
 	onTrigger: (restore: () => void) => void;
-};
+}
 
-type SwipeableRowProps = {
+interface SwipeableRowProps {
 	children: ReactNode;
 	// Revealed when dragging left to right.
 	startAction: SwipeAction;
@@ -24,12 +27,13 @@ type SwipeableRowProps = {
 	endAction: SwipeAction;
 	disabled?: boolean;
 	role?: string;
-};
+}
 
 const COMMIT_DISTANCE = 88;
 const INTENT_DISTANCE = 10;
 // A quick flick commits before the finger reaches COMMIT_DISTANCE.
-const FLICK_VELOCITY = 0.6; // px per ms
+// px per ms
+const FLICK_VELOCITY = 0.6;
 const FLICK_MIN_DISTANCE = 40;
 const FLY_MS = 180;
 const COLLAPSE_MS = 200;
@@ -37,12 +41,26 @@ const COLLAPSE_MS = 200;
 type Phase = "idle" | "dragging" | "flying" | "collapsing" | "collapsed";
 
 // Touch-only swipe gestures; vertical scrolling stays with the browser via touch-action: pan-y.
-export function SwipeableRow({ children, startAction, endAction, disabled, role }: SwipeableRowProps) {
+export function SwipeableRow({
+	children,
+	startAction,
+	endAction,
+	disabled,
+	role,
+}: SwipeableRowProps) {
 	const [offset, setOffset] = useState(0);
 	const [phase, setPhase] = useState<Phase>("idle");
 	const [height, setHeight] = useState<number | null>(null);
 	const container = useRef<HTMLDivElement>(null);
-	const gesture = useRef<{ x: number; y: number; active: boolean; id: number; lastX: number; lastT: number; velocity: number } | null>(null);
+	const gesture = useRef<{
+		x: number;
+		y: number;
+		active: boolean;
+		id: number;
+		lastX: number;
+		lastT: number;
+		velocity: number;
+	} | null>(null);
 	const swiped = useRef(false);
 	const wasArmed = useRef(false);
 
@@ -70,15 +88,32 @@ export function SwipeableRow({ children, startAction, endAction, disabled, role 
 	}
 
 	function onPointerDown(event: PointerEvent<HTMLDivElement>) {
-		if (disabled || phase !== "idle" || event.pointerType === "mouse" || isEdgeSwipeStart(event.clientX)) return;
-		gesture.current = { x: event.clientX, y: event.clientY, active: false, id: event.pointerId, lastX: event.clientX, lastT: event.timeStamp, velocity: 0 };
+		if (
+			disabled ||
+			phase !== "idle" ||
+			event.pointerType === "mouse" ||
+			isEdgeSwipeStart(event.clientX)
+		) {
+			return;
+		}
+		gesture.current = {
+			active: false,
+			id: event.pointerId,
+			lastT: event.timeStamp,
+			lastX: event.clientX,
+			velocity: 0,
+			x: event.clientX,
+			y: event.clientY,
+		};
 		swiped.current = false;
 		wasArmed.current = false;
 	}
 
 	function onPointerMove(event: PointerEvent<HTMLDivElement>) {
-		const current = gesture.current;
-		if (!current || current.id !== event.pointerId) return;
+		const { current } = gesture;
+		if (!current || current.id !== event.pointerId) {
+			return;
+		}
 		const dx = event.clientX - current.x;
 		const dy = event.clientY - current.y;
 		if (!current.active) {
@@ -86,13 +121,17 @@ export function SwipeableRow({ children, startAction, endAction, disabled, role 
 				gesture.current = null;
 				return;
 			}
-			if (Math.abs(dx) < INTENT_DISTANCE) return;
+			if (Math.abs(dx) < INTENT_DISTANCE) {
+				return;
+			}
 			current.active = true;
 			setPhase("dragging");
 			event.currentTarget.setPointerCapture(event.pointerId);
 		}
 		const elapsed = event.timeStamp - current.lastT;
-		if (elapsed > 0) current.velocity = (event.clientX - current.lastX) / elapsed;
+		if (elapsed > 0) {
+			current.velocity = (event.clientX - current.lastX) / elapsed;
+		}
 		current.lastX = event.clientX;
 		current.lastT = event.timeStamp;
 		const armed = Math.abs(dx) >= COMMIT_DISTANCE;
@@ -105,26 +144,45 @@ export function SwipeableRow({ children, startAction, endAction, disabled, role 
 	}
 
 	function finish(event: PointerEvent<HTMLDivElement>) {
-		const current = gesture.current;
-		if (!current || current.id !== event.pointerId) return;
+		const { current } = gesture;
+		if (!current || current.id !== event.pointerId) {
+			return;
+		}
 		gesture.current = null;
-		if (!current.active) return;
+		if (!current.active) {
+			return;
+		}
 		swiped.current = true;
 		const dx = event.clientX - current.x;
-		const flicked = Math.abs(dx) >= FLICK_MIN_DISTANCE && Math.abs(current.velocity) >= FLICK_VELOCITY && Math.sign(current.velocity) === Math.sign(dx);
-		const commit = event.type !== "pointercancel" && (Math.abs(dx) >= COMMIT_DISTANCE || flicked);
+		const flicked =
+			Math.abs(dx) >= FLICK_MIN_DISTANCE &&
+			Math.abs(current.velocity) >= FLICK_VELOCITY &&
+			Math.sign(current.velocity) === Math.sign(dx);
+		const commit =
+			event.type !== "pointercancel" &&
+			(Math.abs(dx) >= COMMIT_DISTANCE || flicked);
 		const action = dx > 0 ? startAction : endAction;
-		if (commit) haptic("impact");
+		if (commit) {
+			haptic("impact");
+		}
 		if (commit && action.dismisses) {
 			dismiss(action, dx > 0 ? 1 : -1);
 			return;
 		}
 		setPhase("idle");
 		setOffset(0);
-		if (commit) action.onTrigger(restore);
+		if (commit) {
+			action.onTrigger(restore);
+		}
 	}
 
-	const action = offset > 0 ? startAction : offset < 0 ? endAction : null;
+	const getRevealedAction = () => {
+		if (offset > 0) {
+			return startAction;
+		}
+		return offset < 0 ? endAction : null;
+	};
+	const action = getRevealedAction();
 	const Icon = action?.icon;
 	const armed = Math.abs(offset) >= COMMIT_DISTANCE || phase === "flying";
 
@@ -132,17 +190,34 @@ export function SwipeableRow({ children, startAction, endAction, disabled, role 
 		<div
 			ref={container}
 			role={role}
-			className="relative overflow-hidden"
-			style={height === null ? undefined : { height, transition: `height ${COLLAPSE_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1)` }}
+			className="relative h-(--mf-height) overflow-hidden transition-all duration-200 ease-(--collapse-ease)"
+			style={
+				(height === null
+					? undefined
+					: {
+							"--collapse-ease": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+							"--mf-height": `${height}px`,
+						}) as CSSProperties &
+					Record<`--${string}`, string | number | undefined>
+			}
 			hidden={phase === "collapsed"}
 		>
 			{action && Icon && (
 				<div
 					aria-hidden="true"
-					className={clsx("absolute inset-0 flex items-center px-6 text-white", offset > 0 ? "justify-start" : "justify-end", action.className)}
+					className={clsx(
+						"absolute inset-0 flex items-center px-6",
+						offset > 0 ? "justify-start" : "justify-end",
+						action.className
+					)}
 				>
-					<span className={clsx("flex items-center gap-2 text-sm font-medium transition-transform duration-150 ease-out", armed ? "scale-110" : "scale-90 opacity-80")}>
-						<Icon className="h-5 w-5" />
+					<span
+						className={clsx(
+							"flex items-center gap-2 text-sm font-medium transition-transform duration-150 ease-out",
+							armed ? "scale-110" : "scale-90 opacity-80"
+						)}
+					>
+						<Icon className="size-5" />
 						{action.label}
 					</span>
 				</div>
@@ -153,13 +228,26 @@ export function SwipeableRow({ children, startAction, endAction, disabled, role 
 				onPointerUp={finish}
 				onPointerCancel={finish}
 				onClickCapture={(event) => {
-					if (!swiped.current) return;
+					if (!swiped.current) {
+						return;
+					}
 					swiped.current = false;
 					event.preventDefault();
 					event.stopPropagation();
 				}}
-				className={clsx("relative bg-card", phase !== "dragging" && "transition-transform ease-out motion-reduce:transition-none", phase === "flying" ? "duration-[180ms]" : "duration-200")}
-				style={{ transform: offset ? `translateX(${offset}px)` : undefined, touchAction: "pan-y" }}
+				className={`[transform:var(--mf-transform)] ${clsx(
+					"relative touch-pan-y bg-card",
+					phase !== "dragging" &&
+						"transition-transform ease-out motion-reduce:transition-none",
+					phase === "flying" ? "duration-(--fly-duration)" : "duration-200"
+				)}`}
+				style={
+					{
+						"--fly-duration": `${FLY_MS}ms`,
+						"--mf-transform": offset ? `translateX(${offset}px)` : undefined,
+					} as CSSProperties &
+						Record<`--${string}`, string | number | undefined>
+				}
 			>
 				{children}
 			</div>

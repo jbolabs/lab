@@ -1,30 +1,45 @@
 import { authFetch } from "@/lib/auth/client";
 import { getEmailAddress } from "@/lib/email/address";
-import type { ContactDetailsRecord, ContactDetailsResponse } from "./contact-details-types";
+
+import type {
+	ContactDetailsRecord,
+	ContactDetailsResponse,
+} from "./contact-details-types";
 
 export async function fetchContactDetails(
 	mailboxId: string,
-	address: string,
+	address: string
 ): Promise<ContactDetailsRecord> {
-	const params = new URLSearchParams({ mailboxId, address: getEmailAddress(address) });
+	const params = new URLSearchParams({
+		address: getEmailAddress(address),
+		mailboxId,
+	});
 	const response = await authFetch(`/api/contacts?${params.toString()}`);
 	const data = (await response.json()) as ContactDetailsResponse;
-	if (!response.ok || !data.contact) throw new Error(data.error ?? "Unable to load contact");
+	if (!response.ok || !data.contact) {
+		throw new Error(data.error ?? "Unable to load contact");
+	}
 	return data.contact;
 }
 
 export async function updateContactName(
 	mailboxId: string,
 	address: string,
-	displayName: string,
+	displayName: string
 ): Promise<ContactDetailsRecord> {
 	const response = await authFetch("/api/contacts", {
-		method: "PATCH",
+		body: JSON.stringify({
+			address: getEmailAddress(address),
+			displayName,
+			mailboxId,
+		}),
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ mailboxId, address: getEmailAddress(address), displayName }),
+		method: "PATCH",
 	});
 	const data = (await response.json()) as ContactDetailsResponse;
-	if (!response.ok || !data.contact) throw new Error(data.error ?? "Unable to update contact");
+	if (!response.ok || !data.contact) {
+		throw new Error(data.error ?? "Unable to update contact");
+	}
 	return data.contact;
 }
 

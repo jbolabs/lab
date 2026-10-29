@@ -2,7 +2,10 @@ import type { mailboxes } from "@/db/schema";
 
 export type SeedMailboxKey = "support" | "billing";
 
-export type SeedMailboxMap = Record<SeedMailboxKey, typeof mailboxes.$inferSelect>;
+export type SeedMailboxMap = Record<
+	SeedMailboxKey,
+	typeof mailboxes.$inferSelect
+>;
 
 export type SeedMessageStatus =
 	| "received"
@@ -13,7 +16,7 @@ export type SeedMessageStatus =
 	| "queued"
 	| "failed";
 
-export type SeedMessageDefinition = {
+export interface SeedMessageDefinition {
 	mailbox: SeedMailboxKey;
 	direction: "inbound" | "outbound";
 	status: SeedMessageStatus;
@@ -24,4 +27,4 @@ export type SeedMessageDefinition = {
 	read?: boolean;
 	minutesAgo: number;
 	providerMessageId?: string;
-};
+}

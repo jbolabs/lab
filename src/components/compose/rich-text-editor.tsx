@@ -1,58 +1,67 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { ClipboardEvent, KeyboardEvent } from "react";
 import {
 	Bold,
 	Italic,
 	Link2,
 	List,
 	ListOrdered,
+	MoreHorizontal,
 	Quote,
 	RemoveFormatting,
 	Strikethrough,
 	Underline,
 } from "lucide-react";
-import { useLanguage } from "@/components/language-provider";
+import { useEffect, useRef, useState } from "react";
+import type { ClipboardEvent, KeyboardEvent } from "react";
+
 import { HintTooltip } from "@/components/hint-tooltip";
-import { Toggle } from "@/components/ui/toggle";
+import { useLanguage } from "@/components/language-provider";
+import { EmailHtmlRenderer } from "@/components/messages/email-html-renderer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
-import { EmailHtmlRenderer } from "@/components/messages/email-html-renderer";
+import { Toggle } from "@/components/ui/toggle";
 import { sanitizeEmailHtml, sanitizeEditorHtml } from "@/lib/email/html";
+import { cn } from "@/lib/utils";
+
 import type {
 	RichTextEditorProps,
 	ToolbarCommand,
 } from "./rich-text-editor-types";
 
 const COMMANDS: ToolbarCommand[] = [
-	{ command: "bold", labelKey: "editor.bold", icon: Bold },
-	{ command: "italic", labelKey: "editor.italic", icon: Italic },
-	{ command: "underline", labelKey: "editor.underline", icon: Underline },
+	{ command: "bold", icon: Bold, labelKey: "editor.bold" },
+	{ command: "italic", icon: Italic, labelKey: "editor.italic" },
+	{ command: "underline", icon: Underline, labelKey: "editor.underline" },
 	{
 		command: "strikeThrough",
-		labelKey: "editor.strikethrough",
 		icon: Strikethrough,
+		labelKey: "editor.strikethrough",
 	},
 	{
 		command: "insertUnorderedList",
-		labelKey: "editor.bulletedList",
 		icon: List,
+		labelKey: "editor.bulletedList",
 	},
 	{
 		command: "insertOrderedList",
-		labelKey: "editor.numberedList",
 		icon: ListOrdered,
+		labelKey: "editor.numberedList",
 	},
 	{
 		command: "formatBlock",
-		labelKey: "editor.quote",
 		icon: Quote,
+		labelKey: "editor.quote",
 		value: "blockquote",
 	},
 ];
+
+function onPaste(event: ClipboardEvent<HTMLDivElement>) {
+	event.preventDefault();
+	const text = event.clipboardData.getData("text/plain");
+	document.execCommand("insertText", false, text);
+}
 
 /**
  * A small HTML editor built on contentEditable. It stays deliberately light:
@@ -82,22 +91,28 @@ export function RichTextEditor({
 	// Keep the DOM in step with the value without resetting the caret on every keystroke.
 	useEffect(() => {
 		const element = editorRef.current;
-		if (!element) return;
+		if (!element) {
+			return;
+		}
 		const safeValue = sanitizeEditorHtml(value);
-		if (element.innerHTML !== safeValue) element.innerHTML = safeValue;
+		if (element.innerHTML !== safeValue) {
+			element.innerHTML = safeValue;
+		}
 	}, [value]);
 
 	useEffect(() => {
 		function refresh() {
 			const element = editorRef.current;
-			if (!element || !element.contains(document.activeElement)) return;
+			if (!element || !element.contains(document.activeElement)) {
+				return;
+			}
 			const next: Record<string, boolean> = {};
 			for (const item of COMMANDS) {
-				if (item.command === "formatBlock") {
-					next[item.command] = document.queryCommandValue("formatBlock").toLowerCase() === "blockquote";
-				} else {
-					next[item.command] = document.queryCommandState(item.command);
-				}
+				next[item.command] =
+					item.command === "formatBlock"
+						? document.queryCommandValue("formatBlock").toLowerCase() ===
+							"blockquote"
+						: document.queryCommandState(item.command);
 			}
 			setActive(next);
 		}
@@ -107,7 +122,11 @@ export function RichTextEditor({
 
 	function emit() {
 		// Export validated original resource addresses, never the blocked preview placeholders.
-		onChange(sanitizeEmailHtml(editorRef.current?.innerHTML ?? "", { forOutgoing: true }) ?? "");
+		onChange(
+			sanitizeEmailHtml(editorRef.current?.innerHTML ?? "", {
+				forOutgoing: true,
+			}) ?? ""
+		);
 	}
 
 	function run(command: string, commandValue?: string) {
@@ -122,7 +141,10 @@ export function RichTextEditor({
 
 	function openLink() {
 		const selection = window.getSelection();
-		savedRange.current = selection && selection.rangeCount > 0 ? selection.getRangeAt(0).cloneRange() : null;
+		savedRange.current =
+			selection && selection.rangeCount > 0
+				? selection.getRangeAt(0).cloneRange()
+				: null;
 		setLinkUrl("");
 		setLinkOpen(true);
 	}
@@ -130,8 +152,12 @@ export function RichTextEditor({
 	function applyLink() {
 		const url = linkUrl.trim();
 		setLinkOpen(false);
-		if (!url) return;
-		const href = /^(https?:|mailto:)/i.test(url) ? url : `https://${url}`;
+		if (!url) {
+			return;
+		}
+		const href = /^(?<capture1>https?:|mailto:)/iu.test(url)
+			? url
+			: `https://${url}`;
 		editorRef.current?.focus();
 		const selection = window.getSelection();
 		if (savedRange.current && selection) {
@@ -139,17 +165,15 @@ export function RichTextEditor({
 			selection.addRange(savedRange.current);
 		}
 		if (selection && selection.isCollapsed) {
-			document.execCommand("insertHTML", false, `<a href="${href.replace(/"/g, "&quot;")}">${href}</a>`);
+			document.execCommand(
+				"insertHTML",
+				false,
+				`<a href="${href.replaceAll('"', "&quot;")}">${href}</a>`
+			);
 		} else {
 			document.execCommand("createLink", false, href);
 		}
 		emit();
-	}
-
-	function onPaste(event: ClipboardEvent<HTMLDivElement>) {
-		event.preventDefault();
-		const text = event.clipboardData.getData("text/plain");
-		document.execCommand("insertText", false, text);
 	}
 
 	function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -170,13 +194,13 @@ export function RichTextEditor({
 						disabled={disabled}
 						onMouseDown={(event) => event.preventDefault()}
 						onClick={() => run(item.command, item.value)}
-						className="shrink-0 [@media(pointer:coarse)]:size-11"
+						className="shrink-0"
 					>
 						<item.icon />
 					</Toggle>
 				</HintTooltip>
 			))}
-			<Separator orientation="vertical" className="mx-1 h-6" />
+			<Separator orientation="vertical" className="mx-1" />
 			<HintTooltip label={t("editor.insertLinkHint")}>
 				<Button
 					variant="ghost"
@@ -186,7 +210,7 @@ export function RichTextEditor({
 					disabled={disabled}
 					onMouseDown={(event) => event.preventDefault()}
 					onClick={openLink}
-					className="shrink-0 [@media(pointer:coarse)]:size-11"
+					className="shrink-0"
 				>
 					<Link2 data-icon="inline-start" />
 				</Button>
@@ -200,7 +224,7 @@ export function RichTextEditor({
 					disabled={disabled}
 					onMouseDown={(event) => event.preventDefault()}
 					onClick={() => run("removeFormat")}
-					className="shrink-0 [@media(pointer:coarse)]:size-11"
+					className="shrink-0"
 				>
 					<RemoveFormatting data-icon="inline-start" />
 				</Button>
@@ -217,7 +241,9 @@ export function RichTextEditor({
 				<div
 					ref={editorRef}
 					id={id}
+					// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- Rich HTML editing needs contentEditable; textarea cannot preserve formatting.
 					role="textbox"
+					tabIndex={disabled ? -1 : 0}
 					aria-multiline="true"
 					aria-label={t("editor.messageBody")}
 					contentEditable={!disabled}
@@ -228,28 +254,27 @@ export function RichTextEditor({
 					onPaste={onPaste}
 					onKeyDown={onKeyDown}
 					className={cn(
-						"email-body max-w-none [@media(pointer:coarse)]:text-base px-4 py-3 text-sm text-foreground outline-none",
+						"email-body max-w-none px-4 py-3 text-sm text-foreground outline-none [@media(pointer:coarse)]:text-base",
 						"min-h-32 empty:before:pointer-events-none empty:before:text-muted-foreground/70 empty:before:content-[attr(data-placeholder)]",
-						disabled && "cursor-not-allowed opacity-60",
+						disabled && "cursor-not-allowed opacity-60"
 					)}
 				/>
 				{quotedHtml && (
 					<div className="px-4 pb-3">
 						<Button
-							variant="ghost"
-							size="icon"
+							variant="outline"
+							size="icon-sm"
 							type="button"
 							onClick={() => setShowQuoted((open) => !open)}
 							aria-expanded={showQuoted}
 							aria-label={
 								showQuoted ? t("editor.hideQuoted") : t("editor.showQuoted")
 							}
-							className="rounded-full border border-border bg-muted px-2 text-xs leading-5 text-muted-foreground hover:bg-accent"
 							title={
 								showQuoted ? t("editor.hideQuoted") : t("editor.showQuoted")
 							}
 						>
-							•••
+							<MoreHorizontal data-icon="inline-start" />
 						</Button>
 						{showQuoted && (
 							<EmailHtmlRenderer
@@ -262,7 +287,7 @@ export function RichTextEditor({
 				)}
 			</div>
 			{footerContent}
-			<div className="relative flex items-center gap-0.5 max-md:gap-2 border-t border-border px-4 py-3 max-md:border-t-0">
+			<div className="relative flex items-center gap-0.5 border-t border-border px-4 py-3 max-md:gap-2 max-md:border-t-0">
 				{toolbarStart}
 				<div className="contents max-md:hidden">{formatButtons}</div>
 				{toolbarEnd}
@@ -279,7 +304,9 @@ export function RichTextEditor({
 									event.preventDefault();
 									applyLink();
 								}
-								if (event.key === "Escape") setLinkOpen(false);
+								if (event.key === "Escape") {
+									setLinkOpen(false);
+								}
 							}}
 							placeholder="https://example.com"
 							aria-label={t("editor.insertLink")}

@@ -1,7 +1,7 @@
 "use client";
 
-import { MessageFolderPage } from "@/components/messages/message-folder-page";
 import { starredFolderConfig } from "@/components/messages/message-folder-configs";
+import { MessageFolderPage } from "@/components/messages/message-folder-page";
 
 export default function StarredPage() {
 	return <MessageFolderPage config={starredFolderConfig} />;

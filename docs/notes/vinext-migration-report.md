@@ -8,7 +8,7 @@ No breaking application behavior was reproduced in the local paths exercised. Th
 
 ## Finding: TypeScript checking stops in a new dependency (P2)
 
-`npx tsc --noEmit --incremental false` exits with three parse errors at `node_modules/@vitejs/plugin-react/dist/index.d.ts:62` (`TS1003`, `TS1005`, `TS1128`). The declaration exports `viteReactForCjs as "module.exports"`, which the locked TypeScript 5.9.3 parser rejects. PR #52 adds `@vitejs/plugin-react: ^6.0.0`; its lockfile installs 6.1.1, while `typescript: ^5.7.4` resolves to 5.9.3. `skipLibCheck` does not suppress declaration *syntax* errors. The OpenNext `main` checkout reaches application diagnostics instead of failing at this declaration, although that branch also has existing type errors.
+`npx tsc --noEmit --incremental false` exits with three parse errors at `node_modules/@vitejs/plugin-react/dist/index.d.ts:62` (`TS1003`, `TS1005`, `TS1128`). The declaration exports `viteReactForCjs as "module.exports"`, which the locked TypeScript 5.9.3 parser rejects. PR #52 adds `@vitejs/plugin-react: ^6.0.0`; its lockfile installs 6.1.1, while `typescript: ^5.7.4` resolves to 5.9.3. `skipLibCheck` does not suppress declaration _syntax_ errors. The OpenNext `main` checkout reaches application diagnostics instead of failing at this declaration, although that branch also has existing type errors.
 
 Impact: the project cannot use its normal type-check command to find migration or application type errors. Align and pin a compatible TypeScript/plugin version pair, regenerate the lockfile, then rerun `tsc --noEmit`. See [package.json](../package.json) and [tsconfig.json](../tsconfig.json).
 

@@ -6,12 +6,20 @@ export function formatState(seq: number, fingerprint: string): string {
 	return `${PREFIX}:${seq}:${fingerprint}`;
 }
 
-export function parseState(value: unknown): { seq: number; fingerprint: string } | null {
-	if (typeof value !== "string") return null;
+export function parseState(
+	value: unknown
+): { seq: number; fingerprint: string } | null {
+	if (typeof value !== "string") {
+		return null;
+	}
 	const [prefix, seq, fingerprint, ...rest] = value.split(":");
-	if (prefix !== PREFIX || !fingerprint || rest.length) return null;
+	if (prefix !== PREFIX || !fingerprint || rest.length) {
+		return null;
+	}
 	const number = Number(seq);
-	return Number.isSafeInteger(number) && number >= 0 ? { seq: number, fingerprint } : null;
+	return Number.isSafeInteger(number) && number >= 0
+		? { fingerprint, seq: number }
+		: null;
 }
 
 /**
@@ -19,21 +27,36 @@ export function parseState(value: unknown): { seq: number; fingerprint: string }
  * object created and destroyed in the window is not reported at all, one
  * destroyed and created again (moved away and back) is updated.
  */
-export function coalesceChanges(rows: Array<{ id: string; change: string }>): { created: string[]; updated: string[]; destroyed: string[] } {
+export function coalesceChanges(rows: { id: string; change: string }[]): {
+	created: string[];
+	updated: string[];
+	destroyed: string[];
+} {
 	const created = new Set<string>();
 	const updated = new Set<string>();
 	const destroyed = new Set<string>();
 	for (const { id, change } of rows) {
 		if (change === "created") {
-			if (destroyed.delete(id)) updated.add(id);
-			else created.add(id);
+			if (destroyed.delete(id)) {
+				updated.add(id);
+			} else {
+				created.add(id);
+			}
 		} else if (change === "updated") {
-			if (!created.has(id)) updated.add(id);
+			if (!created.has(id)) {
+				updated.add(id);
+			}
 		} else if (change === "destroyed") {
-			if (created.delete(id)) continue;
+			if (created.delete(id)) {
+				continue;
+			}
 			updated.delete(id);
 			destroyed.add(id);
 		}
 	}
-	return { created: [...created], updated: [...updated], destroyed: [...destroyed] };
+	return {
+		created: [...created],
+		destroyed: [...destroyed],
+		updated: [...updated],
+	};
 }

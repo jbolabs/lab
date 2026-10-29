@@ -1,5 +1,5 @@
-export type ContactRequestInput = {
+export interface ContactRequestInput {
 	mailboxId?: string;
 	address?: string;
 	displayName?: string;
-};
+}

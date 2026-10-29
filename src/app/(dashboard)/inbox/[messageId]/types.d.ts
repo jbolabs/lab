@@ -1,7 +1,7 @@
 import type { Message } from "@/hooks/types";
 import type { ReplyContentParts } from "@/lib/email/reply-content-types";
 
-export type MessageDetailResponse = {
+export interface MessageDetailResponse {
 	message?: Message;
 	body?: {
 		htmlBody: string | null;
@@ -12,9 +12,13 @@ export type MessageDetailResponse = {
 	/** ISO time a queued message is waiting to be sent, when it is a scheduled send. */
 	scheduledAt?: string | null;
 	error?: string;
+}
+
+export type LoadedMessageData = MessageDetailResponse & {
+	message: NonNullable<MessageDetailResponse["message"]>;
 };
 
-export type MessageAttachment = {
+export interface MessageAttachment {
 	contentId: string | null;
 	disposition: "attachment" | "inline";
 	filename: string;
@@ -22,7 +26,7 @@ export type MessageAttachment = {
 	messageId: string;
 	size: number;
 	type: string;
-};
+}
 
 export type MessageBodyDisplay = ReplyContentParts & {
 	htmlBody: string | null;

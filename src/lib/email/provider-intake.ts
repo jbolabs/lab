@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+
 import { getDb } from "@/db";
 import { domains } from "@/db/schema";
 import { normalizeEmailAddress } from "@/lib/email/address";
@@ -16,24 +17,51 @@ export const MAX_PROVIDER_MESSAGE_BYTES = 25 * 1024 * 1024;
  */
 export async function intakeProviderMail(
 	env: CloudflareEnv,
-	input: { from: string; recipients: string[]; raw: ArrayBuffer; headers?: Record<string, string> },
+	input: {
+		from: string;
+		recipients: string[];
+		raw: ArrayBuffer;
+		headers?: Record<string, string>;
+	}
 ): Promise<{ delivered: number; dropped: string | null }> {
-	if (input.raw.byteLength > MAX_PROVIDER_MESSAGE_BYTES) return { delivered: 0, dropped: "Message exceeds the 25 MiB receiving limit" };
+	if (input.raw.byteLength > MAX_PROVIDER_MESSAGE_BYTES) {
+		return {
+			delivered: 0,
+			dropped: "Message exceeds the 25 MiB receiving limit",
+		};
+	}
 	const limit = await inboundAttachmentLimitReasonFromRaw(input.raw);
-	if (limit) return { delivered: 0, dropped: limit };
+	if (limit) {
+		return { delivered: 0, dropped: limit };
+	}
 
 	const db = getDb(env);
 	let delivered = 0;
-	for (const recipient of [...new Set(input.recipients.map(normalizeEmailAddress).filter(Boolean))]) {
+	for (const recipient of new Set(
+		input.recipients.map(normalizeEmailAddress).filter(Boolean)
+	)) {
 		const hostname = recipient.slice(recipient.lastIndexOf("@") + 1);
-		const [domain] = await db.select({ id: domains.id }).from(domains).where(eq(domains.hostname, hostname)).limit(1);
-		if (!domain) continue;
+		const [domain] = await db
+			.select({ id: domains.id })
+			.from(domains)
+			.where(eq(domains.hostname, hostname))
+			.limit(1);
+		if (!domain) {
+			continue;
+		}
 		const result = await intakeIncomingMail(
 			env,
-			{ from: normalizeEmailAddress(input.from), to: recipient, raw: input.raw, headers: input.headers ?? {} },
-			{ forward: async () => false },
+			{
+				from: normalizeEmailAddress(input.from),
+				headers: input.headers ?? {},
+				raw: input.raw,
+				to: recipient,
+			},
+			{ forward: () => Promise.resolve(false) }
 		);
-		if (result.action === "store") delivered += 1;
+		if (result.action === "store") {
+			delivered += 1;
+		}
 	}
 	return { delivered, dropped: null };
 }

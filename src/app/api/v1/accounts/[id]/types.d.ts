@@ -1,1 +1,3 @@
-export type AdminAccountRouteParams = { params: Promise<{ id: string }> };
+export interface AdminAccountRouteParams {
+	params: Promise<{ id: string }>;
+}

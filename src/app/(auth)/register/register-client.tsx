@@ -1,20 +1,16 @@
 "use client";
-
+import { ArrowRight, CheckCircle2, MailPlus, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, MailPlus, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useLanguage } from "@/components/language-provider";
+import { useEffect, useState, useEffectEvent } from "react";
+
 import { AuthShell } from "@/components/auth/auth-shell";
+import { PasswordInput } from "@/components/auth/password-input";
+import { TurnstileField } from "@/components/auth/turnstile";
+import { useLanguage } from "@/components/language-provider";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PasswordInput } from "@/components/auth/password-input";
-import {
-	InputGroup,
-	InputGroupInput,
-	InputGroupAddon,
-} from "@/components/ui/input-group";
-import { Input } from "@/components/ui/input";
 import {
 	Field,
 	FieldGroup,
@@ -24,10 +20,21 @@ import {
 	FieldSet,
 	FieldLegend,
 } from "@/components/ui/field";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import {
+	InputGroup,
+	InputGroupInput,
+	InputGroupAddon,
+} from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import { TurnstileField } from "@/components/auth/turnstile";
+import { withCleanup } from "@/lib/async-cleanup";
+
+import type {
+	DomainPreflight,
+	DomainSetupResult,
+	SetupRequirementCheck,
+} from "./types";
 import {
 	getSetupStatus,
 	checkExistingMx,
@@ -35,18 +42,13 @@ import {
 	submitPrimaryDomain,
 	submitRegistration,
 } from "./utils";
-import type {
-	DomainPreflight,
-	DomainSetupResult,
-	SetupRequirementCheck,
-} from "./types";
 
 export function RegisterClient() {
 	const { t } = useLanguage();
 	const router = useRouter();
 	const [hasAdminAccount, setHasAdminAccount] = useState<boolean | null>(null);
 	const [hasPrimaryDomain, setHasPrimaryDomain] = useState<boolean | null>(
-		null,
+		null
 	);
 	const [primaryDomain, setPrimaryDomain] = useState<string | null>(null);
 	const [primaryDomainSendingRequested, setPrimaryDomainSendingRequested] =
@@ -67,51 +69,117 @@ export function RegisterClient() {
 	const [mxRecordsExist, setMxRecordsExist] = useState<boolean | null>(null);
 	const [replaceMxRecords, setReplaceMxRecords] = useState(false);
 	const [mxCheckRevision, setMxCheckRevision] = useState(0);
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 	const [turnstileReset, setTurnstileReset] = useState(0);
 
+	function applyPreparation(
+		preparation: Awaited<ReturnType<typeof prepareSetup>>
+	) {
+		return withCleanup(
+			async () => {
+				try {
+					setChecks(preparation.data.checks ?? []);
+					setDatabaseMigrated(!!preparation.data.migrated);
+					if (!preparation.ok) {
+						setError(preparation.data.error ?? t("setup.completeConfig"));
+						return;
+					}
+
+					const data = await getSetupStatus();
+					setHasAdminAccount(data.hasAdminAccount);
+					setHasPrimaryDomain(data.hasPrimaryDomain);
+					setPrimaryDomain(data.primaryDomain?.hostname ?? null);
+					setPrimaryDomainSendingRequested(
+						data.primaryDomain?.sendingRequested ?? null
+					);
+					setPreparationComplete(true);
+				} catch (error_) {
+					setError(
+						error_ instanceof Error ? error_.message : t("setup.prepFailed")
+					);
+				}
+			},
+			() => {
+				setLoading(false);
+			}
+		);
+	}
+
+	function handlePreparationError(preparationError: unknown) {
+		setLoading(false);
+		setError(
+			preparationError instanceof Error
+				? preparationError.message
+				: t("setup.prepFailed")
+		);
+	}
+	function runPreparation() {
+		setLoading(true);
+		setError(null);
+		setPreparationComplete(false);
+		return prepareSetup().then(applyPreparation).catch(handlePreparationError);
+	}
+	const applyInitialPreparation = useEffectEvent(applyPreparation);
+	const reportInitialFailure = useEffectEvent(handlePreparationError);
+
 	useEffect(() => {
-		void runPreparation();
+		async function initialize() {
+			try {
+				const result = await prepareSetup();
+				await applyInitialPreparation(result);
+			} catch (preparationError) {
+				reportInitialFailure(preparationError);
+			}
+		}
+		void initialize();
 	}, []);
 
 	const accountDomain = setupDomain ?? primaryDomain;
 
-	useEffect(() => {
-		if (step !== 3 || !accountDomain) return;
-		if (setupSkipDns) {
-			// DNS is skipped, so there is nothing on the zone to check.
-			setMxChecking(false);
-			setMxRecordsExist(false);
-			setReplaceMxRecords(false);
-			setError(null);
-			return;
-		}
-
-		let active = true;
-		setMxChecking(true);
-		setMxRecordsExist(null);
+	const mxKey = `${step}:${accountDomain}:${mxCheckRevision}:${setupSkipDns}`;
+	const [previousMxKey, setPreviousMxKey] = useState(mxKey);
+	if (previousMxKey !== mxKey) {
+		setPreviousMxKey(mxKey);
+		setMxChecking(!setupSkipDns);
+		setMxRecordsExist(setupSkipDns ? false : null);
 		setReplaceMxRecords(false);
 		setError(null);
+	}
 
+	useEffect(() => {
+		if (step !== 3 || !accountDomain) {
+			return;
+		}
+		if (setupSkipDns) {
+			return;
+		}
+		let active = mxCheckRevision >= 0;
+		void mxCheckRevision;
 		void checkExistingMx(accountDomain)
 			.then(({ ok, data }) => {
-				if (!active) return;
+				if (!active) {
+					return;
+				}
 				setMxChecking(false);
 				if (!ok || data.hasExistingMx === undefined) {
 					setError(
 						typeof data.error === "string"
 							? data.error
-							: t("setup.mxCheckFailed"),
+							: t("setup.mxCheckFailed")
 					);
 					return;
 				}
 				setMxRecordsExist(data.hasExistingMx);
+
+				return null;
 			})
-			.catch((error: unknown) => {
-				if (!active) return;
+			.catch((error_: unknown) => {
+				if (!active) {
+					return;
+				}
 				setMxChecking(false);
 				setError(
-					error instanceof Error ? error.message : t("setup.mxCheckFailed"),
+					error_ instanceof Error ? error_.message : t("setup.mxCheckFailed")
 				);
 			});
 
@@ -119,35 +187,6 @@ export function RegisterClient() {
 			active = false;
 		};
 	}, [step, accountDomain, mxCheckRevision, setupSkipDns, t]);
-
-	async function runPreparation() {
-		setLoading(true);
-		setError(null);
-		setPreparationComplete(false);
-
-		try {
-			const preparation = await prepareSetup();
-			setChecks(preparation.data.checks ?? []);
-			setDatabaseMigrated(!!preparation.data.migrated);
-			if (!preparation.ok) {
-				setError(preparation.data.error ?? t("setup.completeConfig"));
-				return;
-			}
-
-			const data = await getSetupStatus();
-			setHasAdminAccount(data.hasAdminAccount);
-			setHasPrimaryDomain(data.hasPrimaryDomain);
-			setPrimaryDomain(data.primaryDomain?.hostname ?? null);
-			setPrimaryDomainSendingRequested(
-				data.primaryDomain?.sendingRequested ?? null,
-			);
-			setPreparationComplete(true);
-		} catch (error) {
-			setError(error instanceof Error ? error.message : t("setup.prepFailed"));
-		} finally {
-			setLoading(false);
-		}
-	}
 
 	async function onDomainSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
@@ -168,13 +207,13 @@ export function RegisterClient() {
 		setSetupSkipDns(false);
 		const usedCachedCheck = domainCheck?.hostname === hostname;
 		const result: { ok: boolean; data: DomainSetupResult } = usedCachedCheck
-			? { ok: true, data: { domain: domainCheck } }
+			? { data: { domain: domainCheck }, ok: true }
 			: await submitPrimaryDomain(hostname);
 		const { ok, data } = result;
 		setLoading(false);
 		if (!ok || !data.domain) {
 			setError(
-				typeof data.error === "string" ? data.error : t("setup.domainFailed"),
+				typeof data.error === "string" ? data.error : t("setup.domainFailed")
 			);
 			return;
 		}
@@ -185,8 +224,9 @@ export function RegisterClient() {
 
 	async function onDomainBlur(e: React.FocusEvent<HTMLInputElement>) {
 		const hostname = e.currentTarget.value.toLowerCase().trim();
-		if (skipDns || hostname.length < 3 || domainCheck?.hostname === hostname)
+		if (skipDns || hostname.length < 3 || domainCheck?.hostname === hostname) {
 			return;
+		}
 
 		setDomainChecking(true);
 		setError(null);
@@ -198,7 +238,7 @@ export function RegisterClient() {
 			setError(
 				typeof data.error === "string"
 					? data.error
-					: t("setup.domainCheckFailed"),
+					: t("setup.domainCheckFailed")
 			);
 			return;
 		}
@@ -221,11 +261,11 @@ export function RegisterClient() {
 		}
 
 		const { ok, data } = await submitRegistration(form, {
-			firstRun: true,
 			domain,
 			enableSending: setupDomain
 				? setupEnableSending
 				: (primaryDomainSendingRequested ?? undefined),
+			firstRun: true,
 			replaceMxRecords,
 			skipDns: setupDomain ? setupSkipDns : undefined,
 		});
@@ -241,7 +281,7 @@ export function RegisterClient() {
 			setError(
 				typeof data.error === "string"
 					? data.error
-					: t("setup.registrationFailed"),
+					: t("setup.registrationFailed")
 			);
 			setTurnstileReset((value) => value + 1);
 			return;
@@ -266,7 +306,7 @@ export function RegisterClient() {
 					</Link>
 				}
 			>
-				<FieldGroup className="flex-1 gap-5 [&>button:last-child]:mt-auto lg:[&>button:last-child]:mt-0">
+				<FieldGroup className="flex-1 [&>button:last-child]:mt-auto lg:[&>button:last-child]:mt-0">
 					<p className="text-sm leading-6 text-muted-foreground">
 						{t("setup.alreadyHasAccount", {
 							domain: primaryDomain ?? t("setup.thisWorkspace"),
@@ -274,7 +314,8 @@ export function RegisterClient() {
 					</p>
 					<Button
 						type="button"
-						className="min-h-12 w-full"
+						size="lg"
+						className="w-full"
 						onClick={() => router.push("/login")}
 					>
 						{t("setup.goToLogin")}
@@ -283,316 +324,224 @@ export function RegisterClient() {
 			</AuthShell>
 		);
 	}
-
 	return (
 		<AuthShell
 			icon={MailPlus}
-			title={
-				step === 1
-					? t("setup.prepareTitle")
-					: showDomainStep
-						? t("setup.addDomainTitle")
-						: t("setup.createMailboxTitle")
-			}
+			title={(() => {
+				if (step === 1) {
+					return t("setup.prepareTitle");
+				}
+				if (showDomainStep) {
+					return t("setup.addDomainTitle");
+				}
+				return t("setup.createMailboxTitle");
+			})()}
 			// description={
 			// 	showDomainStep
 			// 		? "Connect the primary Cloudflare zone first so routing records can be created before the first mailbox."
 			// 		: `Choose a mailbox username on ${accountDomain ?? "the primary domain"} and add a recovery email.`
 			// }
 			steps={[
-				{ label: t("setup.stepSystem"), active: step === 1 },
-				{ label: t("setup.stepDomain"), active: step === 2 },
-				{ label: t("setup.stepAccount"), active: step === 3 },
+				{ active: step === 1, label: t("setup.stepSystem") },
+				{ active: step === 2, label: t("setup.stepDomain") },
+				{ active: step === 3, label: t("setup.stepAccount") },
 			]}
 		>
-			{step === 1 ? (
-				<FieldGroup className="flex-1 gap-5 [&>button:last-child]:mt-auto lg:[&>button:last-child]:mt-0">
-					<p className="text-sm leading-6 text-muted-foreground">
-						{t("setup.prepareIntro")}
-					</p>
-					<div className="flex flex-col gap-2">
-						{loading && checks.length === 0 && (
-							<Alert>
-								<Spinner />
-								<AlertDescription>{t("setup.checking")}</AlertDescription>
-							</Alert>
-						)}
-						{checks.map((check) => (
-							<div
-								key={check.key}
-								className="flex items-start gap-3 rounded-lg bg-muted/60 px-4 py-3"
-							>
-								{check.configured ? (
-									<CheckCircle2 className="mt-0.5 size-4 shrink-0 text-foreground" />
-								) : (
-									<XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+			{(() => {
+				if (step === 1) {
+					return (
+						<FieldGroup className="flex-1 [&>button:last-child]:mt-auto lg:[&>button:last-child]:mt-0">
+							<p className="text-sm leading-6 text-muted-foreground">
+								{t("setup.prepareIntro")}
+							</p>
+							<div className="flex flex-col gap-2">
+								{loading && checks.length === 0 && (
+									<Alert variant="muted">
+										<Spinner />
+										<AlertDescription>{t("setup.checking")}</AlertDescription>
+									</Alert>
 								)}
-								<div>
-									<p className="text-sm font-medium text-foreground">
-										{check.key}
-									</p>
-									{!check.configured && (
-										<FieldDescription>{check.message}</FieldDescription>
-									)}
-								</div>
-							</div>
-						))}
-						{preparationComplete && (
-							<Alert>
-								<CheckCircle2 className="size-4" />
-								<AlertDescription>
-									{databaseMigrated
-										? t("setup.migrated")
-										: t("setup.schemaReady")}
-								</AlertDescription>
-							</Alert>
-						)}
-					</div>
-					{error && (
-						<Alert id="auth-error" variant="destructive">
-							<AlertDescription>{error}</AlertDescription>
-						</Alert>
-					)}
-					{preparationComplete ? (
-						<Button
-							type="button"
-							className="min-h-12 w-full"
-							onClick={() => setStep(hasPrimaryDomain ? 3 : 2)}
-						>
-							{t("common.continue")}
-						</Button>
-					) : (
-						<Button
-							type="button"
-							variant="outline"
-							className="min-h-12 w-full"
-							disabled={loading}
-							onClick={() => void runPreparation()}
-						>
-							{loading && <Spinner data-icon="inline-start" />}
-							{loading ? t("setup.checkingShort") : t("setup.checkAgain")}
-						</Button>
-					)}
-				</FieldGroup>
-			) : showDomainStep ? (
-				<form method="post" onSubmit={onDomainSubmit} className="flex flex-col">
-					<FieldGroup className="flex-1 gap-5 [&>button[type=submit]]:mt-auto lg:[&>button[type=submit]]:mt-0">
-						<Field data-invalid={!!error}>
-							<FieldLabel htmlFor="domain">
-								{t("setup.primaryDomain")}
-							</FieldLabel>
-							<Input
-								aria-describedby={error ? "auth-error" : undefined}
-								aria-invalid={!!error}
-								id="domain"
-								inputMode="url"
-								autoComplete="off"
-								autoCapitalize="none"
-								spellCheck={false}
-								name="domain"
-								placeholder="example.com"
-								required
-								onBlur={(event) => void onDomainBlur(event)}
-								onChange={(event) => {
-									if (
-										domainCheck?.hostname !==
-										event.currentTarget.value.toLowerCase().trim()
-									) {
-										setDomainCheck(null);
-										setEnableSending(false);
-									}
-								}}
-							/>
-							<FieldDescription>{t("setup.zoneHint")}</FieldDescription>
-						</Field>
-						<Field orientation="horizontal" className="rounded-lg border p-4">
-							<FieldContent>
-								<FieldLabel
-									className="min-h-11 items-center"
-									htmlFor="setup-skip-dns"
-								>
-									{t("setup.skipDns")}
-								</FieldLabel>
-								<FieldDescription>
-									{skipDns ? t("setup.skipDnsOn") : t("setup.skipDnsHint")}
-								</FieldDescription>
-							</FieldContent>
-							<Switch
-								id="setup-skip-dns"
-								checked={skipDns}
-								onCheckedChange={(checked) => {
-									setSkipDns(checked);
-									setError(null);
-								}}
-							/>
-						</Field>
-						{!skipDns && (
-							<Field orientation="horizontal" className="rounded-lg border p-4">
-								<FieldContent>
-									<FieldLabel
-										className="min-h-11 items-center"
-										htmlFor="setup-enable-sending"
+								{checks.map((check) => (
+									<div
+										key={check.key}
+										className="flex items-start gap-3 rounded-lg bg-muted/60 px-4 py-3"
 									>
-										{t("setup.enableSending")}
-									</FieldLabel>
-									<FieldDescription>
-										{domainChecking
-											? t("setup.checkingCloudflare")
-											: domainCheck
-												? enableSending
-													? t("setup.requiredToSend")
-													: t("setup.receiveOnly")
-												: t("setup.enterDomain")}
-									</FieldDescription>
-								</FieldContent>
-								<Switch
-									id="setup-enable-sending"
-									checked={enableSending}
-									onCheckedChange={setEnableSending}
-									disabled={domainChecking || !domainCheck || skipDns}
-								/>
-							</Field>
-						)}
-						{domainCheck && !skipDns && (
-							<Alert>
-								<CheckCircle2 className="size-4" />
-								<AlertDescription>
-									{t("setup.domainFound", { zone: domainCheck.zone.name })}
-								</AlertDescription>
-							</Alert>
-						)}
-						{error && (
-							<Alert id="auth-error" variant="destructive">
-								<AlertDescription>{error}</AlertDescription>
-							</Alert>
-						)}
-						<Button
-							type="submit"
-							className="min-h-12 w-full"
-							disabled={loading || domainChecking}
+										{check.configured ? (
+											<CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
+										) : (
+											<XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+										)}
+										<div>
+											<p className="text-sm font-medium text-foreground">
+												{check.key}
+											</p>
+											{!check.configured && (
+												<FieldDescription>{check.message}</FieldDescription>
+											)}
+										</div>
+									</div>
+								))}
+								{preparationComplete && (
+									<Alert variant="success">
+										<CheckCircle2 />
+										<AlertDescription>
+											{databaseMigrated
+												? t("setup.migrated")
+												: t("setup.schemaReady")}
+										</AlertDescription>
+									</Alert>
+								)}
+							</div>
+							{error && (
+								<Alert id="auth-error" variant="error">
+									<AlertDescription>{error}</AlertDescription>
+								</Alert>
+							)}
+							{preparationComplete ? (
+								<Button
+									type="button"
+									size="lg"
+									className="w-full"
+									onClick={() => setStep(hasPrimaryDomain ? 3 : 2)}
+								>
+									{t("common.continue")}
+								</Button>
+							) : (
+								<Button
+									type="button"
+									variant="outline"
+									size="lg"
+									className="w-full"
+									disabled={loading}
+									onClick={() => runPreparation()}
+								>
+									{loading && <Spinner data-icon="inline-start" />}
+									{loading ? t("setup.checkingShort") : t("setup.checkAgain")}
+								</Button>
+							)}
+						</FieldGroup>
+					);
+				}
+
+				function renderDomainStep() {
+					return (
+						<form
+							method="post"
+							onSubmit={onDomainSubmit}
+							className="flex flex-col"
 						>
-							{loading && <Spinner data-icon="inline-start" />}
-							{loading ? t("setup.addingDomain") : t("common.continue")}
-						</Button>
-					</FieldGroup>
-				</form>
-			) : (
-				<form method="post" onSubmit={onSubmit} className="flex flex-col">
-					<FieldGroup className="flex-1 gap-5 [&>button[type=submit]]:mt-auto lg:[&>button[type=submit]]:mt-0">
-						{mxChecking && (
-							<Alert>
-								<Spinner />
-								<AlertDescription>{t("setup.checkingMx")}</AlertDescription>
-							</Alert>
-						)}
-						{mxRecordsExist === false && (
-							<Alert>
-								<CheckCircle2 className="size-4" />
-								<AlertDescription>{t("setup.noMx")}</AlertDescription>
-							</Alert>
-						)}
-						{mxRecordsExist === true && (
-							<FieldSet className="rounded-lg border p-4">
-								<FieldLegend className="sr-only">
-									{t("setup.replaceMx")}
-								</FieldLegend>
-								<Field orientation="horizontal">
-									<Checkbox
-										id="replace-mx"
-										checked={replaceMxRecords}
-										onCheckedChange={(checked) =>
-											setReplaceMxRecords(checked === true)
-										}
+							<FieldGroup className="flex-1 [&>button[type=submit]]:mt-auto lg:[&>button[type=submit]]:mt-0">
+								<Field data-invalid={!!error}>
+									<FieldLabel htmlFor="domain">
+										{t("setup.primaryDomain")}
+									</FieldLabel>
+									<Input
+										aria-describedby={error ? "auth-error" : undefined}
+										aria-invalid={!!error}
+										id="domain"
+										inputMode="url"
+										autoComplete="off"
+										autoCapitalize="none"
+										spellCheck={false}
+										name="domain"
+										placeholder="example.com"
+										required
+										onBlur={(event) => onDomainBlur(event)}
+										onChange={(event) => {
+											if (
+												domainCheck?.hostname !==
+												event.currentTarget.value.toLowerCase().trim()
+											) {
+												setDomainCheck(null);
+												setEnableSending(false);
+											}
+										}}
 									/>
+									<FieldDescription>{t("setup.zoneHint")}</FieldDescription>
+								</Field>
+								<Field orientation="horizontal" className="p-4">
 									<FieldContent>
-										<FieldLabel
-											className="min-h-11 items-center"
-											htmlFor="replace-mx"
-										>
-											{t("setup.replaceMx")}
+										<FieldLabel htmlFor="setup-skip-dns">
+											{t("setup.skipDns")}
 										</FieldLabel>
 										<FieldDescription>
-											{t("setup.replaceMxHint")}
+											{skipDns ? t("setup.skipDnsOn") : t("setup.skipDnsHint")}
 										</FieldDescription>
 									</FieldContent>
+									<Switch
+										id="setup-skip-dns"
+										checked={skipDns}
+										onCheckedChange={(checked) => {
+											setSkipDns(checked);
+											setError(null);
+										}}
+									/>
 								</Field>
-							</FieldSet>
-						)}
-						<Field data-invalid={!!error}>
-							<FieldLabel htmlFor="username">{t("setup.username")}</FieldLabel>
-							<InputGroup>
-								<InputGroupInput
-									aria-describedby={error ? "auth-error" : undefined}
-									aria-invalid={!!error}
-									id="username"
-									autoCapitalize="none"
-									spellCheck={false}
-									name="username"
-									placeholder={t("setup.usernamePlaceholder")}
-									autoComplete="username"
-									required
-								/>
-								<InputGroupAddon
-									align="inline-end"
-									className="max-w-36 truncate"
+								{!skipDns && (
+									<Field orientation="horizontal" className="p-4">
+										<FieldContent>
+											<FieldLabel htmlFor="setup-enable-sending">
+												{t("setup.enableSending")}
+											</FieldLabel>
+											<FieldDescription>
+												{(() => {
+													if (domainChecking) {
+														return t("setup.checkingCloudflare");
+													}
+													if (domainCheck) {
+														if (enableSending) {
+															return t("setup.requiredToSend");
+														}
+														return t("setup.receiveOnly");
+													}
+													return t("setup.enterDomain");
+												})()}
+											</FieldDescription>
+										</FieldContent>
+										<Switch
+											id="setup-enable-sending"
+											checked={enableSending}
+											onCheckedChange={setEnableSending}
+											disabled={domainChecking || !domainCheck || skipDns}
+										/>
+									</Field>
+								)}
+								{domainCheck && !skipDns && (
+									<Alert variant="success">
+										<CheckCircle2 />
+										<AlertDescription>
+											{t("setup.domainFound", { zone: domainCheck.zone.name })}
+										</AlertDescription>
+									</Alert>
+								)}
+								{error && (
+									<Alert id="auth-error" variant="error">
+										<AlertDescription>{error}</AlertDescription>
+									</Alert>
+								)}
+								<Button
+									type="submit"
+									size="lg"
+									className="w-full"
+									disabled={loading || domainChecking}
 								>
-									@{accountDomain ?? t("setup.domainFallback")}
-								</InputGroupAddon>
-							</InputGroup>
-						</Field>
-						<Field data-invalid={!!error}>
-							<FieldLabel htmlFor="password">{t("auth.password")}</FieldLabel>
-							<PasswordInput
-								aria-describedby={error ? "auth-error" : undefined}
-								aria-invalid={!!error}
-								id="password"
-								name="password"
+									{loading && <Spinner data-icon="inline-start" />}
+									{loading ? t("setup.addingDomain") : t("common.continue")}
+								</Button>
+							</FieldGroup>
+						</form>
+					);
+				}
+				if (showDomainStep) {
+					return renderDomainStep();
+				}
 
-								minLength={8}
-								autoComplete="new-password"
-								required
-							/>
-						</Field>
-
-						<Field data-invalid={!!error}>
-							<FieldLabel htmlFor="resetEmail">
-								{t("setup.recoveryEmail")}
-							</FieldLabel>
-							<Input
-								aria-describedby={error ? "auth-error" : undefined}
-								aria-invalid={!!error}
-								id="resetEmail"
-								name="resetEmail"
-								type="email"
-								inputMode="email"
-								autoCapitalize="none"
-								spellCheck={false}
-								autoComplete="email"
-								placeholder="you@gmail.com"
-								required
-							/>
-							{/* <FieldDescription>Used later for password reset.</FieldDescription> */}
-						</Field>
-
-						{error && (
-							<Alert id="auth-error" variant="destructive">
-								<AlertDescription>{error}</AlertDescription>
-							</Alert>
-						)}
-						{!mxChecking && mxRecordsExist === null && (
-							<Button
-								type="button"
-								variant="outline"
-								className="min-h-12 w-full"
-								onClick={() => setMxCheckRevision((value) => value + 1)}
-							>
-								{t("setup.checkMxAgain")}
-							</Button>
-						)}
-						<TurnstileField resetSignal={turnstileReset} />
+				function renderCreateAccountButton() {
+					return (
 						<Button
 							type="submit"
-							className="min-h-12 w-full"
+							size="lg"
+							className="w-full"
 							disabled={
 								loading ||
 								mxChecking ||
@@ -605,9 +554,129 @@ export function RegisterClient() {
 							{loading && <Spinner data-icon="inline-start" />}
 							{loading ? t("setup.creating") : t("setup.createAccount")}
 						</Button>
-					</FieldGroup>
-				</form>
-			)}
+					);
+				}
+
+				function renderAccountStep() {
+					return (
+						<form method="post" onSubmit={onSubmit} className="flex flex-col">
+							<FieldGroup className="flex-1 [&>button[type=submit]]:mt-auto lg:[&>button[type=submit]]:mt-0">
+								{mxChecking && (
+									<Alert variant="muted">
+										<Spinner />
+										<AlertDescription>{t("setup.checkingMx")}</AlertDescription>
+									</Alert>
+								)}
+								{mxRecordsExist === false && (
+									<Alert variant="success">
+										<CheckCircle2 />
+										<AlertDescription>{t("setup.noMx")}</AlertDescription>
+									</Alert>
+								)}
+								{mxRecordsExist === true && (
+									<FieldSet className=" ">
+										<FieldLegend className="sr-only">
+											{t("setup.replaceMx")}
+										</FieldLegend>
+										<Field orientation="horizontal">
+											<Checkbox
+												id="replace-mx"
+												checked={replaceMxRecords}
+												onCheckedChange={(checked) =>
+													setReplaceMxRecords(checked === true)
+												}
+											/>
+											<FieldContent>
+												<FieldLabel htmlFor="replace-mx">
+													{t("setup.replaceMx")}
+												</FieldLabel>
+												<FieldDescription>
+													{t("setup.replaceMxHint")}
+												</FieldDescription>
+											</FieldContent>
+										</Field>
+									</FieldSet>
+								)}
+								<Field data-invalid={!!error}>
+									<FieldLabel htmlFor="username">
+										{t("setup.username")}
+									</FieldLabel>
+									<InputGroup>
+										<InputGroupInput
+											aria-describedby={error ? "auth-error" : undefined}
+											aria-invalid={!!error}
+											id="username"
+											autoCapitalize="none"
+											spellCheck={false}
+											name="username"
+											placeholder={t("setup.usernamePlaceholder")}
+											autoComplete="username"
+											required
+										/>
+										<InputGroupAddon align="inline-end" className="max-w-36">
+											@{accountDomain ?? t("setup.domainFallback")}
+										</InputGroupAddon>
+									</InputGroup>
+								</Field>
+								<Field data-invalid={!!error}>
+									<FieldLabel htmlFor="password">
+										{t("auth.password")}
+									</FieldLabel>
+									<PasswordInput
+										aria-describedby={error ? "auth-error" : undefined}
+										aria-invalid={!!error}
+										id="password"
+										name="password"
+										minLength={8}
+										autoComplete="new-password"
+										required
+									/>
+								</Field>
+
+								<Field data-invalid={!!error}>
+									<FieldLabel htmlFor="resetEmail">
+										{t("setup.recoveryEmail")}
+									</FieldLabel>
+									<Input
+										aria-describedby={error ? "auth-error" : undefined}
+										aria-invalid={!!error}
+										id="resetEmail"
+										name="resetEmail"
+										type="email"
+										inputMode="email"
+										autoCapitalize="none"
+										spellCheck={false}
+										autoComplete="email"
+										placeholder="you@gmail.com"
+										required
+									/>
+									{/* <FieldDescription>Used later for password reset.</FieldDescription> */}
+								</Field>
+
+								{error && (
+									<Alert id="auth-error" variant="error">
+										<AlertDescription>{error}</AlertDescription>
+									</Alert>
+								)}
+								{!mxChecking && mxRecordsExist === null && (
+									<Button
+										type="button"
+										variant="outline"
+										size="lg"
+										className="w-full"
+										onClick={() => setMxCheckRevision((value) => value + 1)}
+									>
+										{t("setup.checkMxAgain")}
+									</Button>
+								)}
+								<TurnstileField resetSignal={turnstileReset} />
+								{renderCreateAccountButton()}
+							</FieldGroup>
+						</form>
+					);
+				}
+				return renderAccountStep();
+			})()}
 		</AuthShell>
 	);
 }

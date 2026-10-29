@@ -1,4 +1,4 @@
-export type SesSendingView = {
+export interface SesSendingView {
 	registered: boolean;
 	verified: boolean;
 	dkimStatus: string;
@@ -8,4 +8,4 @@ export type SesSendingView = {
 	/** False while the account is in the SES sandbox. */
 	productionAccess: boolean | null;
 	region: string;
-};
+}

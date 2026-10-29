@@ -1,3 +1,3 @@
-export type MessageStatusPayload = {
+export interface MessageStatusPayload {
 	status?: string;
-};
+}

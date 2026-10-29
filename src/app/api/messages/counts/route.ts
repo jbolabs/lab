@@ -1,13 +1,18 @@
 import { and, count, eq, inArray } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import { NextResponse } from "next/server";
+
 import { getDb } from "@/db";
 import { messages } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/cookies";
 import { getEnv } from "@/lib/cloudflare";
 import { scheduledMessageCondition } from "@/lib/email/scheduled";
+import {
+	getMailboxAccessLevel,
+	listAccessibleMailboxIds,
+} from "@/lib/mailboxes/access";
+
 import { buildMessageCounts } from "./utils";
-import { getMailboxAccessLevel, listAccessibleMailboxIds } from "@/lib/mailboxes/access";
 
 export async function GET(request: Request) {
 	const env = getEnv();
@@ -38,13 +43,13 @@ export async function GET(request: Request) {
 
 	const rows = await db
 		.select({
-			mailboxId: messages.mailboxId,
-			folderId: messages.folderId,
 			direction: messages.direction,
-			status: messages.status,
+			folderId: messages.folderId,
+			mailboxId: messages.mailboxId,
 			read: messages.read,
-			starred: messages.starred,
 			snoozedUntil: messages.snoozedUntil,
+			starred: messages.starred,
+			status: messages.status,
 			total: count(),
 		})
 		.from(messages)
@@ -56,7 +61,7 @@ export async function GET(request: Request) {
 			messages.status,
 			messages.read,
 			messages.starred,
-			messages.snoozedUntil,
+			messages.snoozedUntil
 		);
 
 	const [scheduledRow] = await db

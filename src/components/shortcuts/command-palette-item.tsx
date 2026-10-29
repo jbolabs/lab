@@ -1,9 +1,9 @@
 "use client";
 
-import type { CommandItem } from "./types";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
-import { cn } from "@/lib/utils";
+
+import type { CommandItem } from "./types";
 
 interface CommandPaletteItemProps {
 	id: string;
@@ -24,16 +24,14 @@ export function CommandPaletteItem({
 		<Button
 			id={id}
 			type="button"
-			variant="ghost"
+			variant={isActive ? "secondary" : "ghost"}
+			// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- Rich listbox options require custom markup; native option only works inside select.
 			role="option"
 			aria-selected={isActive}
 			tabIndex={-1}
 			onClick={onSelect}
 			onMouseEnter={onHover}
-			className={cn(
-				"h-auto min-h-11 w-full justify-start py-2.5",
-				isActive && "bg-accent text-accent-foreground",
-			)}
+			className="w-full justify-start"
 		>
 			{Icon && <Icon data-icon="inline-start" />}
 			<span className="min-w-0 flex-1 truncate text-left">

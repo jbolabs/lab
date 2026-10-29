@@ -1,25 +1,46 @@
 "use client";
 
-import { createElement, useState, useMemo, useCallback } from "react";
+import {
+	Archive,
+	Ban,
+	BellOff,
+	Clock,
+	FileCode2,
+	Forward,
+	Mail,
+	MailOpen,
+	Reply,
+	ReplyAll,
+	ShieldAlert,
+	Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Archive, Ban, BellOff, Clock, FileCode2, Forward, Mail, MailOpen, Reply, ReplyAll, ShieldAlert, Trash2 } from "lucide-react";
-import { useLanguage } from "@/components/language-provider";
+import { createElement, useState, useMemo, useCallback } from "react";
+
+import type { BulkMessageAction } from "@/app/api/messages/bulk/types";
 import { useCompose } from "@/components/compose/compose-context";
-import { useMessageConfirmation } from "@/components/messages/use-message-confirmation";
-import { MessageSourceDialog } from "@/components/messages/message-source-dialog";
+import { HintTooltip } from "@/components/hint-tooltip";
+import { useLanguage } from "@/components/language-provider";
 import { MessageActionMenu } from "@/components/messages/message-action-menu";
 import { useMessageListVisibility } from "@/components/messages/message-list-visibility";
-import { MessageSnoozeDialog } from "./message-snooze-dialog";
+import { MessageSourceDialog } from "@/components/messages/message-source-dialog";
+import { useMessageConfirmation } from "@/components/messages/use-message-confirmation";
+import { useShortcuts } from "@/components/shortcuts/shortcuts-context";
+import { useHotkeys } from "@/components/shortcuts/use-hotkeys";
 import { useIsMobile } from "@/components/sidebar-mobile-utils";
-import { useHotkeys, useShortcuts } from "@/components/shortcuts";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { HintTooltip } from "@/components/hint-tooltip";
-import type { BulkMessageAction } from "@/app/api/messages/bulk/types";
-import type { MessageActionsProps, ReplyMode } from "./types";
-import { getPermanentDeleteConfirmText, PartialDeleteError, supportsPermanentDelete } from "@/lib/messages/permanent-delete-utils";
+import { Separator } from "@/components/ui/separator";
+import { withCleanup } from "@/lib/async-cleanup";
 import {
-	confirmTrashWithoutUnsubscribe,
+	getPermanentDeleteConfirmText,
+	PartialDeleteError,
+	supportsPermanentDelete,
+} from "@/lib/messages/permanent-delete-utils";
+
+import { MessageSnoozeDialog } from "./message-snooze-dialog";
+import type { MessageActionsProps, ReplyMode } from "./types";
+import {
+	trashWithoutUnsubscribeText,
 	blockMessageContact,
 	createForwardDraft,
 	createReplyDraft,
@@ -34,7 +55,9 @@ import {
 	runSingleMessageAction,
 } from "./utils";
 
-export function MessageActions({
+const emptyOwnAddresses: string[] = [];
+
+function useMessageActions({
 	messageId,
 	mailboxId,
 	senderAddress,
@@ -45,7 +68,7 @@ export function MessageActions({
 	subject,
 	bodyText,
 	ownAddress,
-	ownAddresses = [],
+	ownAddresses = emptyOwnAddresses,
 	message,
 	messageMeta,
 	bodyHtml,
@@ -65,27 +88,39 @@ export function MessageActions({
 	const [sourceOpen, setSourceOpen] = useState(false);
 	const [snoozeOpen, setSnoozeOpen] = useState(false);
 
-	const runAction = useCallback(async (action: BulkMessageAction) => {
-		setMoreOpen(false);
-		setPendingAction(action);
-		setError(null);
-		try {
-			await runSingleMessageAction(messageId, action);
-			const redirect = getMessageActionRedirect(action, listHref);
-			if (redirect) router.push(redirect);
-			router.refresh();
-		} catch {
-			setError(t("actions.error.update"));
-		} finally {
-			setPendingAction(null);
-		}
-	}, [messageId, listHref, router, t]);
+	const runAction = useCallback(
+		async (action: BulkMessageAction) => {
+			setMoreOpen(false);
+			setPendingAction(action);
+			setError(null);
+			return await withCleanup(
+				async () => {
+					try {
+						await runSingleMessageAction(messageId, action);
+						const redirect = getMessageActionRedirect(action, listHref);
+						if (redirect) {
+							router.push(redirect);
+						}
+						router.refresh();
+					} catch {
+						setError(t("actions.error.update"));
+					}
+				},
+				() => {
+					setPendingAction(null);
+				}
+			);
+		},
+		[messageId, listHref, router, t]
+	);
 
 	// In Trash and Spam the delete button removes the message for good instead of
 	// being a no-op, after the user confirms.
 	const canDeleteForever = supportsPermanentDelete(status);
 	const deleteForever = useCallback(async () => {
-		if (!(await confirm(getPermanentDeleteConfirmText(1, t)))) return;
+		if (!(await confirm(getPermanentDeleteConfirmText(1, t)))) {
+			return;
+		}
 		setMoreOpen(false);
 		setPendingAction("delete");
 		setError(null);
@@ -94,93 +129,136 @@ export function MessageActions({
 			router.push(getMessageBackHref(direction, status));
 			router.refresh();
 		} catch (deleteError) {
-			setError(deleteError instanceof PartialDeleteError ? t("actions.error.deleteSkipped") : t("actions.error.delete"));
+			setError(
+				deleteError instanceof PartialDeleteError
+					? t("actions.error.deleteSkipped")
+					: t("actions.error.delete")
+			);
 			setPendingAction(null);
 		}
 	}, [messageId, direction, status, router, t, confirm]);
-	const onTrashClick = () => (canDeleteForever ? void deleteForever() : void runAction("trash"));
-	const trashLabel = canDeleteForever ? t("common.deleteForever") : t("actions.moveToTrash");
+	const onTrashClick = () =>
+		canDeleteForever ? deleteForever() : runAction("trash");
+	const trashLabel = canDeleteForever
+		? t("common.deleteForever")
+		: t("actions.moveToTrash");
 
-	const replyable = useMemo(() => message ?? {
-		direction,
-		fromAddr: senderAddress,
-		toAddr: "",
-		ccAddr: null,
-		replyTo: null,
-		providerMessageId: null,
-		references: null,
-		threadId: null,
-	}, [message, direction, senderAddress]);
+	const replyable = useMemo(
+		() =>
+			message ?? {
+				ccAddr: null,
+				direction,
+				fromAddr: senderAddress,
+				providerMessageId: null,
+				references: null,
+				replyTo: null,
+				threadId: null,
+				toAddr: "",
+			},
+		[message, direction, senderAddress]
+	);
 	const canReplyAll = hasAdditionalRecipients(replyable, ownAddresses);
 
-	const handleReply = useCallback(async (mode: ReplyMode) => {
-		setPendingAction(mode);
-		setError(null);
-		try {
-			const draftId = await createReplyDraft({
-				mailboxId,
-				senderAddress,
-				ownAddress,
-				subject,
-				bodyText,
-				bodyHtml,
-				sentAt: messageMeta?.createdAt,
-				recipients: getReplyRecipients(replyable, ownAddresses, mode),
-				threading: getReplyThreading(replyable),
-			});
-			openDraftComposer(draftId);
-		} catch (replyError) {
-			setError(replyError instanceof Error ? replyError.message : t("message.error.reply"));
-		} finally {
-			setPendingAction(null);
-		}
-	}, [mailboxId, senderAddress, ownAddress, subject, bodyText, bodyHtml, messageMeta?.createdAt, replyable, ownAddresses, openDraftComposer, t]);
+	const handleReply = useCallback(
+		async (mode: ReplyMode) => {
+			setPendingAction(mode);
+			setError(null);
+			return await withCleanup(
+				async () => {
+					try {
+						const draftId = await createReplyDraft({
+							bodyHtml,
+							bodyText,
+							mailboxId,
+							ownAddress,
+							recipients: getReplyRecipients(replyable, ownAddresses, mode),
+							senderAddress,
+							sentAt: messageMeta?.createdAt,
+							subject,
+							threading: getReplyThreading(replyable),
+						});
+						openDraftComposer(draftId);
+					} catch (replyError) {
+						setError(
+							replyError instanceof Error
+								? replyError.message
+								: t("message.error.reply")
+						);
+					}
+				},
+				() => {
+					setPendingAction(null);
+				}
+			);
+		},
+		[
+			mailboxId,
+			senderAddress,
+			ownAddress,
+			subject,
+			bodyText,
+			bodyHtml,
+			messageMeta,
+			replyable,
+			ownAddresses,
+			openDraftComposer,
+			t,
+		]
+	);
 
 	const shortcuts = useMemo(
 		() => [
 			{
+				action: () => {
+					if (status !== "archived") {
+						void runAction("archive");
+					}
+				},
+				category: "Actions" as const,
 				key: "e",
 				label: t("shortcut.archiveMessage"),
-				category: "Actions" as const,
-				action: () => {
-					if (status !== "archived") void runAction("archive");
-				},
 			},
 			{
+				action: () => {
+					if (status !== "archived") {
+						void runAction("archive");
+					}
+				},
+				category: "Actions" as const,
 				key: "y",
 				label: t("shortcut.archiveMessage"),
-				category: "Actions" as const,
-				action: () => {
-					if (status !== "archived") void runAction("archive");
-				},
 			},
 			{
+				action: () => {
+					if (status !== "trash") {
+						void runAction("trash");
+					}
+				},
+				category: "Actions" as const,
 				key: "#",
 				label: t("shortcut.moveToTrash"),
-				category: "Actions" as const,
-				action: () => {
-					if (status !== "trash") void runAction("trash");
-				},
 			},
 			{
+				action: () => handleReply("reply"),
+				category: "Composing" as const,
 				key: "r",
 				label: t("shortcut.replyToMessage"),
-				category: "Composing" as const,
-				action: () => void handleReply("reply"),
 			},
 			{
+				action: () => {
+					if (status !== "spam" && direction === "inbound") {
+						void runAction("spam");
+					}
+				},
+				category: "Actions" as const,
 				key: "!",
 				label: t("shortcut.reportSpam"),
-				category: "Actions" as const,
-				action: () => {
-					if (status !== "spam" && direction === "inbound") void runAction("spam");
-				},
 			},
 			{
+				action: () => router.back(),
+				category: "Navigation" as const,
 				key: "u",
 				label: t("shortcut.backToList"),
-				category: "Navigation" as const,
-				action: () => router.back(),
 			},
 		],
 		[status, direction, runAction, handleReply, router, t]
@@ -196,7 +274,14 @@ export function MessageActions({
 			return;
 		}
 
-		if (!confirmTrashWithoutUnsubscribe()) return;
+		if (
+			!(await confirm(trashWithoutUnsubscribeText, {
+				action: t("actions.unsubscribe"),
+				title: t("actions.unsubscribe"),
+			}))
+		) {
+			return;
+		}
 		setPendingAction("unsubscribe");
 		if (!mailboxId) {
 			setError(t("actions.error.trashRule"));
@@ -214,23 +299,34 @@ export function MessageActions({
 	}
 
 	async function handleForward() {
-		if (!message || !messageMeta) return;
+		if (!message || !messageMeta) {
+			return;
+		}
 		setPendingAction("forward");
 		setError(null);
-		try {
-			const draftId = await createForwardDraft({
-				mailboxId,
-				ownAddress,
-				message: { ...message, ...messageMeta },
-				bodyText,
-				bodyHtml,
-			});
-			openDraftComposer(draftId);
-		} catch (forwardError) {
-			setError(forwardError instanceof Error ? forwardError.message : t("message.error.forward"));
-		} finally {
-			setPendingAction(null);
-		}
+		return await withCleanup(
+			async () => {
+				try {
+					const draftId = await createForwardDraft({
+						bodyHtml,
+						bodyText,
+						mailboxId,
+						message: { ...message, ...messageMeta },
+						ownAddress,
+					});
+					openDraftComposer(draftId);
+				} catch (forwardError) {
+					setError(
+						forwardError instanceof Error
+							? forwardError.message
+							: t("message.error.forward")
+					);
+				}
+			},
+			() => {
+				setPendingAction(null);
+			}
+		);
 	}
 	async function onBlockContact() {
 		setMoreOpen(false);
@@ -241,117 +337,168 @@ export function MessageActions({
 		}
 
 		setPendingAction("block");
-		try {
-			await blockMessageContact({ mailboxId, senderAddress });
-			await runSingleMessageAction(messageId, "trash");
-			router.push(listHref);
-			router.refresh();
-		} catch (blockError) {
-			setError(blockError instanceof Error ? blockError.message : t("message.error.block"));
-		} finally {
-			setPendingAction(null);
-		}
+		return await withCleanup(
+			async () => {
+				try {
+					await blockMessageContact({ mailboxId, senderAddress });
+					await runSingleMessageAction(messageId, "trash");
+					router.push(listHref);
+					router.refresh();
+				} catch (blockError) {
+					setError(
+						blockError instanceof Error
+							? blockError.message
+							: t("message.error.block")
+					);
+				}
+			},
+			() => {
+				setPendingAction(null);
+			}
+		);
 	}
 
 	const disabled = pendingAction !== null;
 	const markAction: BulkMessageAction = read ? "unread" : "read";
 	const moveActions = getMoveMessageActions(status, direction);
 
-	return (
-		<div className="flex flex-wrap items-center gap-3 text-muted-foreground flex-1 min-w-0">
-			{confirmation}
-			{error && <span role="alert" className="text-xs text-red-600">{error}</span>}
+	const getArchiveLabel = () => {
+		if (canDeleteForever) {
+			return t("common.deleteForever");
+		}
+		return shortcutsEnabled ? t("actions.deleteHint") : t("common.delete");
+	};
+	const getTrashLabel = () => {
+		if (canDeleteForever) {
+			return trashLabel;
+		}
+		return shortcutsEnabled
+			? t("actions.moveToTrashHint")
+			: t("actions.moveToTrash");
+	};
+	return {
+		canReplyAll,
+		confirmation,
+		direction,
+		disabled,
+		error,
+		getArchiveLabel,
+		getTrashLabel,
+		handleForward,
+		handleReply,
+		isMobile,
+		mailboxId,
+		markAction,
+		message,
+		messageId,
+		messageMeta,
+		moreOpen,
+		moveActions,
+		onBlockContact,
+		onTrashClick,
+		onUnsubscribe,
+		read,
+		runAction,
+		senderAddress,
+		setMoreOpen,
+		setSnoozeOpen,
+		setSourceOpen,
+		shortcutsEnabled,
+		snoozeOpen,
+		sourceOpen,
+		status,
+		t,
+		trashLabel,
+		unsubscribeUrl,
+	};
+}
 
-			{/* Phones: Gmail's reply bar. The Compose button is hidden while reading, so the bar spans the width. */}
-			{isMobile && <div role="toolbar" aria-label={t("message.reply")} className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t bg-background px-4 pt-2 pb-[calc(.5rem+env(safe-area-inset-bottom))]">
-				<Button className="min-h-11 flex-1" disabled={disabled} onClick={() => void handleReply("reply")}><Reply data-icon="inline-start" />{t("message.reply")}</Button>
-				{canReplyAll && <Button variant="outline" size="icon" className="size-11 shrink-0" aria-label={t("message.replyAll")} disabled={disabled} onClick={() => void handleReply("replyAll")}><ReplyAll data-icon="inline-start" /></Button>}
-				{message && messageMeta && <Button variant="outline" size="icon" className="size-11 shrink-0" aria-label={t("message.forward")} disabled={disabled} onClick={() => void handleForward()}><Forward data-icon="inline-start" /></Button>}
-			</div>}
-			{/* Phones: the reader toolbar Gmail uses, archive, trash and read state; the rest is under More. */}
-			{isMobile && (
-				<>
-					<Button
-						variant="ghost"
-						size="icon"
-						className="pointer-coarse:size-11"
-						aria-label={t("common.archive")}
-						disabled={disabled || status === "archived"}
-						onClick={() => runAction("archive")}
-					>
-						<Archive data-icon="inline-start" />
-					</Button>
-					<Button
-						variant="ghost"
-						size="icon"
-						className="pointer-coarse:size-11"
-						aria-label={trashLabel}
-						disabled={disabled}
-						onClick={onTrashClick}
-					>
-						<Trash2 data-icon="inline-start" />
-					</Button>
-					<Button
-						variant="ghost"
-						size="icon"
-						className="pointer-coarse:size-11"
-						aria-label={read ? t("common.markUnread") : t("common.markRead")}
-						disabled={disabled}
-						onClick={() => runAction(markAction)}
-					>
-						{read ? <Mail data-icon="inline-start" /> : <MailOpen data-icon="inline-start" />}
-					</Button>
-				</>
-			)}
-			{!isMobile && (
-				<>
-			<HintTooltip label={shortcutsEnabled ? t("actions.archiveHint") : t("common.archive")}>
+function DesktopMessageActions({
+	model,
+}: {
+	model: ReturnType<typeof useMessageActions>;
+}) {
+	const {
+		t,
+		disabled,
+		handleReply,
+		canReplyAll,
+		message,
+		messageMeta,
+		handleForward,
+		status,
+		runAction,
+		onTrashClick,
+		read,
+		markAction,
+		shortcutsEnabled,
+		direction,
+		getArchiveLabel,
+		getTrashLabel,
+	} = model;
+	return (
+		<>
+			<HintTooltip
+				label={
+					shortcutsEnabled ? t("actions.archiveHint") : t("common.archive")
+				}
+			>
 				<Button
 					variant="ghost"
 					size="icon"
-					className="pointer-coarse:size-11"
-					aria-label={shortcutsEnabled ? t("actions.archiveHint") : t("common.archive")}
+					aria-label={
+						shortcutsEnabled ? t("actions.archiveHint") : t("common.archive")
+					}
 					disabled={disabled || status === "archived"}
 					onClick={() => runAction("archive")}
 				>
 					<Archive data-icon="inline-start" />
 				</Button>
 			</HintTooltip>
-			<HintTooltip label={shortcutsEnabled ? t("actions.reportSpamHint") : t("common.reportSpam")}>
+			<HintTooltip
+				label={
+					shortcutsEnabled
+						? t("actions.reportSpamHint")
+						: t("common.reportSpam")
+				}
+			>
 				<Button
 					variant="ghost"
 					size="icon"
-					className="pointer-coarse:size-11"
-					aria-label={shortcutsEnabled ? t("actions.reportSpamHint") : t("common.reportSpam")}
+					aria-label={
+						shortcutsEnabled
+							? t("actions.reportSpamHint")
+							: t("common.reportSpam")
+					}
 					disabled={disabled || status === "spam" || direction !== "inbound"}
 					onClick={() => runAction("spam")}
 				>
 					<ShieldAlert data-icon="inline-start" />
 				</Button>
 			</HintTooltip>
-			<HintTooltip label={canDeleteForever ? t("common.deleteForever") : shortcutsEnabled ? t("actions.deleteHint") : t("common.delete")}>
+			<HintTooltip label={getArchiveLabel()}>
 				<Button
 					variant="ghost"
 					size="icon"
-					className="pointer-coarse:size-11"
-					aria-label={canDeleteForever ? trashLabel : shortcutsEnabled ? t("actions.moveToTrashHint") : t("actions.moveToTrash")}
+					aria-label={getTrashLabel()}
 					disabled={disabled}
 					onClick={onTrashClick}
-
 				>
 					<Trash2 data-icon="inline-start" />
 				</Button>
 			</HintTooltip>
-			<Separator orientation="vertical" className="mx-1 h-5" />
+			<Separator orientation="vertical" className="mx-1" />
 
-
-			<HintTooltip label={shortcutsEnabled ? t("actions.replyHint") : t("message.reply")}>
+			<HintTooltip
+				label={shortcutsEnabled ? t("actions.replyHint") : t("message.reply")}
+			>
 				<Button
 					type="button"
 					variant="ghost"
 					size="icon"
-					className="pointer-coarse:size-11"
-					aria-label={shortcutsEnabled ? t("actions.replyHint") : t("message.reply")}
+					aria-label={
+						shortcutsEnabled ? t("actions.replyHint") : t("message.reply")
+					}
 					disabled={disabled}
 					onClick={() => handleReply("reply")}
 				>
@@ -364,7 +511,6 @@ export function MessageActions({
 						type="button"
 						variant="ghost"
 						size="icon"
-					className="pointer-coarse:size-11"
 						aria-label={t("message.replyAll")}
 						disabled={disabled}
 						onClick={() => handleReply("replyAll")}
@@ -379,10 +525,9 @@ export function MessageActions({
 						type="button"
 						variant="ghost"
 						size="icon"
-					className="pointer-coarse:size-11"
 						aria-label={t("message.forward")}
 						disabled={disabled}
-						onClick={() => void handleForward()}
+						onClick={() => handleForward()}
 					>
 						<Forward data-icon="inline-start" />
 					</Button>
@@ -393,28 +538,191 @@ export function MessageActions({
 				<Button
 					variant="ghost"
 					size="icon"
-					className="pointer-coarse:size-11"
 					aria-label={read ? t("common.markUnread") : t("common.markRead")}
 					disabled={disabled}
 					onClick={() => runAction(markAction)}
 				>
-					{read ? <Mail data-icon="inline-start" /> : <MailOpen data-icon="inline-start" />}
+					{read ? (
+						<Mail data-icon="inline-start" />
+					) : (
+						<MailOpen data-icon="inline-start" />
+					)}
 				</Button>
 			</HintTooltip>
+		</>
+	);
+}
+export function MessageActions(props: MessageActionsProps) {
+	const model = useMessageActions(props);
+	const {
+		t,
+		confirmation,
+		error,
+		isMobile,
+		disabled,
+		handleReply,
+		canReplyAll,
+		message,
+		messageMeta,
+		handleForward,
+		status,
+		runAction,
+		trashLabel,
+		onTrashClick,
+		read,
+		markAction,
+		direction,
+		moreOpen,
+		setMoreOpen,
+		moveActions,
+		onBlockContact,
+		onUnsubscribe,
+		setSnoozeOpen,
+		setSourceOpen,
+		sourceOpen,
+		messageId,
+		snoozeOpen,
+		unsubscribeUrl,
+	} = model;
+	return (
+		<div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 text-muted-foreground">
+			{confirmation}
+			{error && (
+				<span role="alert" className="text-xs text-destructive">
+					{error}
+				</span>
+			)}
+
+			{/* Phones: Gmail's reply bar. The Compose button is hidden while reading, so the bar spans the width. */}
+			{isMobile && (
+				<div
+					role="toolbar"
+					aria-label={t("message.reply")}
+					className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t bg-background px-4 pt-2 pb-safe-add-2"
+				>
+					<Button
+						className="flex-1"
+						disabled={disabled}
+						onClick={() => handleReply("reply")}
+					>
+						<Reply data-icon="inline-start" />
+						{t("message.reply")}
+					</Button>
+					{canReplyAll && (
+						<Button
+							variant="outline"
+							size="icon"
+							className="shrink-0"
+							aria-label={t("message.replyAll")}
+							disabled={disabled}
+							onClick={() => handleReply("replyAll")}
+						>
+							<ReplyAll data-icon="inline-start" />
+						</Button>
+					)}
+					{message && messageMeta && (
+						<Button
+							variant="outline"
+							size="icon"
+							className="shrink-0"
+							aria-label={t("message.forward")}
+							disabled={disabled}
+							onClick={() => handleForward()}
+						>
+							<Forward data-icon="inline-start" />
+						</Button>
+					)}
+				</div>
+			)}
+			{/* Phones: the reader toolbar Gmail uses, archive, trash and read state; the rest is under More. */}
+			{isMobile && (
+				<>
+					<Button
+						variant="ghost"
+						size="icon"
+						aria-label={t("common.archive")}
+						disabled={disabled || status === "archived"}
+						onClick={() => runAction("archive")}
+					>
+						<Archive data-icon="inline-start" />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon"
+						aria-label={trashLabel}
+						disabled={disabled}
+						onClick={onTrashClick}
+					>
+						<Trash2 data-icon="inline-start" />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon"
+						aria-label={read ? t("common.markUnread") : t("common.markRead")}
+						disabled={disabled}
+						onClick={() => runAction(markAction)}
+					>
+						{read ? (
+							<Mail data-icon="inline-start" />
+						) : (
+							<MailOpen data-icon="inline-start" />
+						)}
+					</Button>
 				</>
 			)}
-			<MessageActionMenu open={moreOpen} onOpenChange={setMoreOpen} disabled={disabled} actions={[
-				...(direction === "inbound" && status === "received" ? [{ label: t("common.snooze"), icon: <Clock data-icon="inline-start" />, onSelect: () => setSnoozeOpen(true) }] : []),
-				...(direction === "inbound" ? [
-					{ label: t("actions.unsubscribe"), icon: <BellOff data-icon="inline-start" />, disabled: !unsubscribeUrl && status === "trash", onSelect: () => void onUnsubscribe() },
-					{ label: t("message.blockContact"), icon: <Ban data-icon="inline-start" />, onSelect: () => void onBlockContact() },
-				] : []),
-				{ label: t("message.showOriginal"), icon: <FileCode2 data-icon="inline-start" />, onSelect: () => setSourceOpen(true) },
-				...moveActions.map(item => ({ label: t(item.labelKey), icon: createElement(item.icon, { "data-icon": "inline-start" }), onSelect: () => void runAction(item.action) })),
-			]} />
+			{!isMobile && <DesktopMessageActions model={model} />}
+			<MessageActionMenu
+				open={moreOpen}
+				onOpenChange={setMoreOpen}
+				disabled={disabled}
+				actions={[
+					...(direction === "inbound" && status === "received"
+						? [
+								{
+									icon: <Clock data-icon="inline-start" />,
+									label: t("common.snooze"),
+									onSelect: () => setSnoozeOpen(true),
+								},
+							]
+						: []),
+					...(direction === "inbound"
+						? [
+								{
+									disabled: !unsubscribeUrl && status === "trash",
+									icon: <BellOff data-icon="inline-start" />,
+									label: t("actions.unsubscribe"),
+									onSelect: () => onUnsubscribe(),
+								},
+								{
+									icon: <Ban data-icon="inline-start" />,
+									label: t("message.blockContact"),
+									onSelect: () => onBlockContact(),
+								},
+							]
+						: []),
+					{
+						icon: <FileCode2 data-icon="inline-start" />,
+						label: t("message.showOriginal"),
+						onSelect: () => setSourceOpen(true),
+					},
+					...moveActions.map((item) => ({
+						icon: createElement(item.icon, { "data-icon": "inline-start" }),
+						label: t(item.labelKey),
+						onSelect: () => runAction(item.action),
+					})),
+				]}
+			/>
 
-			<MessageSourceDialog messageId={messageId} open={sourceOpen} onOpenChange={setSourceOpen} />
-			<MessageSnoozeDialog messageId={messageId} open={snoozeOpen} onOpenChange={setSnoozeOpen} />
+			<MessageSourceDialog
+				messageId={messageId}
+				open={sourceOpen}
+				onOpenChange={setSourceOpen}
+			/>
+			<MessageSnoozeDialog
+				messageId={messageId}
+				open={snoozeOpen}
+				onOpenChange={setSnoozeOpen}
+			/>
 
 			<span className="flex-1" />
 		</div>

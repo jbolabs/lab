@@ -1,14 +1,13 @@
 import type { MailboxOption } from "@/components/mailbox-provider";
 import { clearMailboxesCache } from "@/components/mailbox-provider-utils";
 import { authFetch } from "@/lib/auth/client";
+
 import type {
 	CurrentMailboxFormResponse,
 	ForwardingEmailResponse,
 	MailboxAutoReplyResponse,
 	MailboxAutoReplySettings,
 	MailboxSignatureResponse,
-} from "./types";
-import type {
 	AccountSettingsResponse,
 	ChangePasswordResponse,
 	MfaEnrollmentResponse,
@@ -16,67 +15,89 @@ import type {
 	MfaStatusResponse,
 } from "./types";
 
-export function getMailboxAddress(mailbox: Pick<MailboxOption, "localPart" | "hostname">): string {
+export function getMailboxAddress(
+	mailbox: Pick<MailboxOption, "localPart" | "hostname">
+): string {
 	return `${mailbox.localPart}@${mailbox.hostname}`;
 }
 
-export async function updateCurrentMailboxName(id: string, displayName: string): Promise<MailboxOption> {
+export async function updateCurrentMailboxName(
+	id: string,
+	displayName: string
+): Promise<MailboxOption> {
 	const res = await authFetch(`/api/mailboxes/${id}`, {
-		method: "PATCH",
-		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ displayName }),
+		headers: { "Content-Type": "application/json" },
+		method: "PATCH",
 	});
 	const data = (await res.json()) as CurrentMailboxFormResponse;
 
 	if (!res.ok || !data.mailbox) {
-		throw new Error(typeof data.error === "string" ? data.error : "Failed to update mailbox");
+		throw new Error(
+			typeof data.error === "string" ? data.error : "Failed to update mailbox"
+		);
 	}
 	clearMailboxesCache();
 
 	return {
-		id: data.mailbox.id,
-		domainId: data.mailbox.domainId,
-		localPart: data.mailbox.localPart,
-		hostname: data.mailbox.hostname,
 		displayName: data.mailbox.displayName,
+		domainId: data.mailbox.domainId,
 		hasAvatar: data.mailbox.hasAvatar,
+		hostname: data.mailbox.hostname,
+		id: data.mailbox.id,
 		isPrimary: data.mailbox.isPrimary,
+		localPart: data.mailbox.localPart,
 	};
 }
 
-export async function loadAccountSettings(): Promise<Required<AccountSettingsResponse>["user"]> {
+export async function loadAccountSettings(): Promise<
+	Required<AccountSettingsResponse>["user"]
+> {
 	const res = await authFetch("/api/auth/me");
 	const data = (await res.json()) as AccountSettingsResponse;
 
 	if (!res.ok || !data.user) {
-		throw new Error(typeof data.error === "string" ? data.error : "Failed to load account");
+		throw new Error(
+			typeof data.error === "string" ? data.error : "Failed to load account"
+		);
 	}
 
 	return data.user;
 }
 
-export async function updateForwardingEmail(forwardingEmail: string): Promise<string> {
+export async function updateForwardingEmail(
+	forwardingEmail: string
+): Promise<string> {
 	const res = await authFetch("/api/settings/forwarding", {
-		method: "PATCH",
-		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ forwardingEmail }),
+		headers: { "Content-Type": "application/json" },
+		method: "PATCH",
 	});
 	const data = (await res.json()) as ForwardingEmailResponse;
 	if (!res.ok) {
-		throw new Error(typeof data.error === "string" ? data.error : "Failed to update forwarding email");
+		throw new Error(
+			typeof data.error === "string"
+				? data.error
+				: "Failed to update forwarding email"
+		);
 	}
 	return data.forwardingEmail ?? "";
 }
 
-export async function updateMailboxSignature(mailboxId: string, signature: string): Promise<string> {
+export async function updateMailboxSignature(
+	mailboxId: string,
+	signature: string
+): Promise<string> {
 	const res = await authFetch(`/api/mailboxes/${mailboxId}`, {
-		method: "PATCH",
-		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ signature }),
+		headers: { "Content-Type": "application/json" },
+		method: "PATCH",
 	});
 	const data = (await res.json()) as MailboxSignatureResponse;
 	if (!res.ok || !data.mailbox) {
-		throw new Error(typeof data.error === "string" ? data.error : "Failed to update signature");
+		throw new Error(
+			typeof data.error === "string" ? data.error : "Failed to update signature"
+		);
 	}
 	clearMailboxesCache();
 	return data.mailbox.signature ?? "";
@@ -84,51 +105,70 @@ export async function updateMailboxSignature(mailboxId: string, signature: strin
 
 export async function updateMailboxAutoReply(
 	mailboxId: string,
-	settings: MailboxAutoReplySettings,
+	settings: MailboxAutoReplySettings
 ): Promise<MailboxAutoReplySettings> {
 	const res = await authFetch(`/api/mailboxes/${mailboxId}`, {
-		method: "PATCH",
-		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({
+			autoReplyBody: settings.body,
 			autoReplyEnabled: settings.enabled,
 			autoReplySubject: settings.subject,
-			autoReplyBody: settings.body,
 		}),
+		headers: { "Content-Type": "application/json" },
+		method: "PATCH",
 	});
 	const data = (await res.json()) as MailboxAutoReplyResponse;
 	if (!res.ok || !data.mailbox) {
-		throw new Error(typeof data.error === "string" ? data.error : "Failed to update auto-reply");
+		throw new Error(
+			typeof data.error === "string"
+				? data.error
+				: "Failed to update auto-reply"
+		);
 	}
 	clearMailboxesCache();
 	return {
+		body: data.mailbox.autoReplyBody,
 		enabled: data.mailbox.autoReplyEnabled,
 		subject: data.mailbox.autoReplySubject,
-		body: data.mailbox.autoReplyBody,
 	};
 }
 
-export async function updatePassword(currentPassword: string, newPassword: string): Promise<void> {
+export async function updatePassword(
+	currentPassword: string,
+	newPassword: string
+): Promise<void> {
 	const res = await authFetch("/api/settings/password", {
-		method: "PATCH",
-		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ currentPassword, newPassword }),
+		headers: { "Content-Type": "application/json" },
+		method: "PATCH",
 	});
 	const data = (await res.json()) as ChangePasswordResponse;
 
 	if (!res.ok) {
-		throw new Error(typeof data.error === "string" ? data.error : "Failed to change password");
+		throw new Error(
+			typeof data.error === "string" ? data.error : "Failed to change password"
+		);
 	}
 }
 
 /** An API key limited to the JMAP scope, for external mail apps. */
-export async function createJmapApiKey(name: string, mailboxIds: string[]): Promise<string> {
+export async function createJmapApiKey(
+	name: string,
+	mailboxIds: string[]
+): Promise<string> {
 	const res = await authFetch("/api/api-keys", {
-		method: "POST",
+		body: JSON.stringify({ mailboxIds, name, scopes: ["jmap"] }),
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ name, scopes: ["jmap"], mailboxIds }),
+		method: "POST",
 	});
-	const data = (await res.json().catch(() => ({}))) as { key?: string; error?: unknown };
-	if (!res.ok || !data.key) throw new Error(typeof data.error === "string" ? data.error : "Could not create a key");
+	const data = (await res.json().catch(() => ({}))) as {
+		key?: string;
+		error?: unknown;
+	};
+	if (!res.ok || !data.key) {
+		throw new Error(
+			typeof data.error === "string" ? data.error : "Could not create a key"
+		);
+	}
 	window.dispatchEvent(new Event("mailflare:api-keys-changed"));
 	return data.key;
 }
@@ -140,49 +180,74 @@ function errorMessage(data: { error?: unknown }, fallback: string): string {
 export async function loadMfaStatus(): Promise<MfaStatusResponse> {
 	const res = await authFetch("/api/settings/mfa");
 	const data = (await res.json()) as MfaStatusResponse;
-	if (!res.ok) throw new Error(errorMessage(data, "Failed to load two-factor settings"));
+	if (!res.ok) {
+		throw new Error(errorMessage(data, "Failed to load two-factor settings"));
+	}
 	return data;
 }
 
-export async function beginMfaEnrollment(password: string): Promise<Required<Pick<MfaEnrollmentResponse, "secret" | "otpauthUrl" | "qrSvg">>> {
+export async function beginMfaEnrollment(
+	password: string
+): Promise<
+	Required<Pick<MfaEnrollmentResponse, "secret" | "otpauthUrl" | "qrSvg">>
+> {
 	const res = await authFetch("/api/settings/mfa/enroll", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ password }),
+		headers: { "Content-Type": "application/json" },
+		method: "POST",
 	});
 	const data = (await res.json()) as MfaEnrollmentResponse;
-	if (!res.ok || !data.secret || !data.otpauthUrl || !data.qrSvg) throw new Error(errorMessage(data, "Could not start enrolment"));
-	return { secret: data.secret, otpauthUrl: data.otpauthUrl, qrSvg: data.qrSvg };
+	if (!res.ok || !data.secret || !data.otpauthUrl || !data.qrSvg) {
+		throw new Error(errorMessage(data, "Could not start enrolment"));
+	}
+	return {
+		otpauthUrl: data.otpauthUrl,
+		qrSvg: data.qrSvg,
+		secret: data.secret,
+	};
 }
 
 export async function confirmMfaEnrollment(code: string): Promise<string[]> {
 	const res = await authFetch("/api/settings/mfa/confirm", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ code }),
+		headers: { "Content-Type": "application/json" },
+		method: "POST",
 	});
 	const data = (await res.json()) as MfaRecoveryCodesResponse;
-	if (!res.ok || !data.recoveryCodes) throw new Error(errorMessage(data, "Could not confirm the code"));
+	if (!res.ok || !data.recoveryCodes) {
+		throw new Error(errorMessage(data, "Could not confirm the code"));
+	}
 	return data.recoveryCodes;
 }
 
-export async function disableMfa(password: string, code: string): Promise<void> {
+export async function disableMfa(
+	password: string,
+	code: string
+): Promise<void> {
 	const res = await authFetch("/api/settings/mfa/disable", {
-		method: "POST",
+		body: JSON.stringify({ code, password }),
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ password, code }),
+		method: "POST",
 	});
 	const data = (await res.json()) as { error?: unknown };
-	if (!res.ok) throw new Error(errorMessage(data, "Could not turn off two-factor authentication"));
+	if (!res.ok) {
+		throw new Error(
+			errorMessage(data, "Could not turn off two-factor authentication")
+		);
+	}
 }
 
-export async function regenerateRecoveryCodes(password: string): Promise<string[]> {
+export async function regenerateRecoveryCodes(
+	password: string
+): Promise<string[]> {
 	const res = await authFetch("/api/settings/mfa/recovery-codes", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ password }),
+		headers: { "Content-Type": "application/json" },
+		method: "POST",
 	});
 	const data = (await res.json()) as MfaRecoveryCodesResponse;
-	if (!res.ok || !data.recoveryCodes) throw new Error(errorMessage(data, "Could not generate new codes"));
+	if (!res.ok || !data.recoveryCodes) {
+		throw new Error(errorMessage(data, "Could not generate new codes"));
+	}
 	return data.recoveryCodes;
 }

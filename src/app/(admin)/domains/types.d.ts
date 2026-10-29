@@ -1,7 +1,7 @@
 export type SendingProvider = "none" | "cloudflare" | "resend" | "ses";
 export type ReceivingProvider = "none" | "cloudflare" | "resend" | "ses";
 
-export type Domain = {
+export interface Domain {
 	id: string;
 	hostname: string;
 	status: string;
@@ -13,47 +13,47 @@ export type Domain = {
 	zoneId: string;
 	/** Added with DNS skipped: the Cloudflare zone is attached on first setup. */
 	dnsSkipped?: boolean;
-};
+}
 
-export type DomainPreflight = {
+export interface DomainPreflight {
 	hostname: string;
 	zone: { id: string; name: string };
-};
+}
 
-export type DomainPreflightResponse = {
+export interface DomainPreflightResponse {
 	ok: boolean;
 	domain?: DomainPreflight;
 	error?: string;
-};
+}
 
-export type DnsRecord = {
+export interface DnsRecord {
 	type?: string;
 	name?: string;
 	content?: string;
 	priority?: number;
-};
+}
 
 export type DnsAuthRecord = "mx" | "spf" | "dkim" | "dmarc";
 
 export type DnsAuthStatus = "ok" | "missing" | "unknown";
 
-export type DnsAuthCheck = {
+export interface DnsAuthCheck {
 	record: DnsAuthRecord;
 	label: string;
 	name: string;
 	status: DnsAuthStatus;
 	found: string[];
-};
+}
 
 export type DomainDnsAudit = Record<DnsAuthRecord, DnsAuthCheck>;
 
-export type DnsStatusSummary = {
+export interface DnsStatusSummary {
 	routing: { configured: boolean; missing: string[] };
 	sending: { configured: boolean; records: string[] };
 	auth?: Record<DnsAuthRecord, DnsAuthStatus>;
-};
+}
 
-export type DomainDnsView = {
+export interface DomainDnsView {
 	routing: {
 		records: DnsRecord[];
 		missing: DnsRecord[];
@@ -64,11 +64,14 @@ export type DomainDnsView = {
 	dkimSelector?: string;
 	sendingSubdomain?: { name: string; tag: string };
 	audit?: DomainDnsAudit;
-};
+}
 
-export type DomainDnsCache = Record<string, { domain: Domain; dns: DomainDnsView }>;
+export type DomainDnsCache = Record<
+	string,
+	{ domain: Domain; dns: DomainDnsView }
+>;
 
-export type DomainDnsDetailsProps = {
+export interface DomainDnsDetailsProps {
 	domain: Domain;
 	dns: DomainDnsView;
 	onSendingProviderChange?: (provider: SendingProvider) => void;
@@ -82,9 +85,9 @@ export type DomainDnsDetailsProps = {
 	onSetup?: (record: DnsAuthRecord) => void;
 	setupRecord?: DnsAuthRecord | null;
 	setupMessage?: string | null;
-};
+}
 
-export type DomainItemCardProps = {
+export interface DomainItemCardProps {
 	item: Domain;
 	dns?: DnsStatusSummary;
 	dnsDetails?: DomainDnsView;
@@ -103,4 +106,4 @@ export type DomainItemCardProps = {
 	onSetup?: (record: DnsAuthRecord) => void;
 	setupRecord?: DnsAuthRecord | null;
 	setupMessage?: string | null;
-};
+}

@@ -8,8 +8,14 @@ export const DRIVE_FOLDERS_EVENT = "mailflare:drive-folders";
 /** Asks the open listing to reload, e.g. after the sidebar created a folder. */
 export const DRIVE_REFRESH_EVENT = "mailflare:drive-refresh";
 
-export type DriveStorageDetail = { used: number; limit: number | null };
+export interface DriveStorageDetail {
+	used: number;
+	limit: number | null;
+}
 
 /** Current listing destination permissions, used by sidebar creation controls. */
 export const DRIVE_LOCATION_EVENT = "mailflare:drive-location";
-export type DriveLocationDetail = { folderId: string | null; canWrite: boolean };
+export interface DriveLocationDetail {
+	folderId: string | null;
+	canWrite: boolean;
+}

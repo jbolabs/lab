@@ -1,3 +1,3 @@
-export type MessageMetadataRouteParams = {
+export interface MessageMetadataRouteParams {
 	params: Promise<{ messageId: string }>;
-};
+}

@@ -1,3 +1,3 @@
-export type MessageReadingHeaderButtonProps = {
+export interface MessageReadingHeaderButtonProps {
 	assistantVisible: boolean;
-};
+}

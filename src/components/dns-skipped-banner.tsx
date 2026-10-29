@@ -1,15 +1,21 @@
 "use client";
 
-import Link from "next/link";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
-import { authFetch } from "@/lib/auth/client";
-import { useCurrentUser } from "@/hooks/use-current-user";
-import { useLanguage } from "@/components/language-provider";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 
-type SkippedDomain = { id: string; hostname: string; dnsSkipped?: boolean };
+import { useLanguage } from "@/components/language-provider";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { withCleanup } from "@/lib/async-cleanup";
+import { authFetch } from "@/lib/auth/client";
+
+interface SkippedDomain {
+	id: string;
+	hostname: string;
+	dnsSkipped?: boolean;
+}
 
 export function DnsSkippedBanner() {
 	const { t } = useLanguage();
@@ -22,7 +28,9 @@ export function DnsSkippedBanner() {
 			const res = await authFetch("/api/domains", {
 				redirectOnUnauthorized: false,
 			});
-			if (!res.ok) return;
+			if (!res.ok) {
+				return;
+			}
 			const data = (await res.json()) as { domains?: SkippedDomain[] };
 			setDomains((data.domains ?? []).filter((domain) => domain.dnsSkipped));
 		} catch {
@@ -31,34 +39,61 @@ export function DnsSkippedBanner() {
 	}, []);
 
 	useEffect(() => {
-		void load();
-	}, [load]);
+		let active = true;
+		async function readDomains() {
+			try {
+				const response = await authFetch("/api/domains", {
+					redirectOnUnauthorized: false,
+				});
+				if (!response.ok) {
+					return;
+				}
+				const data = (await response.json()) as { domains?: SkippedDomain[] };
+				if (active) {
+					setDomains(
+						(data.domains ?? []).filter((domain) => domain.dnsSkipped)
+					);
+				}
+			} catch {
+				// Advisory banner stays hidden on read failure.
+			}
+		}
+		void readDomains();
+		return () => {
+			active = false;
+		};
+	}, []);
 
-	if (domains.length === 0) return null;
+	if (domains.length === 0) {
+		return null;
+	}
 	const canManage =
 		!!user &&
 		(user.isPrimaryAdmin || (user.role === "admin" && user.canManageDomains));
 
 	async function markDone() {
 		setBusy(true);
-		try {
-			await Promise.all(
-				domains.map((domain) =>
-					authFetch(`/api/domains/${domain.id}`, {
-						method: "PATCH",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ dnsSkipped: false }),
-					}),
-				),
-			);
-		} finally {
-			setBusy(false);
-			await load();
-		}
+		return await withCleanup(
+			async () => {
+				await Promise.all(
+					domains.map((domain) =>
+						authFetch(`/api/domains/${domain.id}`, {
+							body: JSON.stringify({ dnsSkipped: false }),
+							headers: { "Content-Type": "application/json" },
+							method: "PATCH",
+						})
+					)
+				);
+			},
+			async () => {
+				setBusy(false);
+				await load();
+			}
+		);
 	}
 
 	return (
-		<Alert role="status" className="mb-2">
+		<Alert aria-live="polite" className="mb-2">
 			<AlertTriangle className="h-4 w-4 shrink-0" />
 			<AlertDescription>
 				{t("dnsSkipped.warning", {
@@ -76,9 +111,8 @@ export function DnsSkippedBanner() {
 							type="button"
 							size="sm"
 							variant="outline"
-							className="max-md:min-h-11"
 							disabled={busy}
-							onClick={() => void markDone()}
+							onClick={() => markDone()}
 						>
 							{t("dnsSkipped.markDone")}
 						</Button>

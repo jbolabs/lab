@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -9,7 +10,10 @@
  * focus and selection. Components read only the semantic shadcn names below
  * (bg-background, text-muted-foreground, bg-primary, bg-sidebar…); restyle the
  * app here, never with raw palette classes. `signal` and `signal-soft` extend
- * shadcn for selected rows, links and unread counts.
+ * shadcn for selected rows, links and unread counts; `success`, `warning` and
+ * the `*-soft` pairs carry status (Badge and Alert variants use them). Maia owns component shapes, fills and spacing; the
+ * primitives in src/components/ui own heights, radii and shadows, and
+ * shadcn lint keeps feature code from overriding them.
  */
 :root {
 	--radius: 0.625rem;
@@ -35,6 +39,14 @@
 	--signal-foreground: oklch(0.99 0 0);
 	--signal-soft: oklch(0.955 0.028 258);
 	--signal-soft-foreground: oklch(0.38 0.15 258);
+	--success: oklch(0.55 0.14 155);
+	--success-soft: oklch(0.96 0.035 155);
+	--success-soft-foreground: oklch(0.38 0.1 155);
+	--warning: oklch(0.66 0.15 65);
+	--warning-soft: oklch(0.965 0.045 85);
+	--warning-soft-foreground: oklch(0.43 0.11 60);
+	--destructive-soft: oklch(0.965 0.02 27);
+	--destructive-soft-foreground: oklch(0.45 0.17 27);
 	--sidebar: oklch(0.982 0.002 265);
 	--sidebar-foreground: oklch(0.18 0.012 265);
 	--sidebar-primary: oklch(0.18 0.012 265);
@@ -75,6 +87,14 @@
 	--signal-foreground: oklch(0.195 0.008 265);
 	--signal-soft: oklch(0.32 0.06 258);
 	--signal-soft-foreground: oklch(0.88 0.06 258);
+	--success: oklch(0.72 0.14 155);
+	--success-soft: oklch(0.3 0.05 155);
+	--success-soft-foreground: oklch(0.87 0.08 155);
+	--warning: oklch(0.8 0.14 75);
+	--warning-soft: oklch(0.32 0.06 70);
+	--warning-soft-foreground: oklch(0.9 0.09 85);
+	--destructive-soft: oklch(0.3 0.07 25);
+	--destructive-soft-foreground: oklch(0.86 0.08 25);
 	--sidebar: oklch(0.17 0.007 265);
 	--sidebar-foreground: oklch(0.965 0.003 265);
 	--sidebar-primary: oklch(0.72 0.14 258);
@@ -87,6 +107,7 @@
 }
 
 @theme inline {
+	--font-heading: var(--font-sans);
 	--font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
 	--font-display: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
 	--font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -114,6 +135,14 @@
 	--color-signal-foreground: var(--signal-foreground);
 	--color-signal-soft: var(--signal-soft);
 	--color-signal-soft-foreground: var(--signal-soft-foreground);
+	--color-success: var(--success);
+	--color-success-soft: var(--success-soft);
+	--color-success-soft-foreground: var(--success-soft-foreground);
+	--color-warning: var(--warning);
+	--color-warning-soft: var(--warning-soft);
+	--color-warning-soft-foreground: var(--warning-soft-foreground);
+	--color-destructive-soft: var(--destructive-soft);
+	--color-destructive-soft-foreground: var(--destructive-soft-foreground);
 	--color-sidebar: var(--sidebar);
 	--color-sidebar-foreground: var(--sidebar-foreground);
 	--color-sidebar-primary: var(--sidebar-primary);
@@ -128,10 +157,13 @@
 	--color-chart-4: var(--chart-4);
 	--color-chart-5: var(--chart-5);
 
-	--radius-sm: calc(var(--radius) - 4px);
-	--radius-md: calc(var(--radius) - 2px);
+	--radius-sm: calc(var(--radius) * 0.6);
+	--radius-md: calc(var(--radius) * 0.8);
 	--radius-lg: var(--radius);
-	--radius-xl: calc(var(--radius) + 4px);
+	--radius-xl: calc(var(--radius) * 1.4);
+	--radius-2xl: calc(var(--radius) * 1.8);
+	--radius-3xl: calc(var(--radius) * 2.2);
+	--radius-4xl: calc(var(--radius) * 2.6);
 }
 
 @layer base {
@@ -191,13 +223,21 @@ pre {
 }
 
 @keyframes dialog-overlay-show {
-	from { opacity: 0; }
-	to { opacity: 1; }
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
 }
 
 @keyframes dialog-overlay-hide {
-	from { opacity: 1; }
-	to { opacity: 0; }
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
 }
 
 @keyframes dialog-content-show {
@@ -225,8 +265,12 @@ pre {
 /* Phone compose sheet: full height, slides up from the bottom;
    on close it slides away again. */
 @keyframes compose-sheet-in {
-	from { transform: translateY(100%); }
-	to { transform: translateY(0); }
+	from {
+		transform: translateY(100%);
+	}
+	to {
+		transform: translateY(0);
+	}
 }
 
 @media (max-width: 767px) {
@@ -241,19 +285,33 @@ pre {
 }
 
 @media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
-	.compose-sheet { animation: compose-sheet-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+	.compose-sheet {
+		animation: compose-sheet-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
 }
 
 /* Bottom-sheet dialogs (send options): slide up from the bottom edge. */
 @keyframes slide-sheet-out {
-	from { transform: translateY(0); }
-	to { transform: translateY(100%); }
+	from {
+		transform: translateY(0);
+	}
+	to {
+		transform: translateY(100%);
+	}
 }
 
-.slide-sheet[data-state="open"] { animation: compose-sheet-in 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.slide-sheet[data-state="closed"] { animation: slide-sheet-out 200ms cubic-bezier(0.4, 0, 1, 1) both; }
-.slide-sheet-overlay[data-state="open"] { animation: dialog-overlay-show 200ms ease-out both; }
-.slide-sheet-overlay[data-state="closed"] { animation: dialog-overlay-hide 160ms ease-in both; }
+.slide-sheet[data-state="open"] {
+	animation: compose-sheet-in 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.slide-sheet[data-state="closed"] {
+	animation: slide-sheet-out 200ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+.slide-sheet-overlay[data-state="open"] {
+	animation: dialog-overlay-show 200ms ease-out both;
+}
+.slide-sheet-overlay[data-state="closed"] {
+	animation: dialog-overlay-hide 160ms ease-in both;
+}
 
 .dialog-overlay[data-state="open"] {
 	animation: dialog-overlay-show 180ms ease-out both;
@@ -274,14 +332,26 @@ pre {
 }
 
 @keyframes route-loading-bar {
-	0% { transform: translateX(-110%) scaleX(0.55); }
-	50% { transform: translateX(110%) scaleX(1); }
-	100% { transform: translateX(280%) scaleX(0.55); }
+	0% {
+		transform: translateX(-110%) scaleX(0.55);
+	}
+	50% {
+		transform: translateX(110%) scaleX(1);
+	}
+	100% {
+		transform: translateX(280%) scaleX(0.55);
+	}
 }
 
 @keyframes page-transition-enter {
-	from { opacity: 0; transform: translateY(8px); }
-	to { opacity: 1; transform: translateY(0); }
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 .page-transition-enter {
@@ -546,30 +616,49 @@ pre {
 }
 
 /* White text on coloured surfaces (status buttons, badges) stays white. */
-.dark .text-white, .dark .hover\:text-white:hover, .dark .fill-white { color: #fff; fill: #fff; }
-.dark .border-white { border-color: #fff; }
+.dark .text-white,
+.dark .hover\:text-white:hover,
+.dark .fill-white {
+	color: #fff;
+	fill: #fff;
+}
+.dark .border-white {
+	border-color: #fff;
+}
 /* Saturated fills behind white text keep their original weight, not the inverted shade. */
-.dark .bg-blue-600 { background-color: oklch(54.6% 0.245 262.881); }
-.dark .bg-red-600 { background-color: oklch(57.7% 0.245 27.325); }
-.dark .bg-red-700, .dark .hover\:bg-red-700:hover { background-color: oklch(50.5% 0.213 27.518); }
-.dark .bg-green-600 { background-color: oklch(62.7% 0.194 149.214); }
-.dark .bg-amber-600 { background-color: oklch(66.6% 0.179 58.318); }
-.dark .bg-violet-600 { background-color: oklch(54.1% 0.281 293.009); }
-.dark .bg-teal-600 { background-color: oklch(60% 0.118 184.704); }
-.dark .bg-pink-600 { background-color: oklch(59.2% 0.249 0.584); }
-.dark .bg-orange-600 { background-color: oklch(64.6% 0.222 41.116); }
+.dark .bg-blue-600 {
+	background-color: oklch(54.6% 0.245 262.881);
+}
+.dark .bg-red-600 {
+	background-color: oklch(57.7% 0.245 27.325);
+}
+.dark .bg-red-700,
+.dark .hover\:bg-red-700:hover {
+	background-color: oklch(50.5% 0.213 27.518);
+}
+.dark .bg-green-600 {
+	background-color: oklch(62.7% 0.194 149.214);
+}
+.dark .bg-amber-600 {
+	background-color: oklch(66.6% 0.179 58.318);
+}
+.dark .bg-violet-600 {
+	background-color: oklch(54.1% 0.281 293.009);
+}
+.dark .bg-teal-600 {
+	background-color: oklch(60% 0.118 184.704);
+}
+.dark .bg-pink-600 {
+	background-color: oklch(59.2% 0.249 0.584);
+}
+.dark .bg-orange-600 {
+	background-color: oklch(64.6% 0.222 41.116);
+}
 /* HTML emails assume a white background: keep them in light colour-scheme inside the dark theme. */
 .dark .email-body {
 	color-scheme: light;
 	border-radius: 0.75rem;
 	padding: 1rem;
-}
-
-/* On phones the settings/admin body is already a padded card, so inner cards drop their own side padding to line up with the page header. */
-@media (max-width: 767px) {
-	.page-flush :is(.bg-card.p-6, .bg-card.p-5) {
-		padding-inline: 0;
-	}
 }
 
 /* Home: content settles up into place once, as on jbolabs.com. */
@@ -619,5 +708,109 @@ pre {
 	to {
 		opacity: 0;
 		visibility: hidden;
+	}
+}
+
+/* Shared standalone-PWA safe areas; max keeps minimum padding, add reserves toolbar space. */
+@utility pt-safe {
+	padding-top: env(safe-area-inset-top, 0px);
+}
+@utility pb-safe {
+	padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@utility bottom-safe {
+	bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
+@utility right-safe {
+	right: max(1rem, env(safe-area-inset-right, 0px));
+}
+@utility top-safe-2 {
+	top: max(0.5rem, env(safe-area-inset-top, 0px));
+}
+@utility top-safe-add-5 {
+	top: calc(1.25rem + env(safe-area-inset-top, 0px));
+}
+@utility min-h-safe-header {
+	min-height: calc(3.5rem + env(safe-area-inset-top, 0px));
+}
+@utility pb-compose-safe {
+	padding-bottom: var(--sheet-pad, max(env(safe-area-inset-bottom, 0px), 1rem));
+}
+@utility pb-safe-2 {
+	padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+@utility pb-safe-5 {
+	padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+}
+@utility pb-safe-6 {
+	padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 0px));
+}
+@utility pb-safe-8 {
+	padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px));
+}
+@utility pb-safe-24 {
+	padding-bottom: max(6rem, env(safe-area-inset-bottom, 0px));
+}
+@utility pb-safe-add-2 {
+	padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+}
+@utility pb-safe-add-4 {
+	padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+@utility pb-safe-add-20 {
+	padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+@utility pb-safe-add-24 {
+	padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+}
+@utility bottom-safe-add-4 {
+	bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+@utility bottom-safe-add-20 {
+	bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.message-content {
+	hr {
+		margin-top: 1.6em;
+		margin-bottom: 1.6em;
+		color: var(--border);
+	}
+}
+
+@keyframes agent-welcome-enter {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.agent-welcome-heading,
+.agent-welcome-prompt {
+	animation: agent-welcome-enter 360ms ease-out both;
+}
+
+.agent-welcome-heading {
+	display: inline-block;
+}
+
+.agent-welcome-prompt:nth-child(1) {
+	animation-delay: 100ms;
+}
+.agent-welcome-prompt:nth-child(2) {
+	animation-delay: 200ms;
+}
+.agent-welcome-prompt:nth-child(3) {
+	animation-delay: 300ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.agent-welcome-heading,
+	.agent-welcome-prompt {
+		animation: none;
 	}
 }

@@ -1,3 +1,3 @@
-export type MessageOriginalRouteParams = {
+export interface MessageOriginalRouteParams {
 	params: Promise<{ messageId: string }>;
-};
+}

@@ -1,24 +1,24 @@
-export type DomainListResult = {
+export interface DomainListResult {
 	domains?: { id: string; hostname: string }[];
-};
+}
 
-export type DomainCreateResult = {
+export interface DomainCreateResult {
 	domain?: { id: string };
 	error?: string;
 	code?: "MX_RECORDS_CONFLICT";
-};
+}
 
-export type DomainPreflight = {
+export interface DomainPreflight {
 	hostname: string;
 	zone: { id: string; name: string };
-};
+}
 
-export type DomainPreflightResponse = {
+export interface DomainPreflightResponse {
 	ok: boolean;
 	domain?: DomainPreflight;
 	error?: string;
-};
+}
 
-export type MailboxCreateResult = {
+export interface MailboxCreateResult {
 	error?: string;
-};
+}

@@ -1,8 +1,10 @@
 import type { Dispatch, FormEvent, SetStateAction } from "react";
+
 import type { Translator } from "@/lib/i18n/utils";
+
 import type { ManagedAccount } from "../types";
 
-export type PasswordSaveOptions = {
+export interface PasswordSaveOptions {
 	event: FormEvent<HTMLFormElement>;
 	account: ManagedAccount | null;
 	password: string;
@@ -10,4 +12,4 @@ export type PasswordSaveOptions = {
 	setSaving: Dispatch<SetStateAction<boolean>>;
 	setMessage: Dispatch<SetStateAction<string | null>>;
 	t?: Translator;
-};
+}

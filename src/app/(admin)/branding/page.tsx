@@ -1,18 +1,41 @@
 "use client";
-import { Field, FieldLabel } from "@/components/ui/field";
-
-import { useEffect, useRef, useState } from "react";
 import { ImagePlus, Palette } from "lucide-react";
-import { useLanguage } from "@/components/language-provider";
+import Image from "next/image";
+import { useRef, useState } from "react";
+
 import { useBranding } from "@/components/branding-provider";
+import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import {
+	Field,
+	FieldDescription,
+	FieldGroup,
+	FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+	PageHeader,
+	PageHeaderText,
+	PageTitle,
+	PageDescription,
+} from "@/components/ui/page-header";
+import { runAsyncAction } from "@/lib/async-cleanup";
+
 import { BRANDING_ICON_ACCEPT, saveBranding } from "./utils";
 
-export default function BrandingPage() {
+function BrandingForm({
+	branding,
+}: {
+	branding: ReturnType<typeof useBranding>;
+}) {
 	const { t } = useLanguage();
-	const branding = useBranding();
 	const [appName, setAppName] = useState(branding.appName);
 	const [icon, setIcon] = useState<File | null>(null);
 	const [preview, setPreview] = useState<string | null>(null);
@@ -20,62 +43,117 @@ export default function BrandingPage() {
 	const [saving, setSaving] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
 
-	useEffect(() => {
-		setAppName(branding.appName);
-	}, [branding.appName]);
-
 	function pickIcon(file: File | null) {
 		setIcon(file);
-		if (preview) URL.revokeObjectURL(preview);
+		if (preview) {
+			URL.revokeObjectURL(preview);
+		}
 		setPreview(file ? URL.createObjectURL(file) : null);
 	}
 
-	async function submit(event: React.FormEvent<HTMLFormElement>) {
+	function submit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		setSaving(true);
 		setStatus(null);
-		try {
-			await saveBranding(appName.trim(), icon);
-			await branding.refreshBranding();
-			setIcon(null);
-			setStatus(t("branding.updated"));
-		} catch (error) {
-			setStatus(error instanceof Error ? error.message : t("branding.saveFailed"));
-		} finally {
-			setSaving(false);
-		}
+		return runAsyncAction(
+			async () => {
+				await saveBranding(appName.trim(), icon);
+				await branding.refreshBranding();
+				setIcon(null);
+				setStatus(t("branding.updated"));
+			},
+			(failure) => {
+				setStatus(
+					failure instanceof Error ? failure.message : t("branding.saveFailed")
+				);
+			},
+			() => {
+				setSaving(false);
+			}
+		);
 	}
 
 	return (
 		<div className="flex flex-col gap-6">
-			<div>
-				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("branding.title")}</h1>
-				<p className="mt-2 text-sm text-muted-foreground">{t("branding.description")}</p>
-			</div>
-			<Card className="rounded-lg border-0 bg-card p-6">
-				<CardHeader className="py-0">
-					<CardTitle className="flex items-center gap-2"><Palette className="size-5" />{t("branding.identity")}</CardTitle>
+			<PageHeader>
+				<PageHeaderText>
+					<PageTitle>{t("branding.title")}</PageTitle>
+					<PageDescription>{t("branding.description")}</PageDescription>
+				</PageHeaderText>
+			</PageHeader>
+			<Card>
+				<CardHeader>
+					<CardTitle className="flex items-center gap-2">
+						<Palette className="size-5" />
+						{t("branding.identity")}
+					</CardTitle>
 					<CardDescription>{t("branding.faviconNote")}</CardDescription>
 				</CardHeader>
-				<CardContent className="pt-6">
-					<form onSubmit={submit} className="flex flex-col gap-6">
-						<Field className="flex flex-col gap-2">
-							<FieldLabel htmlFor="appName">{t("branding.appName")}</FieldLabel>
-							<Input id="appName" value={appName} maxLength={60} onChange={(event) => setAppName(event.target.value)} required />
-						</Field>
-						<Field className="flex flex-col gap-2">
-							<FieldLabel>{t("branding.appIcon")}</FieldLabel>
-							<Input ref={inputRef} type="file" accept={BRANDING_ICON_ACCEPT} className="hidden" onChange={(event) => pickIcon(event.target.files?.[0] ?? null)} />
-							<button type="button" onClick={() => inputRef.current?.click()} className="flex items-center gap-4 rounded-lg border border-dashed border-input p-4 text-left hover:bg-accent/60">
-								<img src={preview ?? branding.iconUrl} alt={t("branding.iconPreview")} className="size-16 rounded-lg object-cover" />
-								<span className="text-sm text-muted-foreground"><ImagePlus className="mb-1 size-5" />{t("branding.chooseImage")}<br /><span className="text-xs text-muted-foreground">{t("branding.maxSize")}</span></span>
-							</button>
-						</Field>
-						{status && <p role="status" className="text-sm text-muted-foreground">{status}</p>}
-						<Button type="submit" disabled={saving || !appName.trim()}>{saving ? t("common.saving") : t("branding.save")}</Button>
+				<CardContent>
+					<form onSubmit={submit}>
+						<FieldGroup>
+							<Field>
+								<FieldLabel htmlFor="appName">
+									{t("branding.appName")}
+								</FieldLabel>
+								<Input
+									id="appName"
+									value={appName}
+									maxLength={60}
+									onChange={(event) => setAppName(event.target.value)}
+									required
+								/>
+							</Field>
+							<Field>
+								<FieldLabel>{t("branding.appIcon")}</FieldLabel>
+								<Input
+									ref={inputRef}
+									type="file"
+									accept={BRANDING_ICON_ACCEPT}
+									className="hidden"
+									onChange={(event) =>
+										pickIcon(event.target.files?.[0] ?? null)
+									}
+								/>
+								<div className="flex items-center gap-4">
+									<Image
+										unoptimized
+										width={48}
+										height={48}
+										src={preview ?? branding.iconUrl}
+										alt={t("branding.iconPreview")}
+										className="size-16 rounded-lg border object-cover"
+									/>
+									<div className="flex flex-col items-start gap-1.5">
+										<Button
+											type="button"
+											variant="outline"
+											onClick={() => inputRef.current?.click()}
+										>
+											<ImagePlus data-icon="inline-start" />
+											{t("branding.chooseImage")}
+										</Button>
+										<FieldDescription>{t("branding.maxSize")}</FieldDescription>
+									</div>
+								</div>
+							</Field>
+							{status && (
+								<output className="text-sm text-muted-foreground">
+									{status}
+								</output>
+							)}
+							<Button type="submit" disabled={saving || !appName.trim()}>
+								{saving ? t("common.saving") : t("branding.save")}
+							</Button>
+						</FieldGroup>
 					</form>
 				</CardContent>
 			</Card>
 		</div>
 	);
+}
+
+export default function BrandingPage() {
+	const branding = useBranding();
+	return <BrandingForm key={branding.appName} branding={branding} />;
 }

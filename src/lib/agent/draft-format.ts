@@ -1,17 +1,27 @@
 import { textToHtml } from "@/components/compose/rich-text-utils";
 
 export function formatAgentDraftBody(body: string) {
-	const text = body.replace(/\r\n?/g, "\n").split("\n").map((line) => line
-		.replace(/^\s*```[^\n]*$/, "")
-		.replace(/^\s{0,3}#{1,6}\s+/, "")
-		.replace(/^\s{0,3}[-*+]\s+/, "• ")
-		.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, "$1 ($2)")
-		.replace(/\*\*([^*\n]+)\*\*/g, "$1")
-		.replace(/__([^_\n]+)__/g, "$1")
-		.replace(/\*([^*\n]+)\*/g, "$1")
-		.replace(/_([^_\n]+)_/g, "$1")
-		.replace(/~~([^~\n]+)~~/g, "$1")
-		.replace(/`([^`\n]+)`/g, "$1")
-	).join("\n").replace(/\n{3,}/g, "\n\n").trim();
-	return { text, html: textToHtml(text) };
+	const text = body
+		.replaceAll(/\r\n?/gu, "\n")
+		.split("\n")
+		.map((line) =>
+			line
+				.replace(/^\s*```[^\n]*$/u, "")
+				.replace(/^\s{0,3}#{1,6}\s+/u, "")
+				.replace(/^\s{0,3}[-*+]\s+/u, "• ")
+				.replaceAll(
+					/\[(?<capture1>[^\]]+)\]\((?<capture2>[^)\s]+)\)/gu,
+					"$1 ($2)"
+				)
+				.replaceAll(/\*\*(?<capture1>[^*\n]+)\*\*/gu, "$1")
+				.replaceAll(/__(?<capture1>[^_\n]+)__/gu, "$1")
+				.replaceAll(/\*(?<capture1>[^*\n]+)\*/gu, "$1")
+				.replaceAll(/_(?<capture1>[^_\n]+)_/gu, "$1")
+				.replaceAll(/~~(?<capture1>[^~\n]+)~~/gu, "$1")
+				.replaceAll(/`(?<capture1>[^`\n]+)`/gu, "$1")
+		)
+		.join("\n")
+		.replaceAll(/\n{3,}/gu, "\n\n")
+		.trim();
+	return { html: textToHtml(text), text };
 }

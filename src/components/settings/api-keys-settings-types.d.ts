@@ -1,4 +1,4 @@
-export type ManagedApiKey = {
+export interface ManagedApiKey {
 	id: string;
 	name: string;
 	prefix: string;
@@ -8,6 +8,12 @@ export type ManagedApiKey = {
 	mailboxScopeEnabled: boolean;
 	createdAt: string;
 	lastUsedAt: string | null;
-};
+}
 
-export type McpKeyScope = "mcp:read" | "mcp:draft" | "mcp:organize" | "mcp:request-send" | "mcp:calendar-read" | "mcp:calendar-write";
+export type McpKeyScope =
+	| "mcp:read"
+	| "mcp:draft"
+	| "mcp:organize"
+	| "mcp:request-send"
+	| "mcp:calendar-read"
+	| "mcp:calendar-write";

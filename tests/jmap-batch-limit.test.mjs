@@ -1,12 +1,15 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
-import { dirname, join } from "node:path";
+import fs from "node:fs";
+import nodePath from "node:path";
 import test, { after } from "node:test";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
 
 import { build } from "esbuild";
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const { mkdtempSync, rmSync } = fs;
+const { join } = nodePath;
+
+const root = join(import.meta.dirname, "..");
 
 /**
  * D1 caps bound parameters per query at 100, but `Email/get` legally serves
@@ -17,10 +20,23 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
  * description never echoes SQL internals to the client. Everything runs
  * against an in-memory SQLite database; no Workers binding is touched.
  */
-const outDir = mkdtempSync(join(root, "node_modules", "mailflare-jmap-batch-test-"));
-after(() => rmSync(outDir, { recursive: true, force: true }));
+const outDir = mkdtempSync(
+	join(root, "node_modules", "mailflare-jmap-batch-test-")
+);
+after(() => rmSync(outDir, { force: true, recursive: true }));
 
 await build({
+	alias: {
+		"cloudflare:workers": "./server/runtime/cloudflare-workers.ts",
+		"next/headers": "next/headers.js",
+		"next/server": "next/server.js",
+	},
+	bundle: true,
+	format: "esm",
+	logLevel: "silent",
+	outfile: join(outDir, "entry.mjs"),
+	packages: "external",
+	platform: "node",
 	stdin: {
 		contents: `
 			export { SqliteDatabase } from "./server/runtime/sqlite-database.ts";
@@ -33,20 +49,20 @@ await build({
 		resolveDir: root,
 		sourcefile: "jmap-batch-test-entry.ts",
 	},
-	outfile: join(outDir, "entry.mjs"),
-	bundle: true,
-	platform: "node",
-	format: "esm",
 	target: "node24",
 	tsconfig: join(root, "tsconfig.json"),
-	packages: "external",
-	alias: { "next/headers": "next/headers.js", "next/server": "next/server.js", "cloudflare:workers": "./server/runtime/cloudflare-workers.ts" },
-	logLevel: "silent",
 });
 
-const { SqliteDatabase, applyMigrations, getDb, emailGet, loadMessages, threadGet, loadAttachmentsByMessage, processRequest } = await import(
-	pathToFileURL(join(outDir, "entry.mjs")).href
-);
+const {
+	SqliteDatabase,
+	applyMigrations,
+	getDb,
+	emailGet,
+	loadMessages,
+	threadGet,
+	loadAttachmentsByMessage,
+	processRequest,
+} = await import(pathToFileURL(join(outDir, "entry.mjs")).href);
 
 const MAILBOX = "mbx_test";
 async function fixture(t) {
@@ -63,17 +79,24 @@ async function fixture(t) {
 	`);
 	const env = { DB: database };
 	const ctx = {
-		env,
-		db: getDb(env),
-		auth: { userId: "admin", email: "owner@one.test", scopes: ["jmap"], mailboxIds: null, user: { id: "admin", email: "owner@one.test", role: "admin" } },
 		accountId: "admin",
-		origin: "http://test",
+		auth: {
+			email: "owner@one.test",
+			mailboxIds: null,
+			scopes: ["jmap"],
+			user: { email: "owner@one.test", id: "admin", role: "admin" },
+			userId: "admin",
+		},
 		createdIds: {},
+		db: getDb(env),
+		env,
+		origin: "http://test",
 	};
-	return { database, ctx };
+	return { ctx, database };
 }
 
-const ids = (count) => Array.from({ length: count }, (_, i) => `msg_${String(i).padStart(4, "0")}`);
+const ids = (count) =>
+	Array.from({ length: count }, (_, i) => `msg_${String(i).padStart(4, "0")}`);
 
 function seedMessages(database, idList) {
 	database.db.exec(`
@@ -87,8 +110,15 @@ test("Email/get returns every row across batch boundaries without duplicates", a
 	seedMessages(database, ids(160));
 	const requested = [...ids(160), "msg_0000", "msg_0001"];
 
-	const result = await emailGet(ctx, { ids: requested, properties: ["keywords"] });
-	assert.equal(result.list.length, 160, "each requested id appears exactly once");
+	const result = await emailGet(ctx, {
+		ids: requested,
+		properties: ["keywords"],
+	});
+	assert.equal(
+		result.list.length,
+		160,
+		"each requested id appears exactly once"
+	);
 	assert.deepEqual(result.notFound, []);
 });
 
@@ -120,9 +150,18 @@ test("attachment loading survives more than 100 message ids", async (t) => {
 		VALUES ('att_1', 'msg_a', 'a.txt', 'text/plain', 3, 'attachment', 'r2_1', 2),
 		       ('att_2', 'msg_b', 'b.txt', 'text/plain', 3, 'attachment', 'r2_2', 2);
 	`);
-	const map = await loadAttachmentsByMessage(ctx, ["msg_a", "msg_b", ...ids(150), "msg_a"]);
+	const map = await loadAttachmentsByMessage(ctx, [
+		"msg_a",
+		"msg_b",
+		...ids(150),
+		"msg_a",
+	]);
 	assert.equal(map.size, 2);
-	assert.equal(map.get("msg_a").length, 1, "repeated id does not append its attachments twice");
+	assert.equal(
+		map.get("msg_a").length,
+		1,
+		"repeated id does not append its attachments twice"
+	);
 	assert.equal(map.get("msg_b").length, 1);
 });
 
@@ -131,36 +170,56 @@ test("serverFail descriptions never echo error internals", async () => {
 	// resolves so the trailing sessionState() call outside the per-method
 	// try/catch does not escape processRequest.
 	let thrown = false;
-	const chain = new Proxy(function () {}, {
+	const chain = new Proxy(() => {}, {
 		apply: () => chain,
 		get: (_, key) => {
-			if (key === "then") return (onOk, onErr) => Promise.resolve([]).then(onOk, onErr);
-			if (key === "catch") return (onErr) => Promise.resolve([]).catch(onErr);
-			if (key === Symbol.toPrimitive) return () => "";
+			if (key === "then") {
+				return (onOk, onErr) => Promise.resolve([]).then(onOk, onErr);
+			}
+			if (key === "catch") {
+				return (onErr) => Promise.resolve([]).catch(onErr);
+			}
+			if (key === Symbol.toPrimitive) {
+				return () => "";
+			}
 			return chain;
 		},
 	});
 	const ctx = {
-		env: {},
-		db: new Proxy({}, {
-			get(_, prop) {
-				if (prop === "select" && !thrown) {
-					thrown = true;
-					throw new Error('Failed query: select "id" from "messages" params: ["p1","p2"]');
-				}
-				return chain;
-			},
-		}),
-		auth: { userId: "admin", email: "owner@one.test", scopes: ["jmap"], mailboxIds: null, user: { id: "admin", email: "owner@one.test", role: "admin" } },
 		accountId: "admin",
-		origin: "http://test",
+		auth: {
+			email: "owner@one.test",
+			mailboxIds: null,
+			scopes: ["jmap"],
+			user: { email: "owner@one.test", id: "admin", role: "admin" },
+			userId: "admin",
+		},
 		createdIds: {},
+		db: new Proxy(
+			{},
+			{
+				get(_, prop) {
+					if (prop === "select" && !thrown) {
+						thrown = true;
+						throw new Error(
+							'Failed query: select "id" from "messages" params: ["p1","p2"]'
+						);
+					}
+					return chain;
+				},
+			}
+		),
+		env: {},
+		origin: "http://test",
 	};
 	const response = await processRequest(ctx, {
 		methodCalls: [["Email/get", { ids: ["msg_x"] }, "c0"]],
 	});
-	const [name, error] = response.methodResponses[0];
+	const [[name, error]] = response.methodResponses;
 	assert.equal(name, "error");
 	assert.equal(error.type, "serverFail");
-	assert.ok(!/select|params|blob/i.test(error.description), `description leaks internals: ${error.description}`);
+	assert.ok(
+		!/select|params|blob/iu.test(error.description),
+		`description leaks internals: ${error.description}`
+	);
 });

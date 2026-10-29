@@ -1,22 +1,20 @@
 "use client";
+import { Camera, LoaderCircle, User } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+import { useLanguage } from "@/components/language-provider";
+import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { useEffect, useRef, useState } from "react";
-import { Camera, LoaderCircle, User } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { authFetch } from "@/lib/auth/client";
 import { getAvatarColorStyle } from "@/lib/avatar-colors";
+import { dispatchMailboxAvatarChanged } from "@/lib/mailboxes/avatar-client";
 import {
 	dispatchProfileAvatarChanged,
 	getProfileAvatarUrl,
 } from "@/lib/profile/avatar-client";
-import { dispatchMailboxAvatarChanged } from "@/lib/mailboxes/avatar-client";
-import { useLanguage } from "@/components/language-provider";
-import { Input } from "@/components/ui/input";
-import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
-import type {
-	ProfileAvatarFormProps,
-	ProfileAvatarSessionResponse,
-} from "./types";
+
 import {
 	getMailboxProfileAvatarUrl,
 	PROFILE_AVATAR_ACCEPT,
@@ -24,6 +22,11 @@ import {
 	uploadProfileAvatar,
 	validateProfileAvatar,
 } from "./profile-avatar-form-utils";
+import type {
+	ProfileAvatarFormProps,
+	ProfileAvatarSessionResponse,
+} from "./types";
+
 export function ProfileAvatarForm({
 	mailboxId,
 	initialHasAvatar = false,
@@ -34,15 +37,23 @@ export function ProfileAvatarForm({
 	const name = nameProp ?? t("avatar.profile");
 	const [hasAvatar, setHasAvatar] = useState(initialHasAvatar);
 	const [avatarUrl, setAvatarUrl] = useState(
-		mailboxId ? `/api/mailboxes/${mailboxId}/avatar` : "/api/profile/avatar",
+		mailboxId ? `/api/mailboxes/${mailboxId}/avatar` : "/api/profile/avatar"
 	);
 	const [status, setStatus] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
+	const avatarStyle = getAvatarColorStyle(colorSeed ?? mailboxId ?? name);
 	const inputRef = useRef<HTMLInputElement>(null);
+	const identity = `${mailboxId ?? "profile"}:${initialHasAvatar}`;
+	const [previousIdentity, setPreviousIdentity] = useState(identity);
+	if (identity !== previousIdentity) {
+		setPreviousIdentity(identity);
+		setHasAvatar(initialHasAvatar);
+		setAvatarUrl(
+			mailboxId ? `/api/mailboxes/${mailboxId}/avatar` : "/api/profile/avatar"
+		);
+	}
 	useEffect(() => {
 		if (mailboxId) {
-			setHasAvatar(initialHasAvatar);
-			setAvatarUrl(`/api/mailboxes/${mailboxId}/avatar`);
 			return;
 		}
 		authFetch("/api/auth/me", { redirectOnUnauthorized: false })
@@ -50,13 +61,17 @@ export function ProfileAvatarForm({
 			.then((data) => {
 				const authData = data as ProfileAvatarSessionResponse | null;
 				setHasAvatar(!!authData?.user?.hasAvatar);
+
+				return null;
 			})
 			.catch(() => setHasAvatar(false));
-	}, [initialHasAvatar, mailboxId]);
+	}, [mailboxId]);
 	async function onPick(event: React.ChangeEvent<HTMLInputElement>) {
 		const picked = event.target.files?.[0] ?? null;
 		event.target.value = "";
-		if (!picked) return;
+		if (!picked) {
+			return;
+		}
 		const validationError = validateProfileAvatar(picked);
 		if (validationError) {
 			setStatus(validationError);
@@ -65,11 +80,9 @@ export function ProfileAvatarForm({
 		setBusy(true);
 		setStatus(null);
 		try {
-			if (mailboxId) {
-				await uploadMailboxProfileAvatar(mailboxId, picked);
-			} else {
-				await uploadProfileAvatar(picked);
-			}
+			await (mailboxId
+				? uploadMailboxProfileAvatar(mailboxId, picked)
+				: uploadProfileAvatar(picked));
 			const nextAvatarUrl = mailboxId
 				? getMailboxProfileAvatarUrl(mailboxId)
 				: getProfileAvatarUrl();
@@ -83,7 +96,7 @@ export function ProfileAvatarForm({
 			}
 		} catch (error) {
 			setStatus(
-				error instanceof Error ? error.message : t("avatar.uploadFailed"),
+				error instanceof Error ? error.message : t("avatar.uploadFailed")
 			);
 			setBusy(false);
 		}
@@ -101,41 +114,46 @@ export function ProfileAvatarForm({
 				type="button"
 				onClick={() => inputRef.current?.click()}
 				disabled={busy}
-				style={getAvatarColorStyle(colorSeed ?? mailboxId ?? name)}
+				style={
+					{
+						"--avatar-background": avatarStyle.backgroundColor,
+						"--avatar-foreground": avatarStyle.color,
+					} as React.CSSProperties
+				}
 				aria-label={
 					hasAvatar
 						? t("avatar.change", { name })
 						: t("avatar.upload", { name })
 				}
 				variant="ghost"
-				className="group relative size-20 shrink-0 overflow-hidden rounded-full"
-				size="icon"
+				className="group relative shrink-0 overflow-hidden"
+				size="avatar"
 			>
 				{hasAvatar ? (
 					<ProgressiveAvatarImage
 						src={avatarUrl}
 						alt={t("account.profilePicture", { name })}
-						className="h-full w-full object-cover"
+						className="size-full object-cover"
 						onError={() => setHasAvatar(false)}
 					/>
 				) : (
-					<span className="flex h-full w-full items-center justify-center">
-						<User className="h-9 w-9" />
+					<span className="flex size-full items-center justify-center bg-(--avatar-background) text-(--avatar-foreground)">
+						<User className="size-9" />
 					</span>
 				)}
 				<span className="absolute inset-0 flex items-center justify-center bg-background/80 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
 					{busy ? (
-						<LoaderCircle className="h-6 w-6 animate-spin" />
+						<LoaderCircle className="size-6 animate-spin" />
 					) : (
-						<span className="flex flex-col items-center gap-1 text-[11px] font-medium">
-							<Camera className="h-5 w-5" />
+						<span className="flex flex-col items-center gap-1 text-xs font-medium">
+							<Camera className="size-5" />
 							{hasAvatar ? t("avatar.changeShort") : t("avatar.uploadShort")}
 						</span>
 					)}
 				</span>
 			</Button>
 			{status && (
-				<Alert variant="destructive">
+				<Alert variant="error">
 					<AlertDescription>{status}</AlertDescription>
 				</Alert>
 			)}

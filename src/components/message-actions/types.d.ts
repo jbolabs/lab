@@ -1,9 +1,12 @@
-import type { TranslationKey } from "@/lib/i18n/types";
+import type { LucideProps } from "lucide-react";
+import { IconNode } from "lucide-react";
+import type { ComponentType } from "react";
+
 import type { BulkMessageAction } from "@/app/api/messages/bulk/types";
 import type { Message, MessageDirection } from "@/hooks/types";
-import { IconNode } from "lucide-react";
+import type { TranslationKey } from "@/lib/i18n/types";
 
-export type MessageActionsProps = {
+export interface MessageActionsProps {
 	messageId: string;
 	mailboxId: string | null;
 	senderAddress: string;
@@ -21,37 +24,48 @@ export type MessageActionsProps = {
 	/** Needed by Forward, which quotes the original header block. */
 	messageMeta?: Pick<Message, "id" | "subject" | "createdAt">;
 	bodyHtml?: string | null;
-};
+}
 
-export type MessageSnoozeDialogProps = {
+export interface MessageSnoozeDialogProps {
 	messageId: string;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-};
+}
 
-export type ForwardDraftInput = {
+export interface ForwardDraftInput {
 	mailboxId: string | null;
 	ownAddress?: string | null;
 	message: ReplyableMessage & Pick<Message, "id" | "subject" | "createdAt">;
 	bodyText?: string | null;
 	bodyHtml?: string | null;
-};
+}
 
-export type SingleMessageAction = BulkMessageAction | "reply" | "replyAll" | "forward";
+export type SingleMessageAction =
+	| BulkMessageAction
+	| "reply"
+	| "replyAll"
+	| "forward";
 
 export type ReplyMode = "reply" | "replyAll";
 
 export type ReplyableMessage = Pick<
 	Message,
-	"direction" | "fromAddr" | "toAddr" | "ccAddr" | "replyTo" | "providerMessageId" | "references" | "threadId"
+	| "direction"
+	| "fromAddr"
+	| "toAddr"
+	| "ccAddr"
+	| "replyTo"
+	| "providerMessageId"
+	| "references"
+	| "threadId"
 >;
 
-export type ReplyRecipients = {
+export interface ReplyRecipients {
 	to: string[];
 	cc: string[];
-};
+}
 
-export type ReplyDraftInput = {
+export interface ReplyDraftInput {
 	mailboxId: string | null;
 	senderAddress: string;
 	ownAddress?: string | null;
@@ -65,20 +79,20 @@ export type ReplyDraftInput = {
 		references: string | null;
 		threadId: string | null;
 	};
-};
+}
 
-export type TrashSenderRuleInput = {
+export interface TrashSenderRuleInput {
 	mailboxId: string;
 	senderAddress: string;
-};
+}
 
-export type BlockMessageContactInput = {
+export interface BlockMessageContactInput {
 	mailboxId: string;
 	senderAddress: string;
-};
+}
 
-export type MoveMessageActionItem = {
+export interface MoveMessageActionItem {
 	action: BulkMessageAction;
 	labelKey: TranslationKey;
-	icon: any
-};
+	icon: ComponentType<LucideProps & { "data-icon"?: string }>;
+}

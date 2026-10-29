@@ -3,20 +3,20 @@ import type { ContactSource } from "@/lib/email/address-types";
 
 export type ContactRow = typeof contacts.$inferSelect;
 
-export type ContactInput = {
+export interface ContactInput {
 	userId: string;
 	address: string;
 	source: ContactSource;
-};
+}
 
-export type BlockContactInput = {
+export interface BlockContactInput {
 	userId: string;
 	mailboxId: string;
 	domainId: string;
 	address: string;
-};
+}
 
-export type MessageContactNames = {
+export interface MessageContactNames {
 	fromContactName: string | null;
 	toContactName: string | null;
-};
+}

@@ -1,15 +1,15 @@
 import { cfRequest } from "@/lib/cloudflare-api";
-import type { CfEmailRoutingRule } from "@/lib/cloudflare-api.types";
 import { getEmailWorkerName } from "@/lib/cloudflare-api-utils";
+import type { CfEmailRoutingRule } from "@/lib/cloudflare-api.types";
 
 export async function getEmailRoutingCatchAll(
 	env: CloudflareEnv,
-	zoneId: string,
+	zoneId: string
 ): Promise<CfEmailRoutingRule | null> {
 	try {
 		return await cfRequest<CfEmailRoutingRule>(
 			env,
-			`/zones/${zoneId}/email/routing/rules/catch_all`,
+			`/zones/${zoneId}/email/routing/rules/catch_all`
 		);
 	} catch {
 		// A zone without Email Routing has no catch-all to read; treat it as absent.
@@ -19,21 +19,21 @@ export async function getEmailRoutingCatchAll(
 
 export async function ensureEmailRoutingCatchAllToWorker(
 	env: CloudflareEnv,
-	zoneId: string,
+	zoneId: string
 ): Promise<CfEmailRoutingRule> {
 	const workerName = getEmailWorkerName();
-	return cfRequest<CfEmailRoutingRule>(
+	return await cfRequest<CfEmailRoutingRule>(
 		env,
 		`/zones/${zoneId}/email/routing/rules/catch_all`,
 		{
-			method: "PUT",
 			body: JSON.stringify({
 				actions: [{ type: "worker", value: [workerName] }],
 				enabled: true,
 				matchers: [{ type: "all" }],
 				name: `Route all email to ${workerName}`,
 			}),
-		},
+			method: "PUT",
+		}
 	);
 }
 
@@ -46,21 +46,25 @@ export async function ensureEmailRoutingCatchAllToWorker(
 export async function restoreEmailRoutingCatchAll(
 	env: CloudflareEnv,
 	zoneId: string,
-	previous: CfEmailRoutingRule | null,
+	previous: CfEmailRoutingRule | null
 ): Promise<void> {
-	const actions = previous?.actions?.length ? previous.actions : [{ type: "drop" as const }];
-	const matchers = previous?.matchers?.length ? previous.matchers : [{ type: "all" as const }];
+	const actions = previous?.actions?.length
+		? previous.actions
+		: [{ type: "drop" as const }];
+	const matchers = previous?.matchers?.length
+		? previous.matchers
+		: [{ type: "all" as const }];
 	await cfRequest<CfEmailRoutingRule>(
 		env,
 		`/zones/${zoneId}/email/routing/rules/catch_all`,
 		{
-			method: "PUT",
 			body: JSON.stringify({
 				actions,
 				enabled: previous?.enabled ?? false,
 				matchers,
 				...(previous?.name ? { name: previous.name } : {}),
 			}),
-		},
+			method: "PUT",
+		}
 	);
 }

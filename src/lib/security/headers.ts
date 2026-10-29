@@ -16,9 +16,15 @@ const csp = [
 
 export function getSecurityHeaders() {
 	return [
-		{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive, nosnippet, noimageindex" },
+		{
+			key: "X-Robots-Tag",
+			value: "noindex, nofollow, noarchive, nosnippet, noimageindex",
+		},
 		{ key: "Content-Security-Policy", value: csp },
-		{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+		{
+			key: "Strict-Transport-Security",
+			value: "max-age=31536000; includeSubDomains",
+		},
 		{ key: "X-Content-Type-Options", value: "nosniff" },
 		{ key: "X-Frame-Options", value: "SAMEORIGIN" },
 		{ key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
@@ -35,10 +41,30 @@ export function getSecurityHeaders() {
  * server has no https, so its own assets fail and the app renders unstyled (iPhone Safari applies the
  * directive even to localhost). Drop it only from responses served over http.
  */
-export function withoutHttpsUpgradeOnHttp(request: Request, response: Response): Response {
+export function withoutHttpsUpgradeOnHttp(
+	request: Request,
+	response: Response
+): Response {
 	const policy = response.headers.get("Content-Security-Policy");
-	if (new URL(request.url).protocol !== "http:" || !policy?.includes("upgrade-insecure-requests") || response.status === 101) return response;
+	if (
+		new URL(request.url).protocol !== "http:" ||
+		!policy?.includes("upgrade-insecure-requests") ||
+		response.status === 101
+	) {
+		return response;
+	}
 	const headers = new Headers(response.headers);
-	headers.set("Content-Security-Policy", policy.split(";").map((part) => part.trim()).filter((part) => part !== "upgrade-insecure-requests").join("; "));
-	return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+	headers.set(
+		"Content-Security-Policy",
+		policy
+			.split(";")
+			.map((part) => part.trim())
+			.filter((part) => part !== "upgrade-insecure-requests")
+			.join("; ")
+	);
+	return new Response(response.body, {
+		headers,
+		status: response.status,
+		statusText: response.statusText,
+	});
 }

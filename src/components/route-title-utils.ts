@@ -1,7 +1,7 @@
 import { settingsNavSections } from "@/components/settings/settings-nav-utils";
 import type { TranslationKey } from "@/lib/i18n/types";
 
-const staticRouteTitles: Array<[string, TranslationKey]> = [
+const staticRouteTitles: [string, TranslationKey][] = [
 	["/settings", "settings.nav.settings"],
 	["/admin", "admin.title"],
 	["/mailboxes", "admin.nav.mailboxes"],
@@ -22,17 +22,26 @@ const staticRouteTitles: Array<[string, TranslationKey]> = [
 	["/compose", "compose.pageTitle"],
 ];
 
-const routeTitles: Array<[string, TranslationKey]> = [
+const routeTitles: [string, TranslationKey][] = [
 	...staticRouteTitles,
-	...settingsNavSections.flatMap((section) => section.items.map((item): [string, TranslationKey] => [item.href, item.labelKey])),
+	...settingsNavSections.flatMap((section) =>
+		section.items.map((item): [string, TranslationKey] => [
+			item.href,
+			item.labelKey,
+		])
+	),
 ];
 
 export function getRouteTitleKey(pathname: string): TranslationKey | null {
 	let best: [string, TranslationKey] | null = null;
 	for (const entry of routeTitles) {
 		const [path] = entry;
-		if (pathname !== path && !pathname.startsWith(`${path}/`)) continue;
-		if (!best || path.length > best[0].length) best = entry;
+		if (pathname !== path && !pathname.startsWith(`${path}/`)) {
+			continue;
+		}
+		if (!best || path.length > best[0].length) {
+			best = entry;
+		}
 	}
 	return best ? best[1] : null;
 }

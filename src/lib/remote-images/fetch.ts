@@ -1,67 +1,50 @@
-export const REMOTE_IMAGE_MAX_URL_LENGTH = 4096;
-export const REMOTE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-export const REMOTE_IMAGE_MAX_REDIRECTS = 3;
-export const REMOTE_IMAGE_TIMEOUT_MS = 10_000;
-
-const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
-const ALLOWED_CONTENT_TYPES = new Set([
-	"image/png",
-	"image/jpeg",
-	"image/gif",
-	"image/webp",
-	"image/avif",
-]);
-
-export type RemoteImageFetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
-
 export class RemoteImageError extends Error {
-	constructor(
-		message: string,
-		readonly status: number,
-		readonly code: string,
-	) {
+	override name = "RemoteImageError";
+	readonly status: number;
+	readonly code: string;
+	constructor(message: string, status: number, code: string) {
 		super(message);
+		this.status = status;
+		this.code = code;
 		this.name = "RemoteImageError";
 	}
 }
-
-export type RemoteImageResult = {
-	body: Uint8Array;
-	contentType: string;
-};
-
-export type RemoteImageFetchOptions = {
-	fetch?: RemoteImageFetch;
-	blockedOrigins?: Iterable<string>;
-	timeoutMs?: number;
-	maxBytes?: number;
-	maxRedirects?: number;
-};
 
 function invalidUrl(message = "Invalid remote image URL"): never {
 	throw new RemoteImageError(message, 400, "invalid_url");
 }
 
 function isIpLiteral(hostname: string): boolean {
-	return hostname.startsWith("[") || /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname);
+	return (
+		hostname.startsWith("[") || /^\d{1,3}(?:\.\d{1,3}){3}$/u.test(hostname)
+	);
 }
 
 function isForbiddenHostname(hostname: string): boolean {
-	const host = hostname.toLowerCase().replace(/\.$/, "");
-	return host === "localhost"
-		|| host === "local"
-		|| host === "internal"
-		|| host === "test"
-		|| host.endsWith(".localhost")
-		|| host.endsWith(".local")
-		|| host.endsWith(".internal")
-		|| host === "home.arpa"
-		|| host.endsWith(".home.arpa")
-		|| host.endsWith(".test");
+	const host = hostname.toLowerCase().replace(/\.$/u, "");
+	return (
+		host === "localhost" ||
+		host === "local" ||
+		host === "internal" ||
+		host === "test" ||
+		host.endsWith(".localhost") ||
+		host.endsWith(".local") ||
+		host.endsWith(".internal") ||
+		host === "home.arpa" ||
+		host.endsWith(".home.arpa") ||
+		host.endsWith(".test")
+	);
 }
 
-export function parseRemoteImageUrl(value: string, blockedOrigins: Iterable<string> = []): URL {
-	if (!value || value.length > REMOTE_IMAGE_MAX_URL_LENGTH) invalidUrl();
+export const REMOTE_IMAGE_MAX_URL_LENGTH = 4096;
+
+export function parseRemoteImageUrl(
+	value: string,
+	blockedOrigins: Iterable<string> = []
+): URL {
+	if (!value || value.length > REMOTE_IMAGE_MAX_URL_LENGTH) {
+		invalidUrl();
+	}
 
 	let url: URL;
 	try {
@@ -70,62 +53,124 @@ export function parseRemoteImageUrl(value: string, blockedOrigins: Iterable<stri
 		invalidUrl();
 	}
 
-	if (url.protocol !== "http:" && url.protocol !== "https:") invalidUrl();
-	if (url.username || url.password || url.port) invalidUrl();
-	if (!url.hostname || isIpLiteral(url.hostname) || isForbiddenHostname(url.hostname)) invalidUrl();
+	if (url.protocol !== "http:" && url.protocol !== "https:") {
+		invalidUrl();
+	}
+	if (url.username || url.password || url.port) {
+		invalidUrl();
+	}
+	if (
+		!url.hostname ||
+		isIpLiteral(url.hostname) ||
+		isForbiddenHostname(url.hostname)
+	) {
+		invalidUrl();
+	}
 
 	for (const origin of blockedOrigins) {
-		if (url.origin === origin) invalidUrl("Remote image URL cannot target this application");
+		if (url.origin === origin) {
+			invalidUrl("Remote image URL cannot target this application");
+		}
 	}
 
 	return url;
 }
 
+const ALLOWED_CONTENT_TYPES = new Set([
+	"image/png",
+	"image/jpeg",
+	"image/gif",
+	"image/webp",
+	"image/avif",
+]);
+
 function contentTypeEssence(value: string | null): string | null {
-	if (!value) return null;
+	if (!value) {
+		return null;
+	}
 	const essence = value.split(";", 1)[0]?.trim().toLowerCase() ?? "";
 	return ALLOWED_CONTENT_TYPES.has(essence) ? essence : null;
 }
 
 function ascii(bytes: Uint8Array, start: number, length: number): string {
+	// oxlint-disable-next-line unicorn/prefer-code-point -- Binary encoding and persisted hashes operate on UTF-16 code units or bytes; code points would change their representation.
 	return String.fromCharCode(...bytes.subarray(start, start + length));
 }
 
 function hasAvifSignature(bytes: Uint8Array): boolean {
-	if (bytes.length < 16 || ascii(bytes, 4, 4) !== "ftyp") return false;
-	const boxSize = Math.min(bytes.length, new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0));
-	if (boxSize < 16) return false;
+	if (bytes.length < 16 || ascii(bytes, 4, 4) !== "ftyp") {
+		return false;
+	}
+	const boxSize = Math.min(
+		bytes.length,
+		new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0)
+	);
+	if (boxSize < 16) {
+		return false;
+	}
 	for (let offset = 8; offset + 4 <= boxSize; offset += 4) {
 		const brand = ascii(bytes, offset, 4);
-		if (brand === "avif" || brand === "avis") return true;
+		if (brand === "avif" || brand === "avis") {
+			return true;
+		}
 	}
 	return false;
 }
 
 function signatureMatches(contentType: string, bytes: Uint8Array): boolean {
 	switch (contentType) {
-		case "image/png":
-			return bytes.length >= 8 && [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((value, index) => bytes[index] === value);
-		case "image/jpeg":
-			return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-		case "image/gif":
-			return bytes.length >= 6 && (ascii(bytes, 0, 6) === "GIF87a" || ascii(bytes, 0, 6) === "GIF89a");
-		case "image/webp":
-			return bytes.length >= 12 && ascii(bytes, 0, 4) === "RIFF" && ascii(bytes, 8, 4) === "WEBP";
-		case "image/avif":
+		case "image/png": {
+			return (
+				bytes.length >= 8 &&
+				[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every(
+					(value, index) => bytes[index] === value
+				)
+			);
+		}
+		case "image/jpeg": {
+			return (
+				bytes.length >= 3 &&
+				bytes[0] === 0xff &&
+				bytes[1] === 0xd8 &&
+				bytes[2] === 0xff
+			);
+		}
+		case "image/gif": {
+			return (
+				bytes.length >= 6 &&
+				(ascii(bytes, 0, 6) === "GIF87a" || ascii(bytes, 0, 6) === "GIF89a")
+			);
+		}
+		case "image/webp": {
+			return (
+				bytes.length >= 12 &&
+				ascii(bytes, 0, 4) === "RIFF" &&
+				ascii(bytes, 8, 4) === "WEBP"
+			);
+		}
+		case "image/avif": {
 			return hasAvifSignature(bytes);
-		default:
+		}
+		default: {
 			return false;
+		}
 	}
 }
 
-async function readLimitedBody(response: Response, maxBytes: number): Promise<Uint8Array> {
+async function readLimitedBody(
+	response: Response,
+	maxBytes: number
+): Promise<Uint8Array> {
 	const declaredLength = Number(response.headers.get("content-length"));
 	if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
-		await response.body?.cancel().catch(() => undefined);
+		await response.body?.cancel().catch(() => {
+			// Cleanup failure does not mask the original result.
+		});
 		throw new RemoteImageError("Remote image is too large", 413, "too_large");
 	}
-	if (!response.body) throw new RemoteImageError("Remote image has no body", 502, "empty_body");
+	if (!response.body) {
+		throw new RemoteImageError("Remote image has no body", 502, "empty_body");
+	}
 
 	const reader = response.body.getReader();
 	const chunks: Uint8Array[] = [];
@@ -133,16 +178,26 @@ async function readLimitedBody(response: Response, maxBytes: number): Promise<Ui
 	try {
 		while (true) {
 			const { done, value } = await reader.read();
-			if (done) break;
+			if (done) {
+				break;
+			}
 			size += value.byteLength;
 			if (size > maxBytes) {
-				await reader.cancel().catch(() => undefined);
-				throw new RemoteImageError("Remote image is too large", 413, "too_large");
+				await reader.cancel().catch(() => {
+					// Cleanup failure does not mask the original result.
+				});
+				throw new RemoteImageError(
+					"Remote image is too large",
+					413,
+					"too_large"
+				);
 			}
 			chunks.push(value);
 		}
 	} catch (error) {
-		await reader.cancel().catch(() => undefined);
+		await reader.cancel().catch(() => {
+			// Cleanup failure does not mask the original result.
+		});
 		throw error;
 	}
 
@@ -155,69 +210,165 @@ async function readLimitedBody(response: Response, maxBytes: number): Promise<Ui
 	return body;
 }
 
-export async function fetchRemoteImage(value: string, options: RemoteImageFetchOptions = {}): Promise<RemoteImageResult> {
+export type RemoteImageFetch = (
+	input: RequestInfo | URL,
+	init?: RequestInit
+) => Promise<Response>;
+
+export interface RemoteImageFetchOptions {
+	fetch?: RemoteImageFetch;
+	blockedOrigins?: Iterable<string>;
+	timeoutMs?: number;
+	maxBytes?: number;
+	maxRedirects?: number;
+}
+
+export interface RemoteImageResult {
+	body: Uint8Array;
+	contentType: string;
+}
+
+export const REMOTE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+
+export const REMOTE_IMAGE_MAX_REDIRECTS = 3;
+
+export const REMOTE_IMAGE_TIMEOUT_MS = 10_000;
+
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+
+export async function fetchRemoteImage(
+	value: string,
+	options: RemoteImageFetchOptions = {}
+): Promise<RemoteImageResult> {
 	const fetchImpl = options.fetch ?? fetch;
 	const blockedOrigins = [...(options.blockedOrigins ?? [])];
 	const maxBytes = options.maxBytes ?? REMOTE_IMAGE_MAX_BYTES;
 	const maxRedirects = options.maxRedirects ?? REMOTE_IMAGE_MAX_REDIRECTS;
 	let current = parseRemoteImageUrl(value, blockedOrigins);
 	const controller = new AbortController();
-	const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? REMOTE_IMAGE_TIMEOUT_MS);
-
-	try {
-		for (let redirects = 0; ; redirects += 1) {
-			let response: Response;
-			try {
-				response = await fetchImpl(current.href, {
-					method: "GET",
-					headers: { Accept: "image/png,image/jpeg,image/gif,image/webp,image/avif", "User-Agent": "Lab-Remote-Images/1.0" },
-					cache: "no-store",
-					redirect: "manual",
-					signal: controller.signal,
-				});
-			} catch {
-				if (controller.signal.aborted) throw new RemoteImageError("Remote image request timed out", 504, "timeout");
-				throw new RemoteImageError("Could not fetch remote image", 502, "upstream_error");
-			}
-
-			if (REDIRECT_STATUSES.has(response.status)) {
-				await response.body?.cancel().catch(() => undefined);
-				if (redirects >= maxRedirects) throw new RemoteImageError("Too many remote image redirects", 502, "too_many_redirects");
-				const location = response.headers.get("location");
-				if (!location) throw new RemoteImageError("Remote image redirect has no location", 502, "invalid_redirect");
-				let redirected: URL;
+	const timeout = setTimeout(
+		() => controller.abort(),
+		options.timeoutMs ?? REMOTE_IMAGE_TIMEOUT_MS
+	);
+	const fetchValidatedRedirects = async (): Promise<RemoteImageResult> => {
+		try {
+			for (let redirects = 0; ; redirects += 1) {
+				let response: Response;
 				try {
-					redirected = new URL(location, current);
+					response = await fetchImpl(current.href, {
+						cache: "no-store",
+						headers: {
+							Accept: "image/png,image/jpeg,image/gif,image/webp,image/avif",
+							"User-Agent": "Lab-Remote-Images/1.0",
+						},
+						method: "GET",
+						redirect: "manual",
+						signal: controller.signal,
+					});
 				} catch {
-					throw new RemoteImageError("Remote image redirect is invalid", 502, "invalid_redirect");
+					if (controller.signal.aborted) {
+						throw new RemoteImageError(
+							"Remote image request timed out",
+							504,
+							"timeout"
+						);
+					}
+					throw new RemoteImageError(
+						"Could not fetch remote image",
+						502,
+						"upstream_error"
+					);
 				}
-				current = parseRemoteImageUrl(redirected.href, blockedOrigins);
-				continue;
-			}
 
-			if (!response.ok) {
-				await response.body?.cancel().catch(() => undefined);
-				throw new RemoteImageError("Remote image server returned an error", 502, "upstream_status");
-			}
-			const contentType = contentTypeEssence(response.headers.get("content-type"));
-			if (!contentType) {
-				await response.body?.cancel().catch(() => undefined);
-				const receivedType = (response.headers.get("content-type") ?? "missing content type").split(";", 1)[0].slice(0, 100);
-				throw new RemoteImageError(`Remote resource is not a supported image (${receivedType})`, 415, "unsupported_type");
-			}
-			let body: Uint8Array;
-			try {
-				body = await readLimitedBody(response, maxBytes);
-			} catch (error) {
-				if (controller.signal.aborted && !(error instanceof RemoteImageError)) {
-					throw new RemoteImageError("Remote image request timed out", 504, "timeout");
+				if (REDIRECT_STATUSES.has(response.status)) {
+					await response.body?.cancel().catch(() => {
+						// Cleanup failure does not mask the original result.
+					});
+					if (redirects >= maxRedirects) {
+						throw new RemoteImageError(
+							"Too many remote image redirects",
+							502,
+							"too_many_redirects"
+						);
+					}
+					const location = response.headers.get("location");
+					if (!location) {
+						throw new RemoteImageError(
+							"Remote image redirect has no location",
+							502,
+							"invalid_redirect"
+						);
+					}
+					let redirected: URL;
+					try {
+						redirected = new URL(location, current);
+					} catch {
+						throw new RemoteImageError(
+							"Remote image redirect is invalid",
+							502,
+							"invalid_redirect"
+						);
+					}
+					current = parseRemoteImageUrl(redirected.href, blockedOrigins);
+					continue;
 				}
-				throw error;
+
+				if (!response.ok) {
+					await response.body?.cancel().catch(() => {
+						// Cleanup failure does not mask the original result.
+					});
+					throw new RemoteImageError(
+						"Remote image server returned an error",
+						502,
+						"upstream_status"
+					);
+				}
+				const contentType = contentTypeEssence(
+					response.headers.get("content-type")
+				);
+				if (!contentType) {
+					await response.body?.cancel().catch(() => {
+						// Cleanup failure does not mask the original result.
+					});
+					const receivedType = (
+						response.headers.get("content-type") ?? "missing content type"
+					)
+						.split(";", 1)[0]
+						.slice(0, 100);
+					throw new RemoteImageError(
+						`Remote resource is not a supported image (${receivedType})`,
+						415,
+						"unsupported_type"
+					);
+				}
+				let body: Uint8Array;
+				try {
+					body = await readLimitedBody(response, maxBytes);
+				} catch (error) {
+					if (
+						controller.signal.aborted &&
+						!(error instanceof RemoteImageError)
+					) {
+						throw new RemoteImageError(
+							"Remote image request timed out",
+							504,
+							"timeout"
+						);
+					}
+					throw error;
+				}
+				if (!signatureMatches(contentType, body)) {
+					throw new RemoteImageError(
+						"Remote image signature is invalid",
+						415,
+						"invalid_signature"
+					);
+				}
+				return { body, contentType };
 			}
-			if (!signatureMatches(contentType, body)) throw new RemoteImageError("Remote image signature is invalid", 415, "invalid_signature");
-			return { body, contentType };
+		} finally {
+			clearTimeout(timeout);
 		}
-	} finally {
-		clearTimeout(timeout);
-	}
+	};
+	return await fetchValidatedRedirects();
 }

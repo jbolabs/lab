@@ -3,35 +3,66 @@
 import { useEffect, useState } from "react";
 import type { RefObject } from "react";
 
-const FOCUSABLE = ["a[href]", "button:not([disabled])", "input:not([disabled])", "select:not([disabled])", "textarea:not([disabled])", "[tabindex]"]
+const FOCUSABLE = [
+	"a[href]",
+	"button:not([disabled])",
+	"input:not([disabled])",
+	"select:not([disabled])",
+	"textarea:not([disabled])",
+	"[tabindex]",
+]
 	.map((selector) => `${selector}:not([tabindex="-1"])`)
 	.join(", ");
 
 export function getFocusable(container: HTMLElement): HTMLElement[] {
-	return [...container.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((element) => element.offsetParent !== null || element === document.activeElement);
+	return [...container.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+		(element) =>
+			element.offsetParent !== null || element === document.activeElement
+	);
 }
 
-export function useDialogFocus(container: RefObject<HTMLElement | null>, initialFocus?: RefObject<HTMLElement | null>) {
-	const [opener] = useState(() => (typeof document !== "undefined" && document.activeElement instanceof HTMLElement ? document.activeElement : null));
+export function useDialogFocus(
+	container: RefObject<HTMLElement | null>,
+	initialFocus?: RefObject<HTMLElement | null>
+) {
+	// oxlint-disable-next-line react/hook-use-state -- This lazy mount snapshot is intentionally immutable and has no setter.
+	const [opener] = useState(() =>
+		typeof document !== "undefined" &&
+		document.activeElement instanceof HTMLElement
+			? document.activeElement
+			: null
+	);
 
 	useEffect(() => {
 		const root = container.current;
-		(initialFocus?.current ?? (root ? getFocusable(root)[0] : null) ?? root)?.focus();
+		(
+			initialFocus?.current ??
+			(root ? getFocusable(root)[0] : null) ??
+			root
+		)?.focus();
 
 		function onKeyDown(event: KeyboardEvent) {
-			if (event.key !== "Tab" || !root) return;
+			if (event.key !== "Tab" || !root) {
+				return;
+			}
 			const focusable = getFocusable(root);
 			if (focusable.length === 0) {
 				event.preventDefault();
 				return;
 			}
-			const first = focusable[0];
-			const last = focusable[focusable.length - 1];
+			const [first] = focusable;
+			const last = focusable.at(-1);
+			if (!first || !last) {
+				return;
+			}
 			const inside = root.contains(document.activeElement);
 			if (event.shiftKey && (!inside || document.activeElement === first)) {
 				event.preventDefault();
 				last.focus();
-			} else if (!event.shiftKey && (!inside || document.activeElement === last)) {
+			} else if (
+				!event.shiftKey &&
+				(!inside || document.activeElement === last)
+			) {
 				event.preventDefault();
 				first.focus();
 			}
@@ -43,7 +74,12 @@ export function useDialogFocus(container: RefObject<HTMLElement | null>, initial
 		};
 	}, [container, initialFocus]);
 
-	useEffect(() => () => {
-		if (opener?.isConnected) opener.focus();
-	}, [opener]);
+	useEffect(
+		() => () => {
+			if (opener?.isConnected) {
+				opener.focus();
+			}
+		},
+		[opener]
+	);
 }

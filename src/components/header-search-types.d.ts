@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export type HeaderSearchProps = {
+export interface HeaderSearchProps {
 	value: string;
 	onChange: (value: string) => void;
 	label: string;
@@ -10,4 +10,4 @@ export type HeaderSearchProps = {
 	inputProps?: Record<string, string>;
 	// On phones, park the collapsed search icon at the right end of the header.
 	mobileEnd?: boolean;
-};
+}

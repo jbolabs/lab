@@ -1,4 +1,4 @@
-export type ManagedAccount = {
+export interface ManagedAccount {
 	id: string;
 	email: string;
 	name: string;
@@ -19,22 +19,25 @@ export type ManagedAccount = {
 	canTransferPrimary: boolean;
 	/** Only ever set client-side when an admin types a new password; never returned by the API. */
 	newPassword?: string;
-};
+}
 
-export type ManagedMailbox = {
+export interface ManagedMailbox {
 	id: string;
 	localPart: string;
 	displayName: string | null;
 	domainId: string;
 	hostname: string;
-};
+}
 
-export type ManagedDomain = { id: string; hostname: string };
+export interface ManagedDomain {
+	id: string;
+	hostname: string;
+}
 
-export type ManagedAccountResponse = {
+export interface ManagedAccountResponse {
 	account?: ManagedAccount;
 	error?: string;
-};
+}
 
 export type AccountDetail = ManagedAccount;
 export type DomainOption = ManagedDomain;
@@ -47,7 +50,7 @@ export type AccountMailboxAccessItem = ManagedMailbox & {
 	permission?: "read_only" | "send_as" | "send_on_behalf" | "full_access";
 };
 
-export type AccountMailboxAccessResponse = {
+export interface AccountMailboxAccessResponse {
 	mailboxes: AccountMailboxAccessItem[];
 	error?: string;
-};
+}

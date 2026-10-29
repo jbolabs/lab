@@ -1,17 +1,13 @@
 import { and, eq } from "drizzle-orm";
+
 import { getDb } from "@/db";
-import {
-	domains,
-	mailboxes,
-	messages,
-	outboundJobs,
-	users,
-} from "@/db/schema";
+import { domains, mailboxes, messages, outboundJobs, users } from "@/db/schema";
 import { hashPassword } from "@/lib/auth/password";
 import { ensureBookingUsername } from "@/lib/booking/username";
 import { upsertContactFromAddress } from "@/lib/contacts/service";
 import { buildSnippet } from "@/lib/email/parse";
 import { newId } from "@/lib/ids";
+import { requireValue } from "@/lib/require-value";
 import type {
 	SeedMailboxKey,
 	SeedMailboxMap,
@@ -30,198 +26,198 @@ const seedMailboxDefinitions: {
 	localPart: string;
 	displayName: string;
 }[] = [
-	{ key: "support", localPart: "support", displayName: "Support" },
-	{ key: "billing", localPart: "billing", displayName: "Billing" },
+	{ displayName: "Support", key: "support", localPart: "support" },
+	{ displayName: "Billing", key: "billing", localPart: "billing" },
 ];
 
 const seedMessages: SeedMessageDefinition[] = [
 	{
-		mailbox: "support",
 		direction: "inbound",
-		status: "received",
 		fromAddr: `"Maya Chen" <maya@acme.test>`,
-		toAddr: `"Support" <support@${demoDomain}>`,
+		mailbox: "support",
+		minutesAgo: 12,
+		providerMessageId: "<seed-inbox-access@example.test>",
+		read: false,
+		status: "received",
 		subject: "Cannot access workspace",
 		textBody:
 			"I reset my password this morning, but the login page still loops back to the sign-in screen. Can you check whether the account is locked?",
-		read: false,
-		minutesAgo: 12,
-		providerMessageId: "<seed-inbox-access@example.test>",
+		toAddr: `"Support" <support@${demoDomain}>`,
 	},
 	{
-		mailbox: "support",
 		direction: "inbound",
-		status: "received",
 		fromAddr: `"Northwind DevOps" <devops@northwind.test>`,
-		toAddr: `"Support" <support@${demoDomain}>`,
+		mailbox: "support",
+		minutesAgo: 47,
+		providerMessageId: "<seed-inbox-webhook@example.test>",
+		read: true,
+		status: "received",
 		subject: "Webhook retry question",
 		textBody:
 			"We noticed three delivery attempts for the same event. Is there a way to confirm whether retries stop after a 2xx response?",
-		read: true,
-		minutesAgo: 47,
-		providerMessageId: "<seed-inbox-webhook@example.test>",
+		toAddr: `"Support" <support@${demoDomain}>`,
 	},
 	{
-		mailbox: "billing",
 		direction: "inbound",
-		status: "received",
 		fromAddr: `"Contoso Finance" <finance@contoso.test>`,
-		toAddr: `"Billing" <billing@${demoDomain}>`,
+		mailbox: "billing",
+		minutesAgo: 94,
+		providerMessageId: "<seed-inbox-invoice@example.test>",
+		read: false,
+		status: "received",
 		subject: "Invoice address update",
 		textBody:
 			"Please update our invoice contact to finance-team@contoso.test before the next billing cycle closes.",
-		read: false,
-		minutesAgo: 94,
-		providerMessageId: "<seed-inbox-invoice@example.test>",
+		toAddr: `"Billing" <billing@${demoDomain}>`,
 	},
 	{
-		mailbox: "support",
 		direction: "outbound",
-		status: "sent",
 		fromAddr: `"Support" <support@${demoDomain}>`,
-		toAddr: `"Maya Chen" <maya@acme.test>`,
+		mailbox: "support",
+		minutesAgo: 8,
+		providerMessageId: "<seed-sent-access@example.test>",
+		read: true,
+		status: "sent",
 		subject: "Re: Cannot access workspace",
 		textBody:
 			"I cleared the stale session and sent a fresh password reset link. Please try again from an incognito window.",
-		read: true,
-		minutesAgo: 8,
-		providerMessageId: "<seed-sent-access@example.test>",
+		toAddr: `"Maya Chen" <maya@acme.test>`,
 	},
 	{
-		mailbox: "billing",
 		direction: "outbound",
-		status: "sent",
 		fromAddr: `"Billing" <billing@${demoDomain}>`,
-		toAddr: `"Contoso Finance" <finance@contoso.test>`,
+		mailbox: "billing",
+		minutesAgo: 35,
+		providerMessageId: "<seed-sent-invoice@example.test>",
+		read: true,
+		status: "sent",
 		subject: "Re: Invoice address update",
 		textBody:
 			"The billing contact is updated. Future invoices will go to finance-team@contoso.test.",
-		read: true,
-		minutesAgo: 35,
-		providerMessageId: "<seed-sent-invoice@example.test>",
+		toAddr: `"Contoso Finance" <finance@contoso.test>`,
 	},
 	{
-		mailbox: "support",
 		direction: "outbound",
-		status: "draft",
 		fromAddr: `"Support" <support@${demoDomain}>`,
-		toAddr: `"Northwind DevOps" <devops@northwind.test>`,
+		mailbox: "support",
+		minutesAgo: 22,
+		read: true,
+		status: "draft",
 		subject: "Re: Webhook retry question",
 		textBody:
 			"Draft note: include retry backoff details, delivery log location, and the recommendation to return HTTP 204 after processing.",
-		read: true,
-		minutesAgo: 22,
+		toAddr: `"Northwind DevOps" <devops@northwind.test>`,
 	},
 	{
-		mailbox: "billing",
 		direction: "outbound",
-		status: "draft",
 		fromAddr: `"Billing" <billing@${demoDomain}>`,
-		toAddr: `"Globex Procurement" <procurement@globex.test>`,
+		mailbox: "billing",
+		minutesAgo: 128,
+		read: true,
+		status: "draft",
 		subject: "Annual plan renewal",
 		textBody:
 			"Draft renewal response with seat count, purchase order reference, and requested renewal date.",
-		read: true,
-		minutesAgo: 128,
+		toAddr: `"Globex Procurement" <procurement@globex.test>`,
 	},
 	{
-		mailbox: "support",
 		direction: "inbound",
-		status: "spam",
 		fromAddr: `"Traffic Promotions" <promo@unknown-sender.test>`,
-		toAddr: `"Support" <support@${demoDomain}>`,
+		mailbox: "support",
+		minutesAgo: 166,
+		providerMessageId: "<seed-spam-promo@example.test>",
+		read: false,
+		status: "spam",
 		subject: "Urgent traffic boost offer",
 		textBody:
 			"We can send thousands of visitors to your dashboard today. Reply now for the limited campaign rate.",
-		read: false,
-		minutesAgo: 166,
-		providerMessageId: "<seed-spam-promo@example.test>",
+		toAddr: `"Support" <support@${demoDomain}>`,
 	},
 	{
-		mailbox: "billing",
 		direction: "inbound",
-		status: "spam",
 		fromAddr: `"Fake Bank Alerts" <alerts@fake-bank.test>`,
-		toAddr: `"Billing" <billing@${demoDomain}>`,
+		mailbox: "billing",
+		minutesAgo: 219,
+		providerMessageId: "<seed-spam-bank@example.test>",
+		read: true,
+		status: "spam",
 		subject: "Payment account verification required",
 		textBody:
 			"Your payout account requires verification. Open the attached link and confirm your banking credentials.",
-		read: true,
-		minutesAgo: 219,
-		providerMessageId: "<seed-spam-bank@example.test>",
+		toAddr: `"Billing" <billing@${demoDomain}>`,
 	},
 	{
-		mailbox: "support",
 		direction: "inbound",
-		status: "trash",
 		fromAddr: `"Vendor Migration" <old-thread@vendor.test>`,
-		toAddr: `"Support" <support@${demoDomain}>`,
+		mailbox: "support",
+		minutesAgo: 266,
+		providerMessageId: "<seed-trash-migration@example.test>",
+		read: true,
+		status: "trash",
 		subject: "Legacy migration thread",
 		textBody:
 			"This message was moved to trash after the migration checklist was completed and archived.",
-		read: true,
-		minutesAgo: 266,
-		providerMessageId: "<seed-trash-migration@example.test>",
+		toAddr: `"Support" <support@${demoDomain}>`,
 	},
 	{
-		mailbox: "billing",
 		direction: "outbound",
-		status: "trash",
 		fromAddr: `"Billing" <billing@${demoDomain}>`,
-		toAddr: `"Initech Ops" <ops@initech.test>`,
+		mailbox: "billing",
+		minutesAgo: 314,
+		read: true,
+		status: "trash",
 		subject: "Old billing draft",
 		textBody:
 			"Discarded copy of an earlier billing reply that was replaced by the final invoice response.",
-		read: true,
-		minutesAgo: 314,
+		toAddr: `"Initech Ops" <ops@initech.test>`,
 	},
 	{
-		mailbox: "support",
 		direction: "outbound",
-		status: "queued",
 		fromAddr: `"Support" <support@${demoDomain}>`,
-		toAddr: `"Customer Status" <status@customer.test>`,
+		mailbox: "support",
+		minutesAgo: 4,
+		read: true,
+		status: "queued",
 		subject: "Queued delivery status",
 		textBody:
 			"This seeded message represents an outbound email waiting for the worker queue to process.",
-		read: true,
-		minutesAgo: 4,
+		toAddr: `"Customer Status" <status@customer.test>`,
 	},
 	{
-		mailbox: "billing",
 		direction: "outbound",
-		status: "queued",
 		fromAddr: `"Billing" <billing@${demoDomain}>`,
-		toAddr: `"Umbrella AP" <ap@umbrella.test>`,
+		mailbox: "billing",
+		minutesAgo: 17,
+		read: true,
+		status: "queued",
 		subject: "Queued payment receipt",
 		textBody:
 			"This seeded receipt is queued so API and background-job views can exercise pending delivery states.",
-		read: true,
-		minutesAgo: 17,
+		toAddr: `"Umbrella AP" <ap@umbrella.test>`,
 	},
 	{
-		mailbox: "support",
 		direction: "outbound",
-		status: "failed",
 		fromAddr: `"Support" <support@${demoDomain}>`,
-		toAddr: `"Invalid Bounce" <bounce@invalid.test>`,
+		mailbox: "support",
+		minutesAgo: 73,
+		read: true,
+		status: "failed",
 		subject: "Failed SMTP handoff",
 		textBody:
 			"This seeded message failed delivery after the provider rejected the recipient address.",
-		read: true,
-		minutesAgo: 73,
+		toAddr: `"Invalid Bounce" <bounce@invalid.test>`,
 	},
 	{
-		mailbox: "billing",
 		direction: "outbound",
-		status: "failed",
 		fromAddr: `"Billing" <billing@${demoDomain}>`,
-		toAddr: `"Closed Partner Account" <closed-account@partner.test>`,
+		mailbox: "billing",
+		minutesAgo: 181,
+		read: true,
+		status: "failed",
 		subject: "Failed billing notice",
 		textBody:
 			"This seeded billing notice failed because the destination mailbox no longer exists.",
-		read: true,
-		minutesAgo: 181,
+		toAddr: `"Closed Partner Account" <closed-account@partner.test>`,
 	},
 ];
 
@@ -232,29 +228,40 @@ export async function ensureDemoUser(env: CloudflareEnv) {
 		.from(users)
 		.where(eq(users.email, demoCredentials.email))
 		.limit(1);
-	const [admin] = await db.select({ id: users.id }).from(users).where(eq(users.role, "admin")).limit(1);
+	const [admin] = await db
+		.select({ id: users.id })
+		.from(users)
+		.where(eq(users.role, "admin"))
+		.limit(1);
 	if (existing) {
 		// Repair demos seeded before the login page required an admin account.
 		if (!admin) {
-			await db.update(users).set({ role: "admin", isPrimaryAdmin: true }).where(eq(users.id, existing.id));
-			return { ...existing, role: "admin" as const, isPrimaryAdmin: true };
+			await db
+				.update(users)
+				.set({ isPrimaryAdmin: true, role: "admin" })
+				.where(eq(users.id, existing.id));
+			return { ...existing, isPrimaryAdmin: true, role: "admin" as const };
 		}
 		return existing;
 	}
 
 	const id = newId("usr");
 	await db.insert(users).values({
-		id,
 		email: demoCredentials.email,
-		passwordHash: hashPassword(demoCredentials.password),
-		name: "Demo User",
-		role: admin ? "user" : "admin",
+		id,
 		isPrimaryAdmin: !admin,
+		name: "Demo User",
+		passwordHash: hashPassword(demoCredentials.password),
+		role: admin ? "user" : "admin",
 	});
 	await ensureBookingUsername(env, id, demoCredentials.email);
 
-	const [created] = await db.select().from(users).where(eq(users.id, id)).limit(1);
-	return created!;
+	const [created] = await db
+		.select()
+		.from(users)
+		.where(eq(users.id, id))
+		.limit(1);
+	return requireValue(created);
 }
 
 export async function ensureDemoDomain(env: CloudflareEnv, userId: string) {
@@ -264,29 +271,35 @@ export async function ensureDemoDomain(env: CloudflareEnv, userId: string) {
 		.from(domains)
 		.where(eq(domains.hostname, demoDomain))
 		.limit(1);
-	if (existing) return existing;
+	if (existing) {
+		return existing;
+	}
 
 	const id = newId("dom");
 	await db.insert(domains).values({
-		id,
-		userId,
 		hostname: demoDomain,
-		zoneId: "00000000000000000000000000000000",
-		status: "active",
+		id,
 		routingEnabled: true,
-		sendingRequested: true,
-		sendingProvider: "cloudflare" as const,
 		sendingEnabled: true,
+		sendingProvider: "cloudflare" as const,
+		sendingRequested: true,
+		status: "active",
+		userId,
+		zoneId: "00000000000000000000000000000000",
 	});
 
-	const [created] = await db.select().from(domains).where(eq(domains.id, id)).limit(1);
-	return created!;
+	const [created] = await db
+		.select()
+		.from(domains)
+		.where(eq(domains.id, id))
+		.limit(1);
+	return requireValue(created);
 }
 
 export async function ensureDemoMailboxes(
 	env: CloudflareEnv,
 	userId: string,
-	domainId: string,
+	domainId: string
 ): Promise<SeedMailboxMap> {
 	const db = getDb(env);
 	const entries = await Promise.all(
@@ -297,19 +310,21 @@ export async function ensureDemoMailboxes(
 				.where(
 					and(
 						eq(mailboxes.domainId, domainId),
-						eq(mailboxes.localPart, definition.localPart),
-					),
+						eq(mailboxes.localPart, definition.localPart)
+					)
 				)
 				.limit(1);
-			if (existing) return [definition.key, existing] as const;
+			if (existing) {
+				return [definition.key, existing] as const;
+			}
 
 			const id = newId("mbx");
 			await db.insert(mailboxes).values({
-				id,
-				userId,
-				domainId,
-				localPart: definition.localPart,
 				displayName: definition.displayName,
+				domainId,
+				id,
+				localPart: definition.localPart,
+				userId,
 			});
 
 			const [created] = await db
@@ -317,8 +332,8 @@ export async function ensureDemoMailboxes(
 				.from(mailboxes)
 				.where(eq(mailboxes.id, id))
 				.limit(1);
-			return [definition.key, created!] as const;
-		}),
+			return [definition.key, requireValue(created)] as const;
+		})
 	);
 
 	return Object.fromEntries(entries) as SeedMailboxMap;
@@ -327,7 +342,7 @@ export async function ensureDemoMailboxes(
 export async function insertDemoMessages(
 	env: CloudflareEnv,
 	userId: string,
-	mailboxMap: SeedMailboxMap,
+	mailboxMap: SeedMailboxMap
 ): Promise<number> {
 	const db = getDb(env);
 	const now = Date.now();
@@ -338,48 +353,51 @@ export async function insertDemoMessages(
 		const mailbox = mailboxMap[seedMessage.mailbox];
 
 		await db.insert(messages).values({
-			id,
-			userId,
-			mailboxId: mailbox.id,
-			direction: seedMessage.direction,
-			providerMessageId: seedMessage.providerMessageId ?? null,
-			fromAddr: seedMessage.fromAddr,
-			toAddr: seedMessage.toAddr,
-			subject: seedMessage.subject,
-			snippet: buildSnippet(seedMessage.textBody, null),
-			textBody: seedMessage.textBody,
-			htmlBody: null,
-			status: seedMessage.status,
-			read: seedMessage.read ?? true,
-			threadId: seedMessage.providerMessageId ?? null,
 			createdAt,
+			direction: seedMessage.direction,
+			fromAddr: seedMessage.fromAddr,
+			htmlBody: null,
+			id,
+			mailboxId: mailbox.id,
+			providerMessageId: seedMessage.providerMessageId ?? null,
+			read: seedMessage.read ?? true,
+			snippet: buildSnippet(seedMessage.textBody, null),
+			status: seedMessage.status,
+			subject: seedMessage.subject,
+			textBody: seedMessage.textBody,
+			threadId: seedMessage.providerMessageId ?? null,
+			toAddr: seedMessage.toAddr,
+			userId,
 		});
 
 		if (seedMessage.status === "queued" || seedMessage.status === "failed") {
 			await db.insert(outboundJobs).values({
-				id: newId("job"),
-				userId,
-				messageId: id,
-				status: seedMessage.status,
-				payload: JSON.stringify({
-					from: seedMessage.fromAddr,
-					to: seedMessage.toAddr,
-					subject: seedMessage.subject,
-					text: seedMessage.textBody,
-				}),
+				createdAt,
 				error:
 					seedMessage.status === "failed"
 						? "Seeded delivery failure for UI and API testing"
 						: null,
-				createdAt,
+				id: newId("job"),
+				messageId: id,
+				payload: JSON.stringify({
+					from: seedMessage.fromAddr,
+					subject: seedMessage.subject,
+					text: seedMessage.textBody,
+					to: seedMessage.toAddr,
+				}),
+				status: seedMessage.status,
 				updatedAt: createdAt,
+				userId,
 			});
 		}
 
 		await upsertContactFromAddress(env, {
-			userId,
-			address: seedMessage.direction === "inbound" ? seedMessage.fromAddr : seedMessage.toAddr,
+			address:
+				seedMessage.direction === "inbound"
+					? seedMessage.fromAddr
+					: seedMessage.toAddr,
 			source: seedMessage.direction === "inbound" ? "inbound" : "outbound",
+			userId,
 		});
 	}
 

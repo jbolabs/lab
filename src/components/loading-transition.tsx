@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIsFetching } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { useBranding } from "@/components/branding-provider";
 import { useLanguage } from "@/components/language-provider";
 import { PageLoadingContext } from "@/components/page-loading";
-import { Progress } from "@/components/ui/progress";
 import { RouteLoadingBar } from "@/components/route-loading-bar";
+import { Progress } from "@/components/ui/progress";
+
 import type { LoadingTransitionProps } from "./loading-transition-types";
 
 const MINIMUM_LOADING_TIME = 600;
@@ -17,14 +19,18 @@ let hasShownInitialLoadingTransition = false;
 export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 	const { t } = useLanguage();
 	const branding = useBranding();
-	const showInitialLoader = useRef(!hasShownInitialLoadingTransition).current;
-	const startedAt = useRef(Date.now());
+	// oxlint-disable-next-line react/hook-use-state -- This lazy mount snapshot is intentionally immutable and has no setter.
+	const [showInitialLoader] = useState(() => !hasShownInitialLoadingTransition);
+	// oxlint-disable-next-line react/hook-use-state -- This lazy mount snapshot is intentionally immutable and has no setter.
+	const [startedAt] = useState(() => Date.now());
 	const [progress, setProgress] = useState(8);
 	const [loaderVisible, setLoaderVisible] = useState(showInitialLoader);
 	const [contentVisible, setContentVisible] = useState(!showInitialLoader);
 	const [initialLoadComplete, setInitialLoadComplete] =
 		useState(!showInitialLoader);
-	const [iconUrl, setIconUrl] = useState(branding.iconUrl);
+	const [failedIconUrl, setFailedIconUrl] = useState<string | null>(null);
+	const iconUrl =
+		failedIconUrl === branding.iconUrl ? "/icon-96.png" : branding.iconUrl;
 	const [pageMounted, setPageMounted] = useState(false);
 	const [pendingLoads, setPendingLoads] = useState(0);
 	const [dataWaitExpired, setDataWaitExpired] = useState(false);
@@ -32,8 +38,11 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 	const fetchingQueries = useIsFetching();
 
 	const reportLoading = useCallback((id: string, loading: boolean) => {
-		if (loading) loadingIds.current.add(id);
-		else loadingIds.current.delete(id);
+		if (loading) {
+			loadingIds.current.add(id);
+		} else {
+			loadingIds.current.delete(id);
+		}
 		setPendingLoads(loadingIds.current.size);
 	}, []);
 	const loadingContext = useMemo(() => ({ reportLoading }), [reportLoading]);
@@ -43,38 +52,42 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 		(dataWaitExpired || (pendingLoads === 0 && fetchingQueries === 0));
 
 	useEffect(() => {
-		setIconUrl(branding.iconUrl);
-	}, [branding.iconUrl]);
-
-	useEffect(() => {
-		if (canComplete) return;
+		if (canComplete) {
+			return;
+		}
 		const timer = window.setInterval(() => {
 			setProgress((current) =>
-				Math.min(92, current + Math.max(1, (92 - current) * 0.08)),
+				Math.min(92, current + Math.max(1, (92 - current) * 0.08))
 			);
 		}, 90);
 		return () => window.clearInterval(timer);
 	}, [canComplete]);
 
 	useEffect(() => {
-		if (!ready) return;
+		if (!ready) {
+			return;
+		}
 		const timer = window.setTimeout(() => setPageMounted(true), 50);
 		return () => window.clearTimeout(timer);
 	}, [ready]);
 
 	useEffect(() => {
-		if (!ready) return;
+		if (!ready) {
+			return;
+		}
 		const timer = window.setTimeout(
 			() => setDataWaitExpired(true),
-			MAXIMUM_DATA_WAIT,
+			MAXIMUM_DATA_WAIT
 		);
 		return () => window.clearTimeout(timer);
 	}, [ready]);
 
 	useEffect(() => {
-		if (!canComplete) return;
+		if (!canComplete) {
+			return;
+		}
 		const remaining = showInitialLoader
-			? Math.max(0, MINIMUM_LOADING_TIME - (Date.now() - startedAt.current))
+			? Math.max(0, MINIMUM_LOADING_TIME - (Date.now() - startedAt))
 			: 0;
 		const completeTimer = window.setTimeout(() => setProgress(100), remaining);
 		const revealTimer = window.setTimeout(() => {
@@ -89,7 +102,7 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 			window.clearTimeout(completeTimer);
 			window.clearTimeout(revealTimer);
 		};
-	}, [canComplete, showInitialLoader]);
+	}, [canComplete, showInitialLoader, startedAt]);
 
 	const showTopLoadingBar = initialLoadComplete && (!ready || pendingLoads > 0);
 
@@ -104,9 +117,8 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 						{children}
 					</div>
 				)}
-				<div
-					role="status"
-					className={`fixed inset-0 z-[100] flex items-center justify-center bg-sidebar transition-opacity duration-300 ${
+				<output
+					className={`fixed inset-0 z-100 flex items-center justify-center bg-sidebar transition-opacity duration-300 ${
 						loaderVisible ? "opacity-100" : "pointer-events-none opacity-0"
 					}`}
 				>
@@ -117,15 +129,16 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 						aria-hidden="true"
 						className="flex w-64 flex-col items-center gap-6"
 					>
+						{/* oxlint-disable-next-line next/no-img-element -- Runtime branding uses the original image URL without an image optimization service. */}
 						<img
 							src={iconUrl}
-							onError={() => setIconUrl("/icon-96.png")}
+							onError={() => setFailedIconUrl(branding.iconUrl)}
 							alt=""
-							className="h-20 w-20 rounded-2xl object-contain"
+							className="size-20 rounded-lg object-contain"
 						/>
 						<Progress value={progress} className="h-1 w-full" />
 					</div>
-				</div>
+				</output>
 			</div>
 		</PageLoadingContext.Provider>
 	);

@@ -1,22 +1,27 @@
 "use client";
-import { FieldLabel, Field, FieldGroup } from "@/components/ui/field";
-import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+
 import { Save } from "lucide-react";
+import type { FormEvent } from "react";
+import { useState } from "react";
+
 import { useLanguage } from "@/components/language-provider";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Empty, EmptyHeader, EmptyDescription } from "@/components/ui/empty";
+import { FieldLabel, Field, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+	PageHeader,
+	PageHeaderText,
+	PageTitle,
+	PageDescription,
+} from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { withCleanup } from "@/lib/async-cleanup";
+
 import { ProfileAvatarForm } from "./profile-avatar-form";
 import { getMailboxAddress, updateCurrentMailboxName } from "./utils";
+
 export function CurrentMailboxForm() {
 	const { t } = useLanguage();
 	const { selectedMailbox, setSelectedMailbox, isLoading } =
@@ -25,59 +30,77 @@ export function CurrentMailboxForm() {
 	const [savedDisplayName, setSavedDisplayName] = useState("");
 	const [status, setStatus] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
-	useEffect(() => {
+	const resetKey = JSON.stringify([
+		selectedMailbox?.id,
+		selectedMailbox?.displayName,
+	]);
+	const [previousResetKey, setPreviousResetKey] = useState<string | null>(null);
+	if (previousResetKey !== resetKey) {
+		setPreviousResetKey(resetKey);
 		const nextName = selectedMailbox?.displayName ?? "";
 		setDisplayName(nextName);
 		setSavedDisplayName(nextName);
 		setStatus(null);
-	}, [selectedMailbox?.id, selectedMailbox?.displayName]);
+	}
+
 	async function onSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		if (!selectedMailbox) return;
+		if (!selectedMailbox) {
+			return;
+		}
 		setSaving(true);
 		setStatus(null);
-		try {
-			const updated = await updateCurrentMailboxName(
-				selectedMailbox.id,
-				displayName,
-			);
-			setSelectedMailbox(updated);
-			setSavedDisplayName(updated.displayName ?? "");
-			setDisplayName(updated.displayName ?? "");
-			setStatus(t("common.saved"));
-		} catch (err) {
-			setStatus(
-				err instanceof Error ? err.message : t("settings.mailbox.updateFailed"),
-			);
-		} finally {
-			setSaving(false);
-		}
+		return await withCleanup(
+			async () => {
+				try {
+					const updated = await updateCurrentMailboxName(
+						selectedMailbox.id,
+						displayName
+					);
+					setSelectedMailbox(updated);
+					setSavedDisplayName(updated.displayName ?? "");
+					setDisplayName(updated.displayName ?? "");
+					setStatus(t("common.saved"));
+				} catch (error) {
+					setStatus(
+						error instanceof Error
+							? error.message
+							: t("settings.mailbox.updateFailed")
+					);
+				}
+			},
+			() => {
+				setSaving(false);
+			}
+		);
 	}
 	if (isLoading) {
 		return (
 			<div className="flex flex-col gap-6">
 				<Skeleton className="h-8 w-32" />
-				<Card className="rounded-lg border-0 bg-card p-6">
-					<CardContent className="flex flex-col gap-4 p-6">
-						<Skeleton className="h-4 w-24" />
-						<Skeleton className="h-10 w-full" />
-						<Skeleton className="h-9 w-28" />
-					</CardContent>
-				</Card>
+				<div className="flex flex-col gap-4 py-6">
+					<Skeleton className="h-4 w-24" />
+					<Skeleton className="h-9 w-full" />
+					<Skeleton className="h-9 w-28" />
+				</div>
 			</div>
 		);
 	}
 	if (!selectedMailbox) {
 		return (
 			<div className="flex flex-col gap-6">
-				<h1 className="text-2xl md:text-3xl font-medium text-foreground">
-					{t("settings.mailbox.title")}
-				</h1>
-				<Card className="rounded-lg border-0 bg-card p-6">
-					<CardContent className="p-6 text-sm text-muted-foreground">
-						{t("settings.mailbox.selectToView")}
-					</CardContent>
-				</Card>
+				<PageHeader>
+					<PageHeaderText>
+						<PageTitle>{t("settings.mailbox.title")}</PageTitle>
+					</PageHeaderText>
+				</PageHeader>
+				<Empty>
+					<EmptyHeader>
+						<EmptyDescription>
+							{t("settings.mailbox.selectToView")}
+						</EmptyDescription>
+					</EmptyHeader>
+				</Empty>
 			</div>
 		);
 	}
@@ -85,14 +108,14 @@ export function CurrentMailboxForm() {
 	const hasChanges = displayName.trim() !== savedDisplayName;
 	return (
 		<div className="flex flex-col gap-8">
-			<div>
-				<h1 className="text-2xl md:text-3xl font-medium text-foreground">
-					{t("settings.mailbox.title")}
-				</h1>
-				<p className="mt-1 text-sm text-muted-foreground">{address}</p>
-			</div>
+			<PageHeader>
+				<PageHeaderText>
+					<PageTitle>{t("settings.mailbox.title")}</PageTitle>
+					<PageDescription>{address}</PageDescription>
+				</PageHeaderText>
+			</PageHeader>
 
-			<CardContent className="flex flex-col gap-6 py-6">
+			<div className="flex flex-col gap-6">
 				<ProfileAvatarForm
 					mailboxId={selectedMailbox.id}
 					initialHasAvatar={!!selectedMailbox.hasAvatar}
@@ -119,14 +142,14 @@ export function CurrentMailboxForm() {
 									: t("settings.mailbox.saveChanges")}
 							</Button>
 							{status && (
-								<p role="status" className="text-sm text-muted-foreground">
+								<output className="text-sm text-muted-foreground">
 									{status}
-								</p>
+								</output>
 							)}
 						</div>
 					</FieldGroup>
 				</form>
-			</CardContent>
+			</div>
 		</div>
 	);
 }

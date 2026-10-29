@@ -56,8 +56,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/install
       - run: npm run db:bundle
-      - name: OAuth, Drive editor, backup, admin and web push integration tests
-        run: node --test tests/drive-document-editor.test.mjs tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs tests/account-alias-selection.test.mjs tests/pwa-app-badge.test.mjs tests/pwa-push-client.test.mjs tests/pwa-notification-ui.test.mjs
+      - name: Lint (Ultracite + @shadcn/lint)
+        run: npm run lint
+      - name: Format
+        run: npm run format:check
+      - name: OAuth, Drive editor, backup, admin, web push and UI consistency tests
+        run: node --test tests/drive-document-editor.test.mjs tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs tests/account-alias-selection.test.mjs tests/pwa-app-badge.test.mjs tests/pwa-push-client.test.mjs tests/pwa-notification-ui.test.mjs tests/ui-consistency.test.mjs tests/domain-routing-rule-validation.test.mjs
       - run: npx tsc --noEmit
 
   build:

@@ -1,44 +1,69 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import type { MouseEvent } from "react";
-import { primeMessageDetail } from "@/lib/messages/detail-cache";
+import { useEffect, useState } from "react";
+import type { CSSProperties, MouseEvent } from "react";
+
 import type { Message } from "@/hooks/types";
+import { primeMessageDetail } from "@/lib/messages/detail-cache";
+
 import type { MessageNavigationState } from "./message-navigation-types";
 
-export function useMessageNavigation(href: string, message: Message): MessageNavigationState {
+export function useMessageNavigation(
+	href: string,
+	message: Message
+): MessageNavigationState {
 	const pathname = usePathname();
 	const router = useRouter();
-	const [progress, setProgress] = useState<number | null>(null);
+	const [navigation, setNavigation] = useState<{ from: string } | null>(null);
+	let progress: number | null = null;
+	if (navigation) {
+		progress = navigation.from === pathname ? 12 : 100;
+	}
 
 	useEffect(() => {
-		if (progress === null) return;
-		setProgress(100);
-		const timer = window.setTimeout(() => setProgress(null), 220);
+		if (progress !== 100) {
+			return;
+		}
+		const timer = window.setTimeout(() => setNavigation(null), 220);
 		return () => window.clearTimeout(timer);
-	}, [pathname]);
+	}, [progress]);
 
 	function onNavigate(event: MouseEvent<HTMLAnchorElement>, markRead = false) {
-		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+			return;
+		}
 		event.preventDefault();
 		primeMessageDetail({ ...message, read: markRead || message.read });
-		setProgress(12);
+		setNavigation({ from: pathname });
 		try {
 			router.push(href);
 		} catch {
-			setProgress(null);
+			setNavigation(null);
 		}
 	}
 
-	return { progress, onNavigate };
+	return { onNavigate, progress };
 }
 
-export function MessageNavigationProgress({ progress }: { progress: number | null }) {
-	if (progress === null) return null;
+export function MessageNavigationProgress({
+	progress,
+}: {
+	progress: number | null;
+}) {
+	if (progress === null) {
+		return null;
+	}
 	return (
 		<div className="fixed inset-x-0 top-0 z-[120] h-1 bg-signal-soft">
-			<div className="h-full bg-primary transition-[width] duration-100 ease-out" style={{ width: `${progress}%` }} />
+			<div
+				className="h-full [width:var(--mf-width)] bg-primary transition-all duration-100 ease-out"
+				style={
+					{
+						"--mf-width": `${progress}%`,
+					} as CSSProperties
+				}
+			/>
 		</div>
 	);
 }

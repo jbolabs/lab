@@ -1,14 +1,17 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useMemo } from "react";
 import type { ReactNode } from "react";
+
 import type { MailSearchContextValue } from "./types";
 
 const MailSearchContext = createContext<MailSearchContextValue | null>(null);
 
 export function useMailSearch() {
 	const ctx = useContext(MailSearchContext);
-	if (!ctx) throw new Error("useMailSearch must be used within MailSearchProvider");
+	if (!ctx) {
+		throw new Error("useMailSearch must be used within MailSearchProvider");
+	}
 	return ctx;
 }
 
@@ -27,8 +30,12 @@ export function MailSearchProvider({ children }: { children: ReactNode }) {
 		return () => clearTimeout(timer);
 	}, [input]);
 
+	const contextValue = useMemo<MailSearchContextValue>(
+		() => ({ input, query, setQuery: setInput }),
+		[input, query]
+	);
 	return (
-		<MailSearchContext.Provider value={{ query, input, setQuery: setInput }}>
+		<MailSearchContext.Provider value={contextValue}>
 			{children}
 		</MailSearchContext.Provider>
 	);

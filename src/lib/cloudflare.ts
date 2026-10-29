@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+
 import { getNodeEnv } from "@/lib/runtime";
 import { withStorage } from "@/lib/storage";
 
@@ -7,5 +8,5 @@ export function getEnv(): CloudflareEnv {
 }
 
 export async function getEnvAsync(): Promise<CloudflareEnv> {
-	return getEnv();
+	return await getEnv();
 }

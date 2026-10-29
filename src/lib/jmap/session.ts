@@ -1,36 +1,31 @@
-import { CAPABILITY_CORE, CAPABILITY_MAIL, CAPABILITY_SUBMISSION, LIMITS } from "./constants";
+import {
+	CAPABILITY_CORE,
+	CAPABILITY_MAIL,
+	CAPABILITY_SUBMISSION,
+	LIMITS,
+} from "./constants";
 import type { JmapContext } from "./types";
 
 /** The Session object (RFC 8620 §2). One account per API key: the key's user. */
 export function buildSession(ctx: JmapContext, sessionState: string) {
 	const base = `${ctx.origin}/jmap`;
 	return {
-		capabilities: {
-			[CAPABILITY_CORE]: {
-				maxSizeUpload: LIMITS.maxSizeUpload,
-				maxConcurrentUpload: 4,
-				maxSizeRequest: LIMITS.maxSizeRequest,
-				maxConcurrentRequests: 4,
-				maxCallsInRequest: LIMITS.maxCallsInRequest,
-				maxObjectsInGet: LIMITS.maxObjectsInGet,
-				maxObjectsInSet: LIMITS.maxObjectsInSet,
-				collationAlgorithms: ["i;ascii-casemap", "i;unicode-casemap"],
-			},
-			[CAPABILITY_MAIL]: {},
-			[CAPABILITY_SUBMISSION]: {},
-		},
 		accounts: {
 			[ctx.accountId]: {
-				name: ctx.auth.email,
-				isPersonal: true,
-				isReadOnly: false,
 				accountCapabilities: {
 					[CAPABILITY_MAIL]: {
-						maxMailboxesPerEmail: 1,
+						emailQuerySortOptions: [
+							"receivedAt",
+							"sentAt",
+							"subject",
+							"from",
+							"size",
+							"hasKeyword",
+						],
 						maxMailboxDepth: 2,
-						maxSizeMailboxName: 80,
+						maxMailboxesPerEmail: 1,
 						maxSizeAttachmentsPerEmail: LIMITS.maxSizeAttachmentsPerEmail,
-						emailQuerySortOptions: ["receivedAt", "sentAt", "subject", "from", "size", "hasKeyword"],
+						maxSizeMailboxName: 80,
 						mayCreateTopLevelMailbox: false,
 					},
 					[CAPABILITY_SUBMISSION]: {
@@ -38,17 +33,34 @@ export function buildSession(ctx: JmapContext, sessionState: string) {
 						submissionExtensions: {},
 					},
 				},
+				isPersonal: true,
+				isReadOnly: false,
+				name: ctx.auth.email,
 			},
 		},
+		apiUrl: `${base}/api`,
+		capabilities: {
+			[CAPABILITY_CORE]: {
+				collationAlgorithms: ["i;ascii-casemap", "i;unicode-casemap"],
+				maxCallsInRequest: LIMITS.maxCallsInRequest,
+				maxConcurrentRequests: 4,
+				maxConcurrentUpload: 4,
+				maxObjectsInGet: LIMITS.maxObjectsInGet,
+				maxObjectsInSet: LIMITS.maxObjectsInSet,
+				maxSizeRequest: LIMITS.maxSizeRequest,
+				maxSizeUpload: LIMITS.maxSizeUpload,
+			},
+			[CAPABILITY_MAIL]: {},
+			[CAPABILITY_SUBMISSION]: {},
+		},
+		downloadUrl: `${base}/download/{accountId}/{blobId}/{name}?type={type}`,
+		eventSourceUrl: `${base}/eventsource?types={types}&closeafter={closeafter}&ping={ping}`,
 		primaryAccounts: {
 			[CAPABILITY_MAIL]: ctx.accountId,
 			[CAPABILITY_SUBMISSION]: ctx.accountId,
 		},
-		username: ctx.auth.email,
-		apiUrl: `${base}/api`,
-		downloadUrl: `${base}/download/{accountId}/{blobId}/{name}?type={type}`,
-		uploadUrl: `${base}/upload/{accountId}`,
-		eventSourceUrl: `${base}/eventsource?types={types}&closeafter={closeafter}&ping={ping}`,
 		state: sessionState,
+		uploadUrl: `${base}/upload/{accountId}`,
+		username: ctx.auth.email,
 	};
 }

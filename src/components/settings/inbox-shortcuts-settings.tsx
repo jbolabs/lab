@@ -1,4 +1,8 @@
 "use client";
+import { useState } from "react";
+
+import { useLanguage } from "@/components/language-provider";
+import { useShortcuts } from "@/components/shortcuts/shortcuts-context";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
 	Field,
@@ -6,10 +10,8 @@ import {
 	FieldLabel,
 	FieldDescription,
 } from "@/components/ui/field";
-import { useState } from "react";
-import { useLanguage } from "@/components/language-provider";
-import { useShortcuts } from "@/components/shortcuts";
 import { Switch } from "@/components/ui/switch";
+
 export function InboxShortcutsSettings() {
 	const { t } = useLanguage();
 	const {
@@ -21,35 +23,39 @@ export function InboxShortcutsSettings() {
 	const [saving, setSaving] = useState(false);
 	const [saveError, setSaveError] = useState<string | null>(null);
 	return (
-		<div>
+		<div className="flex flex-col gap-3">
 			<Field orientation="horizontal">
 				<FieldContent>
-					<FieldLabel htmlFor="inbox-shortcuts-settings-0">{t("settings.shortcuts.title")}</FieldLabel>
+					<FieldLabel htmlFor="inbox-shortcuts-settings-0">
+						{t("settings.shortcuts.title")}
+					</FieldLabel>
 					<FieldDescription>
 						{t("settings.shortcuts.description")}
 					</FieldDescription>
 				</FieldContent>
-				<Switch id="inbox-shortcuts-settings-0"
+				<Switch
+					id="inbox-shortcuts-settings-0"
 					checked={shortcutsEnabled}
 					disabled={shortcutsPreferenceLoading || saving}
-					onCheckedChange={(enabled) => {
+					onCheckedChange={async (enabled) => {
 						setSaving(true);
 						setSaveError(null);
-						void setShortcutsEnabled(enabled)
-							.catch((error) =>
-								setSaveError(
-									error instanceof Error
-										? error.message
-										: t("settings.shortcuts.failed"),
-								),
-							)
-							.finally(() => setSaving(false));
+						try {
+							await setShortcutsEnabled(enabled);
+						} catch (error) {
+							setSaveError(
+								error instanceof Error
+									? error.message
+									: t("settings.shortcuts.failed")
+							);
+						}
+						setSaving(false);
 					}}
 					aria-label={t("settings.shortcuts.enable")}
 				/>
 			</Field>
 			{(saveError || shortcutsPreferenceError) && (
-				<Alert variant="destructive">
+				<Alert variant="error">
 					<AlertDescription>
 						{saveError || shortcutsPreferenceError}
 					</AlertDescription>

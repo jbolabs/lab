@@ -1,17 +1,33 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
-import { dirname, join } from "node:path";
+import fs from "node:fs";
+import nodePath from "node:path";
 import test, { after } from "node:test";
-import { fileURLToPath, pathToFileURL } from "node:url";
-import { build } from "esbuild";
+import { pathToFileURL } from "node:url";
+
 import { streamText } from "ai";
+import { build } from "esbuild";
 import { z } from "zod";
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const bundleDirectory = mkdtempSync(join(root, "node_modules", "mailflare-workers-ai-stream-bundle-"));
-after(() => rmSync(bundleDirectory, { recursive: true, force: true }));
+const { mkdtempSync, rmSync } = fs;
+const { join } = nodePath;
+
+const root = join(import.meta.dirname, "..");
+const bundleDirectory = mkdtempSync(
+	join(root, "node_modules", "mailflare-workers-ai-stream-bundle-")
+);
+after(() => rmSync(bundleDirectory, { force: true, recursive: true }));
 
 await build({
+	alias: {
+		"cloudflare:workers": "./server/runtime/cloudflare-workers.ts",
+		"next/headers": "next/headers.js",
+	},
+	bundle: true,
+	format: "esm",
+	logLevel: "silent",
+	outfile: join(bundleDirectory, "entry.mjs"),
+	packages: "external",
+	platform: "node",
 	stdin: {
 		contents: `
 			export { getAgentModel } from "./src/lib/agent/model.ts";
@@ -19,34 +35,26 @@ await build({
 		resolveDir: root,
 		sourcefile: "workers-ai-stream-test-entry.ts",
 	},
-	outfile: join(bundleDirectory, "entry.mjs"),
-	bundle: true,
-	platform: "node",
-	format: "esm",
 	target: "node24",
 	tsconfig: join(root, "tsconfig.json"),
-	packages: "external",
-	alias: {
-		"next/headers": "next/headers.js",
-		"cloudflare:workers": "./server/runtime/cloudflare-workers.ts",
-	},
-	logLevel: "silent",
 });
 
-const { getAgentModel } = await import(pathToFileURL(join(bundleDirectory, "entry.mjs")).href);
+const { getAgentModel } = await import(
+	pathToFileURL(join(bundleDirectory, "entry.mjs")).href
+);
 
 function createMockDb() {
 	return {
 		prepare() {
 			return {
+				all: () => Promise.resolve({ results: [] }),
 				bind() {
 					return {
-						all: async () => ({ results: [] }),
-						raw: async () => [],
+						all: () => Promise.resolve({ results: [] }),
+						raw: () => Promise.resolve([]),
 					};
 				},
-				all: async () => ({ results: [] }),
-				raw: async () => [],
+				raw: () => Promise.resolve([]),
 			};
 		},
 	};
@@ -57,7 +65,9 @@ function createSseStream(events) {
 		start(controller) {
 			const encoder = new TextEncoder();
 			for (const event of events) {
-				controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+				controller.enqueue(
+					encoder.encode(`data: ${JSON.stringify(event)}\n\n`)
+				);
 			}
 			controller.enqueue(encoder.encode("data: [DONE]\n\n"));
 			controller.close();
@@ -67,12 +77,20 @@ function createSseStream(events) {
 
 test("Workers AI dual-format SSE stream produces deduplicated text", async () => {
 	const binding = {
-		run: async () => createSseStream([
-			{ response: "OK", choices: [{ index: 0, delta: { content: "OK" } }] },
-			{ response: ".", choices: [{ index: 0, delta: { content: "." }, finish_reason: "stop" }] },
-		]),
+		run: () =>
+			Promise.resolve(
+				createSseStream([
+					{ choices: [{ delta: { content: "OK" }, index: 0 }], response: "OK" },
+					{
+						choices: [
+							{ delta: { content: "." }, finish_reason: "stop", index: 0 },
+						],
+						response: ".",
+					},
+				])
+			),
 	};
-	const agent = await getAgentModel({ DB: createMockDb(), AI: binding });
+	const agent = await getAgentModel({ AI: binding, DB: createMockDb() });
 	assert.ok(agent?.model);
 	const result = streamText({ model: agent.model, prompt: "say OK" });
 	assert.equal(await result.text, "OK.");
@@ -80,12 +98,15 @@ test("Workers AI dual-format SSE stream produces deduplicated text", async () =>
 
 test("Workers AI native-only stream emits text once", async () => {
 	const binding = {
-		run: async () => createSseStream([
-			{ response: "OK" },
-			{ response: ".", finish_reason: "stop" },
-		]),
+		run: () =>
+			Promise.resolve(
+				createSseStream([
+					{ response: "OK" },
+					{ finish_reason: "stop", response: "." },
+				])
+			),
 	};
-	const agent = await getAgentModel({ DB: createMockDb(), AI: binding });
+	const agent = await getAgentModel({ AI: binding, DB: createMockDb() });
 	assert.ok(agent?.model);
 	const result = streamText({ model: agent.model, prompt: "say OK" });
 	assert.equal(await result.text, "OK.");
@@ -93,12 +114,19 @@ test("Workers AI native-only stream emits text once", async () => {
 
 test("Workers AI OpenAI-only stream emits text once", async () => {
 	const binding = {
-		run: async () => createSseStream([
-			{ choices: [{ index: 0, delta: { content: "OK" } }] },
-			{ choices: [{ index: 0, delta: { content: "." }, finish_reason: "stop" }] },
-		]),
+		run: () =>
+			Promise.resolve(
+				createSseStream([
+					{ choices: [{ delta: { content: "OK" }, index: 0 }] },
+					{
+						choices: [
+							{ delta: { content: "." }, finish_reason: "stop", index: 0 },
+						],
+					},
+				])
+			),
 	};
-	const agent = await getAgentModel({ DB: createMockDb(), AI: binding });
+	const agent = await getAgentModel({ AI: binding, DB: createMockDb() });
 	assert.ok(agent?.model);
 	const result = streamText({ model: agent.model, prompt: "say OK" });
 	assert.equal(await result.text, "OK.");
@@ -106,36 +134,60 @@ test("Workers AI OpenAI-only stream emits text once", async () => {
 
 test("Workers AI stream preserves legitimately repeated prose across events", async () => {
 	const binding = {
-		run: async () => createSseStream([
-			{ response: "ha", choices: [{ index: 0, delta: { content: "ha" } }] },
-			{ response: "ha", choices: [{ index: 0, delta: { content: "ha" }, finish_reason: "stop" }] },
-		]),
+		run: () =>
+			Promise.resolve(
+				createSseStream([
+					{ choices: [{ delta: { content: "ha" }, index: 0 }], response: "ha" },
+					{
+						choices: [
+							{ delta: { content: "ha" }, finish_reason: "stop", index: 0 },
+						],
+						response: "ha",
+					},
+				])
+			),
 	};
-	const agent = await getAgentModel({ DB: createMockDb(), AI: binding });
+	const agent = await getAgentModel({ AI: binding, DB: createMockDb() });
 	assert.ok(agent?.model);
 	const result = streamText({ model: agent.model, prompt: "laugh" });
 	assert.equal(await result.text, "haha");
 });
 
 test("Workers AI dual-format stream emits exactly one tool call with parsed arguments", async () => {
-	const toolCall = [{ index: 0, id: "call_lookup", type: "function", function: { name: "lookup", arguments: JSON.stringify({ city: "Hanoi" }) } }];
+	const toolCall = [
+		{
+			function: {
+				arguments: JSON.stringify({ city: "Hanoi" }),
+				name: "lookup",
+			},
+			id: "call_lookup",
+			index: 0,
+			type: "function",
+		},
+	];
 	const binding = {
-		run: async () => createSseStream([
-			{ tool_calls: toolCall, choices: [{ index: 0, delta: { tool_calls: toolCall } }] },
-		]),
+		run: () =>
+			Promise.resolve(
+				createSseStream([
+					{
+						choices: [{ delta: { tool_calls: toolCall }, index: 0 }],
+						tool_calls: toolCall,
+					},
+				])
+			),
 	};
-	const agent = await getAgentModel({ DB: createMockDb(), AI: binding });
+	const agent = await getAgentModel({ AI: binding, DB: createMockDb() });
 	assert.ok(agent?.model);
 	const result = streamText({
 		model: agent.model,
+		prompt: "lookup Hanoi",
 		tools: {
 			lookup: {
 				description: "lookup info",
+				execute: (args) => Promise.resolve(args),
 				parameters: z.object({ city: z.string() }),
-				execute: async (args) => args,
 			},
 		},
-		prompt: "lookup Hanoi",
 	});
 	const calls = await result.toolCalls;
 	assert.equal(calls.length, 1);
@@ -144,20 +196,23 @@ test("Workers AI dual-format stream emits exactly one tool call with parsed argu
 });
 
 test("Workers AI stream handles events split across chunk boundaries", async () => {
-	const payload = `data: ${JSON.stringify({ response: "OK", choices: [{ index: 0, delta: { content: "OK" } }] })}\n\ndata: [DONE]\n\n`;
+	const payload = `data: ${JSON.stringify({ choices: [{ delta: { content: "OK" }, index: 0 }], response: "OK" })}\n\ndata: [DONE]\n\n`;
 	const encoder = new TextEncoder();
 	const bytes = encoder.encode(payload);
 	const splitAt = 12;
 	const binding = {
-		run: async () => new ReadableStream({
-			start(controller) {
-				controller.enqueue(bytes.subarray(0, splitAt));
-				controller.enqueue(bytes.subarray(splitAt));
-				controller.close();
-			},
-		}),
+		run: () =>
+			Promise.resolve(
+				new ReadableStream({
+					start(controller) {
+						controller.enqueue(bytes.subarray(0, splitAt));
+						controller.enqueue(bytes.subarray(splitAt));
+						controller.close();
+					},
+				})
+			),
 	};
-	const agent = await getAgentModel({ DB: createMockDb(), AI: binding });
+	const agent = await getAgentModel({ AI: binding, DB: createMockDb() });
 	assert.ok(agent?.model);
 	const result = streamText({ model: agent.model, prompt: "say OK" });
 	assert.equal(await result.text, "OK");

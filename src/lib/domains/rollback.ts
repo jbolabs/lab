@@ -6,14 +6,18 @@ import {
 import { restoreEmailRoutingCatchAll } from "@/lib/domains/catch-all-routing";
 import { restoreMxRecords } from "@/lib/domains/mx-records";
 import type { DomainProvisioningChanges } from "@/lib/domains/types";
+import { requireValue } from "@/lib/require-value";
 
-async function attempt(label: string, run: () => Promise<unknown>): Promise<void> {
+async function attempt(
+	label: string,
+	run: () => Promise<unknown>
+): Promise<void> {
 	try {
 		await run();
-	} catch (err) {
+	} catch (error) {
 		// A rollback runs while another error is already on its way to the caller,
 		// so a failure here must be logged, never thrown — it would mask the cause.
-		console.warn(`rollbackDomainProvisioning: ${label}`, err);
+		console.warn(`rollbackDomainProvisioning: ${label}`, error);
 	}
 }
 
@@ -26,19 +30,23 @@ async function attempt(label: string, run: () => Promise<unknown>): Promise<void
  */
 export async function rollbackDomainProvisioning(
 	env: CloudflareEnv,
-	changes: DomainProvisioningChanges,
+	changes: DomainProvisioningChanges
 ): Promise<void> {
 	const { zoneId } = changes;
 
 	for (const address of changes.createdAddressRules) {
 		await attempt(`deleteEmailRoutingRuleForAddress ${address}`, () =>
-			deleteEmailRoutingRuleForAddress(env, zoneId, address),
+			deleteEmailRoutingRuleForAddress(env, zoneId, address)
 		);
 	}
 
 	if (changes.createdSendingSubdomainTag) {
 		await attempt("deleteSendingSubdomain", () =>
-			deleteSendingSubdomain(env, zoneId, changes.createdSendingSubdomainTag!),
+			deleteSendingSubdomain(
+				env,
+				zoneId,
+				requireValue(changes.createdSendingSubdomainTag)
+			)
 		);
 	}
 
@@ -47,15 +55,19 @@ export async function rollbackDomainProvisioning(
 	// quietly resurrect it the next time someone re-enables routing on the zone.
 	if (changes.previousCatchAll || changes.enabledEmailRouting) {
 		await attempt("restoreEmailRoutingCatchAll", () =>
-			restoreEmailRoutingCatchAll(env, zoneId, changes.previousCatchAll),
+			restoreEmailRoutingCatchAll(env, zoneId, changes.previousCatchAll)
 		);
 	}
 
 	if (changes.enabledEmailRouting) {
-		await attempt("disableEmailRouting", () => disableEmailRouting(env, zoneId));
+		await attempt("disableEmailRouting", () =>
+			disableEmailRouting(env, zoneId)
+		);
 	}
 
 	if (changes.deletedMxRecords.length > 0) {
-		await attempt("restoreMxRecords", () => restoreMxRecords(env, zoneId, changes.deletedMxRecords));
+		await attempt("restoreMxRecords", () =>
+			restoreMxRecords(env, zoneId, changes.deletedMxRecords)
+		);
 	}
 }

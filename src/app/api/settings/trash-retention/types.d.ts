@@ -1,9 +1,12 @@
-import type { updateTrashRetentionSettingsSchema } from "@/lib/validators";
 import type { z } from "zod";
 
-export type UpdateTrashRetentionSettingsInput = z.infer<typeof updateTrashRetentionSettingsSchema>;
+import type { updateTrashRetentionSettingsSchema } from "@/lib/validators";
 
-export type TrashRetentionSettingsResponse = {
+export type UpdateTrashRetentionSettingsInput = z.infer<
+	typeof updateTrashRetentionSettingsSchema
+>;
+
+export interface TrashRetentionSettingsResponse {
 	days?: number | null;
 	error?: unknown;
-};
+}

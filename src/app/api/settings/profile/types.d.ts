@@ -1,9 +1,10 @@
-import type { updateProfileSchema } from "@/lib/validators";
 import type { z } from "zod";
+
+import type { updateProfileSchema } from "@/lib/validators";
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
-export type ProfileResponse = {
+export interface ProfileResponse {
 	user: {
 		id: string;
 		email: string;
@@ -11,4 +12,4 @@ export type ProfileResponse = {
 		resetEmail: string | null;
 		forwardingEmail: string | null;
 	};
-};
+}

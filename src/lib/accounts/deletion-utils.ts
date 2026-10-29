@@ -12,7 +12,12 @@ export function getAccountPurgeCutoff(now: Date): Date {
 	return new Date(now.getTime() - ACCOUNT_RESTORE_DAYS * DAY_MS);
 }
 
-export function getAccountStatus(account: { disabled: boolean; deletedAt?: Date | string | null }): "active" | "disabled" | "pendingDeletion" {
-	if (account.deletedAt) return "pendingDeletion";
+export function getAccountStatus(account: {
+	disabled: boolean;
+	deletedAt?: Date | string | null;
+}): "active" | "disabled" | "pendingDeletion" {
+	if (account.deletedAt) {
+		return "pendingDeletion";
+	}
 	return account.disabled ? "disabled" : "active";
 }

@@ -1,39 +1,39 @@
-export type SetupStatus = {
+export interface SetupStatus {
 	hasAdminAccount: boolean;
 	hasPrimaryDomain: boolean;
 	primaryDomain?: { hostname: string; sendingRequested: boolean } | null;
 	error?: string;
-};
+}
 
-export type SetupRequirementCheck = {
+export interface SetupRequirementCheck {
 	key: string;
 	configured: boolean;
 	message: string;
-};
+}
 
-export type SetupPreparationResult = {
+export interface SetupPreparationResult {
 	checks?: SetupRequirementCheck[];
 	migrated?: boolean;
 	error?: string;
-};
+}
 
-export type DomainPreflight = {
+export interface DomainPreflight {
 	hostname: string;
 	zone: { id: string; name: string };
-};
+}
 
-export type DomainSetupResult = {
+export interface DomainSetupResult {
 	domain?: DomainPreflight;
 	error?: string;
-};
+}
 
-export type MxCheckResult = {
+export interface MxCheckResult {
 	hasExistingMx?: boolean;
 	error?: string;
-};
+}
 
-export type RegisterResult = {
+export interface RegisterResult {
 	redirect?: string;
 	error?: string;
 	code?: "MX_RECORDS_CONFLICT";
-};
+}

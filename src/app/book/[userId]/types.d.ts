@@ -1,4 +1,4 @@
-export type PublicBookingEvent = {
+export interface PublicBookingEvent {
 	id: string;
 	slug: string;
 	userId: string;
@@ -10,6 +10,11 @@ export type PublicBookingEvent = {
 	startTime?: string;
 	endTime?: string;
 	timeZone: string;
-};
+}
 
-export type BookingSlot = { startsAt: string; endsAt: string; localDate: string; time: string };
+export interface BookingSlot {
+	startsAt: string;
+	endsAt: string;
+	localDate: string;
+	time: string;
+}

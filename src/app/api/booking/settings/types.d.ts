@@ -1,1 +1,3 @@
-export type BookingSettingsInput = { username?: unknown };
+export interface BookingSettingsInput {
+	username?: unknown;
+}

@@ -1,0 +1,153 @@
+"use client";
+import { useState } from "react";
+
+import { useLanguage } from "@/components/language-provider";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { runAsyncAction } from "@/lib/async-cleanup";
+
+import { useAdminConfirmation } from "../admin-confirmation-provider";
+import { postJson } from "./api";
+import { StatusRow } from "./status-row";
+
+interface Props {
+	configured: boolean | null;
+	/** Called after the key was saved (true) or removed (false). */
+	onChanged: (configured: boolean) => void;
+	onError: (message: string) => void;
+}
+
+/** The shared Resend API key, used by both the sending and receiving setup. */
+export default function ResendKeyRow({
+	configured,
+	onChanged,
+	onError,
+}: Props) {
+	const { t } = useLanguage();
+	const confirm = useAdminConfirmation();
+	const [apiKey, setApiKey] = useState("");
+	const [editing, setEditing] = useState(false);
+	const [busy, setBusy] = useState(false);
+	const showForm = configured === false || editing;
+
+	function run(action: () => Promise<void>) {
+		setBusy(true);
+		onError("");
+		return runAsyncAction(
+			async () => {
+				await action();
+			},
+			(failure) => {
+				onError(
+					failure instanceof Error
+						? failure.message
+						: t("domains.requestFailed")
+				);
+			},
+			() => {
+				setBusy(false);
+			}
+		);
+	}
+
+	const save = () =>
+		run(async () => {
+			await postJson("/api/admin/resend-key", "PUT", { apiKey });
+			setApiKey("");
+			setEditing(false);
+			onChanged(true);
+		});
+	const remove = () =>
+		run(async () => {
+			if (!(await confirm(t("resend.removeConfirm")))) {
+				return;
+			}
+			await postJson("/api/admin/resend-key", "DELETE", {});
+			onChanged(false);
+		});
+
+	return (
+		<>
+			<StatusRow
+				ok={!!configured && !editing}
+				title={t("resend.key")}
+				hint={t("resend.keyHint")}
+				action={
+					configured && !editing ? (
+						<>
+							<Button
+								size="sm"
+								variant="outline"
+								disabled={busy}
+								onClick={() => setEditing(true)}
+							>
+								{t("resend.replace")}
+							</Button>
+							<Button
+								size="sm"
+								variant="outline"
+								disabled={busy}
+								onClick={() => remove()}
+							>
+								{t("resend.remove")}
+							</Button>
+						</>
+					) : undefined
+				}
+			>
+				{(() => {
+					if (showForm) {
+						return (
+							<form
+								className="flex flex-wrap gap-2"
+								onSubmit={(event) => {
+									event.preventDefault();
+									save();
+								}}
+							>
+								<Input
+									type="password"
+									autoComplete="off"
+									aria-label={t("resend.key")}
+									placeholder="re_..."
+									value={apiKey}
+									onChange={(event) => setApiKey(event.target.value)}
+									className="max-w-xs"
+								/>
+								<Button
+									type="submit"
+									size="sm"
+									disabled={!apiKey.trim() || busy}
+								>
+									{busy ? t("domains.checking") : t("resend.saveKey")}
+								</Button>
+								{editing && (
+									<Button
+										type="button"
+										size="sm"
+										variant="outline"
+										onClick={() => {
+											setEditing(false);
+											setApiKey("");
+										}}
+									>
+										{t("common.cancel")}
+									</Button>
+								)}
+							</form>
+						);
+					}
+					if (configured) {
+						return t("resend.keySaved");
+					}
+					return t("domains.checking");
+				})()}
+			</StatusRow>
+			{showForm && (
+				<li className="list-none px-1 text-xs text-muted-foreground">
+					{t("resend.keyInstructions")}
+				</li>
+			)}
+		</>
+	);
+}

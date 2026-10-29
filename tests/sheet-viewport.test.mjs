@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+
 import { getSheetViewportStyle } from "../src/components/compose/sheet-viewport-utils.ts";
 
 test("sheet fills the visual viewport when no keyboard is open", () => {

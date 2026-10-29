@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,15 +10,17 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import {
 	Field,
 	FieldGroup,
 	FieldLabel,
 	FieldError,
 } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { withCleanup } from "@/lib/async-cleanup";
 import { authFetch } from "@/lib/auth/client";
+
 import { textToHtml } from "./rich-text-utils";
 import type { NewTemplateDialogProps } from "./template-types";
 
@@ -36,36 +39,41 @@ export function NewTemplateDialog({
 	async function save() {
 		setSaving(true);
 		setError("");
-		try {
-			const response = await authFetch("/api/templates", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					mailboxId,
-					from,
-					title,
-					text: content,
-					html: textToHtml(content),
-				}),
-			});
-			if (!response.ok) {
-				setError(
-					(
-						(await response.json().catch(() => null)) as {
-							error?: string;
-						} | null
-					)?.error ?? t("template.saveFailed"),
-				);
-				return;
+		return await withCleanup(
+			async () => {
+				try {
+					const response = await authFetch("/api/templates", {
+						body: JSON.stringify({
+							from,
+							html: textToHtml(content),
+							mailboxId,
+							text: content,
+							title,
+						}),
+						headers: { "Content-Type": "application/json" },
+						method: "POST",
+					});
+					if (!response.ok) {
+						setError(
+							(
+								(await response.json().catch(() => null)) as {
+									error?: string;
+								} | null
+							)?.error ?? t("template.saveFailed")
+						);
+						return;
+					}
+					onOpenChange(false);
+					setTitle("");
+					setContent("");
+				} catch {
+					setError(t("template.saveFailed"));
+				}
+			},
+			() => {
+				setSaving(false);
 			}
-			onOpenChange(false);
-			setTitle("");
-			setContent("");
-		} catch {
-			setError(t("template.saveFailed"));
-		} finally {
-			setSaving(false);
-		}
+		);
 	}
 
 	return (

@@ -1,13 +1,26 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
-import { dirname, join } from "node:path";
+import fs from "node:fs";
+import nodePath from "node:path";
 import test from "node:test";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
+
 import { build } from "esbuild";
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const bundleDirectory = mkdtempSync(join(root, "node_modules", "mailflare-dns-bundle-"));
+const { mkdtempSync, rmSync } = fs;
+const { join } = nodePath;
+
+const root = join(import.meta.dirname, "..");
+const bundleDirectory = mkdtempSync(
+	join(root, "node_modules", "mailflare-dns-bundle-")
+);
 await build({
+	alias: { "cloudflare:workers": "./server/runtime/cloudflare-workers.ts" },
+	bundle: true,
+	format: "esm",
+	logLevel: "silent",
+	outfile: join(bundleDirectory, "entry.mjs"),
+	packages: "external",
+	platform: "node",
 	stdin: {
 		contents: `
 			export { hasMx } from "./src/lib/domains/receiving-dns.ts";
@@ -16,49 +29,73 @@ await build({
 		resolveDir: root,
 		sourcefile: "dns-test-entry.ts",
 	},
-	outfile: join(bundleDirectory, "entry.mjs"),
-	bundle: true,
-	platform: "node",
-	format: "esm",
 	target: "node24",
 	tsconfig: join(root, "tsconfig.json"),
-	packages: "external",
-	alias: { "cloudflare:workers": "./server/runtime/cloudflare-workers.ts" },
-	logLevel: "silent",
 });
-const { hasMx, auditDomainDns } = await import(pathToFileURL(join(bundleDirectory, "entry.mjs")).href);
-rmSync(bundleDirectory, { recursive: true, force: true });
+const { hasMx, auditDomainDns } = await import(
+	pathToFileURL(join(bundleDirectory, "entry.mjs")).href
+);
+rmSync(bundleDirectory, { force: true, recursive: true });
 
 const manualDomain = { hostname: "example.com", zoneId: "manual" };
 
 function answerDns(answers) {
 	const asked = [];
-	globalThis.fetch = async (url) => {
-		const parsed = new URL(url);
-		const name = parsed.searchParams.get("name");
-		asked.push(name);
-		const data = answers[`${name}|${parsed.searchParams.get("type")}`];
-		return Response.json(data === undefined ? { Status: 3 } : { Status: 0, Answer: data.map((value) => ({ name, type: 0, TTL: 60, data: value })) });
+	globalThis.fetch = (url) => {
+		try {
+			const parsed = new URL(url);
+			const name = parsed.searchParams.get("name");
+			asked.push(name);
+			const data = answers[`${name}|${parsed.searchParams.get("type")}`];
+			return Promise.resolve(
+				Response.json(
+					data === undefined
+						? { Status: 3 }
+						: {
+								Answer: data.map((value) => ({
+									TTL: 60,
+									data: value,
+									name,
+									type: 0,
+								})),
+								Status: 0,
+							}
+				)
+			);
+		} catch (error) {
+			return Promise.reject(error);
+		}
 	};
 	return asked;
 }
 
 test("a manual zone's MX is read from public DNS", async () => {
-	answerDns({ "example.com|MX": ["10 inbound-smtp.ap-northeast-1.amazonaws.com."] });
-	assert.equal(await hasMx({}, manualDomain, "inbound-smtp.ap-northeast-1.amazonaws.com"), true);
+	answerDns({
+		"example.com|MX": ["10 inbound-smtp.ap-northeast-1.amazonaws.com."],
+	});
+	assert.equal(
+		await hasMx({}, manualDomain, "inbound-smtp.ap-northeast-1.amazonaws.com"),
+		true
+	);
 	assert.equal(await hasMx({}, manualDomain, "mail.example.net"), false);
 });
 
 test("a manual zone with no MX answers false, and a failed lookup stays unknown", async () => {
 	answerDns({});
 	assert.equal(await hasMx({}, manualDomain, "mail.example.net"), false);
-	globalThis.fetch = async () => { throw new Error("offline"); };
+	globalThis.fetch = () => {
+		try {
+			throw new Error("offline");
+		} catch (error) {
+			return Promise.reject(error);
+		}
+	};
 	assert.equal(await hasMx({}, manualDomain, "mail.example.net"), null);
 });
 
 test("DKIM for a Resend domain is checked at Resend's selector when nothing else names one", async () => {
 	const asked = answerDns({ "resend._domainkey.example.com|TXT": ["p=abc"] });
-	const view = { routing: { records: [], missing: [] }, sending: [] };
+	const view = { routing: { missing: [], records: [] }, sending: [] };
 	const resend = await auditDomainDns("example.com", view, "resend");
 	assert.equal(resend.dkim.status, "ok");
 	assert.ok(asked.includes("resend._domainkey.example.com"));

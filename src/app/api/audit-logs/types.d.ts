@@ -1,4 +1,4 @@
-export type AuditLogRow = {
+export interface AuditLogRow {
 	id: string;
 	action: string;
 	metadata: string | null;
@@ -7,4 +7,4 @@ export type AuditLogRow = {
 	targetEmail: string | null;
 	mailboxLocalPart: string | null;
 	mailboxHostname: string | null;
-};
+}

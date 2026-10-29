@@ -1,3 +1,3 @@
-export type AccountRouteParams = {
+export interface AccountRouteParams {
 	params: Promise<{ id: string }>;
-};
+}

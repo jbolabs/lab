@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+
 import { getDb } from "@/db";
 import { appSettings } from "@/db/schema";
 import { APP_SETTINGS_ID } from "@/lib/branding/service";
@@ -10,13 +11,13 @@ export const revalidate = 0;
 async function getDefaultIcon(env: CloudflareEnv): Promise<Response> {
 	const asset = await env.ASSETS.fetch("https://mailflare.local/icon-96.png");
 	return new Response(await asset.arrayBuffer(), {
+		headers: asset.headers,
 		status: asset.status,
 		statusText: asset.statusText,
-		headers: asset.headers,
 	});
 }
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
 	const env = await getEnvAsync();
 	try {
 		const [settings] = await getDb(env)
@@ -29,8 +30,8 @@ export async function GET(request: Request) {
 			if (object) {
 				return new Response(object.body, {
 					headers: {
-						"Content-Type": object.httpMetadata?.contentType ?? "image/png",
 						"Cache-Control": "no-cache",
+						"Content-Type": object.httpMetadata?.contentType ?? "image/png",
 						"X-Content-Type-Options": "nosniff",
 					},
 				});

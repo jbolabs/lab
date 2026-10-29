@@ -6,7 +6,7 @@ export function getCloudflareAuth(env: CloudflareEnv): CfAuth {
 	const email = env.CF_EMAIL?.trim();
 
 	if (key && email) {
-		return { kind: "global-key", email, key };
+		return { email, key, kind: "global-key" };
 	}
 
 	if (token) {
@@ -33,7 +33,12 @@ export function getCloudflareAuthHeaders(auth: CfAuth): HeadersInit {
 	};
 }
 
-export function formatCloudflareError(path: string, status: number, statusText: string, errors: CfApiError[]) {
+export function formatCloudflareError(
+	path: string,
+	status: number,
+	statusText: string,
+	errors: CfApiError[]
+) {
 	const details = errors
 		.map((error) => {
 			const code = error.code ? `code ${error.code}: ` : "";
@@ -48,19 +53,24 @@ export function formatCloudflareError(path: string, status: number, statusText: 
 export function getCloudflareAuthHint(errors: CfApiError[], path = "") {
 	// Cloudflare answers a sending-subdomain create with 401/2036 when the hostname
 	// has another service's MX records, so a valid token is not the likely cause.
-	if (path.includes("/email/sending/") && errors.some((error) => error.code === 2036)) {
+	if (
+		path.includes("/email/sending/") &&
+		errors.some((error) => error.code === 2036)
+	) {
 		return " If the token has Email Sending permissions, check the domain for MX records pointing at another mail service; Cloudflare refuses sending setup until they are removed.";
 	}
 	const hasAuthError = errors.some(
 		(error) =>
-			error.code === 10000 ||
+			error.code === 10_000 ||
 			error.code === 9109 ||
-			/auth/i.test(error.message) ||
-			/token/i.test(error.message),
+			/auth/iu.test(error.message) ||
+			/token/iu.test(error.message)
 	);
-	if (!hasAuthError) return "";
+	if (!hasAuthError) {
+		return "";
+	}
 
-	return " Verify CF_TOKEN with `curl https://api.cloudflare.com/client/v4/user/tokens/verify -H \"Authorization: Bearer <token>\"`. Use the token secret value without `Bearer`, or use CF_API_KEY plus CF_EMAIL for a Global API Key.";
+	return ' Verify CF_TOKEN with `curl https://api.cloudflare.com/client/v4/user/tokens/verify -H "Authorization: Bearer <token>"`. Use the token secret value without `Bearer`, or use CF_API_KEY plus CF_EMAIL for a Global API Key.';
 }
 
 export function getEmailWorkerName(): string {

@@ -1,3 +1,1 @@
-import Page from "@/app/(dashboard)/inbox/[messageId]/page";
-
-export default Page;
+export { default } from "@/app/(dashboard)/inbox/[messageId]/page";

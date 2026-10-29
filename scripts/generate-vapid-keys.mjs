@@ -7,12 +7,16 @@ function base64Url(bytes) {
 const pair = await webcrypto.subtle.generateKey(
 	{ name: "ECDSA", namedCurve: "P-256" },
 	true,
-	["sign", "verify"],
+	["sign", "verify"]
 );
-const publicKey = new Uint8Array(await webcrypto.subtle.exportKey("raw", pair.publicKey));
+const publicKey = new Uint8Array(
+	await webcrypto.subtle.exportKey("raw", pair.publicKey)
+);
 const privateJwk = await webcrypto.subtle.exportKey("jwk", pair.privateKey);
 
-if (!privateJwk.d) throw new Error("Generated VAPID private key is missing its scalar");
+if (!privateJwk.d) {
+	throw new Error("Generated VAPID private key is missing its scalar");
+}
 
 console.log(`VAPID_PUBLIC_KEY=${base64Url(publicKey)}`);
 console.log(`VAPID_PRIVATE_KEY=${privateJwk.d}`);

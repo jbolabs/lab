@@ -15,11 +15,21 @@ export function isRelayHandle(token: string): boolean {
 /** The relay this server pushes through (`APNS_RELAY_URL`), as an origin without a trailing slash; null when unset or not https. */
 export function relayBaseUrl(env: { APNS_RELAY_URL?: string }): string | null {
 	const raw = env.APNS_RELAY_URL?.trim();
-	if (!raw) return null;
+	if (!raw) {
+		return null;
+	}
 	try {
 		const url = new URL(raw);
-		if (url.protocol !== "https:" && !(url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname))) return null;
-		return `${url.origin}${url.pathname.replace(/\/+$/, "")}`;
+		if (
+			url.protocol !== "https:" &&
+			!(
+				url.protocol === "http:" &&
+				["localhost", "127.0.0.1"].includes(url.hostname)
+			)
+		) {
+			return null;
+		}
+		return `${url.origin}${url.pathname.replace(/\/+$/u, "")}`;
 	} catch {
 		return null;
 	}
@@ -38,21 +48,33 @@ export async function sendViaRelay(
 	handle: string,
 	payload: unknown,
 	collapseId: string | undefined,
-	fetchImpl: typeof fetch = fetch,
+	fetchImpl: typeof fetch = fetch
 ): Promise<RelayResult> {
 	let response: Response;
 	try {
 		response = await fetchImpl(`${baseUrl}/api/v1/push`, {
-			method: "POST",
+			body: JSON.stringify({
+				handle,
+				payload,
+				...(collapseId ? { collapseId } : {}),
+			}),
 			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ handle, payload, ...(collapseId ? { collapseId } : {}) }),
+			method: "POST",
 		});
 	} catch {
 		return { kind: "retry", status: 0 };
 	}
-	if (response.ok) return { kind: "sent" };
-	if (response.status === 404 || response.status === 410) return { kind: "gone", status: response.status };
-	if (response.status === 429 || response.status >= 500) return { kind: "retry", status: response.status };
-	const error = ((await response.json().catch(() => ({}))) as { error?: string }).error ?? "";
-	return { kind: "failed", status: response.status, error };
+	if (response.ok) {
+		return { kind: "sent" };
+	}
+	if (response.status === 404 || response.status === 410) {
+		return { kind: "gone", status: response.status };
+	}
+	if (response.status === 429 || response.status >= 500) {
+		return { kind: "retry", status: response.status };
+	}
+	const error =
+		((await response.json().catch(() => ({}))) as { error?: string }).error ??
+		"";
+	return { error, kind: "failed", status: response.status };
 }

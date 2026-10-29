@@ -1,10 +1,13 @@
 "use client";
-import type { ReactNode } from "react";
+import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import type { ReactNode } from "react";
+
 import { useLanguage } from "@/components/language-provider";
+
 import { SettingsNav } from "./settings-nav";
+
 export function SettingsShell({ children }: { children: ReactNode }) {
 	const pathname = usePathname();
 	const { t } = useLanguage();
@@ -23,7 +26,7 @@ export function SettingsShell({ children }: { children: ReactNode }) {
 			<div
 				className={index ? "hidden min-w-0 flex-1 md:block" : "min-w-0 flex-1"}
 			>
-				<div className="mx-auto w-full max-w-3xl px-5 pb-[max(6rem,env(safe-area-inset-bottom))] pt-5 md:px-10 md:pt-10 [&_[data-slot=card-content]]:pb-6 [&_[role=switch]]:relative [&_[role=switch]]:after:absolute [&_[role=switch]]:after:-inset-3 [&_input]:max-md:text-base [&_textarea]:max-md:text-base [&_select]:max-md:text-base [&_button:not([role=switch]):not([role=checkbox]):not([role=radio])]:max-md:min-h-11 [&_button[type=submit]]:max-md:w-full [&_[data-slot=native-select-wrapper]]:max-md:w-full">
+				<div className="mx-auto w-full max-w-3xl px-5 pt-5 pb-safe-24 md:px-10 md:pt-10 [&_[data-slot=native-select-wrapper]]:max-md:w-full [&_[role=switch]]:relative [&_[role=switch]]:after:absolute [&_[role=switch]]:after:-inset-3 [&_button[type=submit]]:max-md:w-full [&_select]:max-md:text-base">
 					{!index && (
 						<Link
 							href="/settings"

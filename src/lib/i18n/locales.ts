@@ -1,49 +1,49 @@
-type LocaleEntry = {
+interface LocaleEntry {
 	/** The language's own name, shown in the selector. */
 	label: string;
 	/** Set for right-to-left scripts. */
 	dir?: "rtl";
-};
+}
 
 // Register a language here with its native name, and add its catalog as `public/locales/<code>.json`.
 // English ships in the bundle; other catalogs are static assets fetched when first needed, so they
 // do not count toward the Worker size limit.
 // Types, validation, cookies, SSR and the selector all derive from this registry.
 export const locales = {
+	ar: { dir: "rtl", label: "العربية" },
+	bn: { label: "বাংলা" },
+	de: { label: "Deutsch" },
 	en: { label: "English" },
+	es: { label: "Español" },
+	fa: { dir: "rtl", label: "فارسی" },
+	fr: { label: "Français" },
+	gu: { label: "ગુજરાતી" },
+	ha: { label: "Hausa" },
+	hi: { label: "हिन्दी" },
+	id: { label: "Bahasa Indonesia" },
+	it: { label: "Italiano" },
+	ja: { label: "日本語" },
+	kn: { label: "ಕನ್ನಡ" },
+	ko: { label: "한국어" },
+	ml: { label: "മലയാളം" },
+	mr: { label: "मराठी" },
+	ms: { label: "Bahasa Melayu" },
+	nl: { label: "Nederlands" },
+	pa: { label: "ਪੰਜਾਬੀ" },
+	pl: { label: "Polski" },
 	"pt-BR": { label: "Português (Brasil)" },
 	"pt-PT": { label: "Português (Portugal)" },
-	es: { label: "Español" },
-	fr: { label: "Français" },
-	de: { label: "Deutsch" },
 	ru: { label: "Русский" },
-	"zh-CN": { label: "中文（简体）" },
-	ja: { label: "日本語" },
-	id: { label: "Bahasa Indonesia" },
-	tr: { label: "Türkçe" },
-	vi: { label: "Tiếng Việt" },
-	hi: { label: "हिन्दी" },
-	ar: { label: "العربية", dir: "rtl" },
-	bn: { label: "বাংলা" },
-	ur: { label: "اردو", dir: "rtl" },
-	mr: { label: "मराठी" },
-	te: { label: "తెలుగు" },
-	ko: { label: "한국어" },
-	it: { label: "Italiano" },
-	ta: { label: "தமிழ்" },
-	fa: { label: "فارسی", dir: "rtl" },
-	ms: { label: "Bahasa Melayu" },
-	sw: { label: "Kiswahili" },
-	th: { label: "ไทย" },
-	gu: { label: "ગુજરાતી" },
-	kn: { label: "ಕನ್ನಡ" },
-	pl: { label: "Polski" },
-	uk: { label: "Українська" },
-	nl: { label: "Nederlands" },
-	ml: { label: "മലയാളം" },
-	pa: { label: "ਪੰਜਾਬੀ" },
-	ha: { label: "Hausa" },
 	si: { label: "සිංහල" },
+	sw: { label: "Kiswahili" },
+	ta: { label: "தமிழ்" },
+	te: { label: "తెలుగు" },
+	th: { label: "ไทย" },
+	tr: { label: "Türkçe" },
+	uk: { label: "Українська" },
+	ur: { dir: "rtl", label: "اردو" },
+	vi: { label: "Tiếng Việt" },
+	"zh-CN": { label: "中文（简体）" },
 } satisfies Record<string, LocaleEntry>;
 
 export type Locale = keyof typeof locales;

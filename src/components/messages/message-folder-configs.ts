@@ -1,92 +1,100 @@
-import { Archive, Clock, CalendarClock, Inbox, MailOpen, Send, ShieldAlert, Star, Trash2 } from "lucide-react";
+import {
+	Archive,
+	Clock,
+	CalendarClock,
+	Inbox,
+	Send,
+	ShieldAlert,
+	Star,
+	Trash2,
+} from "lucide-react";
+
 import type { MessageFolderConfig } from "./types";
 
 export const inboxFolderConfig: MessageFolderConfig = {
-	folder: "inbox",
-	title: "Inbox",
-	titleKey: "navigation.inbox",
-	emptyTextKey: "folder.empty.inbox",
 	emptyText: "No emails",
+	emptyTextKey: "folder.empty.inbox",
+	folder: "inbox",
 	hrefPrefix: "/inbox",
 	icon: Inbox,
-	// headerIcons: [MailOpen, Clock],
 	showRowBadge: false,
+	title: "Inbox",
+	titleKey: "navigation.inbox",
 };
 
 export const starredFolderConfig: MessageFolderConfig = {
-	folder: "starred",
-	title: "Starred",
-	titleKey: "navigation.starred",
-	emptyTextKey: "folder.empty.starred",
+	badgeVariant: "outline",
 	emptyText: "No starred emails",
+	emptyTextKey: "folder.empty.starred",
+	folder: "starred",
 	hrefPrefix: "/starred",
 	icon: Star,
-	badgeVariant: "outline",
+	title: "Starred",
+	titleKey: "navigation.starred",
 };
 
 export const snoozedFolderConfig: MessageFolderConfig = {
-	folder: "snoozed",
-	title: "Snoozed",
-	titleKey: "navigation.snoozed",
-	emptyTextKey: "folder.empty.snoozed",
+	badgeVariant: "outline",
 	emptyText: "No snoozed emails",
+	emptyTextKey: "folder.empty.snoozed",
+	folder: "snoozed",
 	hrefPrefix: "/snoozed",
 	icon: Clock,
-	badgeVariant: "outline",
+	title: "Snoozed",
+	titleKey: "navigation.snoozed",
 };
 
 export const sentFolderConfig: MessageFolderConfig = {
-	folder: "sent",
-	title: "Sent",
-	titleKey: "navigation.sent",
-	emptyTextKey: "folder.empty.inbox",
+	badgeVariant: "outline",
 	emptyText: "No emails",
+	emptyTextKey: "folder.empty.inbox",
+	folder: "sent",
 	hrefPrefix: "/sent",
 	icon: Send,
-	// headerIcons: [MailOpen, Clock],
-	badgeVariant: "outline",
+	title: "Sent",
+	titleKey: "navigation.sent",
 };
 
 export const scheduledFolderConfig: MessageFolderConfig = {
-	folder: "scheduled",
-	title: "Scheduled",
-	titleKey: "navigation.scheduled",
-	emptyTextKey: "folder.empty.scheduled",
+	badgeVariant: "outline",
 	emptyText: "No scheduled emails",
+	emptyTextKey: "folder.empty.scheduled",
+	folder: "scheduled",
 	hrefPrefix: "/scheduled",
 	icon: CalendarClock,
-	badgeVariant: "outline",
+	title: "Scheduled",
+	titleKey: "navigation.scheduled",
 };
 
 export const archivedFolderConfig: MessageFolderConfig = {
-	folder: "archived",
-	title: "Archived",
-	titleKey: "navigation.archived",
-	emptyTextKey: "folder.empty.archived",
+	badgeVariant: "outline",
 	emptyText: "No archived emails",
+	emptyTextKey: "folder.empty.archived",
+	folder: "archived",
 	hrefPrefix: "/archived",
 	icon: Archive,
-	badgeVariant: "outline",
+	title: "Archived",
+	titleKey: "navigation.archived",
 };
 
 export const spamFolderConfig: MessageFolderConfig = {
-	folder: "spam",
-	title: "Spam",
-	titleKey: "navigation.spam",
-	emptyTextKey: "folder.empty.spam",
+	badgeVariant: "outline",
 	emptyText: "No spam",
+	emptyTextKey: "folder.empty.spam",
+	folder: "spam",
 	hrefPrefix: "/spam",
 	icon: ShieldAlert,
-	badgeVariant: "outline",
+	title: "Spam",
+	titleKey: "navigation.spam",
 };
 
 export const trashFolderConfig: MessageFolderConfig = {
-	folder: "trash",
-	title: "Trash",
-	titleKey: "navigation.trash",
-	emptyTextKey: "folder.empty.trash",
+	badgeVariant: "outline",
 	emptyText: "No emails in trash",
+	emptyTextKey: "folder.empty.trash",
+	folder: "trash",
 	hrefPrefix: "/trash",
 	icon: Trash2,
-	badgeVariant: "outline",
+	title: "Trash",
+	titleKey: "navigation.trash",
 };

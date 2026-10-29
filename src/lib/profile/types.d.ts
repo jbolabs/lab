@@ -1,7 +1,7 @@
-export type ProfileAvatarChangedDetail = {
+export interface ProfileAvatarChangedDetail {
 	url: string;
-};
+}
 
-export type ProfileNameChangedDetail = {
+export interface ProfileNameChangedDetail {
 	name: string;
-};
+}

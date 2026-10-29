@@ -12,24 +12,24 @@ Set up Mailflare in three steps:
 2. **Complete setup:** open the deployed app and follow `/setup` to check the installation and create the first admin account.
 3. **Connect your domain:** add a domain managed by the same Cloudflare account and choose which service receives its mail. Mailflare configures email routing and, when available and selected, email sending before helping you create the first mailbox. Resend and Amazon SES are alternatives to Cloudflare for receiving and sending; see [Sending and receiving providers](providers.md).
 
-
 ## Step 1: Setup CF_TOKEN
+
 To configure your `CF_TOKEN` (which is a scoped Cloudflare API Token with specific permissions), follow the below steps.
 
 1. In your Cloudflare account, navigate to `Manage Account` → `Account API Tokens` and create a new token.
 2. At the top of the Policy window, select `Specified Domains` for all domains that you plan to connect
-    1. Then configure these permissions
-        1. DNS & Zones > DNS > Select `Edit` Access
-            1. This allows the confirmed setup flow to replace conflicting MX records
-        2. DNS & Zones > Zone > Select `Read` Access
-        3. DNS & Zones → Zone Settings → Select `Edit` Access
-        4. Email & Messaging > Email Routing Rules > Select `Edit` Access
+   1. Then configure these permissions
+      1. DNS & Zones > DNS > Select `Edit` Access
+         1. This allows the confirmed setup flow to replace conflicting MX records
+      2. DNS & Zones > Zone > Select `Read` Access
+      3. DNS & Zones → Zone Settings → Select `Edit` Access
+      4. Email & Messaging > Email Routing Rules > Select `Edit` Access
 3. If mailflare will send emails: Add another policy and select `Entire Account`, and configure these permissions:
-    1. Email & Messaging > Email Sending > Select `Edit` Access
+   1. Email & Messaging > Email Sending > Select `Edit` Access
 4. After your token is setup, go to `Compute` → `Email Service` → `Email Sending`
-    1. You will need to purchase a paid workers plan if you don't already have one
-    2. Select On-board domain and follow the prompts
-    3. After this is done, and after you have setup Mailflare, on the Admin > domains page, when you expand the domain you can then configure DKIM and DMARC records
+   1. You will need to purchase a paid workers plan if you don't already have one
+   2. Select On-board domain and follow the prompts
+   3. After this is done, and after you have setup Mailflare, on the Admin > domains page, when you expand the domain you can then configure DKIM and DMARC records
 
 Paste only the token secret into the `CF_TOKEN` field in step 2. Do not include the word `Bearer` and do not use the token ID. The token must belong to the same Cloudflare account as the domains you connect.
 
@@ -40,18 +40,13 @@ Paste only the token secret into the `CF_TOKEN` field in step 2. Do not include 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/hieunc229/mailflare)
 
 2. Choose the Cloudflare account that owns the domain you want to use.
-3. Set the app name to exactly `mailflare`. Do not rename it. 
+3. Set the app name to exactly `mailflare`. Do not rename it.
 4. Add `CF_TOKEN` when Cloudflare asks for the app's runtime variables or secrets. This is different from the CF_TOKEN that Cloudflare uses to deploy the app.
 5. Start the deployment and wait for Cloudflare to finish provisioning and deploying the Worker.
 
-
 ### Optional Web Push configuration
 
-To enable background new-mail notifications, run `npm run push:keys` once and
-store `VAPID_PRIVATE_KEY` as a Worker secret. Configure `VAPID_PUBLIC_KEY` and
-`VAPID_SUBJECT` as Worker variables; the subject must be a `mailto:` URI or the
-public HTTPS URL of the installation. The same VAPID key pair should be kept
-across deployments so existing browser subscriptions remain valid.
+To enable background new-mail notifications, run `npm run push:keys` once and store `VAPID_PRIVATE_KEY` as a Worker secret. Configure `VAPID_PUBLIC_KEY` and `VAPID_SUBJECT` as Worker variables; the subject must be a `mailto:` URI or the public HTTPS URL of the installation. The same VAPID key pair should be kept across deployments so existing browser subscriptions remain valid.
 
 ## Step 3: Complete mailflare setup
 

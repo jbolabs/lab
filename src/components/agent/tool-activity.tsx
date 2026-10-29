@@ -1,10 +1,12 @@
 "use client";
 
+import { ChevronLeft, Wrench } from "lucide-react";
+import { useState } from "react";
+
+import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 
-import { useState } from "react";
-import { ChevronLeft, Wrench } from "lucide-react";
-import { useLanguage } from "@/components/language-provider";
+import { AgentEmailLink } from "./email-link";
 import type {
 	AgentDraftAction,
 	AgentEmailReference,
@@ -16,19 +18,21 @@ import {
 	agentToolLabel,
 	draftFromToolContent,
 	parseAgentToolContent,
+	parseAgentEmailReference,
 } from "./utils";
-import { AgentEmailLink } from "./email-link";
 
 function emailReferences(
-	value: Record<string, unknown>,
+	value: Record<string, unknown>
 ): AgentEmailReference[] {
-	if (Array.isArray(value.emails))
-		return value.emails.filter(
-			(item): item is AgentEmailReference =>
-				!!item && typeof item === "object" && typeof item.id === "string",
-		);
-	if (typeof value.id === "string" && typeof value.subject === "string")
-		return [value as AgentEmailReference];
+	if (Array.isArray(value.emails)) {
+		return value.emails
+			.map(parseAgentEmailReference)
+			.filter((email): email is AgentEmailReference => email !== null);
+	}
+	if (typeof value.subject === "string") {
+		const email = parseAgentEmailReference(value);
+		return email ? [email] : [];
+	}
 	return [];
 }
 
@@ -50,7 +54,7 @@ export function AgentToolActivity({
 		item.toolName,
 		item.toolState,
 		item.content,
-		t,
+		t
 	);
 	const result = parseAgentToolContent(item.content);
 	const emails = result ? emailReferences(result) : [];
@@ -59,7 +63,9 @@ export function AgentToolActivity({
 			className="group/tool text-xs text-muted-foreground"
 			open={forceOpen || open}
 			onToggle={(event) => {
-				if (!forceOpen) setOpen(event.currentTarget.open);
+				if (!forceOpen) {
+					setOpen(event.currentTarget.open);
+				}
 			}}
 		>
 			<summary className="flex w-full max-w-full cursor-pointer list-none items-center gap-1.5 text-sm text-muted-foreground [&::-webkit-details-marker]:hidden">
@@ -68,14 +74,14 @@ export function AgentToolActivity({
 					className="shrink-0 text-muted-foreground/70"
 					aria-hidden="true"
 				/>
-				<span className="truncate flex-1 min-w-0">{display.label}</span>
+				<span className="min-w-0 flex-1 truncate">{display.label}</span>
 				<ChevronLeft
 					size={13}
 					className="shrink-0 text-muted-foreground/70 transition-transform group-open/tool:-rotate-90"
 					aria-hidden="true"
 				/>
 			</summary>
-			<div className="mt-1.5 flex flex-col gap-2 pl-[18px] text-muted-foreground">
+			<div className="mt-1.5 flex flex-col gap-2 pl-4.5 text-muted-foreground">
 				<p>{display.description}</p>
 				{emails.length > 0 && (
 					<ul className="flex flex-col gap-1.5">
@@ -116,18 +122,18 @@ export function AgentToolActivity({
 									"status",
 								].includes(key) &&
 								value !== null &&
-								typeof value !== "object",
+								typeof value !== "object"
 						)
 						.map(([key, value]) => (
 							<p key={key} className="break-words">
 								<span className="text-muted-foreground">
-									{key.replace(/([A-Z])/g, " $1")}:{" "}
+									{key.replaceAll(/(?<capital>[A-Z])/gu, " $<capital>")}:{" "}
 								</span>
 								{String(value)}
 							</p>
 						))}
 				{typeof result?.text === "string" && (
-					<p className="max-h-36 overflow-y-auto whitespace-pre-wrap break-words">
+					<p className="max-h-36 overflow-y-auto break-words whitespace-pre-wrap">
 						{result.text}
 					</p>
 				)}
@@ -138,14 +144,14 @@ export function AgentToolActivity({
 								list: result.attachments
 									.map(
 										(file: { filename?: string }) =>
-											file.filename || t("agent.activity.attachment"),
+											file.filename || t("agent.activity.attachment")
 									)
 									.join(", "),
 							})}
 						</p>
 					)}
 				{!result && item.content && (
-					<p className="whitespace-pre-wrap break-words">{item.content}</p>
+					<p className="break-words whitespace-pre-wrap">{item.content}</p>
 				)}
 			</div>
 		</details>
@@ -169,15 +175,12 @@ export function AgentDraftActions({
 				size="sm"
 				type="button"
 				onClick={() => onOpenDraft(action.draftId)}
-				className="text-signal hover:underline"
 			>
 				{t("agent.activity.editDraft")}
 			</Button>
 			<Button
-				variant="outline"
 				size="sm"
 				type="button"
-				className="rounded-lg bg-primary px-3 py-2 font-medium text-primary-foreground disabled:opacity-50"
 				disabled={approvingId === action.draftId}
 				onClick={() => onApproveDraft(action.draftId, action.revision)}
 			>
@@ -201,8 +204,26 @@ export function AgentPendingActions({
 	if (
 		proposal?.status !== "pending_approval" ||
 		draftFromToolContent(item.content)
-	)
+	) {
 		return null;
+	}
+	function approvalLabel(
+		actionProposal: NonNullable<ReturnType<typeof agentActionProposal>>
+	) {
+		if (approvingId === item.id) {
+			return t("agent.activity.approving");
+		}
+		if (actionProposal.action === "discard_draft") {
+			return t("agent.activity.approveDiscard");
+		}
+		if (actionProposal.action === "mark_email_read") {
+			return t("agent.activity.approveStatus");
+		}
+		return t("agent.activity.approveMove", {
+			destination: actionProposal.destination,
+		});
+	}
+
 	return (
 		<div className="flex flex-col gap-2 text-xs">
 			{proposal.emails && (
@@ -219,22 +240,12 @@ export function AgentPendingActions({
 			)}
 			<div className="flex flex-wrap items-center justify-end gap-3">
 				<Button
-					variant="outline"
 					size="sm"
 					type="button"
-					className="rounded-lg bg-primary px-3 py-2 font-medium text-primary-foreground disabled:opacity-50"
 					disabled={!item.recordId || approvingId === item.id}
 					onClick={() => onApproveAction(item)}
 				>
-					{approvingId === item.id
-						? t("agent.activity.approving")
-						: proposal.action === "discard_draft"
-							? t("agent.activity.approveDiscard")
-							: proposal.action === "mark_email_read"
-								? t("agent.activity.approveStatus")
-								: t("agent.activity.approveMove", {
-										destination: proposal.destination,
-									})}
+					{approvalLabel(proposal)}
 				</Button>
 			</div>
 		</div>

@@ -1,7 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 /**
@@ -9,8 +14,20 @@ import { cn } from "@/lib/utils";
  * wrapping span, so any child works and `className` can place it in a layout. No label
  * renders the child alone.
  */
-export function HintTooltip({ label, children, className, side = "bottom" }: { label: null | string; children: ReactNode; className?: string; side?: "top" | "right" | "bottom" | "left" }) {
-	if (!label) return children;
+export function HintTooltip({
+	label,
+	children,
+	className,
+	side = "bottom",
+}: {
+	label: null | string;
+	children: ReactNode;
+	className?: string;
+	side?: "top" | "right" | "bottom" | "left";
+}) {
+	if (!label) {
+		return children;
+	}
 	return (
 		<Tooltip>
 			<TooltipTrigger asChild>

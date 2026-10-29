@@ -1,1 +1,3 @@
-export type AssistantAvailabilityResponse = { enabled: boolean };
+export interface AssistantAvailabilityResponse {
+	enabled: boolean;
+}

@@ -2,8 +2,8 @@
 
 Mailflare keeps your mail data in your own D1 database and R2 bucket, Backblaze B2 or AWS S3 (or SQLite and local files when self-hosted). What carries mail over the wire is a choice you make **per domain**, separately for receiving and for sending:
 
-| | Cloudflare | Resend | Amazon SES |
-|---|---|---|---|
+|  | Cloudflare | Resend | Amazon SES |
+| --- | --- | --- | --- |
 | **Receiving** | Email Routing (the default) | `email.received` webhook | S3 + SNS notification |
 | **Sending** | Cloudflare Email Sending | Resend API | SESv2 API |
 
@@ -38,13 +38,58 @@ The key needs this policy (the card shows it too, with only the missing parts ca
 
 ```json
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    { "Effect": "Allow", "Action": ["sts:GetCallerIdentity", "ses:GetAccount", "ses:SendEmail", "ses:CreateEmailIdentity", "ses:GetEmailIdentity", "ses:DeleteEmailIdentity"], "Resource": "*" },
-    { "Effect": "Allow", "Action": ["ses:DescribeActiveReceiptRuleSet", "ses:CreateReceiptRuleSet", "ses:SetActiveReceiptRuleSet", "ses:CreateReceiptRule", "ses:UpdateReceiptRule", "ses:DescribeReceiptRule", "ses:DeleteReceiptRule"], "Resource": "*" },
-    { "Effect": "Allow", "Action": ["sns:ListTopics", "sns:CreateTopic", "sns:SetTopicAttributes", "sns:Subscribe", "sns:ListSubscriptionsByTopic"], "Resource": "*" },
-    { "Effect": "Allow", "Action": ["s3:ListAllMyBuckets", "s3:CreateBucket", "s3:PutBucketPolicy", "s3:PutLifecycleConfiguration", "s3:ListBucket", "s3:GetObject", "s3:DeleteObject"], "Resource": "*" }
-  ]
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"sts:GetCallerIdentity",
+				"ses:GetAccount",
+				"ses:SendEmail",
+				"ses:CreateEmailIdentity",
+				"ses:GetEmailIdentity",
+				"ses:DeleteEmailIdentity"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"ses:DescribeActiveReceiptRuleSet",
+				"ses:CreateReceiptRuleSet",
+				"ses:SetActiveReceiptRuleSet",
+				"ses:CreateReceiptRule",
+				"ses:UpdateReceiptRule",
+				"ses:DescribeReceiptRule",
+				"ses:DeleteReceiptRule"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"sns:ListTopics",
+				"sns:CreateTopic",
+				"sns:SetTopicAttributes",
+				"sns:Subscribe",
+				"sns:ListSubscriptionsByTopic"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"s3:ListAllMyBuckets",
+				"s3:CreateBucket",
+				"s3:PutBucketPolicy",
+				"s3:PutLifecycleConfiguration",
+				"s3:ListBucket",
+				"s3:GetObject",
+				"s3:DeleteObject"
+			],
+			"Resource": "*"
+		}
+	]
 }
 ```
 
@@ -88,7 +133,7 @@ You cannot clean up the provider that is currently selected.
 ## Configuration reference
 
 | Variable | Purpose |
-|---|---|
+| --- | --- |
 | `RESEND_API_KEY` | Resend key used when none is saved in the app |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` | SES credentials used when none are saved in the app |
 | `APP_URL` | Public HTTPS address; required for Resend and SES receiving, because the providers call this app |

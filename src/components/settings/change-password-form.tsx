@@ -1,10 +1,15 @@
 "use client";
-import { FieldLabel, Field, FieldGroup } from "@/components/ui/field";
+
 import { useState } from "react";
+
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
+import { FieldLabel, Field, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { withCleanup } from "@/lib/async-cleanup";
+
 import { updatePassword } from "./utils";
+
 export function ChangePasswordForm() {
 	const { t } = useLanguage();
 	const [currentPassword, setCurrentPassword] = useState("");
@@ -20,22 +25,29 @@ export function ChangePasswordForm() {
 			return;
 		}
 		setLoading(true);
-		try {
-			await updatePassword(currentPassword, newPassword);
-			setCurrentPassword("");
-			setNewPassword("");
-			setConfirmPassword("");
-			setStatus(t("settings.password.changed"));
-		} catch (err) {
-			setStatus(
-				err instanceof Error ? err.message : t("settings.password.failed"),
-			);
-		} finally {
-			setLoading(false);
-		}
+		return await withCleanup(
+			async () => {
+				try {
+					await updatePassword(currentPassword, newPassword);
+					setCurrentPassword("");
+					setNewPassword("");
+					setConfirmPassword("");
+					setStatus(t("settings.password.changed"));
+				} catch (error) {
+					setStatus(
+						error instanceof Error
+							? error.message
+							: t("settings.password.failed")
+					);
+				}
+			},
+			() => {
+				setLoading(false);
+			}
+		);
 	}
 	return (
-		<form onSubmit={onSubmit} className="flex flex-col gap-4">
+		<form onSubmit={onSubmit}>
 			<FieldGroup>
 				<Field>
 					<FieldLabel htmlFor="currentPassword">
@@ -85,9 +97,7 @@ export function ChangePasswordForm() {
 							: t("settings.password.change")}
 					</Button>
 					{status && (
-						<p role="status" className="text-sm text-muted-foreground">
-							{status}
-						</p>
+						<output className="text-sm text-muted-foreground">{status}</output>
 					)}
 				</div>
 			</FieldGroup>

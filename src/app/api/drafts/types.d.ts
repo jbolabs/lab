@@ -1,4 +1,4 @@
-export type DraftPayload = {
+export interface DraftPayload {
 	mailboxId?: string | null;
 	from?: string;
 	to?: string;
@@ -14,4 +14,4 @@ export type DraftPayload = {
 	threadId?: string | null;
 	/** Copy this message's attachments onto the new draft (forwarding). */
 	forwardOfMessageId?: string | null;
-};
+}

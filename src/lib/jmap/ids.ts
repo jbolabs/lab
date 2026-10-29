@@ -6,21 +6,37 @@ import type { MailboxRef, SystemRole } from "./types";
  * user folder. Ids are stable strings so clients can cache them.
  */
 const SEP = "~";
-export const SYSTEM_ROLES: SystemRole[] = ["inbox", "sent", "drafts", "archive", "junk", "trash"];
 
 export function encodeMailboxRef(ref: MailboxRef): string {
-	if (ref.kind === "account") return ref.mailboxId;
-	if (ref.kind === "role") return `${ref.mailboxId}${SEP}${ref.role}`;
+	if (ref.kind === "account") {
+		return ref.mailboxId;
+	}
+	if (ref.kind === "role") {
+		return `${ref.mailboxId}${SEP}${ref.role}`;
+	}
 	return `${ref.mailboxId}${SEP}f${SEP}${ref.folderId}`;
 }
 
+export const SYSTEM_ROLES: SystemRole[] = [
+	"inbox",
+	"sent",
+	"drafts",
+	"archive",
+	"junk",
+	"trash",
+];
+
 export function decodeMailboxRef(id: string): MailboxRef | null {
 	const parts = id.split(SEP);
-	if (parts.length === 1 && parts[0]) return { kind: "account", mailboxId: parts[0] };
+	if (parts.length === 1 && parts[0]) {
+		return { kind: "account", mailboxId: parts[0] };
+	}
 	if (parts.length === 2 && (SYSTEM_ROLES as string[]).includes(parts[1])) {
 		return { kind: "role", mailboxId: parts[0], role: parts[1] as SystemRole };
 	}
-	if (parts.length === 3 && parts[1] === "f" && parts[2]) return { kind: "folder", mailboxId: parts[0], folderId: parts[2] };
+	if (parts.length === 3 && parts[1] === "f" && parts[2]) {
+		return { folderId: parts[2], kind: "folder", mailboxId: parts[0] };
+	}
 	return null;
 }
 
@@ -28,64 +44,96 @@ export function decodeMailboxRef(id: string): MailboxRef | null {
 export function attachmentBlobId(attachmentId: string): string {
 	return `att${SEP}${attachmentId}`;
 }
+
 export function messageBlobId(messageId: string): string {
 	return `msg${SEP}${messageId}`;
 }
+
 export function uploadBlobId(uploadId: string): string {
 	return `up${SEP}${uploadId}`;
 }
-export function decodeBlobId(blobId: string): { kind: "att" | "msg" | "up"; id: string } | null {
+
+export function decodeBlobId(
+	blobId: string
+): { kind: "att" | "msg" | "up"; id: string } | null {
 	const index = blobId.indexOf(SEP);
-	if (index < 0) return null;
+	if (index === -1) {
+		return null;
+	}
 	const kind = blobId.slice(0, index);
 	const id = blobId.slice(index + 1);
-	if (!id || (kind !== "att" && kind !== "msg" && kind !== "up")) return null;
-	return { kind, id };
+	if (!id || (kind !== "att" && kind !== "msg" && kind !== "up")) {
+		return null;
+	}
+	return { id, kind };
 }
 
 export function identityId(mailboxId: string, address: string): string {
 	return `${mailboxId}${SEP}${address.toLowerCase()}`;
 }
-export function decodeIdentityId(id: string): { mailboxId: string; address: string } | null {
+
+export function decodeIdentityId(
+	id: string
+): { mailboxId: string; address: string } | null {
 	const index = id.indexOf(SEP);
-	if (index < 0) return null;
-	return { mailboxId: id.slice(0, index), address: id.slice(index + 1) };
+	if (index === -1) {
+		return null;
+	}
+	return { address: id.slice(index + 1), mailboxId: id.slice(0, index) };
 }
 
 /** Status/folder predicate for each system role, as a plain description the query layer turns into SQL. */
 export function roleToStatus(role: SystemRole): string {
 	switch (role) {
-		case "inbox":
+		case "inbox": {
 			return "received";
-		case "sent":
+		}
+		case "sent": {
 			return "sent";
-		case "drafts":
+		}
+		case "drafts": {
 			return "draft";
-		case "archive":
+		}
+		case "archive": {
 			return "archived";
-		case "junk":
+		}
+		case "junk": {
 			return "spam";
-		case "trash":
+		}
+		case "trash": {
 			return "trash";
+		}
+
+		default: {
+			throw new Error("Unknown mailbox role");
+		}
 	}
 }
+
 export function statusToRole(status: string): SystemRole | null {
 	switch (status) {
-		case "received":
+		case "received": {
 			return "inbox";
+		}
 		case "sent":
 		case "queued":
-		case "failed":
+		case "failed": {
 			return "sent";
-		case "draft":
+		}
+		case "draft": {
 			return "drafts";
-		case "archived":
+		}
+		case "archived": {
 			return "archive";
-		case "spam":
+		}
+		case "spam": {
 			return "junk";
-		case "trash":
+		}
+		case "trash": {
 			return "trash";
-		default:
+		}
+		default: {
 			return null;
+		}
 	}
 }

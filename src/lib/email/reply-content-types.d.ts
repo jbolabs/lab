@@ -1,17 +1,17 @@
 export type PreviousMessageDirection = "received" | "sent";
 
-export type QuotedEmailContent = {
+export interface QuotedEmailContent {
 	dateLine: string;
 	direction: PreviousMessageDirection;
 	content: string;
 	quotedContent: QuotedEmailContent[];
-};
+}
 
-export type ReplyContentParts = {
+export interface ReplyContentParts {
 	latestContent: string;
 	quotedContent: QuotedEmailContent[];
-};
+}
 
-export type SplitReplyContentOptions = {
+export interface SplitReplyContentOptions {
 	ownAddress?: string;
-};
+}

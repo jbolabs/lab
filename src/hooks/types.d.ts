@@ -1,10 +1,27 @@
-export type MessageStatus = "received" | "sent" | "draft" | "queued" | "failed" | "archived" | "trash" | "spam";
+export type MessageStatus =
+	| "received"
+	| "sent"
+	| "draft"
+	| "queued"
+	| "failed"
+	| "archived"
+	| "trash"
+	| "spam";
 
-export type MessageFolder = "inbox" | "starred" | "snoozed" | "sent" | "scheduled" | "drafts" | "archived" | "trash" | "spam";
+export type MessageFolder =
+	| "inbox"
+	| "starred"
+	| "snoozed"
+	| "sent"
+	| "scheduled"
+	| "drafts"
+	| "archived"
+	| "trash"
+	| "spam";
 
 export type MessageDirection = "inbound" | "outbound";
 
-export type Message = {
+export interface Message {
 	id: string;
 	userId: string;
 	mailboxId: string | null;
@@ -46,12 +63,12 @@ export type Message = {
 	/** In conversation view: every message this row stands for within the current folder. */
 	threadMessageIds?: string[];
 	createdAt: string;
-};
+}
 
 export type ThreadMessage = Message & {
 	textBody: string | null;
 	htmlBody: string | null;
-	attachments: Array<{
+	attachments: {
 		contentId: string | null;
 		disposition: "attachment" | "inline";
 		filename: string;
@@ -59,18 +76,18 @@ export type ThreadMessage = Message & {
 		messageId: string;
 		size: number;
 		type: string;
-	}>;
+	}[];
 };
 
-export type ThreadResponse = {
+export interface ThreadResponse {
 	threadId: string | null;
 	messages?: ThreadMessage[];
 	error?: string;
-};
+}
 
 export type MessageReadFilter = "all" | "read" | "unread";
 
-export type MessageFilterOptions = {
+export interface MessageFilterOptions {
 	query?: string;
 	read?: MessageReadFilter;
 	title?: string;
@@ -78,33 +95,33 @@ export type MessageFilterOptions = {
 	offset?: number;
 	/** "thread" collapses each conversation to its newest matching message. */
 	group?: "thread";
-};
+}
 
-export type MessageListResponse = {
+export interface MessageListResponse {
 	messages?: Message[];
 	total?: number;
 	limit?: number;
 	offset?: number;
-};
+}
 
-export type FolderCount = {
+export interface FolderCount {
 	total: number;
 	unread: number;
-};
+}
 
-export type MailboxCount = {
+export interface MailboxCount {
 	mailboxId: string;
 	total: number;
 	unread: number;
 	inbox: number;
-};
+}
 
-export type MessageCounts = {
+export interface MessageCounts {
 	folders: Record<MessageFolder, FolderCount>;
 	customFolders: Record<string, FolderCount>;
 	mailboxes: MailboxCount[];
-};
+}
 
-export type MessageCountsDelta = {
+export interface MessageCountsDelta {
 	inboxUnreadDelta?: number;
-};
+}

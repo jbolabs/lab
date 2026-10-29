@@ -1,21 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
-import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
+import { useCallback, useSyncExternalStore } from "react";
+import type { ReactNode } from "react";
+
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
 import { readStorage, writeStorage } from "./reorderable-list-utils";
 
 /** Open/closed state of a menu section, remembered in localStorage. Starts open. */
-export function useSectionOpen(storageKey: string): [boolean, () => void] {
-	const [open, setOpen] = useState(true);
-	useEffect(() => {
-		setOpen(readStorage(storageKey, true));
-	}, [storageKey]);
+export function useSectionOpen(
+	storageKey: string,
+	defaultOpen = true
+): [boolean, () => void] {
+	const subscribe = useCallback((notify: () => void) => {
+		window.addEventListener("storage", notify);
+		window.addEventListener("mailflare:section-preference", notify);
+		return () => {
+			window.removeEventListener("storage", notify);
+			window.removeEventListener("mailflare:section-preference", notify);
+		};
+	}, []);
+	const snapshot = useCallback(
+		() => readStorage(storageKey, defaultOpen),
+		[storageKey, defaultOpen]
+	);
+	const open = useSyncExternalStore(subscribe, snapshot, () => defaultOpen);
 	function toggle() {
 		writeStorage(storageKey, !open);
-		setOpen(!open);
+		window.dispatchEvent(new Event("mailflare:section-preference"));
 	}
 	return [open, toggle];
 }
@@ -39,7 +53,8 @@ export function NavSectionHeader({
 				type="button"
 				onClick={onToggle}
 				aria-expanded={open}
-				className="h-9 min-w-0 flex-1 justify-start px-3 max-md:min-h-11"
+				size="default"
+				className="min-w-0 flex-1 justify-start"
 			>
 				<ChevronRight
 					className={cn("shrink-0 transition-transform", open && "rotate-90")}

@@ -1,16 +1,19 @@
 "use client";
 
+import { KeyRound } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { KeyRound } from "lucide-react";
-import { useLanguage } from "@/components/language-provider";
+
 import { AuthShell } from "@/components/auth/auth-shell";
 import { TurnstileField } from "@/components/auth/turnstile";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { useLanguage } from "@/components/language-provider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { withCleanup } from "@/lib/async-cleanup";
+
 import { requestPasswordReset } from "./utils";
 
 export function ForgotPasswordClient() {
@@ -20,26 +23,31 @@ export function ForgotPasswordClient() {
 	const [sent, setSent] = useState(false);
 	const [turnstileReset, setTurnstileReset] = useState(0);
 
-	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+	function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		setLoading(true);
 		setError(null);
-		try {
-			const result = await requestPasswordReset(
-				new FormData(event.currentTarget),
-			);
-			if (!result.ok) {
-				setError(result.error ?? t("auth.forgot.error"));
-				setTurnstileReset((value) => value + 1);
-				return;
+		return withCleanup(
+			async () => {
+				try {
+					const result = await requestPasswordReset(
+						new FormData(event.currentTarget)
+					);
+					if (!result.ok) {
+						setError(result.error ?? t("auth.forgot.error"));
+						setTurnstileReset((value) => value + 1);
+						return;
+					}
+					setSent(true);
+				} catch {
+					setError(t("auth.serverUnreachable"));
+					setTurnstileReset((value) => value + 1);
+				}
+			},
+			() => {
+				setLoading(false);
 			}
-			setSent(true);
-		} catch {
-			setError(t("auth.serverUnreachable"));
-			setTurnstileReset((value) => value + 1);
-		} finally {
-			setLoading(false);
-		}
+		);
 	}
 
 	return (
@@ -58,7 +66,7 @@ export function ForgotPasswordClient() {
 		>
 			{!sent && (
 				<form onSubmit={onSubmit} className="flex flex-col">
-					<FieldGroup className="flex-1 gap-5 [&>button[type=submit]]:mt-auto lg:[&>button[type=submit]]:mt-0">
+					<FieldGroup className="flex-1 [&>button[type=submit]]:mt-auto lg:[&>button[type=submit]]:mt-0">
 						<Field data-invalid={!!error}>
 							<FieldLabel htmlFor="email">{t("auth.email")}</FieldLabel>
 							<Input
@@ -76,14 +84,15 @@ export function ForgotPasswordClient() {
 							/>
 						</Field>
 						{error && (
-							<Alert id="auth-error" variant="destructive">
+							<Alert id="auth-error" variant="error">
 								<AlertDescription>{error}</AlertDescription>
 							</Alert>
 						)}
 						<TurnstileField resetSignal={turnstileReset} />
 						<Button
 							type="submit"
-							className="min-h-12 w-full"
+							size="lg"
+							className="w-full"
 							disabled={loading}
 						>
 							{loading && <Spinner data-icon="inline-start" />}

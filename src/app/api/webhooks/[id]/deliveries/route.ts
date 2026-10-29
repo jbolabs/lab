@@ -1,15 +1,19 @@
 import { desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+
 import { webhookDeliveries } from "@/db/schema";
-import { loadOwnedWebhook } from "../utils";
+
 import type { WebhookRouteParams } from "../types";
+import { loadOwnedWebhook } from "../utils";
 
 const MAX_PAYLOAD_PREVIEW = 2000;
 
 export async function GET(request: Request, { params }: WebhookRouteParams) {
 	const { id } = await params;
 	const loaded = await loadOwnedWebhook(request, id);
-	if (loaded.error) return loaded.error;
+	if (loaded.error) {
+		return loaded.error;
+	}
 
 	const url = new URL(request.url);
 	const limit = Math.min(Number(url.searchParams.get("limit") ?? 25), 100);
@@ -26,18 +30,18 @@ export async function GET(request: Request, { params }: WebhookRouteParams) {
 
 	return NextResponse.json({
 		deliveries: filtered.map((row) => ({
-			id: row.id,
-			eventType: row.eventType,
-			status: row.status,
 			attempts: row.attempts,
-			maxAttempts: loaded.hook.maxAttempts,
-			responseStatus: row.responseStatus,
-			error: row.error,
-			durationMs: row.durationMs,
-			lastAttemptAt: row.lastAttemptAt,
-			nextRetryAt: row.nextRetryAt,
 			createdAt: row.createdAt,
+			durationMs: row.durationMs,
+			error: row.error,
+			eventType: row.eventType,
+			id: row.id,
+			lastAttemptAt: row.lastAttemptAt,
+			maxAttempts: loaded.hook.maxAttempts,
+			nextRetryAt: row.nextRetryAt,
 			payload: row.payload.slice(0, MAX_PAYLOAD_PREVIEW),
+			responseStatus: row.responseStatus,
+			status: row.status,
 		})),
 	});
 }
