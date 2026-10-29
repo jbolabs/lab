@@ -18,6 +18,7 @@ import { formatScheduledSendTime } from "./scheduled-send-utils";
 import { useIsMobile } from "@/components/sidebar-mobile-utils";
 import { useMessageCounts } from "@/hooks/use-message-counts";
 import { useMessages } from "@/hooks/use-messages";
+import { useOlderMessages } from "@/hooks/use-older-messages";
 import type { BulkMessageAction } from "@/app/api/messages/bulk/types";
 import type { Message } from "@/hooks/types";
 import { setMessageDragData } from "@/lib/messages/drag-utils";
@@ -58,6 +59,7 @@ import {
 import { cn as clsx } from "@/lib/utils";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { SkeletonRows } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 
 const pageSize = 25;
@@ -377,13 +379,30 @@ export function MessageFolderPage({
 	const [conversationView] = useConversationView();
 	const grouped = conversationView && config.folder !== "drafts";
 	const listScroller = useRef<HTMLDivElement>(null);
-	const { messages, isLoading, total, limit, updateMessages, refresh } = useMessages(config.folder, selectedMailbox?.id, {
+	const listFilters = {
 		query,
 		limit: pageSize,
+		read: unreadOnly ? "unread" as const : "all" as const,
+		group: grouped ? "thread" as const : undefined,
+	};
+	const { messages: firstPage, isLoading, total, limit, updateMessages, refresh } = useMessages(config.folder, selectedMailbox?.id, {
+		...listFilters,
 		offset,
-		read: unreadOnly ? "unread" : "all",
-		group: grouped ? "thread" : undefined,
 	}, !mailboxesLoading, config.folderId);
+	// Phones scroll one endless list, like Gmail; wider screens keep the paged list.
+	const older = useOlderMessages(config.folder, selectedMailbox?.id, listFilters, firstPage, total, isMobile && !mailboxesLoading && offset === 0, config.folderId);
+	const messages = useMemo(() => older.older.length ? [...firstPage, ...older.older] : firstPage, [firstPage, older.older]);
+	const loadMoreSentinel = useRef<HTMLDivElement>(null);
+	const loadMore = older.loadMore;
+	useEffect(() => {
+		const sentinel = loadMoreSentinel.current;
+		if (!sentinel || !older.hasMore) return;
+		const observer = new IntersectionObserver((entries) => {
+			if (entries.some((entry) => entry.isIntersecting)) loadMore();
+		}, { root: listScroller.current, rootMargin: "0px 0px 600px 0px" });
+		observer.observe(sentinel);
+		return () => observer.disconnect();
+	}, [older.hasMore, loadMore]);
 	const { counts } = useMessageCounts(selectedMailbox?.id, !mailboxesLoading);
 	usePageLoading(mailboxesLoading || isLoading);
 	const headerIcons = config.headerIcons ?? [];
@@ -594,7 +613,7 @@ export function MessageFolderPage({
 								variant="ghost"
 								size="icon"
 								disabled={offset === 0 || isLoading}
-								className={clsx(isMobile && total <= limit && "hidden")}
+								className={clsx(isMobile && "hidden")}
 								onClick={() => setOffset(Math.max(offset - limit, 0))}
 								aria-label={t("list.previousPage")}
 							>
@@ -606,7 +625,7 @@ export function MessageFolderPage({
 								variant="ghost"
 								size="icon"
 								disabled={offset + messages.length >= total || isLoading}
-								className={clsx(isMobile && total <= limit && "hidden")}
+								className={clsx(isMobile && "hidden")}
 								onClick={() => setOffset(offset + limit)}
 								aria-label={t("list.nextPage")}
 							>
@@ -671,6 +690,12 @@ export function MessageFolderPage({
 						/>
 					))}
 				</div>
+				{older.hasMore && (
+					<div ref={loadMoreSentinel} role="status" className="flex h-16 items-center justify-center">
+						<Spinner className="size-5 text-muted-foreground" />
+						<span className="sr-only">{t("common.loading")}</span>
+					</div>
+				)}
 				{isLoading && messages.length === 0 && <SkeletonRows compact={compact || isMobile} />}
 				{!isLoading && messages.length === 0 && (
 					<Empty className="min-h-72"><EmptyHeader><EmptyMedia variant="icon"><config.icon /></EmptyMedia><EmptyTitle>{title}</EmptyTitle><EmptyDescription>{hasActiveFilters ? t("list.noMatch") : config.emptyTextKey ? t(config.emptyTextKey) : config.emptyText}</EmptyDescription></EmptyHeader></Empty>

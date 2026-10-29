@@ -164,6 +164,7 @@
 	"list.markUnread": "Mark unread",
 	"list.markRead": "Mark read",
 	"list.archived": "Archived",
+	"offline.banner": "You're offline. Showing saved mail.",
 	"list.starred": "Starred",
 	"list.notStarred": "Not starred",
 	"list.selectFrom": "Select message from {sender}",

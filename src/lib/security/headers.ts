@@ -28,3 +28,17 @@ export function getSecurityHeaders() {
 		},
 	];
 }
+
+/**
+ * `upgrade-insecure-requests` makes the browser fetch every subresource over https. In production that
+ * is what lets `http://` images in mail load under `img-src https:`, but a plain-http local or LAN
+ * server has no https, so its own assets fail and the app renders unstyled (iPhone Safari applies the
+ * directive even to localhost). Drop it only from responses served over http.
+ */
+export function withoutHttpsUpgradeOnHttp(request: Request, response: Response): Response {
+	const policy = response.headers.get("Content-Security-Policy");
+	if (new URL(request.url).protocol !== "http:" || !policy?.includes("upgrade-insecure-requests") || response.status === 101) return response;
+	const headers = new Headers(response.headers);
+	headers.set("Content-Security-Policy", policy.split(";").map((part) => part.trim()).filter((part) => part !== "upgrade-insecure-requests").join("; "));
+	return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}

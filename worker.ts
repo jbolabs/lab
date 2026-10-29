@@ -24,6 +24,7 @@ import { runTrashRetention } from "./src/lib/email/trash-retention";
 import { runDriveTrashRetention } from "./src/lib/drive/retention";
 import { runAccountRetention } from "./src/lib/accounts/deletion";
 import { runJmapChangeRetention } from "./src/lib/jmap/changes";
+import { withoutHttpsUpgradeOnHttp } from "./src/lib/security/headers";
 export { RealtimeHub } from "./src/lib/realtime/hub";
 
 export default {
@@ -49,7 +50,7 @@ export default {
 			return hub.fetch(hubRequest);
 		}
 
-		return vinextHandler.fetch(request, env, ctx);
+		return withoutHttpsUpgradeOnHttp(request, await vinextHandler.fetch(request, env, ctx));
 	},
 
 	async email(message: ForwardableEmailMessage, rawEnv: CloudflareEnv, ctx: ExecutionContext) {
