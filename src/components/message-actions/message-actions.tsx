@@ -1,16 +1,18 @@
 "use client";
 
-import { createElement, useState, useMemo, useCallback, useRef } from "react";
+import { createElement, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Ban, BellOff, Clock, FileCode2, Forward, Mail, MailOpen, MoreVertical, Reply, ReplyAll, ShieldAlert, Trash2 } from "lucide-react";
+import { Archive, Ban, BellOff, Clock, FileCode2, Forward, Mail, MailOpen, Reply, ReplyAll, ShieldAlert, Trash2 } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { useCompose } from "@/components/compose/compose-context";
+import { useMessageConfirmation } from "@/components/messages/use-message-confirmation";
 import { MessageSourceDialog } from "@/components/messages/message-source-dialog";
-import { useDismissible } from "@/components/use-dismissible";
+import { MessageActionMenu } from "@/components/messages/message-action-menu";
 import { useMessageListVisibility } from "@/components/messages/message-list-visibility";
 import { MessageSnoozeDialog } from "./message-snooze-dialog";
 import { useIsMobile } from "@/components/sidebar-mobile-utils";
 import { useHotkeys, useShortcuts } from "@/components/shortcuts";
+import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { HintTooltip } from "@/components/hint-tooltip";
 import type { BulkMessageAction } from "@/app/api/messages/bulk/types";
@@ -50,6 +52,7 @@ export function MessageActions({
 }: MessageActionsProps) {
 	const { t } = useLanguage();
 	const router = useRouter();
+	const { confirm, confirmation } = useMessageConfirmation();
 	const isMobile = useIsMobile();
 	const { openDraftComposer } = useCompose();
 	const { backHref: listHref } = useMessageListVisibility();
@@ -59,8 +62,6 @@ export function MessageActions({
 	>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [moreOpen, setMoreOpen] = useState(false);
-	const moreRef = useRef<HTMLDivElement>(null);
-	useDismissible(moreOpen, () => setMoreOpen(false), moreRef);
 	const [sourceOpen, setSourceOpen] = useState(false);
 	const [snoozeOpen, setSnoozeOpen] = useState(false);
 
@@ -84,7 +85,7 @@ export function MessageActions({
 	// being a no-op, after the user confirms.
 	const canDeleteForever = supportsPermanentDelete(status);
 	const deleteForever = useCallback(async () => {
-		if (!window.confirm(getPermanentDeleteConfirmText(1, t))) return;
+		if (!(await confirm(getPermanentDeleteConfirmText(1, t)))) return;
 		setMoreOpen(false);
 		setPendingAction("delete");
 		setError(null);
@@ -96,7 +97,7 @@ export function MessageActions({
 			setError(deleteError instanceof PartialDeleteError ? t("actions.error.deleteSkipped") : t("actions.error.delete"));
 			setPendingAction(null);
 		}
-	}, [messageId, direction, status, router, t]);
+	}, [messageId, direction, status, router, t, confirm]);
 	const onTrashClick = () => (canDeleteForever ? void deleteForever() : void runAction("trash"));
 	const trashLabel = canDeleteForever ? t("common.deleteForever") : t("actions.moveToTrash");
 
@@ -258,27 +259,34 @@ export function MessageActions({
 
 	return (
 		<div className="flex flex-wrap items-center gap-3 text-muted-foreground flex-1 min-w-0">
+			{confirmation}
 			{error && <span role="alert" className="text-xs text-red-600">{error}</span>}
 
+			{isMobile && <div role="toolbar" aria-label={t("message.reply")} className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t bg-background pl-4 pr-40 pt-2 pb-[calc(.5rem+env(safe-area-inset-bottom))]">
+				<Button className="min-h-11 flex-1" disabled={disabled} onClick={() => void handleReply("reply")}><Reply data-icon="inline-start" />{t("message.reply")}</Button>
+				{message && messageMeta && <Button variant="outline" size="icon" className="size-11 shrink-0" aria-label={t("message.forward")} disabled={disabled} onClick={() => void handleForward()}><Forward data-icon="inline-start" /></Button>}
+			</div>}
 			{isMobile && (
 				<>
 					<Button
 						variant="ghost"
-						size="roundedSM"
+						size="icon"
+					className="pointer-coarse:size-11"
 						aria-label={trashLabel}
 						disabled={disabled}
 						onClick={onTrashClick}
 					>
-						<Trash2 size={iconSize} />
+						<Trash2 data-icon="inline-start" />
 					</Button>
 					<Button
 						variant="ghost"
-						size="roundedSM"
+						size="icon"
+					className="pointer-coarse:size-11"
 						aria-label={t("common.reportSpam")}
 						disabled={disabled || status === "spam" || direction !== "inbound"}
 						onClick={() => runAction("spam")}
 					>
-						<ShieldAlert size={iconSize} />
+						<ShieldAlert data-icon="inline-start" />
 					</Button>
 				</>
 			)}
@@ -287,50 +295,54 @@ export function MessageActions({
 			<HintTooltip label={shortcutsEnabled ? t("actions.archiveHint") : t("common.archive")}>
 				<Button
 					variant="ghost"
-					size="roundedSM"
+					size="icon"
+					className="pointer-coarse:size-11"
 					aria-label={shortcutsEnabled ? t("actions.archiveHint") : t("common.archive")}
 					disabled={disabled || status === "archived"}
 					onClick={() => runAction("archive")}
 				>
-					<Archive size={iconSize} />
+					<Archive data-icon="inline-start" />
 				</Button>
 			</HintTooltip>
 			<HintTooltip label={shortcutsEnabled ? t("actions.reportSpamHint") : t("common.reportSpam")}>
 				<Button
 					variant="ghost"
-					size="roundedSM"
+					size="icon"
+					className="pointer-coarse:size-11"
 					aria-label={shortcutsEnabled ? t("actions.reportSpamHint") : t("common.reportSpam")}
 					disabled={disabled || status === "spam" || direction !== "inbound"}
 					onClick={() => runAction("spam")}
 				>
-					<ShieldAlert size={iconSize} />
+					<ShieldAlert data-icon="inline-start" />
 				</Button>
 			</HintTooltip>
 			<HintTooltip label={canDeleteForever ? t("common.deleteForever") : shortcutsEnabled ? t("actions.deleteHint") : t("common.delete")}>
 				<Button
 					variant="ghost"
-					size="roundedSM"
+					size="icon"
+					className="pointer-coarse:size-11"
 					aria-label={canDeleteForever ? trashLabel : shortcutsEnabled ? t("actions.moveToTrashHint") : t("actions.moveToTrash")}
 					disabled={disabled}
 					onClick={onTrashClick}
-					className={canDeleteForever ? "text-red-600 hover:text-red-700" : undefined}
+
 				>
-					<Trash2 size={iconSize} />
+					<Trash2 data-icon="inline-start" />
 				</Button>
 			</HintTooltip>
-			<span className="h-5 mx-2 bg-accent w-px inline-block" />
+			<Separator orientation="vertical" className="mx-1 h-5" />
 
 
 			<HintTooltip label={shortcutsEnabled ? t("actions.replyHint") : t("message.reply")}>
 				<Button
 					type="button"
 					variant="ghost"
-					size="roundedSM"
+					size="icon"
+					className="pointer-coarse:size-11"
 					aria-label={shortcutsEnabled ? t("actions.replyHint") : t("message.reply")}
 					disabled={disabled}
 					onClick={() => handleReply("reply")}
 				>
-					<Reply size={iconSize} />
+					<Reply data-icon="inline-start" />
 				</Button>
 			</HintTooltip>
 			{canReplyAll && (
@@ -338,12 +350,13 @@ export function MessageActions({
 					<Button
 						type="button"
 						variant="ghost"
-						size="roundedSM"
+						size="icon"
+					className="pointer-coarse:size-11"
 						aria-label={t("message.replyAll")}
 						disabled={disabled}
 						onClick={() => handleReply("replyAll")}
 					>
-						<ReplyAll size={iconSize} />
+						<ReplyAll data-icon="inline-start" />
 					</Button>
 				</HintTooltip>
 			)}
@@ -352,12 +365,13 @@ export function MessageActions({
 					<Button
 						type="button"
 						variant="ghost"
-						size="roundedSM"
+						size="icon"
+					className="pointer-coarse:size-11"
 						aria-label={t("message.forward")}
 						disabled={disabled}
 						onClick={() => void handleForward()}
 					>
-						<Forward size={iconSize} />
+						<Forward data-icon="inline-start" />
 					</Button>
 				</HintTooltip>
 			)}
@@ -365,122 +379,33 @@ export function MessageActions({
 			<HintTooltip label={read ? t("common.markUnread") : t("common.markRead")}>
 				<Button
 					variant="ghost"
-					size="roundedSM"
+					size="icon"
+					className="pointer-coarse:size-11"
 					aria-label={read ? t("common.markUnread") : t("common.markRead")}
 					disabled={disabled}
 					onClick={() => runAction(markAction)}
 				>
-					{read ? <Mail size={iconSize} /> : <MailOpen size={iconSize} />}
+					{read ? <Mail data-icon="inline-start" /> : <MailOpen data-icon="inline-start" />}
 				</Button>
 			</HintTooltip>
 				</>
 			)}
-			<div ref={moreRef} className="relative">
-				<HintTooltip label={t("common.moreActions")}>
-					<Button
-						type="button"
-						variant="ghost"
-						size="roundedSM"
-						aria-label={t("common.moreActions")}
-						aria-expanded={moreOpen}
-						disabled={disabled}
-						onClick={() => setMoreOpen((open) => !open)}
-					>
-						<MoreVertical size={iconSize} />
-					</Button>
-				</HintTooltip>
-
-
-				{moreOpen && (
-					<div className="absolute right-0 top-8 z-20 w-54 rounded-xl border border-border bg-card p-2 shadow-lg">
-						{isMobile && (
-							<>
-								<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent disabled:text-muted-foreground/70" disabled={status === "archived"} onClick={() => void runAction("archive")}>
-									<Archive className="h-4 w-4" />
-									{t("common.archive")}
-								</button>
-								<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent disabled:text-muted-foreground/70" onClick={() => { setMoreOpen(false); void handleReply("reply"); }}>
-									<Reply className="h-4 w-4" />
-									{t("message.reply")}
-								</button>
-								{canReplyAll && (
-									<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent disabled:text-muted-foreground/70" onClick={() => { setMoreOpen(false); void handleReply("replyAll"); }}>
-										<ReplyAll className="h-4 w-4" />
-										{t("message.replyAll")}
-									</button>
-								)}
-								{message && messageMeta && (
-									<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent disabled:text-muted-foreground/70" onClick={() => { setMoreOpen(false); void handleForward(); }}>
-										<Forward className="h-4 w-4" />
-										{t("message.forward")}
-									</button>
-								)}
-								<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent disabled:text-muted-foreground/70" onClick={() => void runAction(markAction)}>
-									{read ? <Mail className="h-4 w-4" /> : <MailOpen className="h-4 w-4" />}
-									{read ? t("common.markUnread") : t("common.markRead")}
-								</button>
-								<hr className="my-1 border-border" />
-							</>
-						)}
-						{direction === "inbound" && status === "received" && (
-							<button
-								type="button"
-								className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent"
-								onClick={() => { setMoreOpen(false); setSnoozeOpen(true); }}
-							>
-								<Clock className="h-4 w-4" />
-								{t("common.snooze")}
-							</button>
-						)}
-						{direction === "inbound" && (
-							<>
-								<button
-									type="button"
-									className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent disabled:cursor-not-allowed disabled:text-muted-foreground/70"
-									disabled={!unsubscribeUrl && status === "trash"}
-									onClick={() => void onUnsubscribe()}
-								>
-									<BellOff className="h-4 w-4 shrink-0" />
-									{t("actions.unsubscribe")}
-								</button>
-								<button
-									type="button"
-									className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent"
-									onClick={() => void onBlockContact()}
-								>
-									<Ban className="h-4 w-4" />
-									{t("message.blockContact")}
-								</button>
-								<hr className="my-1 border-border" />
-							</>
-						)}
-						<button
-							type="button"
-							className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent"
-							onClick={() => { setMoreOpen(false); setSourceOpen(true); }}
-						>
-							<FileCode2 className="h-4 w-4" />
-							{t("message.showOriginal")}
-						</button>
-						<hr className="my-1 border-border" />
-						<p className="mt-1 px-3 pb-1 pt-2 text-sm font-medium text-muted-foreground">
-							{t("common.moveTo")}
-						</p>
-						{moveActions.map((item) => (
-							<button
-								key={item.action}
-								type="button"
-								className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground/80 hover:bg-accent"
-								onClick={() => void runAction(item.action)}
-							>
-								{createElement(item.icon, { size: 16 })}
-								{t(item.labelKey)}
-							</button>
-						))}
-					</div>
-				)}
-
-			</div>
+			<MessageActionMenu open={moreOpen} onOpenChange={setMoreOpen} disabled={disabled} actions={[
+				...(isMobile ? [
+					{ label: t("common.archive"), icon: <Archive data-icon="inline-start" />, disabled: status === "archived", onSelect: () => void runAction("archive") },
+					{ label: t("message.reply"), icon: <Reply data-icon="inline-start" />, onSelect: () => void handleReply("reply") },
+					...(canReplyAll ? [{ label: t("message.replyAll"), icon: <ReplyAll data-icon="inline-start" />, onSelect: () => void handleReply("replyAll") }] : []),
+					...(message && messageMeta ? [{ label: t("message.forward"), icon: <Forward data-icon="inline-start" />, onSelect: () => void handleForward() }] : []),
+					{ label: read ? t("common.markUnread") : t("common.markRead"), icon: <Mail data-icon="inline-start" />, onSelect: () => void runAction(markAction) },
+				] : []),
+				...(direction === "inbound" && status === "received" ? [{ label: t("common.snooze"), icon: <Clock data-icon="inline-start" />, onSelect: () => setSnoozeOpen(true) }] : []),
+				...(direction === "inbound" ? [
+					{ label: t("actions.unsubscribe"), icon: <BellOff data-icon="inline-start" />, disabled: !unsubscribeUrl && status === "trash", onSelect: () => void onUnsubscribe() },
+					{ label: t("message.blockContact"), icon: <Ban data-icon="inline-start" />, onSelect: () => void onBlockContact() },
+				] : []),
+				{ label: t("message.showOriginal"), icon: <FileCode2 data-icon="inline-start" />, onSelect: () => setSourceOpen(true) },
+				...moveActions.map(item => ({ label: t(item.labelKey), icon: createElement(item.icon, { "data-icon": "inline-start" }), onSelect: () => void runAction(item.action) })),
+			]} />
 
 			<MessageSourceDialog messageId={messageId} open={sourceOpen} onOpenChange={setSourceOpen} />
 			<MessageSnoozeDialog messageId={messageId} open={snoozeOpen} onOpenChange={setSnoozeOpen} />
@@ -489,6 +414,3 @@ export function MessageActions({
 		</div>
 	);
 }
-
-
-const iconSize = 16;

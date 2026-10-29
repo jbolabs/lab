@@ -8,10 +8,12 @@ import { formatUserDate } from "@/lib/time/utils";
 import { MarkAsRead } from "@/components/mark-read";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { ContactDetailsTrigger } from "@/components/contacts/contact-details";
-import { ContactAvatar } from "@/components/contacts/contact-avatar";
+import { MessageAvatar } from "@/components/messages/message-avatar";
 import { MessageActions } from "@/components/message-actions/message-actions";
 import { MessageAttachmentViewer } from "@/components/message-attachment-viewer";
-import { MessageAttachmentCard } from "@/components/message-attachment-card";
+import { MessageAttachmentItem } from "@/components/messages/message-attachment-item";
+import { Button } from "@/components/ui/button";
+import { Item, ItemContent, ItemTitle, ItemDescription, ItemMedia } from "@/components/ui/item";
 import { MessageDetailSkeleton } from "@/components/page-skeletons";
 import { usePageLoading } from "@/components/page-loading";
 import { PreviousMessage } from "@/components/previous-message";
@@ -164,7 +166,7 @@ export default function MessageDetailPage() {
       : { month: "short", day: "2-digit", year: "numeric" });
   return (<>
 
-    <div className={clsx("flex py-2 h-12 items-center px-2 border-b sticky top-0 bg-card z-40 gap-3", scrolled ? "border-border" : "border-transparent")}>
+    <div className={clsx("flex min-h-14 shrink-0 items-center px-2 border-b sticky top-0 bg-card z-20 gap-1 pt-[env(safe-area-inset-top)]", scrolled ? "border-border" : "border-transparent")}>
       <MessageReadingHeaderButton assistantVisible={assistantVisible} />
       {/* <div className="min-w-0 flex-1" /> */}
       {/* <div className="flex items-center flex-row gap-6">
@@ -194,10 +196,10 @@ export default function MessageDetailPage() {
       <MessageDetailNavigation messageId={message.id} unread={message.direction === "inbound" && !message.read} />
     </div>
 
-    <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto overscroll-contain scrollbar-gutter-stable flex-1 min-h-0">
+    <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto overscroll-contain scrollbar-gutter-stable flex-1 min-h-0 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6">
       {!message.read && <MarkAsRead messageId={message.id} />}
 
-      <h1 className={clsx(!isAnyPanelVisible ? "sm:pl-16" : "sm:pl-10", "px-4 pb-2 pt-2 text-2xl text-foreground sm:pr-6")} title={message.subject ?? t("list.noSubject")}>
+      <h1 className={clsx(!isAnyPanelVisible ? "sm:pl-16" : "sm:pl-10", "px-4 pb-2 pt-6 text-2xl font-medium tracking-tight text-foreground sm:pr-6")} title={message.subject ?? t("list.noSubject")}>
         {message.subject ?? t("list.noSubject")}
       </h1>
       {/* <div className="px-6">
@@ -227,7 +229,7 @@ export default function MessageDetailPage() {
         <div className="w-full">
           <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 px-4 pb-5 sm:px-0 sm:pl-4">
             <div className="flex min-w-0 items-start gap-3">
-              <ContactAvatar
+              <MessageAvatar
                 mailboxId={message.mailboxId}
                 address={message.fromAddr}
                 name={fromName}
@@ -262,9 +264,9 @@ export default function MessageDetailPage() {
                 </p>
                 <div className="sm:hidden flex items-center gap-2 text-xs text-muted-foreground">
                   <span>{messageDate(false)}</span>
-                  <button type="button" className="text-signal hover:underline" aria-expanded={detailsOpen} onClick={() => setDetailsOpen((open) => !open)}>
+                  <Button variant="link" size="sm" type="button" className="min-h-11" aria-expanded={detailsOpen} onClick={() => setDetailsOpen((open) => !open)}>
                     {t("message.details")}
-                  </button>
+                  </Button>
                 </div>
                 {ccEntries.length > 0 && (
                   <p className="text-xs text-muted-foreground">
@@ -320,25 +322,13 @@ export default function MessageDetailPage() {
               </h2>
               <div className="grid gap-2 sm:grid-cols-2">
                 {cloudAttachmentResult.attachments.map((attachment) => (
-                  <a
-                    key={attachment.id}
-                    href={attachment.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-3 rounded-lg border border-border p-3 text-left hover:border-signal/30 hover:bg-signal-soft/40"
-                  >
-                    <Cloud className="h-5 w-5 shrink-0 text-signal" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium text-foreground">
-                        {attachment.filename}
-                      </span>
-                      <span className="block text-xs text-muted-foreground">
-                        {t("message.openFrom", { provider: attachment.provider })}
-                      </span>
-                    </span>
-                    <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground/70" aria-hidden="true" />
-                    <span className="sr-only"> ({t("common.opensInNewTab")})</span>
-                  </a>
+                  <Item key={attachment.id} variant="outline" size="sm" asChild>
+                    <a href={attachment.url} target="_blank" rel="noreferrer">
+                      <ItemMedia variant="icon"><Cloud /></ItemMedia>
+                      <ItemContent className="min-w-0"><ItemTitle className="max-w-full"><span className="truncate">{attachment.filename}</span></ItemTitle><ItemDescription>{t("message.openFrom", { provider: attachment.provider })}</ItemDescription></ItemContent>
+                      <ExternalLink className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" /><span className="sr-only">({t("common.opensInNewTab")})</span>
+                    </a>
+                  </Item>
                 ))}
               </div>
             </section>
@@ -350,7 +340,7 @@ export default function MessageDetailPage() {
               </h2>
               <div className="grid gap-2 sm:grid-cols-2">
                 {attachments.map((attachment) => (
-                  <MessageAttachmentCard
+                  <MessageAttachmentItem
                     key={attachment.id}
                     attachment={attachment}
                     messageId={message.id}
