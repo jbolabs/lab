@@ -20,6 +20,8 @@ export type SidebarProviderProps = {
 export type SidebarHeaderProps = {
 	href: string;
 	label?: string;
+	/** The app the sidebar belongs to, shown after "jbo" in the wordmark. */
+	app?: "inbox" | "drive" | "calendar";
 };
 
 export type SidebarScaffoldProps = {
