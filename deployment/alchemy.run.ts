@@ -6,9 +6,11 @@
  */
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
+import * as Output from "alchemy/Output";
 import * as RemovalPolicy from "alchemy/RemovalPolicy";
 import { Effect, Layer } from "effect";
 
+import { vapidPublicKey, vapidPrivateKey } from "./push-keys.ts";
 import { sharedStateContext } from "./shared-state.ts";
 import { accountId, mailDomains, mailflare } from "./config.ts";
 import { publishesDmarc } from "./mail-domain-flags.ts";
@@ -110,6 +112,12 @@ export default Alchemy.Stack(
       ],
     });
 
+    // Persist this pair in Alchemy state: rotating it invalidates existing browser subscriptions.
+    const pushKeys = yield* Alchemy.KeyPair("WebPushKeys", {
+      algorithm: "ec",
+      namedCurve: "P-256",
+    }).pipe(RemovalPolicy.retain());
+
     const worker = yield* Cloudflare.Worker("Mailflare", {
       assets: { directory: dist("client"), notFoundHandling: "none" },
       bundle: false,
@@ -149,6 +157,9 @@ export default Alchemy.Stack(
         REALTIME: Cloudflare.DurableObject("REALTIME", {
           className: "RealtimeHub",
         }),
+        VAPID_PUBLIC_KEY: Output.map(pushKeys.publicKey, vapidPublicKey),
+        VAPID_PRIVATE_KEY: Output.map(pushKeys.privateKey, vapidPrivateKey),
+        VAPID_SUBJECT: `https://${mailflare.host}`,
         WORKER_SELF_REFERENCE: Cloudflare.Workers.Self,
       },
       main: dist("server/index.js"),

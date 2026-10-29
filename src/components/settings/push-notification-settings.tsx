@@ -1,106 +1,89 @@
 "use client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-	Field,
-	FieldContent,
-	FieldLabel,
-	FieldDescription,
-} from "@/components/ui/field";
+
 import { useEffect, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
+import { useLanguage } from "@/components/language-provider";
+import { AUTH_SESSION_CHANGED_EVENT } from "@/lib/auth/client";
 import {
-	disablePushNotifications,
-	enablePushNotifications,
-	getPushState,
+	disablePushNotifications, enablePushNotifications, getPushState,
+	PUSH_STATE_CHANGED_EVENT, type PushState,
 } from "@/lib/push/client";
-type State = {
-	loading: boolean;
-	supported: boolean;
-	configured: boolean;
-	permission: NotificationPermission | "unsupported";
-	subscribed: boolean;
-	error: string | null;
-};
-const initialState: State = {
-	loading: true,
-	supported: false,
-	configured: false,
-	permission: "unsupported",
-	subscribed: false,
-	error: null,
-};
+
 export function PushNotificationSettings() {
-	const [state, setState] = useState<State>(initialState);
+	const { t } = useLanguage();
+	const [state, setState] = useState<PushState | null>(null);
+	const [busy, setBusy] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [retry, setRetry] = useState(0);
 	useEffect(() => {
 		let cancelled = false;
-		getPushState()
-			.then((next) => {
-				if (!cancelled) setState({ ...next, loading: false, error: null });
-			})
-			.catch((error) => {
-				if (!cancelled) {
-					setState((current) => ({
-						...current,
-						loading: false,
-						error:
-							error instanceof Error
-								? error.message
-								: "Failed to load notification settings",
-					}));
-				}
+		let revision = 0;
+		const refresh = () => {
+			const current = ++revision;
+			void getPushState().then((next) => {
+				if (!cancelled && current === revision) { setState(next); setError(null); }
+			}).catch(() => {
+				if (!cancelled && current === revision) setError(t("settings.push.loadFailed"));
 			});
+		};
+		const resume = () => { if (document.visibilityState === "visible") refresh(); };
+		refresh();
+		window.addEventListener(PUSH_STATE_CHANGED_EVENT, refresh);
+		window.addEventListener(AUTH_SESSION_CHANGED_EVENT, refresh);
+		window.addEventListener("online", refresh);
+		document.addEventListener("visibilitychange", resume);
 		return () => {
 			cancelled = true;
+			window.removeEventListener(PUSH_STATE_CHANGED_EVENT, refresh);
+			window.removeEventListener(AUTH_SESSION_CHANGED_EVENT, refresh);
+			window.removeEventListener("online", refresh);
+			document.removeEventListener("visibilitychange", resume);
 		};
-	}, []);
-	const disabled =
-		state.loading ||
-		!state.supported ||
-		(!state.configured && !state.subscribed) ||
-		(state.permission === "denied" && !state.subscribed);
-	let description = "Get new mail alerts even when the Lab is closed.";
-	if (!state.supported)
-		description = "This browser does not support Web Push for the Lab.";
-	else if (!state.configured)
-		description = "Web Push has not been configured on this Lab server.";
-	else if (state.permission === "denied")
-		description = "Notifications are blocked in your browser settings.";
+	}, [retry, t]);
+
+	let description = t("settings.push.description");
+	if (!state) description = t(error ? "settings.push.loadFailed" : "settings.push.loading");
+	else if (state.needsInstall) description = t("settings.push.install");
+	else if (!state.supported) description = t("settings.push.unsupported");
+	else if (state.permission === "denied") description = t("settings.push.blocked");
+	else if (!state.configured) description = t("settings.push.unconfigured");
+
 	return (
 		<div>
 			<Field orientation="horizontal">
 				<FieldContent>
-					<FieldLabel htmlFor="push-notification-settings-0">Browser push notifications</FieldLabel>
-					<FieldDescription>{description}</FieldDescription>
+					<FieldLabel htmlFor="new-email-notifications">{t("settings.push.title")}</FieldLabel>
+					<FieldDescription id="new-email-notifications-description">{description}</FieldDescription>
 				</FieldContent>
-				<Switch id="push-notification-settings-0"
-					checked={state.subscribed}
-					disabled={disabled}
+				<Switch
+					id="new-email-notifications"
+					aria-describedby="new-email-notifications-description"
+					checked={state?.subscribed ?? false}
+					disabled={busy || !state || !state.supported || (!state.configured && !state.subscribed) || (state.permission === "denied" && !state.subscribed)}
 					onCheckedChange={(enabled) => {
-						setState((current) => ({ ...current, loading: true, error: null }));
-						void (
-							enabled ? enablePushNotifications() : disablePushNotifications()
-						)
+						setBusy(true);
+						setError(null);
+						// Calling directly keeps iOS permission attached to this tap.
+						void (enabled ? enablePushNotifications() : disablePushNotifications())
 							.then(() => getPushState())
-							.then((next) =>
-								setState({ ...next, loading: false, error: null }),
-							)
-							.catch((error) => {
-								setState((current) => ({
-									...current,
-									loading: false,
-									error:
-										error instanceof Error
-											? error.message
-											: "Failed to update notifications",
-								}));
-							});
+							.then(setState)
+							.catch(async () => {
+								try { setState(await getPushState()); } catch { /* Keep the last known state while offline. */ }
+								setError(t("settings.push.updateFailed"));
+							})
+							.finally(() => setBusy(false));
 					}}
-					aria-label="Enable browser push notifications"
 				/>
 			</Field>
-			{state.error && (
-				<Alert variant="destructive">
-					<AlertDescription>{state.error}</AlertDescription>
+			{error && (
+				<Alert variant="destructive" className="mt-3">
+					<AlertDescription>
+						{error}
+						<Button variant="link" size="sm" disabled={busy} onClick={() => setRetry((value) => value + 1)}>{t("settings.push.retry")}</Button>
+					</AlertDescription>
 				</Alert>
 			)}
 		</div>
