@@ -1,9 +1,10 @@
+import { AdminRowActions } from "../admin-row-actions";
 import { Fragment } from "react";
 import { useLanguage } from "@/components/language-provider";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ListRow } from "@/components/ui/list";
+import { Item as ListRow } from "@/components/ui/item";
 import { cn } from "@/lib/utils";
 import DomainDnsDetails from "./DomainDnsDetails";
 import DomainDnsSkeleton from "./DomainDnsSkeleton";
@@ -20,7 +21,7 @@ import {
 import type { DomainItemCardProps } from "./types";
 
 function StatusIcon({ ok, className }: { ok: boolean; className?: string }) {
-  if (ok) return <Check className={cn(className, "text-green-600")} />;
+  if (ok) return <Check className={cn(className, "text-foreground")} />;
   return <AlertTriangle className={cn(className, "text-amber-500")} />;
 }
 
@@ -48,10 +49,10 @@ export default function DomainItemCard({
   const auth = dns?.auth;
 
   return (
-    <ListRow className="group relative flex-col items-stretch gap-3 max-md:rounded-none max-md:border-b max-md:border-border max-md:px-0 max-md:py-4 max-md:last:border-b-0">
+    <ListRow variant="outline" className="group relative flex-col items-stretch gap-3 max-md:rounded-none max-md:border-b max-md:border-border max-md:px-0 max-md:py-4 max-md:last:border-b-0">
       <div className="flex flex-col items-start gap-3 md:flex-row md:gap-4">
-        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-muted-foreground">
-          <Globe2 className="h-5 w-5" />
+        <span className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-muted-foreground">
+          <Globe2 className="size-5" />
           <img
             src={`https://${item.hostname}/favicon.ico`}
             alt=""
@@ -67,10 +68,10 @@ export default function DomainItemCard({
 
           <div className="flex flex-wrap gap-2">
             <Badge
-              variant={item.status === "active" ? "success" : "secondary"}
+              variant={item.status === "active" ? "outline" : "secondary"}
               className="gap-1"
             >
-              <StatusIcon ok={item.status === "active"} className="h-3 w-3" />
+              <StatusIcon ok={item.status === "active"} className="size-3" />
               {item.status === "active" ? t("dns.status.active") : item.status === "pending" ? t("dns.status.pending") : item.status}
             </Badge>
             {item.receivingProvider === "cloudflare" ? (
@@ -78,7 +79,7 @@ export default function DomainItemCard({
                 variant={item.routingEnabled ? "outline" : "secondary"}
                 className={cn("gap-1", !item.routingEnabled && "opacity-50")}
               >
-                <StatusIcon ok={item.routingEnabled} className="h-3 w-3" />
+                <StatusIcon ok={item.routingEnabled} className="size-3" />
                 {t("domains.badge.routing")}
               </Badge>
             ) : item.receivingProvider === "none" ? (
@@ -92,7 +93,7 @@ export default function DomainItemCard({
             )}
             {item.sendingProvider === "resend" || item.sendingProvider === "ses" ? (
               <Badge variant="outline" className="gap-1">
-                <StatusIcon ok className="h-3 w-3" />
+                <StatusIcon ok className="size-3" />
                 {t("domains.badge.sendingVia", { provider: item.sendingProvider === "ses" ? "Amazon SES" : "Resend" })}
               </Badge>
             ) : item.sendingProvider === "none" ? (
@@ -104,7 +105,7 @@ export default function DomainItemCard({
                 variant={item.sendingEnabled ? "outline" : "secondary"}
                 className={cn("gap-1", !item.sendingEnabled && "opacity-50")}
               >
-                <StatusIcon ok={item.sendingEnabled} className="h-3 w-3" />
+                <StatusIcon ok={item.sendingEnabled} className="size-3" />
                 {t("domains.badge.sending")}
               </Badge>
             )}
@@ -128,20 +129,20 @@ export default function DomainItemCard({
                 </Fragment>
               ))}
             <span className="flex-1" />
-            <button
+            <Button variant="ghost" size="sm"
               onClick={() => onToggleDns(item.id)}
-              className="flex cursor-pointer items-center gap-0.5 text-xs text-signal hover:text-signal-soft-foreground"
+              aria-expanded={expanded}
             >
               {expanded ? (
                 <>
-                  {t("domains.hideDetails")} <ChevronRight className="h-3 w-3" />
+                  {t("domains.hideDetails")} <ChevronRight className="size-3" />
                 </>
               ) : (
                 <>
-                  {t("domains.showDetails")} <ChevronDown className="h-3 w-3" />
+                  {t("domains.showDetails")} <ChevronDown className="size-3" />
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -170,41 +171,7 @@ export default function DomainItemCard({
           <DomainDnsSkeleton />
         ) : null)}
 
-      <DropdownMenu.Root>
-        <DropdownMenu.Trigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute right-4 top-4 h-8 w-8 p-0"
-            disabled={remove.isPending}
-            aria-label={t("domains.actionsFor", { host: item.hostname })}
-          >
-            <MoreVertical className="h-4 w-4" />
-          </Button>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content
-            align="end"
-            sideOffset={6}
-            className="z-50 min-w-40 rounded-lg border border-border bg-card p-1 text-sm shadow-lg"
-          >
-            <DropdownMenu.Item
-              disabled={remove.isPending}
-              onSelect={() => {
-                // Removing a domain deletes its mailboxes (and all their mail)
-                // and disables Email Routing on the zone, so require the hostname.
-                const typed = window.prompt(t("domains.removeConfirm", { host: item.hostname }));
-                if (typed?.trim().toLowerCase() !== item.hostname.toLowerCase()) return;
-                remove.mutate(item.id);
-              }}
-              className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-red-600 outline-none hover:bg-red-50 focus:bg-red-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-            >
-              <Trash2 className="h-4 w-4" />
-              {t("domains.removeDomain")}
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Root>
+		<div className="absolute right-2 top-2"><AdminRowActions title={t("domains.removeDomain")} description={t("domains.removeConfirm", { host: item.hostname })} confirmLabel={t("domains.removeDomain")} match={item.hostname} onConfirm={() => remove.mutate(item.id)} disabled={remove.isPending} /></div>
     </ListRow>
   );
 }

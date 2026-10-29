@@ -1,5 +1,7 @@
 "use client";
 
+import "./admin-console.css";
+import { AdminConfirmationProvider } from "./admin-confirmation-provider";
 import { SkipToContent } from "@/components/skip-to-content";
 import Link from "next/link";
 import { HelpCircle, Search } from "lucide-react";
@@ -62,14 +64,14 @@ export default function DashboardLayout({
               </div>
               <SidebarResizeBoundary />
             </SidebarAside>
-            <div className="flex min-h-0 min-w-0 flex-col">
+            <div className="relative flex min-h-0 min-w-0 flex-col">
                             <MobileTopBar title={mobileTitle} />
-              <header className="fixed top-2 right-4 flex items-center gap-4 z-90">
+              <header className="absolute top-[max(0.5rem,env(safe-area-inset-top))] right-4 flex items-center gap-4 z-10">
                 <LicenseIndicator />
                 <MailboxSelector />
               </header>
-              <main id="main-content" tabIndex={-1} className={clsx("focus:outline-none page-flush min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain rounded-tl-3xl max-md:rounded-t-3xl max-md:bg-card max-md:pb-24 px-6 py-10 scrollbar-gutter-stable lg:px-12", mobileTitle && "max-md:[&_h1]:sr-only")}>
-                <div className="w-full max-w-3xl">{children}</div>
+              <main id="main-content" tabIndex={-1} className={clsx("focus:outline-none page-flush min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain bg-background max-md:pb-[calc(6rem+env(safe-area-inset-bottom))] px-4 py-8 md:px-6 md:pt-16 scrollbar-gutter-stable lg:px-12", mobileTitle && "max-md:[&_h1]:sr-only")}>
+                <div className="admin-console w-full max-w-5xl mx-auto"><AdminConfirmationProvider>{children}</AdminConfirmationProvider></div>
               </main>
             </div>
             <FloatingComposer />

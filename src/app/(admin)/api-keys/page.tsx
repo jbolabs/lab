@@ -1,24 +1,19 @@
 "use client";
+import { Empty } from "@/components/ui/empty";
+import { Field, FieldLabel, FieldSet, FieldLegend, FieldGroup } from "@/components/ui/field";
 
-import { mobilePrimaryActionClass } from "@/components/page-header-utils";
+import { AdminRowActions } from "../admin-row-actions";
+import { mobilePrimaryActionClass } from "../admin-ui-utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Copy, KeyRound, Plus, Trash2 } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
+import { AdminFormPanel as Dialog, AdminFormPanelContent as DialogContent, AdminFormPanelDescription as DialogDescription, AdminFormPanelHeader as DialogHeader, AdminFormPanelTitle as DialogTitle, AdminFormPanelTrigger as DialogTrigger } from "../admin-form-panel";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { List, ListRow } from "@/components/ui/list";
+import { ItemGroup as List, Item as ListRow } from "@/components/ui/item";
 import { SectionRowSkeleton } from "@/components/page-skeletons";
 import { McpAgentInstructions } from "@/components/settings/mcp-agent-instructions";
 import { authFetch } from "@/lib/auth/client";
@@ -74,30 +69,30 @@ export default function ApiKeysPage() {
 	});
 
 	return (
-		<div className="space-y-6">
+		<div className="flex flex-col gap-6">
 			<div className="flex items-center justify-between gap-4">
 				<h1 className="text-2xl md:text-3xl font-medium">{t("admin.section.apiKeysTitle")}</h1>
 				<Dialog open={createOpen} onOpenChange={(open) => { if (create.isPending) return; setCreateOpen(open); if (!open) { setNewKey(null); setCopied(false); } }}>
 					<DialogTrigger asChild>
 						<Button className={mobilePrimaryActionClass}>
-							<Plus className="h-4 w-4" />
+							<Plus data-icon="inline-start" />
 							{t("apiKeys.new")}
 						</Button>
 					</DialogTrigger>
-					<DialogContent className="max-h-[calc(100vh-4rem)] overflow-y-auto">
+					<DialogContent>
 						<DialogHeader>
 							<DialogTitle>{newKey ? t("apiKeys.createdTitle") : t("apiKeys.createTitle")}</DialogTitle>
 							<DialogDescription>{newKey ? t("apiKeys.copyNow") : t("apiKeys.nameAndAccess")}</DialogDescription>
 						</DialogHeader>
-						{!newKey && <div className="space-y-4">
-						<div className="space-y-2">
-							<Label htmlFor="admin-key-name">{t("apiKeys.keyName")}</Label>
+						{!newKey && <FieldGroup className="flex flex-col gap-4">
+						<Field className="flex flex-col gap-2">
+							<FieldLabel htmlFor="admin-key-name">{t("apiKeys.keyName")}</FieldLabel>
 							<Input id="admin-key-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} placeholder={t("adminKeys.namePlaceholder")} />
-						</div>
+						</Field>
 						<label className="flex items-start gap-3 text-sm"><Checkbox checked={mcpAllowed} onCheckedChange={(checked) => setMcpAllowed((checked === true))} /><span><strong>{t("apiKeys.allowMcp")}</strong><span className="mt-1 block text-muted-foreground">{t("adminKeys.allowMcpHint")}</span></span></label>
-						<fieldset className="space-y-2">
-							<legend className="text-sm font-medium">{t("apiKeys.permissions")}</legend>
-							<div className="space-y-2">
+						<FieldSet className="flex flex-col gap-2">
+							<FieldLegend className="text-sm font-medium">{t("apiKeys.permissions")}</FieldLegend>
+							<div className="flex flex-col gap-2">
 								{ADMIN_KEY_PERMISSIONS.map((scope) => (
 									<label key={scope.value} className="flex items-start gap-3 text-sm">
 										<Checkbox
@@ -114,7 +109,7 @@ export default function ApiKeysPage() {
 									</label>
 								))}
 							</div>
-						</fieldset>
+						</FieldSet>
 						{create.isError && (
 							<p role="alert" className="text-sm text-red-600">{(create.error as Error).message}</p>
 						)}
@@ -124,31 +119,31 @@ export default function ApiKeysPage() {
 						>
 							{create.isPending ? t("accounts.creating") : t("adminKeys.createKey")}
 						</Button>
-						</div>}
-						{newKey && <div className="space-y-3 rounded-xl border border-signal/30 bg-signal-soft p-4"><code className="block break-all rounded bg-card p-2 text-xs">{newKey}</code>{createdMcpAllowed && <McpAgentInstructions mode="admin" apiKey={newKey} />}<div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => void navigator.clipboard.writeText(newKey).then(() => setCopied(true))}><Copy className="h-4 w-4" />{copied ? t("common.copied") : t("apiKeys.copyKey")}</Button><Button type="button" size="sm" variant="ghost" onClick={() => { setCreateOpen(false); setNewKey(null); setCopied(false); }}>{t("common.done")}</Button></div></div>}
+						</FieldGroup>}
+						{newKey && <div className="flex flex-col gap-3 rounded-xl border border-signal/30 bg-signal-soft p-4"><code className="block break-all rounded bg-card p-2 text-xs">{newKey}</code>{createdMcpAllowed && <McpAgentInstructions mode="admin" apiKey={newKey} />}<div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => void navigator.clipboard.writeText(newKey).then(() => setCopied(true))}><Copy data-icon="inline-start" />{copied ? t("common.copied") : t("apiKeys.copyKey")}</Button><Button type="button" size="sm" variant="ghost" onClick={() => { setCreateOpen(false); setNewKey(null); setCopied(false); }}>{t("common.done")}</Button></div></div>}
 					</DialogContent>
 				</Dialog>
 			</div>
-			<section className="space-y-3">
+			<section className="flex flex-col gap-3">
 				{revoke.isError && <p role="alert" className="text-sm text-red-600">{revoke.error.message}</p>}
 				{isLoading && (
 					<SectionRowSkeleton />
 				)}
 				{!isLoading && (data?.apiKeys ?? []).length === 0 && (
-					<p className="rounded-2xl bg-card px-5 py-4 text-sm text-muted-foreground">
+					<Empty className="rounded-lg bg-card px-5 py-4 text-sm text-muted-foreground">
 						{t("apiKeys.none")}
-					</p>
+					</Empty>
 				)}
-				<List>
+				<List className="gap-2">
 					{(data?.apiKeys ?? []).map((key) => (
-						<ListRow
+						<ListRow variant="outline"
 							key={key.id}
 							className="px-5 py-4"
 						>
-							<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-signal-soft text-signal">
-								<KeyRound className="h-5 w-5" />
+							<span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-signal-soft text-signal">
+								<KeyRound className="size-5" />
 							</span>
-							<span className="min-w-0 flex-1 space-y-2">
+							<span className="min-w-0 flex-1 flex flex-col gap-2">
 								<span className="flex min-w-0 flex-wrap items-center gap-2"><strong className="truncate text-sm font-semibold text-foreground">{key.name}</strong>{key.kind === "mcp" && <Badge variant="outline">MCP</Badge>}</span>
 								<span className="block truncate no-font-mono text-sm text-muted-foreground">{key.prefix}...</span>
 								<span className="flex flex-wrap gap-1">
@@ -159,7 +154,7 @@ export default function ApiKeysPage() {
 									))}
 								</span>
 							</span>
-						<Button type="button" size="sm" variant="outline" disabled={revoke.isPending} onClick={() => { if (window.confirm(t("apiKeys.revokeConfirm", { name: key.name }))) revoke.mutate(key.id); }}><Trash2 className="h-4 w-4" />{t("common.revoke")}</Button>
+						<AdminRowActions title={t("common.revoke")} description={t("apiKeys.revokeConfirm", { name: key.name })} confirmLabel={t("common.revoke")} onConfirm={() => revoke.mutateAsync(key.id)} disabled={revoke.isPending} />
 						</ListRow>
 					))}
 				</List>

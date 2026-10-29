@@ -1,0 +1,15 @@
+.admin-console {
+	padding-bottom: env(safe-area-inset-bottom);
+}
+.admin-console [data-slot="item"] { min-width: 0; }
+.admin-console [data-slot="input-group"] { min-width: 0; }
+.admin-console [data-slot="table-cell"] { overflow-wrap: anywhere; }
+@media (pointer: coarse) {
+	.admin-console button:not([role="checkbox"]):not([role="switch"]),
+	.admin-console [data-slot="item"] a,
+	.admin-console [data-slot="dropdown-menu-item"] {
+		min-height: 44px;
+	}
+	.admin-console button[data-size="icon"] { min-width: 44px; }
+	.admin-console input:not([type="checkbox"]), .admin-console select, .admin-console textarea { font-size: 16px; }
+}

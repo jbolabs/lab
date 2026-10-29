@@ -1,11 +1,11 @@
 "use client";
+import { Field, FieldLabel } from "@/components/ui/field";
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { loadGeneralSettings, saveGeneralSettings } from "./utils";
 
@@ -55,22 +55,22 @@ export default function GeneralSettingsPage() {
 		} finally { setDriveSaving(false); }
 	}
 
-	return <div className="space-y-6">
+	return <div className="flex flex-col gap-6">
 		<div><h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("general.title")}</h1><p className="mt-2 text-sm text-muted-foreground">{t("general.description")}</p></div>
-		<Card className="rounded-3xl border-0 bg-card p-6">
+		<Card className="rounded-lg border-0 bg-card p-6">
 			<CardHeader className="py-0"><CardTitle>{t("general.attachments")}</CardTitle></CardHeader>
-			<CardContent className="pt-6"><form onSubmit={save} className="space-y-4">
-				<div className="space-y-2"><Label htmlFor="attachment-limit">{t("general.maxAttachments")}</Label><Input id="attachment-limit" type="number" min="1" max="25" step="1" value={maxMb} onChange={(event) => setMaxMb(Number(event.target.value))} disabled={!loaded || saving} className="max-w-40" required /><p className="text-sm text-muted-foreground">{t("general.appliesTo")}</p></div>
-				<div className="space-y-2 rounded-xl bg-muted/60 p-4 text-sm text-foreground/80"><p>{t("general.cloudflareLimit")}</p><p>{t("general.largeFiles")}</p></div>
+			<CardContent className="pt-6"><form onSubmit={save} className="flex flex-col gap-4">
+				<Field className="flex flex-col gap-2"><FieldLabel htmlFor="attachment-limit">{t("general.maxAttachments")}</FieldLabel><Input id="attachment-limit" type="number" min="1" max="25" step="1" value={maxMb} onChange={(event) => setMaxMb(Number(event.target.value))} disabled={!loaded || saving} className="max-w-40" required /><p className="text-sm text-muted-foreground">{t("general.appliesTo")}</p></Field>
+				<div className="flex flex-col gap-2 rounded-xl bg-muted/60 p-4 text-sm text-foreground/80"><p>{t("general.cloudflareLimit")}</p><p>{t("general.largeFiles")}</p></div>
 				{status && <p role="status" className="text-sm text-foreground/80">{status}</p>}
 				<Button type="submit" disabled={!loaded || saving || !Number.isInteger(maxMb) || maxMb < 1 || maxMb > 25}>{saving ? t("common.saving") : t("general.save")}</Button>
 			</form></CardContent>
 		</Card>
-		<Card className="rounded-3xl border-0 bg-card p-6">
+		<Card className="rounded-lg border-0 bg-card p-6">
 			<CardHeader className="py-0"><CardTitle>{t("general.drive")}</CardTitle></CardHeader>
-			<CardContent className="pt-6"><form onSubmit={saveDrive} className="space-y-4">
-				<div className="flex items-center gap-3"><Switch id="drive-unlimited" checked={unlimited} onCheckedChange={setUnlimited} disabled={!loaded || driveSaving} /><Label htmlFor="drive-unlimited">{t("general.driveUnlimited")}</Label></div>
-				{!unlimited && <div className="space-y-2"><Label htmlFor="drive-limit">{t("general.driveLimit")}</Label><Input id="drive-limit" type="number" min="0.01" max="1000000" step="any" value={limitGb} onChange={(event) => setLimitGb(Number(event.target.value))} disabled={!loaded || driveSaving} className="max-w-40" required /></div>}
+			<CardContent className="pt-6"><form onSubmit={saveDrive} className="flex flex-col gap-4">
+				<Field className="flex items-center gap-3"><Switch id="drive-unlimited" checked={unlimited} onCheckedChange={setUnlimited} disabled={!loaded || driveSaving} /><FieldLabel htmlFor="drive-unlimited">{t("general.driveUnlimited")}</FieldLabel></Field>
+				{!unlimited && <Field className="flex flex-col gap-2"><FieldLabel htmlFor="drive-limit">{t("general.driveLimit")}</FieldLabel><Input id="drive-limit" type="number" min="0.01" max="1000000" step="any" value={limitGb} onChange={(event) => setLimitGb(Number(event.target.value))} disabled={!loaded || driveSaving} className="max-w-40" required /></Field>}
 				<p className="text-sm text-muted-foreground">{t("general.driveHint")}</p>
 				{driveStatus && <p role="status" className="text-sm text-foreground/80">{driveStatus}</p>}
 				<Button type="submit" disabled={!loaded || driveSaving || (!unlimited && !(limitGb > 0))}>{driveSaving ? t("common.saving") : t("general.save")}</Button>

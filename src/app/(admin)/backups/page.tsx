@@ -1,8 +1,14 @@
 "use client";
+import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 
+import { AdminRowActions } from "../admin-row-actions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
+import { Empty } from "@/components/ui/empty";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import {
   AlertTriangle,
   DatabaseBackup,
@@ -27,7 +33,6 @@ import {
 } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
@@ -40,7 +45,6 @@ import {
   fetchBackups,
   formatBackupDate,
   formatBackupSize,
-  getStatusClass,
   removeBackup,
   restoreBackup,
   saveBackupSettings,
@@ -54,6 +58,7 @@ export default function BackupsPage() {
   const savedSettings = useRef<BackupSettings | null>(null);
   const [settings, setSettings] = useState<BackupSettings | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const backups = useQuery({
     queryKey: ["backups"],
     queryFn: fetchBackups,
@@ -115,8 +120,8 @@ export default function BackupsPage() {
   const backupConfigured = configuration?.configured === true;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-medium text-foreground">
             {t("backups.title")}
@@ -134,43 +139,43 @@ export default function BackupsPage() {
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = "";
-              if (!file || !window.confirm(t("backups.restoreConfirm"))) return;
-              restore.mutate(file);
+              if (file) setRestoreFile(file);
             }}
           />
           <Button onClick={() => runBackup.mutate()} disabled={runBackup.isPending || !backupConfigured}>
             <Play size={18} />
             {runBackup.isPending ? t("backups.starting") : t("backups.backUp")}
           </Button>
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <Button type="button" variant="outline" className="h-10 w-10 px-0" aria-label={t("backups.actions")}>
-                <MoreVertical className="h-4 w-4" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" className="size-10 px-0" aria-label={t("backups.actions")}>
+                <MoreVertical data-icon="inline-start" />
               </Button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content align="end" sideOffset={6} className="z-50 min-w-48 rounded-lg border border-border bg-card p-1 text-sm shadow-lg">
-                <DropdownMenu.Item disabled={restore.isPending} onSelect={() => restoreInput.current?.click()} className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-foreground outline-none hover:bg-accent focus:bg-accent data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                  <Upload className="h-4 w-4" />
+            </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end" sideOffset={6} ><DropdownMenuGroup>
+                <DropdownMenuItem className="min-h-11" disabled={restore.isPending} onSelect={() => restoreInput.current?.click()}>
+                  <Upload className="size-4" />
                   {restore.isPending ? t("backups.restoring") : t("backups.restore")}
-                </DropdownMenu.Item>
-                <DropdownMenu.Item disabled={!settings || autoSaveSettings.isPending} onSelect={() => setSettingsOpen(true)} className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-foreground outline-none hover:bg-accent focus:bg-accent data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                  <Settings className="h-4 w-4" />
+                </DropdownMenuItem>
+                <DropdownMenuItem className="min-h-11" disabled={!settings || autoSaveSettings.isPending} onSelect={() => setSettingsOpen(true)}>
+                  <Settings className="size-4" />
                   {t("backups.settings")}
-                </DropdownMenu.Item>
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+                </DropdownMenuItem>
+              </DropdownMenuGroup></DropdownMenuContent>
+
+          </DropdownMenu>
         </div>
       </div>
 
+      <AlertDialog open={!!restoreFile} onOpenChange={(open) => { if (!open && !restore.isPending) setRestoreFile(null); }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t("backups.restore")}</AlertDialogTitle><AlertDialogDescription>{t("backups.restoreConfirm")}</AlertDialogDescription></AlertDialogHeader>{restore.error && <p role="alert" className="text-destructive">{restore.error.message}</p>}<AlertDialogFooter><AlertDialogCancel disabled={restore.isPending}>{t("common.cancel")}</AlertDialogCancel><Button variant="destructive" disabled={restore.isPending} onClick={() => { if (restoreFile) restore.mutate(restoreFile); }}>{restore.isPending ? t("backups.restoring") : t("backups.restore")}</Button></AlertDialogFooter></AlertDialogContent></AlertDialog>
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="max-h-[calc(100vh-4rem)] overflow-y-auto">
+        <DialogContent className="max-h-[calc(100dvh-4rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("backups.tablesTitle")}</DialogTitle>
             <DialogDescription>{t("backups.tablesDescription")}</DialogDescription>
           </DialogHeader>
-          {settings && <div className="space-y-5">
+          {settings && <div className="flex flex-col gap-5">
             <div className="divide-y divide-border">
               {BACKUP_TABLE_GROUPS.map((group) => {
                 const enabled = !settings.excludedTableGroups.includes(group.id);
@@ -181,28 +186,28 @@ export default function BackupsPage() {
                 </div>;
               })}
             </div>
-            {saveSettings.error && <p role="alert" className="text-sm text-red-700">{saveSettings.error instanceof Error ? saveSettings.error.message : t("backups.saveSettingsFailed")}</p>}
-            <Button onClick={() => saveSettings.mutate(settings)} disabled={saveSettings.isPending}><Save className="h-4 w-4" />{saveSettings.isPending ? t("common.saving") : t("backups.saveSettings")}</Button>
+            {saveSettings.error && <p role="alert" className="text-sm text-destructive">{saveSettings.error instanceof Error ? saveSettings.error.message : t("backups.saveSettingsFailed")}</p>}
+            <Button onClick={() => saveSettings.mutate(settings)} disabled={saveSettings.isPending}><Save data-icon="inline-start" />{saveSettings.isPending ? t("common.saving") : t("backups.saveSettings")}</Button>
           </div>}
         </DialogContent>
       </Dialog>
 
       {error && (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-lg border   px-4 py-3 text-sm text-destructive">
           {error instanceof Error ? error.message : t("backups.operationFailed")}
         </p>
       )}
 
       {configuration && !configuration.configured && (
-        <Card className="rounded-3xl border border-amber-200 bg-amber-50 p-6">
-          <CardHeader className="py-0">
+        <Card>
+          <CardHeader>
             <div className="flex items-start gap-3">
-              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+              <AlertTriangle className="mt-0.5 size-5 shrink-0 " />
               <div>
-                <CardTitle className="text-amber-950">
+                <CardTitle >
                   {t("backups.setupTitle")}
                 </CardTitle>
-                <CardDescription className="mt-1 text-amber-800">
+                <CardDescription className="mt-1 ">
                   {t("backups.setupDescription")}
                 </CardDescription>
               </div>
@@ -214,7 +219,7 @@ export default function BackupsPage() {
                 <Badge
                   key={item}
                   variant="outline"
-                  className="border-amber-300 bg-background/70 text-amber-900"
+                  className=" bg-background/70 "
                 >
                   {item}
                 </Badge>
@@ -223,7 +228,7 @@ export default function BackupsPage() {
                 type="button"
                 size="sm"
                 variant="outline"
-                className="ml-auto border-amber-300 bg-background/70"
+                className="ml-auto  bg-background/70"
                 disabled={backups.isFetching}
                 onClick={() => void backups.refetch()}
               >
@@ -237,30 +242,30 @@ export default function BackupsPage() {
         </Card>
       )}
 
-      <Card className="rounded-3xl border-0 bg-card p-6">
-        <CardHeader className="py-0">
+      <Card>
+        <CardHeader>
           <CardTitle>{t("backups.automatic")}</CardTitle>
           <CardDescription>
             {t("backups.scheduleNote")}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-5 pt-5">
+        <CardContent className="flex flex-col gap-5 pt-5">
           {settings && (
             <>
-              <div className="flex items-center justify-between gap-4 border-t border-border pt-5">
-                <Label htmlFor="automatic-backup-switch">{t("backups.enableAutomatic")}</Label>
+              <Field orientation="horizontal" className="flex items-center justify-between gap-4 border-t border-border pt-5">
+                <FieldLabel htmlFor="automatic-backup-switch">{t("backups.enableAutomatic")}</FieldLabel>
                 <Switch
                   id="automatic-backup-switch"
                   checked={settings.enabled}
                   disabled={autoSaveSettings.isPending}
                   onCheckedChange={(enabled) => autoSaveSettings.mutate({ ...settings, enabled })}
                 />
-              </div>
+              </Field>
               {settings.enabled && (
                 <>
-                  <div className="grid gap-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <Label htmlFor="schedule-type" className="flex-1">{t("backups.frequency")}</Label>
+                  <FieldGroup className="grid gap-4">
+                    <Field orientation="horizontal" className="flex items-center justify-between gap-4">
+                      <FieldLabel htmlFor="schedule-type" className="flex-1">{t("backups.frequency")}</FieldLabel>
                       <NativeSelect
                         id="schedule-type"
                         value={settings.scheduleType}
@@ -286,11 +291,11 @@ export default function BackupsPage() {
                         <option value="weekly">{t("backups.weekly")}</option>
                         <option value="monthly">{t("backups.monthly")}</option>
                       </NativeSelect>
-                    </div>
+                    </Field>
 
                     {settings.scheduleType === "weekly" && (
-                      <div className="flex items-center justify-between gap-4">
-                        <Label htmlFor="weekday">{t("backups.dayOfWeek")}</Label>
+                      <Field orientation="horizontal" className="flex items-center justify-between gap-4">
+                        <FieldLabel htmlFor="weekday">{t("backups.dayOfWeek")}</FieldLabel>
                         <NativeSelect
                           id="weekday"
                           value={settings.scheduleValue ?? 1}
@@ -302,7 +307,7 @@ export default function BackupsPage() {
                               scheduleValue: Number(event.target.value),
                             })
                           }
-                          
+
                         className="px-3 py-2 text-sm"
                         >
                           {WEEKDAYS.map((day) => (
@@ -311,12 +316,12 @@ export default function BackupsPage() {
                             </option>
                           ))}
                         </NativeSelect>
-                      </div>
+                      </Field>
                     )}
 
                     {settings.scheduleType === "monthly" && (
-                      <div className="flex items-center justify-between gap-4">
-                        <Label htmlFor="month-day">{t("backups.dayOfMonth")}</Label>
+                      <Field orientation="horizontal" className="flex items-center justify-between gap-4">
+                        <FieldLabel htmlFor="month-day">{t("backups.dayOfMonth")}</FieldLabel>
                         <Input
                           id="month-day"
                           className="w-1/2 max-w-52 shrink-0"
@@ -336,13 +341,13 @@ export default function BackupsPage() {
                             else setSettings({ ...settings, scheduleValue: savedSettings.current?.scheduleValue ?? 1 });
                           }}
                         />
-                      </div>
+                      </Field>
                     )}
-                  </div>
+                  </FieldGroup>
 
-                  <div className="grid gap-4 border-t border-border pt-5">
-                    <div className="flex items-center justify-between gap-4">
-                      <Label htmlFor="retention-switch">{t("backups.deleteOld")}</Label>
+                  <FieldGroup className="grid gap-4 border-t border-border pt-5">
+                    <Field orientation="horizontal" className="flex items-center justify-between gap-4">
+                      <FieldLabel htmlFor="retention-switch">{t("backups.deleteOld")}</FieldLabel>
                       <Switch
                         id="retention-switch"
                         checked={settings.retentionEnabled}
@@ -354,12 +359,12 @@ export default function BackupsPage() {
                           })
                         }
                       />
-                    </div>
+                    </Field>
 
-                    <div className="flex items-center justify-between gap-4">
-                      <Label htmlFor="retention-days">
+                    <Field orientation="horizontal" className="flex items-center justify-between gap-4">
+                      <FieldLabel htmlFor="retention-days">
                         {t("backups.deleteOlderThan")}
-                      </Label>
+                      </FieldLabel>
                       <div className="flex w-1/2 max-w-52 shrink-0 items-center gap-2 relative">
                         <Input
                           id="retention-days"
@@ -382,8 +387,8 @@ export default function BackupsPage() {
                         />
                         <span className="text-sm text-muted-foreground absolute z-10 right-6">{t("backups.days")}</span>
                       </div>
-                    </div>
-                  </div>
+                    </Field>
+                  </FieldGroup>
                 </>
               )}
             </>
@@ -391,28 +396,20 @@ export default function BackupsPage() {
         </CardContent>
       </Card>
 
-      <section className="overflow-hidden rounded-3xl bg-card">
+      <section className="overflow-hidden rounded-lg bg-card">
         <div className="flex items-center gap-3 border-b border-border px-4 py-4">
-          <DatabaseBackup className="h-5 w-5 text-muted-foreground" />
+          <DatabaseBackup className="size-5 text-muted-foreground" />
           <h2 className="font-semibold text-foreground">{t("backups.history")}</h2>
         </div>
-        <div className="grid grid-cols-[1fr_110px_110px_170px_120px] gap-4 border-b border-border bg-muted/60 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <span>{t("backups.col.file")}</span>
-          <span>{t("backups.col.status")}</span>
-          <span>{t("backups.col.size")}</span>
-          <span>{t("backups.col.created")}</span>
-          <span>{t("backups.col.actions")}</span>
-        </div>
-        {backups.isLoading && <SkeletonRows count={5} />}
+        <Table className="max-md:[&_tbody]:flex max-md:[&_tbody]:flex-col max-md:[&_tr]:flex max-md:[&_tr]:flex-wrap max-md:[&_tr]:gap-2 max-md:[&_tr]:p-4 max-md:[&_td]:whitespace-normal max-md:[&_td]:p-0">
+          <TableHeader className="max-md:hidden"><TableRow><TableHead>{t("backups.col.file")}</TableHead><TableHead>{t("backups.col.status")}</TableHead><TableHead>{t("backups.col.size")}</TableHead><TableHead>{t("backups.col.created")}</TableHead><TableHead>{t("backups.col.actions")}</TableHead></TableRow></TableHeader><TableBody>
+        {backups.isLoading && <TableRow><TableCell colSpan={5}><SkeletonRows count={5} /></TableCell></TableRow>}
         {!backups.isLoading && (backups.data?.backups ?? []).length === 0 && (
-          <p className="px-4 py-6 text-sm text-muted-foreground">{t("backups.none")}</p>
+          <TableRow><TableCell colSpan={5}><Empty>{t("backups.none")}</Empty></TableCell></TableRow>
         )}
         {(backups.data?.backups ?? []).map((backup: BackupItem) => (
-          <div
-            key={backup.id}
-            className="grid grid-cols-[1fr_110px_110px_170px_120px] items-center gap-4 border-b border-border px-4 py-3 last:border-b-0"
-          >
-            <div className="min-w-0">
+          <TableRow key={backup.id}>
+            <TableCell className="min-w-0 max-md:basis-full">
               <p className="truncate text-sm font-medium text-foreground">
                 {backup.filename ?? backup.id}
               </p>
@@ -420,42 +417,19 @@ export default function BackupsPage() {
                 {backup.trigger === "manual" ? t("backups.manual") : t("backups.scheduled")}
                 {backup.error ? `: ${backup.error}` : ""}
               </p>
-            </div>
-            <Badge variant="outline" className={getStatusClass(backup.status)}>
+            </TableCell>
+            <TableCell><Badge variant={backup.status === "failed" ? "destructive" : backup.status === "completed" ? "outline" : "secondary"}>
               {t(`backups.status.${backup.status}` as TranslationKey)}
-            </Badge>
-            <span className="text-sm text-muted-foreground">
+            </Badge></TableCell>
+            <TableCell className="text-muted-foreground">
               {formatBackupSize(backup.size)}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              {formatBackupDate(backup.createdAt)}
-            </span>
-            <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant="ghost"
-                title={t("backups.download")}
-                disabled={backup.status !== "completed" || download.isPending}
-                onClick={() => download.mutate(backup)}
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                title={t("backups.delete")}
-                disabled={
-                  deleteBackup.isPending ||
-                  backup.status === "queued" ||
-                  backup.status === "running"
-                }
-                onClick={() => deleteBackup.mutate(backup.id)}
-              >
-                <Trash2 className="h-4 w-4 text-red-600" />
-              </Button>
-            </div>
-          </div>
-        ))}
+            </TableCell>
+            <TableCell className="text-muted-foreground">{formatBackupDate(backup.createdAt)}</TableCell>
+			<TableCell><AdminRowActions title={t("backups.delete")} description={backup.filename ?? backup.id} confirmLabel={t("backups.delete")} onConfirm={() => deleteBackup.mutateAsync(backup.id)} disabled={deleteBackup.isPending || backup.status === "queued" || backup.status === "running"}>
+				<DropdownMenuItem className="min-h-11" disabled={backup.status !== "completed" || download.isPending} onSelect={() => download.mutate(backup)}><Download />{t("backups.download")}</DropdownMenuItem>
+			</AdminRowActions></TableCell>
+          </TableRow>
+        ))}</TableBody></Table>
       </section>
     </div>
   );

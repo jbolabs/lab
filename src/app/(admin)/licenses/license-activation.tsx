@@ -1,4 +1,6 @@
 "use client";
+import { useAdminConfirmation } from "../admin-confirmation-provider";
+import { Field, FieldLabel } from "@/components/ui/field";
 
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
@@ -8,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { LicenseStatus } from "@/lib/licenses/types";
 import type { ActivatableLicensePlan, LicenseAction } from "./types";
@@ -17,6 +18,7 @@ import { formatLicensePlan, loadLicenseStatus, runLicenseAction } from "./utils"
 // children is the pricing grid: the activated card goes above it, the key form below.
 export function LicenseActivation({ children }: { children?: ReactNode }) {
 	const { t } = useLanguage();
+	const confirm = useAdminConfirmation();
 	const [license, setLicense] = useState<LicenseStatus | null>(null);
 	const [licenseKey, setLicenseKey] = useState("");
 	const [selectedPlan, setSelectedPlan] = useState<ActivatableLicensePlan>("pro");
@@ -46,7 +48,7 @@ export function LicenseActivation({ children }: { children?: ReactNode }) {
 			setStatus(t("licenses.enterKey"));
 			return;
 		}
-		if (nextAction === "deactivate" && !window.confirm(t("licenses.deactivateConfirm"))) return;
+		if (nextAction === "deactivate" && !await confirm(t("licenses.deactivateConfirm"))) return;
 
 		setAction(nextAction);
 		setStatus(null);
@@ -67,17 +69,17 @@ export function LicenseActivation({ children }: { children?: ReactNode }) {
 		}
 	}
 
-	if (loading) return <>{children}<Skeleton className="h-64 w-full rounded-3xl" /></>;
+	if (loading) return <>{children}<Skeleton className="h-64 w-full rounded-lg" /></>;
 
 	const hasActivation = !!license?.activatedAt && license.state !== "deactivated";
 
 	if (license?.active) {
 		return (
 			<>
-			<Card className="rounded-3xl border-0 bg-card px-6">
+			<Card className="rounded-lg border-0 bg-card px-6">
 				<CardContent className="flex items-start gap-4 py-8">
-					<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
-						<CheckCircle2 className="h-6 w-6" />
+					<span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+						<CheckCircle2 className="size-6" />
 					</span>
 					<div className="min-w-0 flex-1">
 						<CardTitle>{t("licenses.activated")}</CardTitle>
@@ -100,16 +102,16 @@ export function LicenseActivation({ children }: { children?: ReactNode }) {
 	return (
 		<>
 		{children}
-		<Card className="rounded-3xl border-0 bg-card px-6">
-			<CardContent className="space-y-5 pb-6">
+		<Card className="rounded-lg border-0 bg-card px-6">
+			<CardContent className="flex flex-col gap-5 pb-6">
 				{hasActivation && license && (
-					<p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+					<p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
 						{t("licenses.currentState", { state: license.state })}
 					</p>
 				)}
 				{!hasActivation && (
-					<div className="space-y-4 pt-6">
-						<Label className="mb-4">{t("licenses.haveLicense")}</Label>
+					<Field className="flex flex-col gap-4 pt-6">
+						<FieldLabel className="mb-4">{t("licenses.haveLicense")}</FieldLabel>
 						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-2" role="radiogroup" aria-label={t("licenses.product")}>
 							<button
 								type="button"
@@ -142,10 +144,10 @@ export function LicenseActivation({ children }: { children?: ReactNode }) {
 								<span className="mt-1 block text-xs text-muted-foreground">{t("licenses.teamTag")}</span>
 							</button>
 						</div>
-					</div>
+					</Field>
 				)}
-				<div className="space-y-2">
-					<Label htmlFor="licenseKey">{t("licenses.licenseKey")}</Label>
+				<Field className="flex flex-col gap-2">
+					<FieldLabel htmlFor="licenseKey">{t("licenses.licenseKey")}</FieldLabel>
 					<Input
 						id="licenseKey"
 						type="password"
@@ -155,7 +157,7 @@ export function LicenseActivation({ children }: { children?: ReactNode }) {
 						placeholder={t("licenses.keyPlaceholder")}
 						disabled={action !== null}
 					/>
-				</div>
+				</Field>
 				<div className="flex flex-wrap items-center gap-3">
 					{hasActivation ? (
 						<>

@@ -1,6 +1,8 @@
 "use client";
+import { useAdminConfirmation } from "../admin-confirmation-provider";
+import { Field, FieldLabel } from "@/components/ui/field";
 
-import { mobilePrimaryActionClass } from "@/components/page-header-utils";
+import { mobilePrimaryActionClass } from "../admin-ui-utils";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, Plus, RefreshCw, Send, Trash2 } from "lucide-react";
@@ -16,7 +18,6 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { SectionRowSkeleton } from "@/components/page-skeletons";
 import type { Webhook, WebhookEvent } from "./types";
@@ -32,6 +33,7 @@ import { WebhookDeliveries } from "./deliveries";
 
 export default function WebhooksPage() {
 	const { t } = useLanguage();
+	const confirm = useAdminConfirmation();
 	const qc = useQueryClient();
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [url, setUrl] = useState("");
@@ -88,7 +90,7 @@ export default function WebhooksPage() {
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="flex flex-col gap-6">
 			<div className="flex flex-wrap items-end justify-between gap-4">
 				<div>
 					<h1 className="text-2xl font-semibold">{t("webhooks.title")}</h1>
@@ -103,7 +105,7 @@ export default function WebhooksPage() {
 						setDialogOpen(true);
 					}}
 				>
-					<Plus className="h-4 w-4" /> {t("webhooks.add")}
+					<Plus data-icon="inline-start" /> {t("webhooks.add")}
 				</Button>
 			</div>
 
@@ -134,7 +136,7 @@ export default function WebhooksPage() {
 					</CardContent>
 				</Card>
 			) : (
-				<section className="divide-y divide-border overflow-hidden rounded-3xl bg-card">
+				<section className="divide-y divide-border overflow-hidden rounded-lg bg-card">
 					{webhooks.data.map((hook) => (
 						<div key={hook.id} className="px-5 py-6 sm:px-6">
 							<div className="flex flex-wrap items-start justify-between gap-4">
@@ -160,7 +162,7 @@ export default function WebhooksPage() {
 									/>
 								</div>
 							</div>
-							<div className="mt-5 grid grid-cols-2 overflow-hidden rounded-2xl bg-muted/60 sm:grid-cols-5">
+							<div className="mt-5 grid grid-cols-2 overflow-hidden rounded-lg bg-muted/60 sm:grid-cols-5">
 								<div className="px-4 py-3">
 									<span className="block text-lg font-semibold text-foreground">{hook.stats.total}</span>
 									<span className="block text-xs text-muted-foreground">{t("webhooks.stat.deliveries")}</span>
@@ -195,7 +197,7 @@ export default function WebhooksPage() {
 									size="sm"
 									onClick={() => setExpanded(expanded === hook.id ? null : hook.id)}
 								>
-									<Activity className="h-4 w-4" />
+									<Activity data-icon="inline-start" />
 									{expanded === hook.id ? t("webhooks.hideHistory") : t("webhooks.history")}
 								</Button>
 								<div className="ml-auto flex flex-wrap items-center gap-2">
@@ -210,17 +212,17 @@ export default function WebhooksPage() {
 										onClick={() => runTest.mutate(hook.id)}
 										disabled={runTest.isPending}
 									>
-										<Send className="h-4 w-4" /> {t("webhooks.test")}
+										<Send data-icon="inline-start" /> {t("webhooks.test")}
 									</Button>
 									<Button
 										variant="ghost"
 										size="sm"
-										onClick={() => {
-											if (window.confirm(t("webhooks.rotateConfirm"))) rotate.mutate(hook.id);
+										onClick={async () => {
+											if (await confirm(t("webhooks.rotateConfirm"))) rotate.mutate(hook.id);
 										}}
 										disabled={rotate.isPending}
 									>
-										<RefreshCw className="h-4 w-4" /> {t("webhooks.rotate")}
+										<RefreshCw data-icon="inline-start" /> {t("webhooks.rotate")}
 									</Button>
 									<Button
 										variant="ghost"
@@ -228,7 +230,7 @@ export default function WebhooksPage() {
 										onClick={() => remove.mutate(hook.id)}
 										aria-label={t("webhooks.deleteLabel", { url: hook.url })}
 									>
-										<Trash2 className="h-4 w-4" /> {t("common.delete")}
+										<Trash2 data-icon="inline-start" /> {t("common.delete")}
 									</Button>
 								</div>
 							</div>
@@ -244,7 +246,7 @@ export default function WebhooksPage() {
 			)}
 
 			<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-				<DialogContent className="max-h-[calc(100vh-4rem)] overflow-y-auto">
+				<DialogContent className="max-h-[calc(100dvh-4rem)] overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle>{t("webhooks.add")}</DialogTitle>
 						<DialogDescription>
@@ -252,14 +254,14 @@ export default function WebhooksPage() {
 						</DialogDescription>
 					</DialogHeader>
 					<form
-						className="space-y-4"
+						className="flex flex-col gap-4"
 						onSubmit={(e) => {
 							e.preventDefault();
 							create.mutate();
 						}}
 					>
-						<div className="space-y-2">
-							<Label htmlFor="hook-url">{t("webhooks.endpointUrl")}</Label>
+						<Field className="flex flex-col gap-2">
+							<FieldLabel htmlFor="hook-url">{t("webhooks.endpointUrl")}</FieldLabel>
 							<Input
 								id="hook-url"
 								type="url"
@@ -267,18 +269,18 @@ export default function WebhooksPage() {
 								value={url}
 								onChange={(e) => setUrl(e.target.value)}
 							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="hook-description">{t("webhooks.descriptionLabel")}</Label>
+						</Field>
+						<Field className="flex flex-col gap-2">
+							<FieldLabel htmlFor="hook-description">{t("webhooks.descriptionLabel")}</FieldLabel>
 							<Input
 								id="hook-description"
 								value={description}
 								placeholder={t("webhooks.optional")}
 								onChange={(e) => setDescription(e.target.value)}
 							/>
-						</div>
-						<div className="space-y-2">
-							<Label>{t("webhooks.events")}</Label>
+						</Field>
+						<Field className="flex flex-col gap-2">
+							<FieldLabel>{t("webhooks.events")}</FieldLabel>
 							{WEBHOOK_EVENTS.map((event) => (
 								<label
 									key={event.value}
@@ -290,15 +292,15 @@ export default function WebhooksPage() {
 									</span>
 									<input
 										type="checkbox"
-										className="h-4 w-4"
+										className="size-4"
 										checked={events.includes(event.value)}
 										onChange={() => toggleEvent(event.value)}
 									/>
 								</label>
 							))}
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="hook-attempts">{t("webhooks.stat.maxAttempts")}</Label>
+						</Field>
+						<Field className="flex flex-col gap-2">
+							<FieldLabel htmlFor="hook-attempts">{t("webhooks.stat.maxAttempts")}</FieldLabel>
 							<Input
 								id="hook-attempts"
 								type="number"
@@ -307,7 +309,7 @@ export default function WebhooksPage() {
 								value={maxAttempts}
 								onChange={(e) => setMaxAttempts(Number(e.target.value))}
 							/>
-						</div>
+						</Field>
 
 						{error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 

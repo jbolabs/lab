@@ -1,10 +1,10 @@
 "use client";
+import { Field, FieldLabel } from "@/components/ui/field";
 
 import { useState } from "react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { NativeSelect } from "@/components/ui/native-select";
 import { authFetch } from "@/lib/auth/client";
 import { ACCOUNT_RESTORE_DAYS } from "@/lib/accounts/deletion-utils";
@@ -38,15 +38,15 @@ export function DeleteAccountsDialog({ open, onOpenChange, accounts, candidates,
 		}
 	}
 
-	return <Dialog open={open} onOpenChange={(next) => { if (!deleting) { setMessage(null); onOpenChange(next); } }}>
-		<DialogContent className="max-h-[calc(100dvh-4rem)] w-[min(520px,calc(100vw-32px))] overflow-y-auto">
-			<DialogHeader><DialogTitle>{t("accounts.deleteTitle", { count: accounts.length })}</DialogTitle><DialogDescription>{t("accounts.deleteDescription", { days: ACCOUNT_RESTORE_DAYS })}</DialogDescription></DialogHeader>
-			<ul className="space-y-1 text-sm text-foreground/80">{accounts.map((account) => <li key={account.id} className="truncate">{account.name} <span className="text-muted-foreground">{account.email}</span></li>)}</ul>
-			<div className="space-y-2"><Label htmlFor="transfer-account">{t("accounts.transferLabel")}</Label>
+	return <AlertDialog open={open} onOpenChange={(next) => { if (!deleting) { setMessage(null); onOpenChange(next); } }}>
+		<AlertDialogContent className="max-h-[calc(100dvh-4rem)] w-[min(520px,calc(100vw-32px))] overflow-y-auto max-md:[&_button]:min-h-11">
+			<AlertDialogHeader><AlertDialogTitle>{t("accounts.deleteTitle", { count: accounts.length })}</AlertDialogTitle><AlertDialogDescription>{t("accounts.deleteDescription", { days: ACCOUNT_RESTORE_DAYS })}</AlertDialogDescription></AlertDialogHeader>
+			<ul className="flex flex-col gap-1 text-sm text-foreground/80">{accounts.map((account) => <li key={account.id} className="truncate">{account.name} <span className="text-muted-foreground">{account.email}</span></li>)}</ul>
+			<Field className="flex flex-col gap-2"><FieldLabel htmlFor="transfer-account">{t("accounts.transferLabel")}</FieldLabel>
 				<NativeSelect id="transfer-account" value={transferToId} onChange={(event) => setTransferToId(event.target.value)} disabled={deleting} containerClassName="h-10 w-full bg-card px-0" className="px-3 text-sm"><option value="">{t("accounts.transferNone")}</option>{recipients.map((account) => <option key={account.id} value={account.id}>{account.name} ({account.email})</option>)}</NativeSelect>
-				<p className="text-xs text-muted-foreground">{t("accounts.transferHint")}</p></div>
+				<p className="text-xs text-muted-foreground">{t("accounts.transferHint")}</p></Field>
 			{message && <p role="alert" className="text-sm text-red-600">{message}</p>}
 			<div className="flex justify-end gap-2"><Button variant="outline" disabled={deleting} onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button><Button variant="destructive" disabled={deleting || !accounts.length} onClick={confirm}>{deleting ? t("accounts.deleting") : t("accounts.confirmDelete")}</Button></div>
-		</DialogContent>
-	</Dialog>;
+		</AlertDialogContent>
+	</AlertDialog>;
 }

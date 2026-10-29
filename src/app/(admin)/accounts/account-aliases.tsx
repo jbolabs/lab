@@ -12,7 +12,7 @@ export function AccountAliases({ domains, domainId, username, useAllDomains, onU
 	const { t } = useLanguage();
 	const availableDomains = domains.filter((domain) => domain.status === "active");
 	return (
-		<div className="space-y-4 border-t border-border pt-4">
+		<div className="flex flex-col gap-4 border-t border-border pt-4">
 			<label className="flex items-start gap-3 rounded-xl bg-muted/60 p-4">
 				<Checkbox checked={useAllDomains} onCheckedChange={(checked) => onUseAllDomainsChange((checked === true))} />
 				<span>
@@ -22,7 +22,7 @@ export function AccountAliases({ domains, domainId, username, useAllDomains, onU
 					</span>
 				</span>
 			</label>
-			<div className="space-y-3">
+			<div className="flex flex-col gap-3">
 				<div>
 					<p className="text-sm font-medium">{t("aliases.additional")} <span className="font-normal text-muted-foreground">{t("aliases.optional")}</span></p>
 					<p className="mt-1 text-sm text-muted-foreground">{t("aliases.hint")}</p>
@@ -52,8 +52,8 @@ export function AccountAliases({ domains, domainId, username, useAllDomains, onU
 								{availableDomains.map((domain) => <option key={domain.id} value={domain.id}>{domain.hostname}</option>)}
 							</NativeSelect>
 						</div>
-						<Button type="button" variant="ghost" size="sm" className="h-10 w-10 shrink-0 p-0" aria-label={t("aliases.remove", { n: index + 1 })} onClick={() => onAliasesChange(aliases.filter((item) => item.id !== alias.id))}>
-							<Trash2 className="h-4 w-4" />
+						<Button type="button" variant="ghost" size="sm" className="size-10 shrink-0 p-0" aria-label={t("aliases.remove", { n: index + 1 })} onClick={() => onAliasesChange(aliases.filter((item) => item.id !== alias.id))}>
+							<Trash2 data-icon="inline-start" />
 						</Button>
 					</div>
 				))}
@@ -61,7 +61,7 @@ export function AccountAliases({ domains, domainId, username, useAllDomains, onU
 					...aliases,
 					{ id: crypto.randomUUID(), localPart: username.trim(), domainId: (availableDomains.find((domain) => domain.id !== domainId) ?? availableDomains[0]).id },
 				])}>
-					<Plus className="h-4 w-4" /> {t("aliases.add")}
+					<Plus data-icon="inline-start" /> {t("aliases.add")}
 				</Button>
 			</div>
 		</div>
