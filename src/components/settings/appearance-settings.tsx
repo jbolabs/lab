@@ -1,9 +1,9 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/language-provider";
 import type { TranslationKey } from "@/lib/i18n/types";
-import { Select } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
 import {
 	isThemePreference,
 	readThemePreference,
@@ -11,49 +11,50 @@ import {
 	THEME_CHANGED_EVENT,
 	type ThemePreference,
 } from "@/components/theme-utils";
-
-const OPTIONS: { value: ThemePreference; labelKey: TranslationKey }[] = [
+const OPTIONS: {
+	value: ThemePreference;
+	labelKey: TranslationKey;
+}[] = [
 	{ value: "system", labelKey: "settings.theme.system" },
 	{ value: "light", labelKey: "settings.theme.light" },
 	{ value: "dark", labelKey: "settings.theme.dark" },
 ];
-
 export function AppearanceSettings() {
 	const { t } = useLanguage();
 	const [preference, setPreference] = useState<ThemePreference>("system");
-
 	useEffect(() => {
 		setPreference(readThemePreference());
 		const sync = () => setPreference(readThemePreference());
 		window.addEventListener(THEME_CHANGED_EVENT, sync);
 		return () => window.removeEventListener(THEME_CHANGED_EVENT, sync);
 	}, []);
-
 	return (
-		<label className="flex items-start gap-3 rounded-xl bg-neutral-50 p-4">
-			<span className="flex-1">
-				<span className="block text-sm font-medium text-neutral-900">{t("settings.theme.label")}</span>
-				<span className="mt-1 block text-sm text-neutral-500">
-					{t("settings.theme.description")}
-				</span>
-			</span>
-			<Select
+		<Field>
+			<FieldLabel>{t("settings.theme.label")}</FieldLabel>
+			<FieldDescription>{t("settings.theme.description")}</FieldDescription>
+			<ToggleGroup
+				type="single"
+				variant="outline"
 				value={preference}
 				aria-label={t("settings.theme.label")}
-				className="py-1.5 text-sm text-neutral-900"
-				onChange={(event) => {
-					const next = event.target.value;
-					if (!isThemePreference(next)) return;
-					setPreference(next);
-					saveThemePreference(next);
+				onValueChange={(next) => {
+					if (isThemePreference(next)) {
+						setPreference(next);
+						saveThemePreference(next);
+					}
 				}}
+				className="w-full justify-start"
 			>
 				{OPTIONS.map((option) => (
-					<option key={option.value} value={option.value}>
+					<ToggleGroupItem
+						key={option.value}
+						value={option.value}
+						className="min-h-11 flex-1"
+					>
 						{t(option.labelKey)}
-					</option>
+					</ToggleGroupItem>
 				))}
-			</Select>
-		</label>
+			</ToggleGroup>
+		</Field>
 	);
 }

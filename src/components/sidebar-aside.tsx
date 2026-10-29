@@ -1,75 +1,113 @@
 "use client";
 
-import clsx from "clsx";
 import { Menu } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useSidebar } from "./sidebar-state";
 import { useLanguage } from "./language-provider";
-import { useBranding } from "./branding-provider";
+import { BrandMark } from "./brand";
+import { APP_NAME } from "@/lib/app-identity";
 
-export function SidebarAside({ children, className }: { children: ReactNode; className?: string }) {
+export function SidebarAside({
+	children,
+	className,
+}: {
+	children: ReactNode;
+	className?: string;
+}) {
 	const { mobile, mobileOpen, toggle } = useSidebar();
-	const hidden = mobile && !mobileOpen;
-
-	useEffect(() => {
-		if (!mobile || !mobileOpen) return;
-		function onKeyDown(event: KeyboardEvent) {
-			if (event.key !== "Escape") return;
-			toggle();
-			document.querySelector<HTMLElement>("[data-mobile-menu]")?.focus();
-		}
-		document.addEventListener("keydown", onKeyDown);
-		return () => document.removeEventListener("keydown", onKeyDown);
-	}, [mobile, mobileOpen, toggle]);
-
-	return (
-		<>
-			<div
-				onClick={toggle}
-				aria-hidden="true"
-				className={clsx("fixed inset-0 z-[100] bg-black/40 transition-opacity duration-200 ease-out motion-reduce:transition-none md:hidden", mobileOpen ? "opacity-100" : "pointer-events-none opacity-0")}
-			/>
-			<aside
-				aria-hidden={hidden}
-				inert={hidden}
-				className={clsx(
-					"fixed inset-y-0 left-0 z-[110] w-[min(85vw,300px)] min-h-0 min-w-0 bg-[#f6f8fc] transition-transform duration-200 ease-out motion-reduce:transition-none",
-					"md:relative md:z-30 md:w-[var(--sidebar-width)] md:translate-x-0 md:shadow-none",
-					mobileOpen ? "translate-x-0 shadow-xl" : "-translate-x-full",
-					className,
-				)}
+	const { t } = useLanguage();
+	if (mobile)
+		return (
+			<Sheet
+				open={mobileOpen}
+				onOpenChange={(open) => {
+					if (open !== mobileOpen) toggle();
+				}}
 			>
-				{children}
-			</aside>
-		</>
+				<SheetContent
+					side="left"
+					showCloseButton={false}
+					aria-describedby={undefined}
+					onCloseAutoFocus={(event) => {
+						event.preventDefault();
+						document.querySelector<HTMLElement>("[data-mobile-menu]")?.focus();
+					}}
+					className={cn(
+						"w-[min(85vw,320px)] gap-0 bg-sidebar text-sidebar-foreground pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
+						className,
+					)}
+				>
+					<SheetTitle className="sr-only">
+						{t("navigation.openMenu")}
+					</SheetTitle>
+					{children}
+				</SheetContent>
+			</Sheet>
+		);
+	return (
+		<aside
+			className={cn(
+				"relative hidden min-h-0 min-w-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:block md:w-[var(--sidebar-width)]",
+				className,
+			)}
+		>
+			{children}
+		</aside>
 	);
 }
 
 export function MobileMenuButton({ className }: { className?: string }) {
 	const { t } = useLanguage();
-	const branding = useBranding();
 	const { mobile, mobileOpen, toggle } = useSidebar();
 	if (!mobile) return null;
 	return (
 		<>
-			<button type="button" data-mobile-menu onClick={toggle} aria-label={t("navigation.openMenu")} aria-expanded={mobileOpen} className={clsx("flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-600 hover:bg-neutral-200 md:hidden", className)}>
-				<Menu size={20} />
-			</button>
-			<Link href="/inbox" aria-label={t("navigation.inbox")} className="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-neutral-200 md:hidden">
-				<img src={branding.iconUrl} height={28} width={28} alt="" />
-			</Link>
+			<Button
+				type="button"
+				variant="ghost"
+				size="icon"
+				data-mobile-menu
+				onClick={toggle}
+				aria-label={t("navigation.openMenu")}
+				aria-expanded={mobileOpen}
+				className={cn(
+					"size-11 shrink-0 touch-manipulation md:hidden",
+					className,
+				)}
+			>
+				<Menu />
+			</Button>
+			<Button
+				variant="ghost"
+				size="icon"
+				asChild
+				className="size-11 shrink-0 md:hidden"
+			>
+				{/* Home: the launcher. On the home-screen web app there is no browser chrome, so this is the way back. */}
+				<Link href="/" aria-label={t("home.homeLabel", { app: APP_NAME })}>
+					<BrandMark size={26} />
+				</Link>
+			</Button>
 		</>
 	);
 }
 
-// Phone top bar for pages without a header of their own: menu button, then the page title.
 export function MobileTopBar({ title }: { title?: string }) {
 	return (
-		<div className="flex h-16 shrink-0 items-center gap-2 pl-2 md:hidden">
+		<div className="flex min-h-14 shrink-0 items-center gap-1 border-b border-sidebar-border bg-sidebar pl-1 pt-[env(safe-area-inset-top)] md:hidden">
 			<MobileMenuButton />
-			{title && <p aria-hidden="true" className="min-w-0 max-w-[40vw] truncate text-base font-medium text-neutral-900">{title}</p>}
+			{title && (
+				<p
+					aria-hidden="true"
+					className="min-w-0 truncate pr-3 text-sm font-medium"
+				>
+					{title}
+				</p>
+			)}
 		</div>
 	);
 }

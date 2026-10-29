@@ -1,6 +1,8 @@
+import { DnsValue } from "./dns-value";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
-import { dnsAuthDescriptions, getDnsAuthItemClass } from "./utils";
+import { dnsAuthDescriptions } from "./utils";
 import { ROW_GRID, StatusBadge, StatusRow } from "./status-row";
 import CloudflareReceivingConfig from "./CloudflareReceivingConfig";
 import ReceivingSetupSection from "./ReceivingSetupSection";
@@ -45,19 +47,19 @@ export default function DomainDnsDetails({
 		const item = audit[record];
 		const ok = item.status === "ok";
 		return (
-			<li key={record} className={`${ROW_GRID} ${getDnsAuthItemClass(item.status)}`}>
+			<li key={record} className={`${ROW_GRID} border bg-card`}>
 				<StatusBadge ok={ok} tone={item.status === "missing" ? "red" : "neutral"} />
 				<span className="min-w-0">
-					<span className="block font-medium text-neutral-900">{t("domains.recordLabel", { label: item.label })}</span>
-					<span className="block text-xs text-neutral-500">{t(dnsAuthDescriptions[record])}</span>
+					<span className="block font-medium text-foreground">{t("domains.recordLabel", { label: item.label })}</span>
+					<span className="block text-xs text-muted-foreground">{t(dnsAuthDescriptions[record])}</span>
 				</span>
 				{ok ? (
-					<span className="min-w-0 break-all text-neutral-500">{item.found.length > 0 ? item.found.join(", ") : item.name}</span>
+					<DnsValue value={item.found.length > 0 ? item.found.join(", ") : item.name} />
 				) : (
 					<Button
 						variant="outline"
 						size="sm"
-						className="shrink-0 bg-white"
+						className="shrink-0 bg-card"
 						disabled={manual || setupRecord === record}
 						title={manual ? t("domains.manualDns") : t("domains.createRecord", { label: item.label })}
 						onClick={() => onSetup?.(record)}
@@ -70,7 +72,7 @@ export default function DomainDnsDetails({
 	};
 
 	const cloudflareConfig = (
-		<ul className="space-y-2">
+		<ul className="flex flex-col gap-2">
 			<StatusRow ok={!!sendingOk} title={t("domains.emailSending")} hint={t("domains.emailSendingHint")}>{sendingLabel}</StatusRow>
 			{auditRow("dkim")}
 		</ul>
@@ -84,17 +86,15 @@ export default function DomainDnsDetails({
 		<div className="px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
 			{audit && (
 				<section>
-					<h2 className="text-base font-semibold text-neutral-900">{t("domains.setupTitle")}</h2>
-					<p className="mt-0.5 text-sm text-neutral-500">
+					<h2 className="text-base font-semibold text-foreground">{t("domains.setupTitle")}</h2>
+					<p className="mt-0.5 text-sm text-muted-foreground">
 						{t("domains.setupDescription")}
 					</p>
-					<ul className="mt-3 space-y-2">
+					<ul className="mt-3 flex flex-col gap-2">
 						{(["mx", "spf", "dmarc"] as DnsAuthRecord[]).map(auditRow)}
 					</ul>
 					{manual && (
-						<p className="text-xs text-neutral-500">
-							{t("domains.manualDnsNote")}
-						</p>
+						<Alert><AlertDescription>{t("domains.manualDnsNote")}</AlertDescription></Alert>
 					)}
 					{setupMessage && <p role="alert" className="text-xs text-red-600">{setupMessage}</p>}
 				</section>

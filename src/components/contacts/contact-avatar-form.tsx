@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { Camera, LoaderCircle } from "lucide-react";
 import { dispatchContactAvatarChanged } from "@/lib/contacts/avatar-client";
 import { normalizeEmailAddress } from "@/lib/email/address";
+import { Button } from "@/components/ui/button";
+import { Field, FieldDescription, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/components/language-provider";
 import { ContactAvatar } from "./contact-avatar";
@@ -42,9 +44,14 @@ export function ContactAvatarForm({
 		try {
 			await uploadContactAvatar(mailboxId, address, file);
 			onAvatarChange(true);
-			dispatchContactAvatarChanged({ email: normalizeEmailAddress(address), hasAvatar: true });
+			dispatchContactAvatarChanged({
+				email: normalizeEmailAddress(address),
+				hasAvatar: true,
+			});
 		} catch (error) {
-			setStatus(error instanceof Error ? error.message : t("avatar.uploadFailed"));
+			setStatus(
+				error instanceof Error ? error.message : t("avatar.uploadFailed"),
+			);
 		} finally {
 			setBusy(false);
 		}
@@ -56,47 +63,75 @@ export function ContactAvatarForm({
 		try {
 			await removeContactAvatar(mailboxId, address);
 			onAvatarChange(false);
-			dispatchContactAvatarChanged({ email: normalizeEmailAddress(address), hasAvatar: false });
+			dispatchContactAvatarChanged({
+				email: normalizeEmailAddress(address),
+				hasAvatar: false,
+			});
 		} catch (error) {
-			setStatus(error instanceof Error ? error.message : t("avatar.removeFailed"));
+			setStatus(
+				error instanceof Error ? error.message : t("avatar.removeFailed"),
+			);
 		} finally {
 			setBusy(false);
 		}
 	}
 
 	return (
-		<div className="flex flex-col items-start gap-2">
-			<Input ref={inputRef} type="file" accept={CONTACT_AVATAR_ACCEPT} className="hidden" onChange={onPick} />
+		<Field data-invalid={!!status}>
+			<Input
+				ref={inputRef}
+				type="file"
+				accept={CONTACT_AVATAR_ACCEPT}
+				className="hidden"
+				onChange={onPick}
+			/>
 			<div className="flex items-center gap-3">
-				<button
+				<Button
+					variant="ghost"
 					type="button"
 					onClick={() => inputRef.current?.click()}
 					disabled={busy}
-					className="group relative h-14 w-14 overflow-hidden rounded-full outline-none ring-blue-500 focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait"
-					aria-label={hasAvatar ? t("avatar.change", { name }) : t("avatar.upload", { name })}
+					className="group relative size-14 overflow-hidden rounded-full outline-none ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-wait"
+					aria-label={
+						hasAvatar
+							? t("avatar.change", { name })
+							: t("avatar.upload", { name })
+					}
 				>
 					<ContactAvatar
 						mailboxId={mailboxId}
 						address={address}
 						name={name}
 						hasManagedAvatar={hasAvatar}
-						className="h-14 w-14 text-lg"
+						className="size-14 text-lg"
 					/>
-					<span className="absolute inset-0 flex items-center justify-center bg-neutral-950/55 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-						{busy ? <LoaderCircle className="h-5 w-5 animate-spin text-white" /> : <Camera className="h-5 w-5 text-white" />}
+					<span className="absolute inset-0 flex items-center justify-center bg-foreground/55 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+						{busy ? (
+							<LoaderCircle className="h-5 w-5 animate-spin text-primary-foreground" />
+						) : (
+							<Camera className="h-5 w-5 text-primary-foreground" />
+						)}
 					</span>
-				</button>
+				</Button>
 				<div>
-					<p className="text-sm font-medium text-neutral-900">{t("avatar.title")}</p>
-					<p className="text-xs text-neutral-500">{t("avatar.contactHint")}</p>
+					<p className="text-sm font-medium text-foreground">
+						{t("avatar.title")}
+					</p>
+					<FieldDescription>{t("avatar.contactHint")}</FieldDescription>
 					{hasAvatar && (
-						<button type="button" onClick={() => void onRemove()} disabled={busy} className="mt-1 text-xs font-medium text-blue-600 hover:underline disabled:text-neutral-400">
+						<Button
+							variant="ghost"
+							type="button"
+							onClick={() => void onRemove()}
+							disabled={busy}
+							className="mt-1 text-xs font-medium text-signal hover:underline disabled:text-muted-foreground/70"
+						>
 							{t("avatar.remove")}
-						</button>
+						</Button>
 					)}
 				</div>
 			</div>
-			{status && <p role="alert" className="text-xs text-red-600">{status}</p>}
-		</div>
+			{status && <FieldError>{status}</FieldError>}
+		</Field>
 	);
 }

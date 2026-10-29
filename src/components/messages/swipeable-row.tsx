@@ -98,7 +98,7 @@ export function SwipeableRow({ children, startAction, endAction, disabled, role 
 					event.preventDefault();
 					event.stopPropagation();
 				}}
-				className={clsx("relative bg-white", !dragging && "transition-transform duration-200 ease-out motion-reduce:transition-none")}
+				className={clsx("relative bg-card", !dragging && "transition-transform duration-200 ease-out motion-reduce:transition-none")}
 				style={{ transform: offset ? `translateX(${offset}px)` : undefined, touchAction: "pan-y" }}
 			>
 				{children}

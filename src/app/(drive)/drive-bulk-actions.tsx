@@ -1,9 +1,11 @@
 "use client";
+import { useConfirmation } from "@/app/(calendar)/use-confirmation";
+import { Input } from "@/components/ui/input";
 
 import { useMemo, useRef, useState } from "react";
-import toast from "react-hot-toast";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import clsx from "clsx";
+import { toast } from "sonner";
+import * as DropdownMenu from "@/components/ui/dropdown-menu";
+import { cn as clsx } from "@/lib/utils";
 import { Folder, FolderInput, FolderPlus, HardDrive, RotateCcw, Trash2, X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
@@ -59,6 +61,7 @@ function buildRows(folders: FolderNode[], moving: Set<string>): FolderRow[] {
 
 export function DriveBulkActions({ selected, trashView, onDone }: { selected: DriveItemDto[]; trashView: boolean; onDone: () => void }) {
 	const { t } = useLanguage();
+	const { confirm, confirmation } = useConfirmation();
 	const [folders, setFolders] = useState<FolderNode[] | null>(null);
 	const [name, setName] = useState("");
 	const [busy, setBusy] = useState(false);
@@ -129,39 +132,39 @@ export function DriveBulkActions({ selected, trashView, onDone }: { selected: Dr
 
 	const buttonClass = "h-9 gap-2 rounded-full px-3 text-sm";
 	return (
-		<div className="flex flex-wrap items-center justify-end gap-1 text-sm">
+		<div className="flex flex-wrap items-center justify-end gap-1 text-sm">{confirmation}
 			{!trashView && canTrash && (
 				<>
-					<Button type="button" variant="ghost" className={buttonClass} disabled={busy} onClick={() => void run(() => act("trash"), (done) => t("drive.bulkTrashed", { count: done }))}><Trash2 size={16} />{t("drive.moveToTrash")}</Button>
-					{attachmentIds.length === 0 && ownsAll && <DropdownMenu.Root onOpenChange={(open) => void loadFolders(open)}>
-						<DropdownMenu.Trigger asChild>
-							<Button type="button" variant="ghost" className={buttonClass} disabled={busy}><FolderInput size={16} />{t("drive.moveToFolder")}</Button>
-						</DropdownMenu.Trigger>
-						<DropdownMenu.Portal>
-							<DropdownMenu.Content align="end" sideOffset={6} onCloseAutoFocus={(event) => event.preventDefault()} className="z-[200] w-72 rounded-xl border border-neutral-200 bg-white p-1.5 shadow-xl">
-								<form onSubmit={(event) => void createAndMove(event)} onKeyDown={(event) => event.stopPropagation()} className="flex items-center gap-1 border-b border-neutral-100 p-1.5 pb-2">
-									<FolderPlus size={16} className="shrink-0 text-neutral-500" />
-									<input ref={inputRef} value={name} onChange={(event) => setName(event.target.value)} maxLength={255} placeholder={t("drive.newFolderPlaceholder")} aria-label={t("drive.newFolderPlaceholder")} className="h-8 min-w-0 flex-1 rounded-md border border-neutral-200 bg-transparent px-2 text-sm placeholder:text-neutral-500 focus:border-blue-600 focus:outline-none" />
+					<Button type="button" variant="ghost" className={buttonClass} disabled={busy} onClick={() => void run(() => act("trash"), (done) => t("drive.bulkTrashed", { count: done }))}><Trash2 data-icon="inline-start" />{t("drive.moveToTrash")}</Button>
+					{attachmentIds.length === 0 && ownsAll && <DropdownMenu.DropdownMenu onOpenChange={(open) => void loadFolders(open)}>
+						<DropdownMenu.DropdownMenuTrigger asChild>
+							<Button type="button" variant="ghost" className={buttonClass} disabled={busy}><FolderInput data-icon="inline-start" />{t("drive.moveToFolder")}</Button>
+						</DropdownMenu.DropdownMenuTrigger>
+						<DropdownMenu.DropdownMenuPortal>
+							<DropdownMenu.DropdownMenuContent align="end" sideOffset={6} onCloseAutoFocus={(event) => event.preventDefault()} className="w-72"><DropdownMenu.DropdownMenuGroup>
+								<form onSubmit={(event) => void createAndMove(event)} onKeyDown={(event) => event.stopPropagation()} className="flex items-center gap-1 border-b border-border p-1.5 pb-2">
+									<FolderPlus size={16} className="shrink-0 text-muted-foreground" />
+									<Input ref={inputRef} value={name} onChange={(event) => setName(event.target.value)} maxLength={255} placeholder={t("drive.newFolderPlaceholder")} aria-label={t("drive.newFolderPlaceholder")} className="h-8 min-w-0 flex-1 rounded-md border border-border bg-transparent px-2 text-sm placeholder:text-muted-foreground focus:border-ring focus:outline-none" />
 									<Button type="submit" size="sm" disabled={busy || !name.trim()} title={t("drive.createAndMove")}>{t("drive.create")}</Button>
 								</form>
 								<div className="max-h-64 overflow-y-auto pt-1">
-									<DropdownMenu.Item onSelect={() => void move(null)} className="flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-neutral-700 outline-none data-[highlighted]:bg-neutral-100"><HardDrive size={16} className="shrink-0" />{t("drive.myDrive")}</DropdownMenu.Item>
+									<DropdownMenu.DropdownMenuItem onSelect={() => void move(null)} className="flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-foreground/80 outline-none data-[highlighted]:bg-accent"><HardDrive size={16} className="shrink-0" />{t("drive.myDrive")}</DropdownMenu.DropdownMenuItem>
 									{rows.map((folder) => (
-										<DropdownMenu.Item key={folder.id} disabled={folder.disabled} onSelect={() => void move(folder.id)} style={{ paddingLeft: 10 + folder.depth * 14 }} className={clsx("flex cursor-pointer items-center gap-2 rounded-lg py-2 pr-2.5 text-sm text-neutral-700 outline-none data-[disabled]:cursor-default data-[disabled]:opacity-40 data-[highlighted]:bg-neutral-100")}>
+										<DropdownMenu.DropdownMenuItem key={folder.id} disabled={folder.disabled} onSelect={() => void move(folder.id)} style={{ paddingLeft: 10 + folder.depth * 14 }} className={clsx("flex cursor-pointer items-center gap-2 rounded-lg py-2 pr-2.5 text-sm text-foreground/80 outline-none data-[disabled]:cursor-default data-[disabled]:opacity-40 data-[highlighted]:bg-accent")}>
 											<Folder size={16} className="shrink-0 text-amber-500" /><span className="truncate">{folder.name}</span>
-										</DropdownMenu.Item>
+										</DropdownMenu.DropdownMenuItem>
 									))}
-									{folders && rows.length === 0 && <p className="px-2.5 py-2 text-xs text-neutral-500">{t("drive.noFolders")}</p>}
+									{folders && rows.length === 0 && <p className="px-2.5 py-2 text-xs text-muted-foreground">{t("drive.noFolders")}</p>}
 								</div>
-							</DropdownMenu.Content>
-						</DropdownMenu.Portal>
-					</DropdownMenu.Root>}
+							</DropdownMenu.DropdownMenuGroup></DropdownMenu.DropdownMenuContent>
+						</DropdownMenu.DropdownMenuPortal>
+					</DropdownMenu.DropdownMenu>}
 				</>
 			)}
 			{ownsAll && trashView && (
 				<>
-					<Button type="button" variant="ghost" className={buttonClass} disabled={busy} onClick={() => void run(() => act("restore"), (done) => t("drive.bulkRestored", { count: done }))}><RotateCcw size={16} />{t("drive.restore")}</Button>
-					<Button type="button" variant="ghost" className={clsx(buttonClass, "text-red-600")} disabled={busy} onClick={() => { if (window.confirm(t("drive.confirmBulkDelete", { count }))) void run(() => act("delete"), (done) => t("drive.bulkDeleted", { count: done })); }}><X size={16} />{t("drive.deleteForever")}</Button>
+					<Button type="button" variant="ghost" className={buttonClass} disabled={busy} onClick={() => void run(() => act("restore"), (done) => t("drive.bulkRestored", { count: done }))}><RotateCcw data-icon="inline-start" />{t("drive.restore")}</Button>
+					<Button type="button" variant="ghost" className={clsx(buttonClass, "text-destructive")} disabled={busy} onClick={async () => { if (await confirm(t("drive.confirmBulkDelete", { count }))) void run(() => act("delete"), (done) => t("drive.bulkDeleted", { count: done })); }}><X data-icon="inline-start" />{t("drive.deleteForever")}</Button>
 				</>
 			)}
 		</div>

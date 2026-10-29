@@ -1,30 +1,27 @@
 "use client";
-
+import { FieldLabel, Field, FieldGroup } from "@/components/ui/field";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/language-provider";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { isHtmlSignature } from "@/components/compose/rich-text-utils";
 import { EmailHtmlRenderer } from "@/components/messages/email-html-renderer";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { updateMailboxSignature } from "./utils";
-
 export function MailboxSignatureForm() {
 	const { t } = useLanguage();
-	const { selectedMailbox, setSelectedMailbox, isLoading } = useSelectedMailbox();
+	const { selectedMailbox, setSelectedMailbox, isLoading } =
+		useSelectedMailbox();
 	const [signature, setSignature] = useState("");
 	const [savedSignature, setSavedSignature] = useState("");
 	const [status, setStatus] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
-
 	useEffect(() => {
 		const nextSignature = selectedMailbox?.signature ?? "";
 		setSignature(nextSignature);
 		setSavedSignature(nextSignature);
 		setStatus(null);
 	}, [selectedMailbox?.id, selectedMailbox?.signature]);
-
 	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		if (!selectedMailbox) return;
@@ -37,50 +34,78 @@ export function MailboxSignatureForm() {
 			setSelectedMailbox({ ...selectedMailbox, signature: saved });
 			setStatus(t("common.saved"));
 		} catch (error) {
-			setStatus(error instanceof Error ? error.message : t("settings.signature.failed"));
+			setStatus(
+				error instanceof Error ? error.message : t("settings.signature.failed"),
+			);
 		} finally {
 			setSaving(false);
 		}
 	}
-
-	if (isLoading) return <p className="text-sm text-neutral-500">{t("settings.signature.loadingInbox")}</p>;
-	if (!selectedMailbox) return <p className="text-sm text-neutral-500">{t("settings.signature.selectInbox")}</p>;
-
+	if (isLoading)
+		return (
+			<p className="text-sm text-muted-foreground">
+				{t("settings.signature.loadingInbox")}
+			</p>
+		);
+	if (!selectedMailbox)
+		return (
+			<p className="text-sm text-muted-foreground">
+				{t("settings.signature.selectInbox")}
+			</p>
+		);
 	const address = `${selectedMailbox.localPart}@${selectedMailbox.hostname}`;
 	const canManage = selectedMailbox.permission === "full_access";
-
 	return (
-		<form onSubmit={onSubmit} className="space-y-4">
-			<div className="space-y-2">
-				<Label htmlFor="mailboxSignature">{t("settings.signature.for", { address })}</Label>
-				<Textarea
-					id="mailboxSignature"
-					value={signature}
-					onChange={(event) => setSignature(event.target.value)}
-					placeholder={t("settings.signature.placeholder")}
-					rows={6}
-					disabled={!canManage || saving}
-				/>
-				<p className="text-xs leading-5 text-neutral-500">
-					{t("settings.signature.hint")}
-				</p>
-			</div>
-			{isHtmlSignature(signature) && (
-				<div className="space-y-2">
-					<p className="text-xs font-medium text-neutral-500">{t("settings.signature.preview")}</p>
-					<EmailHtmlRenderer
-						className="rounded-md border border-neutral-200 bg-white p-4 text-sm text-neutral-900"
-						html={signature}
+		<form onSubmit={onSubmit} className="flex flex-col gap-4">
+			<FieldGroup>
+				<Field>
+					<FieldLabel htmlFor="mailboxSignature">
+						{t("settings.signature.for", { address })}
+					</FieldLabel>
+					<Textarea
+						id="mailboxSignature"
+						value={signature}
+						onChange={(event) => setSignature(event.target.value)}
+						placeholder={t("settings.signature.placeholder")}
+						rows={6}
+						disabled={!canManage || saving}
 					/>
+					<p className="text-xs leading-5 text-muted-foreground">
+						{t("settings.signature.hint")}
+					</p>
+				</Field>
+				{isHtmlSignature(signature) && (
+					<div className="flex flex-col gap-2">
+						<p className="text-xs font-medium text-muted-foreground">
+							{t("settings.signature.preview")}
+						</p>
+						<EmailHtmlRenderer
+							className="rounded-md border border-border bg-card p-4 text-sm text-foreground"
+							html={signature}
+						/>
+					</div>
+				)}
+				<div className="flex items-center gap-3">
+					<Button
+						type="submit"
+						disabled={
+							!canManage || saving || signature.trim() === savedSignature
+						}
+					>
+						{saving ? t("common.saving") : t("settings.signature.save")}
+					</Button>
+					{!canManage && (
+						<p className="text-sm text-muted-foreground">
+							{t("settings.signature.needFullAccess")}
+						</p>
+					)}
+					{status && (
+						<p role="status" className="text-sm text-muted-foreground">
+							{status}
+						</p>
+					)}
 				</div>
-			)}
-			<div className="flex items-center gap-3">
-				<Button type="submit" disabled={!canManage || saving || signature.trim() === savedSignature}>
-					{saving ? t("common.saving") : t("settings.signature.save")}
-				</Button>
-				{!canManage && <p className="text-sm text-neutral-500">{t("settings.signature.needFullAccess")}</p>}
-				{status && <p role="status" className="text-sm text-neutral-500">{status}</p>}
-			</div>
+			</FieldGroup>
 		</form>
 	);
 }

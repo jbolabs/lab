@@ -1,8 +1,8 @@
-<img src="/public/icon-96.png" alt="Lab" width="72" />
+<img src="/public/icon-96.png" alt="The Lab" width="72" />
 
-# Lab
+# The Lab
 
-Lab is my personal mail, calendar, files, booking, and agent workspace at **https://lab.jbolabs.com**. It is a maintained fork of [Mailflare](https://github.com/hieunc229/mailflare), licensed under AGPLv3.
+The Lab is my personal mail, calendar, files, booking, and agent workspace at **https://lab.jbolabs.com**. It is a maintained fork of [Mailflare](https://github.com/hieunc229/mailflare), licensed under AGPLv3.
 
 For this installation, use the [Alchemy deployment guide](docs/jbo-deployment.md). The original Mailflare documentation below is retained for reference; do not use its standalone deploy instructions for the existing installation.
 
@@ -10,18 +10,8 @@ For this installation, use the [Alchemy deployment guide](docs/jbo-deployment.md
 
 ## Screenshots
 
-| ![Inbox](/screenshots/1.png)<br>Inbox | ![Manage domains](/screenshots/2.png)<br>Manage domains | ![Manage inboxes](/screenshots/3.png)<br>Manage inboxes |
+| ![Home](/screenshots/1.png)<br>Home | ![Inbox](/screenshots/2.png)<br>Inbox | ![Drive](/screenshots/3.png)<br>Drive |
 | --- | --- | --- |
-
-### Featured sponsors
-
-<a target="_blank" href="https://sequenzy.com/?ref=hieunc229/mailflare">
-  <img height="80" src="/sponsors/sequenzy.png" alt="Sequenzy">
-</a>  <a target="_blank" href="https://drivemug.com/?ref=hieunc229/mailflare">
-  <img height="80" src="https://mailflare.co/sponsors/drivemug.png" alt="Drivemug">
-</a>
-
-Want to support the mailflare? <a target="_blank" href="https://store.paymug.co/buy/mailflare-sponsor">Start sponsoring</a>
 
 ## What you can do
 

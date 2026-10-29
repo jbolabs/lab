@@ -57,8 +57,6 @@ async function fixture(t, { rules = [], failAddress, slowAddress } = {}) {
 			('two', 'admin', 'two.test', 'zone-two', 'active', 1),
 			('pending', 'admin', 'pending.test', 'zone-pending', 'pending', 1),
 			('foreign', 'other', 'foreign.test', 'zone-foreign', 'active', 1);
-		INSERT INTO license_settings (id, instance_id, plan, state, features, updated_at)
-			VALUES ('default', 'test-instance', 'team', 'active', '[]', 1);
 	`);
 	database.db.prepare("INSERT INTO api_keys (id, user_id, name, prefix, key_hash, scopes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
 		.run("key", "admin", "Test", key.prefix, key.hash, '["accounts"]', 1);
@@ -234,28 +232,11 @@ for (const enabled of [true, false]) {
 	});
 }
 
-test("account creation still enforces admin authorization and the Team license", async (t) => {
+test("account creation still enforces admin authorization", async (t) => {
 	const f = await fixture(t);
 	assert.equal((await f.post("api", {}, "invalid-test-key")).status, 401);
 	assert.equal((await f.post("dashboard", {}, "invalid-test-session")).status, 403);
-	f.database.db.exec("UPDATE license_settings SET state = 'inactive'");
-	assert.equal((await f.post("api")).status, 403);
-	assert.equal((await f.post("dashboard")).status, 403);
 	assert.equal(f.calls.length, 0);
-});
-
-test("a Pro license creates accounts only while seats remain; Team and unlimited Pro have no limit", async (t) => {
-	const f = await fixture(t);
-	const users = () => f.database.db.prepare("SELECT count(*) AS count FROM users WHERE disabled = 0").get().count;
-	f.database.db.exec(`UPDATE license_settings SET plan = 'pro', seat_limit = ${users()}`);
-	assert.equal((await f.post("api")).status, 403, "no seat left");
-	f.database.db.exec(`UPDATE license_settings SET seat_limit = ${users() + 1}`);
-	assert.equal((await f.post("api", { username: "seat-one" })).status, 201);
-	assert.equal((await f.post("api", { username: "seat-two" })).status, 403, "seat just used");
-	f.database.db.exec("UPDATE license_settings SET seat_limit = NULL");
-	assert.equal((await f.post("api", { username: "seat-three" })).status, 201);
-	f.database.db.exec("UPDATE license_settings SET plan = 'team', seat_limit = 1");
-	assert.equal((await f.post("api", { username: "seat-four" })).status, 201);
 });
 
 for (const separateDomains of [false, true]) {

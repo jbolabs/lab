@@ -1,4 +1,5 @@
 "use client";
+import { useAdminConfirmation } from "../admin-confirmation-provider";
 
 import { useState } from "react";
 import { useLanguage } from "@/components/language-provider";
@@ -17,6 +18,7 @@ type Props = {
 /** Email Routing status for the zone, with a setup that also deals with conflicting MX records. */
 export default function CloudflareReceivingConfig({ domainId, routingOk, routingLabel, manual, onChanged }: Props) {
 	const { t } = useLanguage();
+	const confirm = useAdminConfirmation();
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState("");
 
@@ -24,21 +26,21 @@ export default function CloudflareReceivingConfig({ domainId, routingOk, routing
 		setBusy(true);
 		setError("");
 		try {
-			if (await runReceivingSetup(domainId, "cloudflare")) onChanged?.();
+			if (await runReceivingSetup(domainId, "cloudflare", confirm)) onChanged?.();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : t("domains.setupFailed"));
 		} finally { setBusy(false); }
 	}
 
 	return (
-		<div className="space-y-2">
-			<ul className="space-y-2">
+		<div className="flex flex-col gap-2">
+			<ul className="flex flex-col gap-2">
 				<StatusRow
 					ok={routingOk}
 					title={t("domains.emailRouting")}
 					hint={t("domains.emailRoutingHint")}
 					action={!routingOk ? (
-						<Button size="sm" variant="outline" className="bg-white" disabled={busy || manual} title={manual ? t("domains.manualDns") : undefined} onClick={() => void setup()}>
+						<Button size="sm" variant="outline" className="bg-card" disabled={busy || manual} title={manual ? t("domains.manualDns") : undefined} onClick={() => void setup()}>
 							{busy ? t("domains.settingUp") : t("domains.setup")}
 						</Button>
 					) : undefined}

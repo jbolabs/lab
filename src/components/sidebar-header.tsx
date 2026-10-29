@@ -1,24 +1,47 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, TextAlignJustify } from "lucide-react";
-import { useBranding } from "./branding-provider";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { TextAlignJustify } from "lucide-react";
+import { BrandMark, Wordmark } from "./brand";
 import { useSidebar } from "./sidebar-state";
 import type { SidebarHeaderProps } from "./sidebar-state-types";
-import { Tooltip } from "./ui/tooltip";
+import { HintTooltip } from "@/components/hint-tooltip";
 import { useLanguage } from "./language-provider";
 
 export function SidebarHeader({ href, label }: SidebarHeaderProps) {
 	const { t } = useLanguage();
-	const branding = useBranding();
 	const { minimal, toggle } = useSidebar();
-	const toggleButton = <button type="button" onClick={toggle} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-600 hover:bg-neutral-200" aria-label={minimal ? t("navigation.expandMenu") : t("navigation.collapseMenu")}>
-		{minimal ? <img src={branding.iconUrl} height={32} width={32} alt="" /> : <TextAlignJustify size={18} />}
-	</button>;
+	const toggleButton = (
+		<Button
+			type="button"
+			variant="ghost"
+			size="icon"
+			onClick={toggle}
+			className="size-11 shrink-0"
+			aria-label={
+				minimal ? t("navigation.expandMenu") : t("navigation.collapseMenu")
+			}
+		>
+			{minimal ? <BrandMark size={32} /> : <TextAlignJustify />}
+		</Button>
+	);
 	return (
-		<div className={`mb-3 flex h-10 items-center ${minimal ? "" : "gap-2 px-1"}`}>
-			{minimal ? <Tooltip label={t("navigation.expandMenu")} placement="right">{toggleButton}</Tooltip> : toggleButton}
-			{!minimal && <Link href={href} className="flex min-w-0 items-center gap-3"><img src={branding.iconUrl} height={32} width={32} alt="" /><span className="truncate text-lg font-semibold text-neutral-800">{label ?? branding.appName}</span></Link>}
+		<div className={cn("mb-1 flex h-11 items-center", !minimal && "gap-1")}>
+			{minimal ? (
+				<HintTooltip label={t("navigation.expandMenu")} side="right">
+					{toggleButton}
+				</HintTooltip>
+			) : (
+				toggleButton
+			)}
+			{!minimal && (
+				<Link href={href} className="flex min-w-0 items-center gap-2.5">
+					<BrandMark size={30} />
+					<Wordmark name={label} />
+				</Link>
+			)}
 		</div>
 	);
 }

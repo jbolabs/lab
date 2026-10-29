@@ -1,11 +1,11 @@
 "use client";
+import { Field, FieldLabel } from "@/components/ui/field";
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { ManagedAccount } from "../types";
 import { fetchManagedAccount } from "../utils";
 import { saveAccountPassword } from "./utils";
@@ -25,21 +25,21 @@ export default function AccountPasswordPage() {
 	}, [id, t]);
 
 	return (
-		<div className="space-y-6">
+		<div className="flex flex-col gap-6">
 			<div>
-				<h1 className="text-2xl md:text-3xl font-medium text-neutral-900">{t("account.password.title")}</h1>
-				<p className="mt-2 text-sm text-neutral-500">{t("account.password.resetFor", { name: account?.name ?? t("account.password.thisAccount") })}</p>
+				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("account.password.title")}</h1>
+				<p className="mt-2 text-sm text-muted-foreground">{t("account.password.resetFor", { name: account?.name ?? t("account.password.thisAccount") })}</p>
 			</div>
 			<form
 				onSubmit={(event) => void saveAccountPassword({ event, account, password, setPassword, setSaving, setMessage, t })}
-				className="space-y-5 rounded-3xl bg-white p-6"
+				className="flex flex-col gap-5 rounded-lg bg-card p-6"
 			>
 				{account && !account.editable ? (
-					<p className="text-sm text-neutral-500">{t("account.password.onlyPrimary")}</p>
+					<p className="text-sm text-muted-foreground">{t("account.password.onlyPrimary")}</p>
 				) : (
 					<>
-						<div className="space-y-2">
-							<Label htmlFor="account-new-password">{t("account.password.new")}</Label>
+						<Field className="flex flex-col gap-2">
+							<FieldLabel htmlFor="account-new-password">{t("account.password.new")}</FieldLabel>
 							<Input
 								id="account-new-password"
 								type="password"
@@ -52,17 +52,17 @@ export default function AccountPasswordPage() {
 								onChange={(event) => setPassword(event.target.value)}
 								placeholder={t("account.password.placeholder")}
 							/>
-							<p className="text-xs leading-5 text-neutral-500">
+							<p className="text-xs leading-5 text-muted-foreground">
 								{t("account.password.hint")}
 							</p>
-						</div>
+						</Field>
 						<Button type="submit" disabled={!account || saving || password.trim().length < 8}>
 							{saving ? t("account.password.resetting") : t("account.password.reset")}
 						</Button>
 					</>
 				)}
 			</form>
-			{message && <p role="status" className="text-sm text-neutral-500">{message}</p>}
+			{message && <p role="status" className="text-sm text-muted-foreground">{message}</p>}
 		</div>
 	);
 }

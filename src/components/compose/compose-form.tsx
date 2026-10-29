@@ -2,14 +2,27 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
-import { ChevronUp, FileText, Forward, Maximize2, Minimize2, Minus, Paperclip, Reply, Trash2, X } from "lucide-react";
+import {
+	ChevronUp,
+	FileText,
+	Forward,
+	Maximize2,
+	Minimize2,
+	Minus,
+	Paperclip,
+	Reply,
+	Trash2,
+	X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/components/language-provider";
+import { toast as notify } from "sonner";
+import { Item } from "@/components/ui/item";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { Tooltip } from "@/components/ui/tooltip";
+import { NativeSelect } from "@/components/ui/native-select";
+import { HintTooltip } from "@/components/hint-tooltip";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { authFetch } from "@/lib/auth/client";
 import { formatEmailAddress, getEmailAddress } from "@/lib/email/address";
@@ -32,8 +45,16 @@ import {
 	splitQuotedHtml,
 	textToHtml,
 } from "./rich-text-utils";
-import { headerToRecipients, isValidRecipient, recipientsToHeader } from "./recipient-utils";
-import type { ComposeAttachment, ComposeStoredAttachment, ComposeThreading } from "./types";
+import {
+	headerToRecipients,
+	isValidRecipient,
+	recipientsToHeader,
+} from "./recipient-utils";
+import type {
+	ComposeAttachment,
+	ComposeStoredAttachment,
+	ComposeThreading,
+} from "./types";
 import type { ComposeAttachmentPolicy } from "./attachment-policy-types";
 
 type Toast = { type: "success" | "error"; message: string } | null;
@@ -158,6 +179,7 @@ export function ComposeForm({
 
 	useEffect(() => {
 		if (!toast) return;
+		notify[toast.type](toast.message);
 		const timer = setTimeout(() => setToast(null), 3200);
 		return () => clearTimeout(timer);
 	}, [toast]);
@@ -573,93 +595,175 @@ export function ComposeForm({
 		if (selectedMailbox?.id !== option.mailbox.id) setSelectedMailbox(option.mailbox);
 	}
 
-	const attachmentContent = (attachments.length > 0 || storedAttachments.length > 0) && (
+	const attachmentContent = (attachments.length > 0 ||
+		storedAttachments.length > 0) && (
 		<div>
-		<div className="flex min-w-0 flex-nowrap gap-2 overflow-x-auto overflow-y-hidden px-3 py-2">
-			{storedAttachments.map((attachment) => (
-				<div
-					key={attachment.id}
-					className="flex max-w-full shrink-0 items-center gap-2 rounded-lg bg-neutral-100 px-2 py-1 text-xs"
-					title={t("compose.carriedOver")}
-				>
-					<FileText className="h-4 w-4 shrink-0 text-neutral-500" />
-					<span className="max-w-48 truncate">{attachment.filename}</span>
-					<span className="text-xs text-neutral-500">{formatAttachmentSize(attachment.size)}</span>
-					<button
-						type="button"
-						onClick={() => void removeStoredAttachment(attachment.id)}
-						className="rounded-full p-1 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
+			<div className="flex min-w-0 flex-nowrap gap-2 overflow-x-auto overflow-y-hidden px-3 py-2">
+				{storedAttachments.map((attachment) => (
+					<Item
+						variant="muted"
+						size="sm"
+						key={attachment.id}
+						className="flex max-w-full shrink-0 items-center gap-2 rounded-lg bg-muted px-2 py-1 text-xs"
+						title={t("compose.carriedOver")}
 					>
-						<X className="h-3.5 w-3.5" />
-						<span className="sr-only">{t("compose.removeAttachment")}</span>
-					</button>
-				</div>
-			))}
-			{attachments.map((attachment) => (
-				<div
-					key={attachment.id}
-					className="flex max-w-full shrink-0 items-center gap-2 rounded-lg bg-neutral-100 px-2 py-1 text-xs"
-				>
-					<FileText className="h-4 w-4 shrink-0 text-neutral-500" />
-					<span className="max-w-48 truncate font-medium">{attachment.file.name}</span>
-					<span className="text-xs text-neutral-500">
-						{formatAttachmentSize(attachment.file.size)}
-					</span>
-					<button
-						type="button"
-						onClick={() =>
-							setAttachments((current) =>
-								current.filter((item) => item.id !== attachment.id),
-							)
-						}
-						className="rounded-full p-1 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
+						<FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+						<span className="max-w-48 truncate">{attachment.filename}</span>
+						<span className="text-xs text-muted-foreground">
+							{formatAttachmentSize(attachment.size)}
+						</span>
+						<Button
+							variant="ghost"
+							size="icon"
+							type="button"
+							onClick={() => void removeStoredAttachment(attachment.id)}
+							className="[@media(pointer:coarse)]:size-11"
+						>
+							<X data-icon="inline-start" />
+							<span className="sr-only">{t("compose.removeAttachment")}</span>
+						</Button>
+					</Item>
+				))}
+				{attachments.map((attachment) => (
+					<Item
+						variant="muted"
+						size="sm"
+						key={attachment.id}
+						className="flex max-w-full shrink-0 items-center gap-2 rounded-lg bg-muted px-2 py-1 text-xs"
 					>
-						<X className="h-3.5 w-3.5" />
-						<span className="sr-only">{t("compose.removeAttachment")}</span>
-					</button>
-				</div>
-			))}
-		</div>
-		<p className="px-3 pb-2 text-xs text-amber-700">{[...attachments.map((item) => item.file.size), ...storedAttachments.map((item) => item.size)].some((size) => size > attachmentPolicy.cloudThresholdBytes) ? t("compose.cloudWarning.will") : t("compose.cloudWarning.may")}</p>
+						<FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+						<span className="max-w-48 truncate font-medium">
+							{attachment.file.name}
+						</span>
+						<span className="text-xs text-muted-foreground">
+							{formatAttachmentSize(attachment.file.size)}
+						</span>
+						<Button
+							variant="ghost"
+							size="icon"
+							type="button"
+							onClick={() =>
+								setAttachments((current) =>
+									current.filter((item) => item.id !== attachment.id),
+								)
+							}
+							className="[@media(pointer:coarse)]:size-11"
+						>
+							<X data-icon="inline-start" />
+							<span className="sr-only">{t("compose.removeAttachment")}</span>
+						</Button>
+					</Item>
+				))}
+			</div>
+			<p className="px-3 pb-2 text-xs text-amber-700">
+				{[
+					...attachments.map((item) => item.file.size),
+					...storedAttachments.map((item) => item.size),
+				].some((size) => size > attachmentPolicy.cloudThresholdBytes)
+					? t("compose.cloudWarning.will")
+					: t("compose.cloudWarning.may")}
+			</p>
 		</div>
 	);
 
 	// Below md the popup is a bottom sheet: full width, anchored to the visual viewport (so the keyboard never covers the toolbar) and padded by the bottom safe area.
-	const sheetClass = "compose-sheet max-md:inset-x-0 max-md:bottom-[var(--sheet-bottom,0px)] max-md:left-0 max-md:right-0 max-md:top-auto max-md:z-50 max-md:h-[var(--sheet-height,100dvh)] max-md:w-full max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-none max-md:border-0 max-md:pt-[env(safe-area-inset-top)] max-md:pb-[var(--sheet-pad,max(env(safe-area-inset-bottom),1rem))]";
+	const sheetClass =
+		"compose-sheet max-md:inset-x-0 max-md:bottom-[var(--sheet-bottom,0px)] max-md:left-0 max-md:right-0 max-md:top-auto max-md:z-50 max-md:h-[var(--sheet-height,100dvh)] max-md:w-full max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-none max-md:border-0 max-md:pt-[env(safe-area-inset-top)] max-md:pb-[var(--sheet-pad,max(env(safe-area-inset-bottom),1rem))]";
 	const frameClass =
 		mode === "popup"
 			? minimized
-				? cn("fixed bottom-0 right-8 z-40 flex h-9 w-[min(260px,calc(100vw-32px))] flex-col overflow-hidden rounded-t-lg border border-neutral-200 bg-white shadow-2xl", sheetClass)
+				? cn(
+						"fixed bottom-0 right-8 z-40 flex h-9 w-[min(260px,calc(100vw-32px))] flex-col overflow-hidden rounded-t-lg border border-border bg-card shadow-2xl",
+						sheetClass,
+					)
 				: modalMode
-				? cn("fixed left-1/2 top-1/2 z-50 flex h-[86vh] w-[min(860px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg bg-white shadow-2xl", sheetClass)
-				: cn("fixed bottom-0 right-8 z-40 flex h-[min(520px,calc(100vh-88px))] w-[min(560px,calc(100vw-32px))] flex-col overflow-hidden rounded-t-lg border border-neutral-200 bg-white shadow-2xl", sheetClass)
-			: "relative flex h-full min-h-[720px] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm";
+					? cn(
+							"fixed left-1/2 top-1/2 z-50 flex h-[86dvh] w-[min(860px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg bg-card shadow-2xl",
+							sheetClass,
+						)
+					: cn(
+							"fixed bottom-0 right-8 z-40 flex h-[min(580px,calc(100dvh-88px))] w-[min(680px,calc(100vw-32px))] flex-col overflow-hidden rounded-t-lg border border-border bg-card shadow-2xl",
+							sheetClass,
+						)
+			: "relative flex h-full min-h-[720px] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm";
 
 	return (
 		<>
-			{agentReview && <SendReview approvalId={agentReview.approvalId} snapshot={agentReview.snapshot} onClose={() => setAgentReview(null)} onSent={() => { setAgentReview(null); if (onClose) dismiss(); else router.push("/sent"); }} />}
-			{mode === "popup" && modalMode && !minimized && <div className="fixed inset-0 z-40 bg-neutral-950/65" aria-hidden="true" />}
-			{toast && (
-				<div
-					role={toast.type === "error" ? "alert" : "status"}
-					className={cn(
-						"fixed right-6 top-6 z-[60] rounded-lg px-4 py-3 text-sm font-medium shadow-lg",
-						toast.type === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white",
-					)}
-				>
-					{toast.message}
-				</div>
+			{agentReview && (
+				<SendReview
+					approvalId={agentReview.approvalId}
+					snapshot={agentReview.snapshot}
+					onClose={() => setAgentReview(null)}
+					onSent={() => {
+						setAgentReview(null);
+						if (onClose) dismiss();
+						else router.push("/sent");
+					}}
+				/>
 			)}
-			<form onSubmit={onSubmit} className={cn(frameClass, closing && "compose-sheet-closing")} style={dragY ? { transform: `translateY(${dragY}px)`, transition: "none" } : undefined} ref={formRef} role={modalMode && !minimized ? "dialog" : mode === "popup" ? "region" : undefined} aria-modal={modalMode && !minimized || undefined} aria-label={mode === "popup" ? t("compose.dialogLabel") : undefined} onKeyDown={(event) => { if (modalMode && !minimized && event.key === "Escape") { event.preventDefault(); setModalMode(false); } }} onDragEnterCapture={minimized ? undefined : onFileDragEnter} onDragOverCapture={minimized ? undefined : onFileDragOver} onDragLeaveCapture={minimized ? undefined : onFileDragLeave} onDropCapture={minimized ? undefined : onFileDrop}>
+			{mode === "popup" && modalMode && !minimized && (
+				<div
+					className="fixed inset-0 z-40 bg-foreground/65"
+					aria-hidden="true"
+				/>
+			)}
+
+			<form
+				onSubmit={onSubmit}
+				className={cn(frameClass, closing && "compose-sheet-closing")}
+				style={
+					dragY
+						? { transform: `translateY(${dragY}px)`, transition: "none" }
+						: undefined
+				}
+				ref={formRef}
+				role={
+					modalMode && !minimized
+						? "dialog"
+						: mode === "popup"
+							? "region"
+							: undefined
+				}
+				aria-modal={(modalMode && !minimized) || undefined}
+				aria-label={mode === "popup" ? t("compose.dialogLabel") : undefined}
+				onKeyDown={(event) => {
+					if (modalMode && !minimized && event.key === "Escape") {
+						event.preventDefault();
+						setModalMode(false);
+					}
+				}}
+				onDragEnterCapture={minimized ? undefined : onFileDragEnter}
+				onDragOverCapture={minimized ? undefined : onFileDragOver}
+				onDragLeaveCapture={minimized ? undefined : onFileDragLeave}
+				onDropCapture={minimized ? undefined : onFileDrop}
+			>
 				{draggingFiles && !minimized && (
-					<div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center border-2 border-dashed border-blue-400 bg-blue-50/90 text-sm font-medium text-blue-700" aria-hidden="true">
+					<div
+						className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center border-2 border-dashed border-ring bg-signal-soft/90 text-sm font-medium text-signal"
+						aria-hidden="true"
+					>
 						{t("compose.dropFiles")}
 					</div>
 				)}
-				<div {...sheetDrag} className="flex h-9 shrink-0 items-center justify-between max-md:h-12 max-md:touch-none bg-neutral-800 text-white dark:bg-neutral-100 px-4 text-sm font-medium">
-					<span className="flex min-w-0 items-center gap-2 truncate  dark:text-neutral-900">
-						{threading?.inReplyTo && <Reply className="h-3.5 w-3.5 text-neutral-300" />}
-						{!threading?.inReplyTo && /^fwd?:/i.test(subject) && <Forward className="h-3.5 w-3.5 text-neutral-300" />}
+				<div
+					{...sheetDrag}
+					className="flex h-9 shrink-0 items-center justify-between max-md:h-auto max-md:min-h-14 max-md:touch-none max-md:pt-[env(safe-area-inset-top)] border-b bg-card text-foreground px-3 text-sm font-medium"
+				>
+					<Button
+						type="button"
+						variant="ghost"
+						onClick={dismiss}
+						className="md:hidden min-h-11"
+					>
+						{t("common.cancel")}
+					</Button>
+					<span className="flex min-w-0 items-center gap-2 truncate ">
+						{threading?.inReplyTo && (
+							<Reply className="h-3.5 w-3.5 text-muted-foreground/50" />
+						)}
+						{!threading?.inReplyTo && /^fwd?:/i.test(subject) && (
+							<Forward className="h-3.5 w-3.5 text-muted-foreground/50" />
+						)}
 						{loadingDraft
 							? t("compose.title.loading")
 							: threading?.inReplyTo
@@ -670,170 +774,282 @@ export function ComposeForm({
 										? t("compose.title.saved")
 										: t("compose.title.new")}
 					</span>
+					<Button
+						type="submit"
+						size="sm"
+						disabled={loading || loadingDraft || !fromAddr}
+						className="md:hidden min-h-11"
+					>
+						{loading
+							? t("compose.preparing")
+							: scheduledAt
+								? t("compose.schedule")
+								: agentRevision !== null
+									? t("compose.reviewSend")
+									: t("compose.send")}
+					</Button>
 					{mode === "popup" && (
-						<div className="flex shrink-0 items-center gap-3 text-neutral-300">
-							<button type="button" onClick={() => { setMinimized((current) => !current); setDraggingFiles(false); }} aria-label={minimized ? t("compose.restore") : t("compose.minimize")} title={minimized ? t("compose.restore") : t("compose.minimize")} className="max-md:hidden rounded p-1 hover:bg-neutral-700 dark:hover:bg-neutral-200 hover:text-white">
-								{minimized ? <ChevronUp className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
-							</button>
-							<button type="button" onClick={() => { if (minimized) setMinimized(false); setModalMode((current) => !current); }} aria-label={modalMode ? t("compose.restoreFloating") : t("compose.openModal")} title={modalMode ? t("compose.restoreFloating") : t("compose.openModal")} className="max-md:hidden rounded p-1 dark:hover:bg-neutral-200 hover:bg-neutral-700 hover:text-white">
-								{modalMode ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-							</button>
-							<button type="button" onClick={dismiss} aria-label={t("compose.close")} className="rounded p-1 max-md:-m-2 max-md:p-3 hover:bg-neutral-700 dark:hover:bg-neutral-200 hover:text-white">
-								<X className="h-4 w-4" />
-							</button>
+						<div className="hidden md:flex shrink-0 items-center gap-1">
+							<Button
+								variant="ghost"
+								size="icon"
+								type="button"
+								onClick={() => {
+									setMinimized((current) => !current);
+									setDraggingFiles(false);
+								}}
+								aria-label={
+									minimized ? t("compose.restore") : t("compose.minimize")
+								}
+								title={minimized ? t("compose.restore") : t("compose.minimize")}
+								className="max-md:hidden rounded p-1 hover:bg-primary/90 hover:text-primary-foreground"
+							>
+								{minimized ? (
+									<ChevronUp className="h-4 w-4" />
+								) : (
+									<Minus className="h-4 w-4" />
+								)}
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
+								type="button"
+								onClick={() => {
+									if (minimized) setMinimized(false);
+									setModalMode((current) => !current);
+								}}
+								aria-label={
+									modalMode
+										? t("compose.restoreFloating")
+										: t("compose.openModal")
+								}
+								title={
+									modalMode
+										? t("compose.restoreFloating")
+										: t("compose.openModal")
+								}
+								className="max-md:hidden rounded p-1 hover:bg-primary/90 hover:text-primary-foreground"
+							>
+								{modalMode ? (
+									<Minimize2 className="h-4 w-4" />
+								) : (
+									<Maximize2 className="h-4 w-4" />
+								)}
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
+								type="button"
+								onClick={dismiss}
+								aria-label={t("compose.close")}
+								className="rounded p-1 max-md:-m-2 max-md:p-3 hover:bg-primary/90 hover:text-primary-foreground"
+							>
+								<X data-icon="inline-start" />
+							</Button>
 						</div>
 					)}
 				</div>
-				<div className={cn("flex min-h-0 flex-1 flex-col", minimized && "hidden")}>
-				<div className="border-b border-neutral-100 px-4 py-1 flex flex-row items-center">
-					<Label htmlFor={`${mode}-from`} className="text-sm text-neutral-500">{t("compose.from")}</Label>
-					<Select
-						id={`${mode}-from`}
-						value={selectedMailbox && selectedFrom ? `${selectedMailbox.id}|${selectedFrom}` : ""}
-						onChange={(event) => selectSender(event.target.value)}
-						// placeholder="Select a mailbox first"
-						required
-						disabled={loadingDraft || senderOptions.length === 0}
-						className="h-8 px-0 py-1 text-sm shadow-none focus-visible:ring-0"
-						containerClassName="border-0 flex-1"
-					>
-						{senderOptions.length === 0 && <option value="">{t("compose.selectMailboxFirst")}</option>}
-						{senderOptions.map(({ mailbox, address }) => (
-							<option key={`${mailbox.id}|${address}`} value={`${mailbox.id}|${address}`}>{address}</option>
-						))}
-					</Select>
-				</div>
-				<RecipientInput
-					id={`${mode}-to`}
-					label={t("compose.to")}
-					value={to}
-					onChange={setTo}
-					placeholder={t("compose.toPlaceholder")}
-					required
-					autoFocus={!draftIdToLoad}
-					disabled={loadingDraft}
-					trailing={
-						<>
-							{!showCc && (
-								<button type="button" className="rounded px-1 hover:text-neutral-800" onClick={() => setShowCc(true)}>
-									{t("compose.cc")}
-								</button>
+				<div
+					className={cn("flex min-h-0 flex-1 flex-col", minimized && "hidden")}
+				>
+					<div className="border-b border-border px-4 py-1 flex flex-row items-center gap-2">
+						<Label
+							htmlFor={`${mode}-from`}
+							className="text-sm text-muted-foreground"
+						>
+							{t("compose.from")}
+						</Label>
+						<NativeSelect
+							id={`${mode}-from`}
+							value={
+								selectedMailbox && selectedFrom
+									? `${selectedMailbox.id}|${selectedFrom}`
+									: ""
+							}
+							onChange={(event) => selectSender(event.target.value)}
+							// placeholder="Select a mailbox first"
+							required
+							disabled={loadingDraft || senderOptions.length === 0}
+							className="h-8 border-0 bg-transparent px-0 py-1 text-sm shadow-none focus-visible:ring-0 dark:bg-transparent dark:hover:bg-transparent"
+							containerClassName="flex-1"
+						>
+							{senderOptions.length === 0 && (
+								<option value="">{t("compose.selectMailboxFirst")}</option>
 							)}
-							{!showBcc && (
-								<button type="button" className="rounded px-1 hover:text-neutral-800" onClick={() => setShowBcc(true)}>
-									{t("compose.bcc")}
-								</button>
-							)}
-						</>
-					}
-				/>
-				{showCc && (
-					<RecipientInput
-						id={`${mode}-cc`}
-						label={t("compose.cc")}
-						value={cc}
-						onChange={setCc}
-						placeholder={t("compose.ccPlaceholder")}
-						disabled={loadingDraft}
-						autoFocus={!loadingDraft && cc.length === 0}
-					/>
-				)}
-				{showBcc && (
-					<RecipientInput
-						id={`${mode}-bcc`}
-						label={t("compose.bcc")}
-						value={bcc}
-						onChange={setBcc}
-						placeholder={t("compose.bccPlaceholder")}
-						disabled={loadingDraft}
-						autoFocus={!loadingDraft && bcc.length === 0}
-					/>
-				)}
-				<div className="border-b border-neutral-100 px-4 py-1">
-					<Label htmlFor={`${mode}-subject`} className="sr-only">{t("compose.subject")}</Label>
-					<Input
-						id={`${mode}-subject`}
-						value={subject}
-						onChange={(event) => setSubject(event.target.value)}
-						placeholder={t("compose.subject")}
-						required
-						disabled={loadingDraft}
-						className="h-8 border-0 px-0 py-1 shadow-none focus-visible:ring-0"
-					/>
-				</div>
-				<Label htmlFor={`${mode}-text`} className="sr-only">{t("compose.body")}</Label>
-				<RichTextEditor
-					id={`${mode}-text`}
-					value={html}
-					onChange={setHtml}
-					quotedHtml={quotedHtml}
-					disabled={loadingDraft}
-					placeholder={t("compose.bodyPlaceholder")}
-					footerContent={attachmentContent}
-					toolbarStart={
-						<div className="flex items-center max-md:contents">
-							<Button type="button" variant="secondary" size="sm" onClick={dismiss} className="md:hidden max-md:h-10 max-md:px-3.5 max-md:text-[15px]">
-								{t("common.cancel")}
-							</Button>
-							<div className="flex items-center max-md:order-last max-md:ml-auto">
-								<Button
-									type="submit"
-									size="sm"
-									disabled={loading || loadingDraft || !fromAddr}
-									className="rounded-r-none px-4 max-md:h-10 max-md:px-5 max-md:text-[15px]"
+							{senderOptions.map(({ mailbox, address }) => (
+								<option
+									key={`${mailbox.id}|${address}`}
+									value={`${mailbox.id}|${address}`}
 								>
-									{loading ? t("compose.preparing") : scheduledAt ? t("compose.schedule") : agentRevision !== null ? t("compose.reviewSend") : t("compose.send")}
-								</Button>
-								<ScheduleSendMenu
-									disabled={loading || loadingDraft || !fromAddr}
-									value={scheduledAt}
-									onChange={setScheduledAt}
-									mailboxId={selectedMailbox?.id}
-									from={fromAddr}
-									onApplyTemplate={({ title, html: templateHtml }) => {
-										setSubject((current) => current.trim() ? current : title);
-										setHtml((current) => (hasMeaningfulHtml(current) ? `${current}${templateHtml}` : templateHtml));
-									}}
-								/>
+									{address}
+								</option>
+							))}
+						</NativeSelect>
+					</div>
+					<RecipientInput
+						id={`${mode}-to`}
+						label={t("compose.to")}
+						value={to}
+						onChange={setTo}
+						placeholder={t("compose.toPlaceholder")}
+						required
+						autoFocus={!draftIdToLoad}
+						disabled={loadingDraft}
+						trailing={
+							<>
+								{!showCc && (
+									<Button
+										variant="ghost"
+										size="icon"
+										type="button"
+										className="[@media(pointer:coarse)]:size-11"
+										onClick={() => setShowCc(true)}
+									>
+										{t("compose.cc")}
+									</Button>
+								)}
+								{!showBcc && (
+									<Button
+										variant="ghost"
+										size="icon"
+										type="button"
+										className="[@media(pointer:coarse)]:size-11"
+										onClick={() => setShowBcc(true)}
+									>
+										{t("compose.bcc")}
+									</Button>
+								)}
+							</>
+						}
+					/>
+					{showCc && (
+						<RecipientInput
+							id={`${mode}-cc`}
+							label={t("compose.cc")}
+							value={cc}
+							onChange={setCc}
+							placeholder={t("compose.ccPlaceholder")}
+							disabled={loadingDraft}
+							autoFocus={!loadingDraft && cc.length === 0}
+						/>
+					)}
+					{showBcc && (
+						<RecipientInput
+							id={`${mode}-bcc`}
+							label={t("compose.bcc")}
+							value={bcc}
+							onChange={setBcc}
+							placeholder={t("compose.bccPlaceholder")}
+							disabled={loadingDraft}
+							autoFocus={!loadingDraft && bcc.length === 0}
+						/>
+					)}
+					<div className="border-b border-border px-4 py-1">
+						<Label htmlFor={`${mode}-subject`} className="sr-only">
+							{t("compose.subject")}
+						</Label>
+						<Input
+							id={`${mode}-subject`}
+							value={subject}
+							onChange={(event) => setSubject(event.target.value)}
+							placeholder={t("compose.subject")}
+							required
+							disabled={loadingDraft}
+							className="h-8 border-0 px-0 py-1 shadow-none focus-visible:ring-0"
+						/>
+					</div>
+					<Label htmlFor={`${mode}-text`} className="sr-only">
+						{t("compose.body")}
+					</Label>
+					<RichTextEditor
+						id={`${mode}-text`}
+						value={html}
+						onChange={setHtml}
+						quotedHtml={quotedHtml}
+						disabled={loadingDraft}
+						placeholder={t("compose.bodyPlaceholder")}
+						footerContent={attachmentContent}
+						toolbarStart={
+							<div className="flex items-center max-md:contents">
+								<div className="flex items-center max-md:order-last max-md:ml-auto">
+									<Button
+										type="submit"
+										size="sm"
+										disabled={loading || loadingDraft || !fromAddr}
+										className="rounded-r-none px-4 max-md:hidden"
+									>
+										{loading
+											? t("compose.preparing")
+											: scheduledAt
+												? t("compose.schedule")
+												: agentRevision !== null
+													? t("compose.reviewSend")
+													: t("compose.send")}
+									</Button>
+									<ScheduleSendMenu
+										disabled={loading || loadingDraft || !fromAddr}
+										value={scheduledAt}
+										onChange={setScheduledAt}
+										mailboxId={selectedMailbox?.id}
+										from={fromAddr}
+										onApplyTemplate={({ title, html: templateHtml }) => {
+											setSubject((current) =>
+												current.trim() ? current : title,
+											);
+											setHtml((current) =>
+												hasMeaningfulHtml(current)
+													? `${current}${templateHtml}`
+													: templateHtml,
+											);
+										}}
+									/>
+								</div>
 							</div>
-						</div>
-					}
-					toolbarEnd={
-						<>
-							{/* <span className="mx-1 h-5 w-px bg-neutral-200" /> */}
-							<Input
-								ref={attachmentInput}
-								type="file"
-								multiple
-								className="hidden"
-								onChange={(event) => addAttachments(event.target.files)}
-							/>
-							<Tooltip label={t("compose.attachTooltip", { max: attachmentPolicy.maxMb })}>
-								<button
-									type="button"
-									aria-label={t("compose.attachFiles")}
-									onClick={() => attachmentInput.current?.click()}
-									disabled={loading || loadingDraft}
-									className="rounded-md p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 disabled:pointer-events-none disabled:opacity-50 max-md:px-2"
+						}
+						toolbarEnd={
+							<>
+								{/* <span className="mx-1 h-5 w-px bg-accent" /> */}
+								<Input
+									ref={attachmentInput}
+									type="file"
+									multiple
+									className="hidden"
+									onChange={(event) => addAttachments(event.target.files)}
+								/>
+								<HintTooltip
+									label={t("compose.attachTooltip", {
+										max: attachmentPolicy.maxMb,
+									})}
 								>
-									<Paperclip className="h-4 w-4" />
-								</button>
-							</Tooltip>
-							<span className="flex-1 max-md:hidden" />
-							<Tooltip label={t("compose.deleteDraft")}>
-								<button
-									type="button"
-									aria-label={t("compose.deleteDraft")}
-									onClick={() => void deleteDraftAndClose()}
-									disabled={loading || loadingDraft || deletingDraft}
-									className="rounded-md p-1.5 text-neutral-500 hover:bg-red-50 hover:text-red-600 disabled:pointer-events-none disabled:opacity-50 max-md:px-2"
-								>
-									<Trash2 className="h-4 w-4" />
-								</button>
-							</Tooltip>
-						</>
-					}
-				/>
+									<Button
+										variant="ghost"
+										size="icon"
+										type="button"
+										aria-label={t("compose.attachFiles")}
+										onClick={() => attachmentInput.current?.click()}
+										disabled={loading || loadingDraft}
+										className="[@media(pointer:coarse)]:size-11"
+									>
+										<Paperclip data-icon="inline-start" />
+									</Button>
+								</HintTooltip>
+								<span className="flex-1 max-md:hidden" />
+								<HintTooltip label={t("compose.deleteDraft")}>
+									<Button
+										variant="ghost"
+										size="icon"
+										type="button"
+										aria-label={t("compose.deleteDraft")}
+										onClick={() => void deleteDraftAndClose()}
+										disabled={loading || loadingDraft || deletingDraft}
+										className="[@media(pointer:coarse)]:size-11"
+									>
+										<Trash2 data-icon="inline-start" />
+									</Button>
+								</HintTooltip>
+							</>
+						}
+					/>
 				</div>
 			</form>
 		</>

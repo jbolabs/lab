@@ -4,11 +4,18 @@ import { useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { X } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { getEmailAddress } from "@/lib/email/address";
-import { cn } from "@/lib/utils";
+
 import type { RecipientInputProps } from "./recipient-input-types";
-import { getRecipientLabel, isValidRecipient, parseRecipientEntries } from "./recipient-utils";
+import {
+	getRecipientLabel,
+	isValidRecipient,
+	parseRecipientEntries,
+} from "./recipient-utils";
 
 /**
  * A To/Cc/Bcc row. Addresses become chips as soon as the user types a comma,
@@ -37,7 +44,12 @@ export function RecipientInput({
 	}
 
 	function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-		if (event.key === "," || event.key === ";" || event.key === "Enter" || (event.key === "Tab" && draft.trim())) {
+		if (
+			event.key === "," ||
+			event.key === ";" ||
+			event.key === "Enter" ||
+			(event.key === "Tab" && draft.trim())
+		) {
 			if (event.key !== "Tab") event.preventDefault();
 			commit();
 			return;
@@ -52,72 +64,84 @@ export function RecipientInput({
 
 	return (
 		<div
-			className="flex min-h-9 items-center gap-2 border-b border-neutral-100 px-4 py-1"
+			className="flex min-h-9 items-center gap-2 border-b border-border px-4 py-1"
 			onClick={() => inputRef.current?.focus()}
 		>
-			<Label htmlFor={id} className="w-8 shrink-0 text-sm text-neutral-500">
+			<Label
+				htmlFor={id}
+				className="w-8 shrink-0 text-sm text-muted-foreground"
+			>
 				{label}
 			</Label>
 			<div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
 				{value.map((entry) => {
 					const valid = isValidRecipient(entry);
 					return (
-						<span
+						<Badge
+							variant={valid ? "secondary" : "destructive"}
 							key={entry}
 							title={getEmailAddress(entry)}
-							className={cn(
-								"inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs",
-								valid
-									? "border-neutral-200 bg-neutral-50 text-neutral-800"
-									: "border-red-200 bg-red-50 text-red-700",
-							)}
+							className="max-w-full gap-1 rounded-full"
 						>
 							<span className="truncate">{getRecipientLabel(entry)}</span>
 							{!disabled && (
-								<button
+								<Button
+									variant="ghost"
+									size="icon"
 									type="button"
-									aria-label={t("recipient.remove", { address: getEmailAddress(entry) })}
-									className="rounded-full p-0.5 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
+									aria-label={t("recipient.remove", {
+										address: getEmailAddress(entry),
+									})}
+									className="size-5 rounded-full [@media(pointer:coarse)]:size-11"
 									onClick={(event) => {
 										event.stopPropagation();
 										onChange(value.filter((item) => item !== entry));
 									}}
 								>
-									<X className="h-3 w-3" />
-								</button>
+									<X data-icon="inline-start" />
+								</Button>
 							)}
-						</span>
+						</Badge>
 					);
 				})}
-				<input
-					ref={inputRef}
-					id={id}
-					value={draft}
-					onChange={(event) => {
-						// A pasted list should split immediately instead of waiting for a comma.
-						if (/[,;]/.test(event.target.value) && event.target.value.length - draft.length > 1) {
-							commit(event.target.value);
-							return;
-						}
-						setDraft(event.target.value);
-					}}
-					onKeyDown={onKeyDown}
-					onBlur={() => commit()}
-					type="text"
-					autoComplete="off"
-					autoFocus={autoFocus}
-					spellCheck={false}
-					placeholder={value.length === 0 ? placeholder : undefined}
-					disabled={disabled}
-					// Native `required` would block submit while chips exist; the form checks itself.
-					aria-required={required}
-					className="h-7 min-w-32 flex-1 border-0 bg-transparent p-0 text-sm outline-none placeholder:text-neutral-400 disabled:cursor-not-allowed"
-				/>
+				<InputGroup className="h-auto min-w-32 flex-1 border-0 bg-transparent shadow-none dark:bg-transparent has-[[data-slot=input-group-control]:focus-visible]:ring-0">
+					<InputGroupInput
+						ref={inputRef}
+						id={id}
+						value={draft}
+						onChange={(event) => {
+							// A pasted list should split immediately instead of waiting for a comma.
+							if (
+								/[,;]/.test(event.target.value) &&
+								event.target.value.length - draft.length > 1
+							) {
+								commit(event.target.value);
+								return;
+							}
+							setDraft(event.target.value);
+						}}
+						onKeyDown={onKeyDown}
+						onBlur={() => commit()}
+						type="text"
+						inputMode="email"
+						enterKeyHint="next"
+						autoCapitalize="none"
+						autoCorrect="off"
+						autoComplete="off"
+						autoFocus={autoFocus}
+						spellCheck={false}
+						placeholder={value.length === 0 ? placeholder : undefined}
+						disabled={disabled}
+						// Native `required` would block submit while chips exist; the form checks itself.
+						aria-required={required}
+						className="min-h-9 [@media(pointer:coarse)]:text-base"
+					/>
+				</InputGroup>
 			</div>
 			{trailing && (
 				// Toggles live inside the clickable row; keep their clicks from refocusing this field.
 				<div
-					className="flex shrink-0 items-center gap-1 text-xs text-neutral-500"
+					className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground"
 					onClick={(event) => event.stopPropagation()}
 				>
 					{trailing}

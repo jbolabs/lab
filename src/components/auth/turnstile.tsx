@@ -88,7 +88,7 @@ export function TurnstileField({
 	if (!TURNSTILE_SITE_KEY) return null;
 
 	return (
-		<div className="space-y-2">
+		<div className="flex flex-col gap-2">
 			<div ref={containerRef} />
 			<Input type="hidden" name={name} value={token} />
 		</div>

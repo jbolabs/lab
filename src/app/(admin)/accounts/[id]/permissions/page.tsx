@@ -1,11 +1,12 @@
 "use client";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select } from "@/components/ui/select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
 import { getAvatarColorStyle } from "@/lib/avatar-colors";
@@ -83,20 +84,20 @@ export default function AccountPermissionsPage() {
 	const editable = !!account?.editable;
 
 	return (
-		<div className="space-y-6">
+		<div className="flex flex-col gap-6">
 			<div>
-				<h1 className="text-2xl md:text-3xl font-medium text-neutral-900">{t("account.permissions.title")}</h1>
-				<p className="mt-2 text-sm text-neutral-500">{t("account.permissions.description")}</p>
+				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("account.permissions.title")}</h1>
+				<p className="mt-2 text-sm text-muted-foreground">{t("account.permissions.description")}</p>
 			</div>
 			{account?.isPrimaryAdmin && (
-				<section className="rounded-3xl bg-amber-50 p-6">
+				<section className="rounded-lg bg-amber-50 p-6">
 					<p className="text-sm font-semibold text-amber-900">{t("account.permissions.primaryAdmin")}</p>
 					<p className="mt-1 text-sm text-amber-800">{t("account.permissions.primaryNote")}</p>
 				</section>
 			)}
-			<section className="space-y-3 rounded-3xl bg-white p-6">
-				<label htmlFor="account-role" className="block text-sm font-semibold text-neutral-900">{t("accounts.role")}</label>
-				<Select
+			<section className="flex flex-col gap-3 rounded-lg bg-card p-6">
+				<label htmlFor="account-role" className="block text-sm font-semibold text-foreground">{t("accounts.role")}</label>
+				<NativeSelect
 					id="account-role"
 					value={account?.role ?? "user"}
 					disabled={!account || saving || !account.canChangeRole}
@@ -106,66 +107,66 @@ export default function AccountPermissionsPage() {
 				>
 					<option value="user">{t("accounts.roleUser")}</option>
 					<option value="admin">{t("accounts.roleAdmin")}</option>
-				</Select>
-				<p className="text-xs text-neutral-500">
+				</NativeSelect>
+				<p className="text-xs text-muted-foreground">
 					{account?.canChangeRole
 						? t("account.permissions.admins")
 						: t("account.permissions.onlyPrimaryRoles")}
 				</p>
 			</section>
-			<div className="overflow-hidden rounded-3xl bg-white">
-				<table className="w-full text-left">
-					<thead className="border-b border-neutral-100 bg-neutral-50 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-						<tr>
-							<th scope="col" className="px-5 py-3">{t("account.permissions.permission")}</th>
-							<th scope="col" className="w-28 px-5 py-3 text-center">{t("account.permissions.allowed")}</th>
-						</tr>
-					</thead>
-					<tbody className="divide-y divide-neutral-100">
-						<tr>
-							<td className="px-5 py-4">
-								<p className="text-sm font-semibold text-neutral-900">{t("account.permissions.manageMailboxes")}</p>
-								<p className="mt-1 text-xs text-neutral-500">{t("account.permissions.manageMailboxesHint")}</p>
-							</td>
-							<td className="px-5 py-4 text-center">
+			<div className="overflow-hidden rounded-lg bg-card">
+				<Table className="w-full table-fixed text-left [&_td]:whitespace-normal">
+					<TableHeader className="border-b border-border bg-muted/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+						<TableRow>
+							<TableHead scope="col" className="px-5 py-3">{t("account.permissions.permission")}</TableHead>
+							<TableHead scope="col" className="w-28 px-5 py-3 text-center">{t("account.permissions.allowed")}</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody className="divide-y divide-border">
+						<TableRow>
+							<TableCell className="px-5 py-4">
+								<p className="text-sm font-semibold text-foreground">{t("account.permissions.manageMailboxes")}</p>
+								<p className="mt-1 text-xs text-muted-foreground">{t("account.permissions.manageMailboxesHint")}</p>
+							</TableCell>
+							<TableCell className="px-5 py-4 text-center">
 								<Checkbox
 									aria-label={t("account.permissions.allowMailboxes")}
 									checked={account?.canManageMailboxes ?? false}
 									disabled={!account || !editable}
-									onChange={(event) => account && setAccount({ ...account, canManageMailboxes: event.target.checked })}
+									onCheckedChange={(checked) => account && setAccount({ ...account, canManageMailboxes: (checked === true) })}
 								/>
-							</td>
-						</tr>
-						<tr>
-							<td className="px-5 py-4">
-								<p className="text-sm font-semibold text-neutral-900">{t("account.permissions.manageDomains")}</p>
-								<p className="mt-1 text-xs text-neutral-500">{t("account.permissions.manageDomainsHint")}</p>
-							</td>
-							<td className="px-5 py-4 text-center">
+							</TableCell>
+						</TableRow>
+						<TableRow>
+							<TableCell className="px-5 py-4">
+								<p className="text-sm font-semibold text-foreground">{t("account.permissions.manageDomains")}</p>
+								<p className="mt-1 text-xs text-muted-foreground">{t("account.permissions.manageDomainsHint")}</p>
+							</TableCell>
+							<TableCell className="px-5 py-4 text-center">
 								<Checkbox
 									aria-label={t("account.permissions.allowDomains")}
 									checked={account?.canManageDomains ?? false}
 									disabled={!account || !account.canChangeRole}
-									onChange={(event) => account && setAccount({ ...account, canManageDomains: event.target.checked })}
+									onCheckedChange={(checked) => account && setAccount({ ...account, canManageDomains: (checked === true) })}
 								/>
-							</td>
-						</tr>
-						<tr>
-							<td className="px-5 py-4">
-								<p className="text-sm font-semibold text-neutral-900">{t("account.permissions.manageUsers")}</p>
-								<p className="mt-1 text-xs text-neutral-500">{t("account.permissions.manageUsersHint")}</p>
-							</td>
-							<td className="px-5 py-4 text-center">
+							</TableCell>
+						</TableRow>
+						<TableRow>
+							<TableCell className="px-5 py-4">
+								<p className="text-sm font-semibold text-foreground">{t("account.permissions.manageUsers")}</p>
+								<p className="mt-1 text-xs text-muted-foreground">{t("account.permissions.manageUsersHint")}</p>
+							</TableCell>
+							<TableCell className="px-5 py-4 text-center">
 								<Checkbox
 									aria-label={t("account.permissions.allowUsers")}
 									checked={account?.canManageUsers ?? false}
 									disabled={!account || !account.canChangeRole}
-									onChange={(event) => account && setAccount({ ...account, canManageUsers: event.target.checked })}
+									onCheckedChange={(checked) => account && setAccount({ ...account, canManageUsers: (checked === true) })}
 								/>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+							</TableCell>
+						</TableRow>
+					</TableBody>
+				</Table>
 			</div>
 			{editable && (
 				<Button onClick={() => void savePermissions()} disabled={saving}>
@@ -173,13 +174,13 @@ export default function AccountPermissionsPage() {
 				</Button>
 			)}
 			{isPrimary && (
-				<section className="space-y-4 rounded-3xl bg-white p-6">
+				<section className="flex flex-col gap-4 rounded-lg bg-card p-6">
 					<div>
-						<h2 className="text-sm font-semibold text-neutral-900">{t("account.permissions.transferTitle")}</h2>
-						<p className="mt-1 text-xs text-neutral-500">{t("account.permissions.transferHint")}</p>
+						<h2 className="text-sm font-semibold text-foreground">{t("account.permissions.transferTitle")}</h2>
+						<p className="mt-1 text-xs text-muted-foreground">{t("account.permissions.transferHint")}</p>
 					</div>
 					<div className="flex flex-col gap-3 sm:flex-row">
-						<Select
+						<NativeSelect
 							aria-label={t("account.permissions.selectNext")}
 							value={transferTargetId}
 							containerClassName="w-full sm:max-w-sm"
@@ -190,17 +191,17 @@ export default function AccountPermissionsPage() {
 							{candidates.map((candidate) => (
 								<option key={candidate.id} value={candidate.id}>{candidate.email} — {candidate.name}</option>
 							))}
-						</Select>
+						</NativeSelect>
 						<Button variant="outline" disabled={!transferTarget} onClick={() => setTransferOpen(true)}>
 							{t("account.permissions.transferTitle")}
 						</Button>
 					</div>
 				</section>
 			)}
-			{message && <p role="status" className="text-sm text-neutral-500">{message}</p>}
+			{message && <p role="status" className="text-sm text-muted-foreground">{message}</p>}
 
 			<Dialog open={transferOpen} onOpenChange={setTransferOpen}>
-				<DialogContent className="w-[min(420px,calc(100vw-32px))]">
+				<DialogContent className="w-[min(420px,calc(100vw-32px))] max-h-[calc(100dvh-4rem)] overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle>{t("account.permissions.transferQuestion")}</DialogTitle>
 						<DialogDescription>
@@ -208,9 +209,9 @@ export default function AccountPermissionsPage() {
 						</DialogDescription>
 					</DialogHeader>
 					{transferTarget && (
-						<div className="flex items-center gap-4 rounded-2xl border border-neutral-200 p-4">
+						<div className="flex items-center gap-4 rounded-lg border border-border p-4">
 							<span
-								className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold text-white"
+								className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold text-white"
 								style={getAvatarColorStyle(transferTarget.email)}
 							>
 								{transferTarget.name.charAt(0).toUpperCase()}
@@ -223,8 +224,8 @@ export default function AccountPermissionsPage() {
 								)}
 							</span>
 							<span className="min-w-0">
-								<span className="block truncate font-semibold text-neutral-900">{transferTarget.name}</span>
-								<span className="block truncate text-sm text-neutral-500">{transferTarget.email}</span>
+								<span className="block truncate font-semibold text-foreground">{transferTarget.name}</span>
+								<span className="block truncate text-sm text-muted-foreground">{transferTarget.email}</span>
 							</span>
 						</div>
 					)}

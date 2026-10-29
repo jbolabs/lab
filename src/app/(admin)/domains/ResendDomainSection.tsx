@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DnsValue } from "./dns-value";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/language-provider";
 import { authFetch } from "@/lib/auth/client";
@@ -98,8 +99,8 @@ export default function ResendDomainSection({ domainId, onStatus }: { domainId: 
 						: t("resend.btn.checkStatus");
 
 	return (
-		<div className="space-y-2">
-			<ul className="space-y-2">
+		<div className="flex flex-col gap-2">
+			<ul className="flex flex-col gap-2">
 				<ResendKeyRow
 					configured={keyConfigured}
 					onChanged={(configured) => { setKeyConfigured(configured); if (!configured) setView(null); setLoading(true); setReload((value) => value + 1); }}
@@ -112,12 +113,12 @@ export default function ResendDomainSection({ domainId, onStatus }: { domainId: 
 						title={t("resend.domain")}
 						hint={t("resend.domainHint")}
 						action={verified ? (
-							<Button size="sm" variant="outline" className="bg-white" disabled={busy !== null} onClick={() => void sendTest()}>{busy === "test" ? t("resend.sending") : t("resend.sendTest")}</Button>
+							<Button size="sm" variant="outline" className="bg-card" disabled={busy !== null} onClick={() => void sendTest()}>{busy === "test" ? t("resend.sending") : t("resend.sendTest")}</Button>
 						) : domainButton && !loading ? (
 							<Button
 								size="sm"
 								variant="outline"
-								className="bg-white"
+								className="bg-card"
 								disabled={!canManage || busy !== null}
 								title={canManage ? undefined : needsFullKey}
 								onClick={() => void domainAction(view?.registered && (!view.dnsManaged || view.missingDns === 0) ? "verify" : "setup")}
@@ -131,18 +132,18 @@ export default function ResendDomainSection({ domainId, onStatus }: { domainId: 
 				)}
 			</ul>
 
-			{!loading && !canManage && keyConfigured && <p className="text-xs text-neutral-500">{t("resend.manualHint")}</p>}
-			{view && view.registered && !verified && !view.dnsManaged && <p className="text-xs text-neutral-500">{t("resend.addRecords")}</p>}
-			{view && view.registered && !verified && view.dnsManaged && view.missingDns === 0 && <p className="text-xs text-neutral-500">{t("resend.propagate")}</p>}
+			{!loading && !canManage && keyConfigured && <p className="text-xs text-muted-foreground">{t("resend.manualHint")}</p>}
+			{view && view.registered && !verified && !view.dnsManaged && <p className="text-xs text-muted-foreground">{t("resend.addRecords")}</p>}
+			{view && view.registered && !verified && view.dnsManaged && view.missingDns === 0 && <p className="text-xs text-muted-foreground">{t("resend.propagate")}</p>}
 
 			{view && view.records.length > 0 && !verified && (
-				<ul className="space-y-1 text-xs text-neutral-600">
+				<ul className="flex flex-col gap-1 text-xs text-muted-foreground">
 					{view.records.map((record) => (
-						<li key={`${record.type}-${record.name}-${record.value}`} className="grid gap-1 rounded-lg bg-white px-3 py-2 sm:grid-cols-[4rem_minmax(8rem,14rem)_minmax(0,1fr)_auto]">
+						<li key={`${record.type}-${record.name}-${record.value}`} className="grid gap-1 rounded-lg bg-card px-3 py-2 sm:grid-cols-[4rem_minmax(8rem,14rem)_minmax(0,1fr)_auto]">
 							<span className="font-medium">{record.type}</span>
 							<span className="break-all">{record.name}</span>
-							<span className="break-all">{record.priority !== null ? `${record.priority} ` : ""}{record.value}</span>
-							<span className="uppercase text-neutral-500">{record.status.replace(/_/g, " ")}</span>
+							<DnsValue value={`${record.priority !== null ? `${record.priority} ` : ""}${record.value}`} />
+							<span className="uppercase text-muted-foreground">{record.status.replace(/_/g, " ")}</span>
 						</li>
 					))}
 				</ul>

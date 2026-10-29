@@ -1,4 +1,5 @@
 "use client";
+import { useAdminConfirmation } from "../admin-confirmation-provider";
 
 import { useState } from "react";
 import { useLanguage } from "@/components/language-provider";
@@ -17,6 +18,7 @@ type Props = {
 /** The shared Resend API key, used by both the sending and receiving setup. */
 export default function ResendKeyRow({ configured, onChanged, onError }: Props) {
 	const { t } = useLanguage();
+	const confirm = useAdminConfirmation();
 	const [apiKey, setApiKey] = useState("");
 	const [editing, setEditing] = useState(false);
 	const [busy, setBusy] = useState(false);
@@ -35,7 +37,7 @@ export default function ResendKeyRow({ configured, onChanged, onError }: Props) 
 		onChanged(true);
 	});
 	const remove = () => run(async () => {
-		if (!window.confirm(t("resend.removeConfirm"))) return;
+		if (!await confirm(t("resend.removeConfirm"))) return;
 		await postJson("/api/admin/resend-key", "DELETE", {});
 		onChanged(false);
 	});
@@ -48,20 +50,20 @@ export default function ResendKeyRow({ configured, onChanged, onError }: Props) 
 				hint={t("resend.keyHint")}
 				action={configured && !editing ? (
 					<>
-						<Button size="sm" variant="outline" className="bg-white" disabled={busy} onClick={() => setEditing(true)}>{t("resend.replace")}</Button>
-						<Button size="sm" variant="outline" className="bg-white" disabled={busy} onClick={() => void remove()}>{t("resend.remove")}</Button>
+						<Button size="sm" variant="outline" className="bg-card" disabled={busy} onClick={() => setEditing(true)}>{t("resend.replace")}</Button>
+						<Button size="sm" variant="outline" className="bg-card" disabled={busy} onClick={() => void remove()}>{t("resend.remove")}</Button>
 					</>
 				) : undefined}
 			>
 				{showForm ? (
 					<form className="flex flex-wrap gap-2" onSubmit={(event) => { event.preventDefault(); void save(); }}>
-						<Input type="password" autoComplete="off" aria-label={t("resend.key")} placeholder="re_..." value={apiKey} onChange={(event) => setApiKey(event.target.value)} className="max-w-xs bg-white" />
+						<Input type="password" autoComplete="off" aria-label={t("resend.key")} placeholder="re_..." value={apiKey} onChange={(event) => setApiKey(event.target.value)} className="max-w-xs bg-card" />
 						<Button type="submit" size="sm" disabled={!apiKey.trim() || busy}>{busy ? t("domains.checking") : t("resend.saveKey")}</Button>
-						{editing && <Button type="button" size="sm" variant="outline" className="bg-white" onClick={() => { setEditing(false); setApiKey(""); }}>{t("common.cancel")}</Button>}
+						{editing && <Button type="button" size="sm" variant="outline" className="bg-card" onClick={() => { setEditing(false); setApiKey(""); }}>{t("common.cancel")}</Button>}
 					</form>
 				) : configured ? t("resend.keySaved") : t("domains.checking")}
 			</StatusRow>
-			{showForm && <li className="list-none px-1 text-xs text-neutral-500">{t("resend.keyInstructions")}</li>}
+			{showForm && <li className="list-none px-1 text-xs text-muted-foreground">{t("resend.keyInstructions")}</li>}
 		</>
 	);
 }

@@ -1,4 +1,5 @@
 "use client";
+import { AdminConfirmationProvider, useAdminConfirmation } from "../admin-confirmation-provider";
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/components/language-provider";
@@ -28,8 +29,9 @@ function isCapabilityReport(value: unknown): value is AwsCapabilityReport {
  * with AWS (identity, then a harmless call per service) and lists any permission
  * the key lacks, along with the IAM policy that grants everything.
  */
-export default function AwsCredentialsPanel({ need, onChanged }: Props) {
+function AwsCredentialsPanelContent({ need, onChanged }: Props) {
 	const { t } = useLanguage();
+	const confirm = useAdminConfirmation();
 	const [status, setStatus] = useState<AwsConfigStatus | null>(null);
 	const [policy, setPolicy] = useState<unknown>(null);
 	const [report, setReport] = useState<AwsCapabilityReport | null>(null);
@@ -95,7 +97,7 @@ export default function AwsCredentialsPanel({ need, onChanged }: Props) {
 		onChanged?.(true, data.report);
 	});
 	const remove = () => run("remove", async () => {
-		if (!window.confirm(t("aws.removeConfirm"))) return;
+		if (!await confirm(t("aws.removeConfirm"))) return;
 		const data = await requestJson<{ status: AwsConfigStatus }>("/api/admin/aws", "DELETE", {});
 		setStatus(data.status);
 		setReport(null);
@@ -110,29 +112,29 @@ export default function AwsCredentialsPanel({ need, onChanged }: Props) {
 	const missingReport = rejected ?? (configured && !editing ? report : null);
 
 	return (
-		<div className="space-y-2">
-			<ul className="space-y-2">
+		<div className="flex flex-col gap-2">
+			<ul className="flex flex-col gap-2">
 				<StatusRow
 					ok={configured && !editing}
 					title={t("aws.credentials")}
 					hint={t("aws.credentialsHint")}
 					action={configured && !editing ? (
 						<>
-							<Button size="sm" variant="outline" className="bg-white" disabled={busy !== null} onClick={() => void check()}>{busy === "check" ? t("domains.checking") : t("aws.recheck")}</Button>
-							{!fromEnvironment && <Button size="sm" variant="outline" className="bg-white" disabled={busy !== null} onClick={() => { setEditing(true); setError(""); setRejected(null); }}>{t("resend.replace")}</Button>}
-							{!fromEnvironment && <Button size="sm" variant="outline" className="bg-white" disabled={busy !== null} onClick={() => void remove()}>{t("resend.remove")}</Button>}
+							<Button size="sm" variant="outline" className="bg-card" disabled={busy !== null} onClick={() => void check()}>{busy === "check" ? t("domains.checking") : t("aws.recheck")}</Button>
+							{!fromEnvironment && <Button size="sm" variant="outline" className="bg-card" disabled={busy !== null} onClick={() => { setEditing(true); setError(""); setRejected(null); }}>{t("resend.replace")}</Button>}
+							{!fromEnvironment && <Button size="sm" variant="outline" className="bg-card" disabled={busy !== null} onClick={() => void remove()}>{t("resend.remove")}</Button>}
 						</>
 					) : undefined}
 				>
 					{showForm ? (
 						<form className="grid gap-2" onSubmit={(event) => { event.preventDefault(); void save(); }}>
-							<Input autoComplete="off" aria-label={t("aws.accessKeyId")} placeholder={t("aws.accessKeyId")} value={accessKeyId} onChange={(event) => setAccessKeyId(event.target.value)} className="max-w-sm bg-white" />
-							<Input type="password" autoComplete="off" aria-label={t("aws.secretKey")} placeholder={t("aws.secretKey")} value={secretAccessKey} onChange={(event) => setSecretAccessKey(event.target.value)} className="max-w-sm bg-white" />
-							<Input list="aws-regions" aria-label={t("aws.region")} placeholder={t("aws.region")} value={region} onChange={(event) => setRegion(event.target.value)} className="max-w-[12rem] bg-white" />
+							<Input autoComplete="off" aria-label={t("aws.accessKeyId")} placeholder={t("aws.accessKeyId")} value={accessKeyId} onChange={(event) => setAccessKeyId(event.target.value)} className="max-w-sm bg-card" />
+							<Input type="password" autoComplete="off" aria-label={t("aws.secretKey")} placeholder={t("aws.secretKey")} value={secretAccessKey} onChange={(event) => setSecretAccessKey(event.target.value)} className="max-w-sm bg-card" />
+							<Input list="aws-regions" aria-label={t("aws.region")} placeholder={t("aws.region")} value={region} onChange={(event) => setRegion(event.target.value)} className="max-w-[12rem] bg-card" />
 							<datalist id="aws-regions">{REGION_HINTS.map((hint) => <option key={hint} value={hint} />)}</datalist>
 							<span className="flex gap-2">
 								<Button type="submit" size="sm" disabled={!accessKeyId.trim() || !secretAccessKey.trim() || !region.trim() || busy !== null}>{busy === "save" ? t("aws.validating") : t("aws.validateSave")}</Button>
-								{editing && <Button type="button" size="sm" variant="outline" className="bg-white" onClick={() => { setEditing(false); setError(""); setRejected(null); }}>{t("common.cancel")}</Button>}
+								{editing && <Button type="button" size="sm" variant="outline" className="bg-card" onClick={() => { setEditing(false); setError(""); setRejected(null); }}>{t("common.cancel")}</Button>}
 							</span>
 						</form>
 					) : configured ? `${t("aws.keySummary", { hint: status?.accessKeyHint, region: status?.region })}${status?.accountId ? t("aws.accountSuffix", { id: status.accountId }) : ""}${fromEnvironment ? t("aws.envSuffix") : ""}` : t("domains.checking")}
@@ -160,17 +162,21 @@ export default function AwsCredentialsPanel({ need, onChanged }: Props) {
 			</ul>
 			{error && <p role="alert" className="text-xs text-red-600">{error}</p>}
 			{missingReport && missingReport.missing.length > 0 && (
-				<details open={rejected !== null} className="rounded-lg bg-white px-3 py-2 text-xs text-neutral-600">
-					<summary className="cursor-pointer font-medium text-neutral-800">{t("aws.missingSummary")}</summary>
+				<details open={rejected !== null} className="rounded-lg bg-card px-3 py-2 text-xs text-muted-foreground">
+					<summary className="cursor-pointer font-medium text-foreground">{t("aws.missingSummary")}</summary>
 					<p className="mt-2">{t("aws.missingList", { list: missingReport.missing.join(", ") })}</p>
-					<pre className="mt-2 max-h-64 overflow-auto rounded bg-neutral-50 p-2">{JSON.stringify(policy, null, 2)}</pre>
+					<pre className="mt-2 max-h-64 overflow-auto rounded bg-muted/60 p-2">{JSON.stringify(policy, null, 2)}</pre>
 				</details>
 			)}
 			{showForm && (
-				<p className="text-xs text-neutral-500">
+				<p className="text-xs text-muted-foreground">
 					{t("aws.createUserHint")}
 				</p>
 			)}
 		</div>
 	);
+}
+
+export default function AwsCredentialsPanel(props: Props) {
+	return <AdminConfirmationProvider><AwsCredentialsPanelContent {...props} /></AdminConfirmationProvider>;
 }

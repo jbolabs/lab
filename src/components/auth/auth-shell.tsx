@@ -1,98 +1,73 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useBranding } from "@/components/branding-provider";
+import Link from "next/link";
+import { BrandMark, Wordmark } from "@/components/brand";
 import { LanguageSelector } from "@/components/language-selector";
+import { cn } from "@/lib/utils";
 import type { AuthShellProps } from "./types";
 
 export function AuthShell({
-  icon: Icon,
-  title,
-  description,
-  children,
-  footer,
-  steps,
+	title,
+	description,
+	children,
+	footer,
+	steps,
 }: AuthShellProps) {
-  const branding = useBranding();
-  const [iconUrl, setIconUrl] = useState(branding.iconUrl);
-  const [iconFailed, setIconFailed] = useState(false);
-
-  useEffect(() => {
-    setIconUrl(branding.iconUrl);
-    setIconFailed(false);
-  }, [branding.iconUrl]);
-
-  return (
-    <div className="min-h-dvh bg-[#f1f4fa] text-neutral-900 sm:px-6 sm:py-6 lg:flex lg:items-center lg:px-10 lg:py-10">
-      <main className="mx-auto grid min-h-dvh w-full max-w-4xl grid-rows-[auto_1fr] overflow-hidden bg-white sm:min-h-0 sm:grid-rows-none sm:rounded-4xl lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-        <section className="flex flex-col p-7 sm:p-10 lg:p-14">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center justify-center overflow-hidden">
-              {iconFailed ? (
-                <Icon className="h-8 w-8 text-blue-600" />
-              ) : (
-                <img
-                  src={iconUrl}
-                  onError={() => {
-                    if (iconUrl !== "/icon-96.png") setIconUrl("/icon-96.png");
-                    else setIconFailed(true);
-                  }}
-                  alt=""
-                  className="h-8 w-8 object-contain"
-                />
-              )}
-            </span>
-            <span className="truncate text-md font-semibold text-neutral-800">
-              {branding.appName}
-            </span>
-          </div>
-
-          <div className="mt-10 sm:mt-6 lg:mt-8">
-            <h1 className="max-w-md text-3xl font-medium leading-tight tracking-tight text-neutral-950 sm:text-4xl">
-              {title}
-            </h1>
-            {description && (
-              <p className="mt-5 max-w-md text-base leading-7 text-neutral-600">
-                {description}
-              </p>
-            )}
-          </div>
-
-          <div className="mt-auto hidden pt-8 lg:block">
-            <LanguageSelector variant="text" />
-          </div>
-        </section>
-
-        <section className="flex min-w-0 flex-col justify-start px-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-0 sm:justify-center sm:p-10 lg:p-14">
-          {steps && (
-            <div className="mb-7 flex flex-wrap gap-2 text-xs font-semibold">
-              {steps.map((step, index) => (
-                <span key={step.label} className="flex items-center gap-2">
-                  <span
-                    className={
-                      step.active ? "text-blue-700" : "text-neutral-500"
-                    }
-                  >
-                    {index + 1} {step.label}
-                  </span>
-                  {index < steps.length - 1 && (
-                    <span className="text-neutral-300">/</span>
-                  )}
-                </span>
-              ))}
-            </div>
-          )}
-          <div className="w-full">{children}</div>
-          {footer && (
-            <div className="mt-8 text-sm font-medium text-blue-700">
-              {footer}
-            </div>
-          )}
-          <div className="mt-auto pt-8 lg:hidden">
-            <LanguageSelector variant="text" />
-          </div>
-        </section>
-      </main>
-    </div>
-  );
+	return (
+		<div className="flex min-h-svh flex-col bg-background text-foreground">
+			<header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 pt-[env(safe-area-inset-top)] sm:px-8 [&_button]:min-h-11">
+				<Link
+					href="/"
+					className="flex min-h-20 items-center gap-2.5 rounded-md focus-visible:outline-ring"
+				>
+					<BrandMark size={30} />
+					<Wordmark />
+				</Link>
+				<LanguageSelector variant="text" />
+			</header>
+			<main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-10 sm:px-8 sm:py-16 lg:grid lg:grid-cols-2 lg:items-start lg:gap-24 lg:py-28">
+				<section className="min-w-0">
+					<h1 className="text-balance font-display text-4xl font-extralight leading-tight tracking-[-0.03em] sm:text-5xl">
+						{title}
+					</h1>
+					{description && (
+						<p className="mt-5 max-w-md text-base leading-7 text-muted-foreground">
+							{description}
+						</p>
+					)}
+				</section>
+				<section className="flex min-w-0 flex-1 flex-col lg:border-l lg:pl-10">
+					{steps && (
+						<ol className="mb-8 flex gap-3">
+							{steps.map((step, index) => (
+								<li
+									key={step.label}
+									aria-current={step.active ? "step" : undefined}
+									className={cn(
+										"flex min-w-0 flex-1 flex-col gap-2 border-t pt-3 text-xs",
+										step.active
+											? "border-foreground font-medium text-foreground"
+											: "text-muted-foreground",
+									)}
+								>
+									<span className="font-mono tabular-nums">
+										{String(index + 1).padStart(2, "0")}
+									</span>
+									<span>{step.label}</span>
+								</li>
+							))}
+						</ol>
+					)}
+					<div className="flex flex-1 flex-col [&>form]:flex [&>form]:flex-1 [&>form]:flex-col [&_input]:min-h-12 [&_input:not([name=code])]:text-base [&_[data-slot=input-group]]:h-12 [&_button:not([role=switch]):not([role=checkbox])]:min-h-11 [&_a]:inline-flex [&_a]:min-h-11 [&_a]:items-center">
+						{children}
+					</div>
+					{footer && (
+						<div className="mt-6 text-sm text-signal [&_a]:inline-flex [&_a]:min-h-11 [&_a]:items-center">
+							{footer}
+						</div>
+					)}
+				</section>
+			</main>
+		</div>
+	);
 }

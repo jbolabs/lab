@@ -1,4 +1,5 @@
 "use client";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RotateCw } from "lucide-react";
@@ -20,7 +21,7 @@ const STATUS_STYLES: Record<WebhookDelivery["status"], string> = {
 	failed: "bg-red-600/10 text-red-700",
 	exhausted: "bg-red-600/10 text-red-700",
 	retrying: "bg-amber-500/10 text-amber-700",
-	pending: "bg-neutral-200 text-neutral-700",
+	pending: "bg-accent text-foreground/80",
 };
 
 export function WebhookDeliveries({ webhookId }: { webhookId: string }) {
@@ -42,51 +43,51 @@ export function WebhookDeliveries({ webhookId }: { webhookId: string }) {
 	});
 
 	if (deliveries.isLoading) {
-		return <p className="text-sm text-neutral-500">{t("webhooks.loadingDeliveries")}</p>;
+		return <p className="text-sm text-muted-foreground">{t("webhooks.loadingDeliveries")}</p>;
 	}
 
 	if (!deliveries.data?.length) {
-		return <p className="text-sm text-neutral-500">{t("webhooks.noDeliveries")}</p>;
+		return <p className="text-sm text-muted-foreground">{t("webhooks.noDeliveries")}</p>;
 	}
 
 	return (
-		<div role="region" tabIndex={0} aria-label={t("webhooks.stat.deliveries")} className="overflow-x-auto rounded-xl border border-neutral-200">
-			<table className="w-full min-w-[820px] text-left text-sm">
-				<thead className="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
-					<tr>
-						<th scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.event")}</th>
-						<th scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.status")}</th>
-						<th scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.attempts")}</th>
-						<th scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.response")}</th>
-						<th scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.lastAttempt")}</th>
-						<th scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.nextRetry")}</th>
-						<th scope="col" className="px-3 py-2 font-medium" />
-					</tr>
-				</thead>
-				<tbody>
+		<div role="region" tabIndex={0} aria-label={t("webhooks.stat.deliveries")} className="overflow-x-auto rounded-xl border border-border">
+			<Table className="w-full min-w-[820px] text-left text-sm">
+				<TableHeader className="bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground">
+					<TableRow>
+						<TableHead scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.event")}</TableHead>
+						<TableHead scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.status")}</TableHead>
+						<TableHead scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.attempts")}</TableHead>
+						<TableHead scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.response")}</TableHead>
+						<TableHead scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.lastAttempt")}</TableHead>
+						<TableHead scope="col" className="px-3 py-2 font-medium">{t("webhooks.col.nextRetry")}</TableHead>
+						<TableHead scope="col" className="px-3 py-2 font-medium" />
+					</TableRow>
+				</TableHeader>
+				<TableBody>
 					{deliveries.data.map((delivery) => (
-						<tr key={delivery.id} className="border-t border-neutral-100 align-top">
-							<td className="px-3 py-2">
+						<TableRow key={delivery.id} className="border-t border-border align-top">
+							<TableCell className="px-3 py-2">
 								<span className="block">{delivery.eventType}</span>
-								<span className="block text-xs text-neutral-500">
+								<span className="block text-xs text-muted-foreground">
 									{formatTimestamp(delivery.createdAt)}
 								</span>
-							</td>
-							<td className="px-3 py-2">
+							</TableCell>
+							<TableCell className="px-3 py-2">
 								<Badge className={STATUS_STYLES[delivery.status]}>
 									{DELIVERY_STATUS_LABELS[delivery.status] ? t(DELIVERY_STATUS_LABELS[delivery.status]) : delivery.status}
 								</Badge>
-							</td>
-							<td className="px-3 py-2 whitespace-nowrap">
+							</TableCell>
+							<TableCell className="px-3 py-2 whitespace-nowrap">
 								{/* Manual retries can push attempts past the configured max, so never show "3 / 2". */}
 								{delivery.attempts} / {Math.max(delivery.maxAttempts, delivery.attempts)}
-							</td>
-							<td className="px-3 py-2">
+							</TableCell>
+							<TableCell className="px-3 py-2">
 								<span className="block whitespace-nowrap">
 									{delivery.responseStatus ?? "—"}
 									{delivery.durationMs !== null && (
 										// An explicit separator: "200" next to "6ms" otherwise reads as "2006ms".
-										<span className="ml-1 text-xs text-neutral-500">
+										<span className="ml-1 text-xs text-muted-foreground">
 											· {formatDuration(delivery.durationMs)}
 										</span>
 									)}
@@ -96,14 +97,14 @@ export function WebhookDeliveries({ webhookId }: { webhookId: string }) {
 										{delivery.error}
 									</span>
 								)}
-							</td>
-							<td className="px-3 py-2 whitespace-nowrap text-neutral-600">
+							</TableCell>
+							<TableCell className="px-3 py-2 whitespace-nowrap text-muted-foreground">
 								{formatTimestamp(delivery.lastAttemptAt)}
-							</td>
-							<td className="px-3 py-2 whitespace-nowrap text-neutral-600">
+							</TableCell>
+							<TableCell className="px-3 py-2 whitespace-nowrap text-muted-foreground">
 								{formatTimestamp(delivery.nextRetryAt)}
-							</td>
-							<td className="px-3 py-2">
+							</TableCell>
+							<TableCell className="px-3 py-2">
 								{isRetryable(delivery) && (
 									<Button
 										variant="outline"
@@ -111,14 +112,14 @@ export function WebhookDeliveries({ webhookId }: { webhookId: string }) {
 										disabled={retry.isPending}
 										onClick={() => retry.mutate(delivery.id)}
 									>
-										<RotateCw className="h-3 w-3" /> {t("webhooks.retry")}
+										<RotateCw data-icon="inline-start" /> {t("webhooks.retry")}
 									</Button>
 								)}
-							</td>
-						</tr>
+							</TableCell>
+						</TableRow>
 					))}
-				</tbody>
-			</table>
+				</TableBody>
+			</Table>
 		</div>
 	);
 }

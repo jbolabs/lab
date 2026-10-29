@@ -1,4 +1,6 @@
 "use client";
+import { AdminRowActions } from "../../../admin-row-actions";
+import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -7,8 +9,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import type { ManagedAccount, ManagedDomain, ManagedMailbox } from "../types";
 import {
   addManagedMailbox,
@@ -80,26 +81,26 @@ export default function AccountMailboxesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl md:text-3xl font-medium text-neutral-900">{t("account.mailboxes.title")}</h1>
-        <p className="mt-2 text-sm text-neutral-500">
+        <h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("account.mailboxes.title")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           {t("account.mailboxes.manage", { name: account?.name ?? t("account.password.thisAccount") })}
         </p>
       </div>
-      <section className="space-y-4 rounded-3xl bg-white p-6">
-        <h2 className="text-base font-semibold text-neutral-900">{t("account.mailboxes.current")}</h2>
-        <div className="space-y-2">
+      <section className="flex flex-col gap-4 rounded-lg bg-card p-6">
+        <h2 className="text-base font-semibold text-foreground">{t("account.mailboxes.current")}</h2>
+        <div className="flex flex-col gap-2">
           {mailboxes.map((mailbox) => (
             <div
               key={mailbox.id}
-              className="flex items-center justify-between rounded-2xl bg-neutral-50 px-4 py-3"
+              className="flex items-center justify-between rounded-lg bg-muted/60 px-4 py-3"
             >
               <span className="min-w-0">
                 <span className="block truncate font-medium">
                   {mailbox.displayName || mailbox.localPart}
                 </span>
-                <span className="block truncate text-sm text-neutral-500">
+                <span className="block truncate text-sm text-muted-foreground">
                   {mailbox.localPart}@{mailbox.hostname}
                 </span>
               </span>
@@ -109,31 +110,23 @@ export default function AccountMailboxesPage() {
                   {t("mailbox.title")}
                 </Link>
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => void removeMailbox(mailbox.id)}
-                aria-label={t("account.mailboxes.removeInbox")}
-              >
-                <Trash2 className="h-4 w-4 text-red-600" />
-              </Button>
+              <AdminRowActions title={t("account.mailboxes.removeInbox")} description={t("mailbox.deleteConfirm", { address: `${mailbox.localPart}@${mailbox.hostname}` })} confirmLabel={t("account.mailboxes.removeInbox")} onConfirm={() => removeMailbox(mailbox.id)} />
               </span>
             </div>
           ))}
           {account && mailboxes.length === 0 && (
-            <p className="text-sm text-neutral-500">{t("account.mailboxes.none")}</p>
+            <p className="text-sm text-muted-foreground">{t("account.mailboxes.none")}</p>
           )}
         </div>
-        <div className="border-t border-neutral-200 pt-6">
-          <h2 className="text-base font-semibold text-neutral-900">{t("account.mailboxes.addTitle")}</h2>
-          <p className="mt-1 text-sm text-neutral-500">
+        <div className="border-t border-border pt-6">
+          <h2 className="text-base font-semibold text-foreground">{t("account.mailboxes.addTitle")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             {t("account.mailboxes.addDescription")}
           </p>
-          <form onSubmit={addMailbox} className="mt-4 space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="min-w-0 space-y-2">
-                <Label htmlFor="inbox-name">{t("account.mailboxes.inboxName")}</Label>
+          <form onSubmit={addMailbox} className="mt-4 flex flex-col gap-4">
+            <FieldGroup className="grid gap-4 sm:grid-cols-2">
+              <Field className="min-w-0 flex flex-col gap-2">
+                <FieldLabel htmlFor="inbox-name">{t("account.mailboxes.inboxName")}</FieldLabel>
                 <Input
                   id="inbox-name"
                   value={localPart}
@@ -143,14 +136,14 @@ export default function AccountMailboxesPage() {
                   maxLength={64}
                   required
                 />
-              </div>
-              <div className="min-w-0 space-y-2">
-                <Label htmlFor="inbox-domain">{t("account.mailboxes.domain")}</Label>
-                <Select
+              </Field>
+              <Field className="min-w-0 flex flex-col gap-2">
+                <FieldLabel htmlFor="inbox-domain">{t("account.mailboxes.domain")}</FieldLabel>
+                <NativeSelect
                   id="inbox-domain"
                   value={domainId}
                   onChange={(event) => setDomainId(event.target.value)}
-                  containerClassName="h-10 w-full min-w-0 bg-white"
+                  containerClassName="h-10 w-full min-w-0 bg-card"
                   className="min-w-0 text-sm"
                   disabled={!account || domains.length === 0 || saving}
                   required
@@ -161,22 +154,22 @@ export default function AccountMailboxesPage() {
                       {domain.hostname}
                     </option>
                   ))}
-                </Select>
-              </div>
-            </div>
+                </NativeSelect>
+              </Field>
+            </FieldGroup>
             {domainId && (
-              <p className="break-all text-sm text-neutral-500">
-                {t("account.mailboxes.address")} <span className="font-medium text-neutral-900">{localPart || t("account.mailboxes.inboxPlaceholder")}@{domains.find((domain) => domain.id === domainId)?.hostname}</span>
+              <p className="break-all text-sm text-muted-foreground">
+                {t("account.mailboxes.address")} <span className="font-medium text-foreground">{localPart || t("account.mailboxes.inboxPlaceholder")}@{domains.find((domain) => domain.id === domainId)?.hostname}</span>
               </p>
             )}
             <Button type="submit" disabled={!account || !domainId || !localPart.trim() || saving}>
-              <Plus className="h-4 w-4" />
+              <Plus data-icon="inline-start" />
               {saving ? t("account.mailboxes.adding") : t("account.mailboxes.add")}
             </Button>
           </form>
         </div>
       </section>
-      {message && <p role="status" className="text-sm text-neutral-500">{message}</p>}
+      {message && <p role="status" className="text-sm text-muted-foreground">{message}</p>}
     </div>
   );
 }

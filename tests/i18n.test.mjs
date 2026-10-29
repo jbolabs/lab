@@ -68,7 +68,7 @@ async function bundleI18n(outfile, extraLocale = false) {
 				builder.onLoad({ filter: /.*/, namespace: "stub" }, ({ path }) => ({ contents: path === "next/headers"
 					? 'export async function cookies() { return { get(name) { return name === "mailflare-locale" && globalThis.testLocaleCookie !== undefined ? { value: globalThis.testLocaleCookie } : undefined; } }; }'
 					: path === "next/font/google"
-						? 'export const Geist = () => ({ variable: "sans" }); export const Geist_Mono = () => ({ variable: "mono" });'
+						? 'export const Figtree = () => ({ variable: "sans" }); export const Montserrat = () => ({ variable: "display" }); export const Geist_Mono = () => ({ variable: "mono" });'
 						: path === "./home-server-utils"
 							? 'export async function getHomeBranding() { return { appName: "Mailflare", hasCustomIcon: false, canCustomizeBranding: false }; }'
 							: path === "@/lib/cloudflare"

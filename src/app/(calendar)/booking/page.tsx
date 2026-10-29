@@ -1,11 +1,14 @@
 "use client";
+import { useConfirmation } from "@/app/(calendar)/use-confirmation";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { mobilePrimaryActionClass } from "@/components/page-header-utils";
-import clsx from "clsx";
+import { cn as clsx } from "@/lib/utils";
 import { CalendarDays, Check, Clock3, Copy, ExternalLink, MapPin, MoreHorizontal, Plus } from "lucide-react";
-import toast, { Toaster } from "react-hot-toast";
+import { toast } from "sonner";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { RouteLoadingBarPortal } from "@/components/route-loading-bar-portal";
@@ -21,6 +24,7 @@ import { availabilityLabel, durationLabel, emptyBookingForm, formFromEvent } fro
 
 export default function BookingsPage() {
 	const { t } = useLanguage();
+	const { confirm, confirmation } = useConfirmation();
 	const { minimal: sidebarMinimal, mobile } = useSidebar();
 	const minimal = sidebarMinimal || mobile;
 	const [events, setEvents] = useState<BookingEvent[]>([]);
@@ -33,7 +37,7 @@ export default function BookingsPage() {
 	const [form, setForm] = useState<BookingForm | null>(null);
 	const [panelOpen, setPanelOpen] = useState(false);
 	const [saving, setSaving] = useState(false);
-	const [menuId, setMenuId] = useState<string | null>(null);
+
 	const [savingTemplateId, setSavingTemplateId] = useState<string | null>(null);
 	const listEvents = visibleBookingEvents(events, currentUserId, getUserTimeZone());
 
@@ -62,8 +66,8 @@ export default function BookingsPage() {
 	}, [panelOpen, form]);
 
 	function revealPanel() { setPanelOpen(false); requestAnimationFrame(() => requestAnimationFrame(() => setPanelOpen(true))); }
-	function startCreate() { if (!currentUserId) return; setEditingId(null); setForm(emptyBookingForm(getUserTimeZone(), currentUserId)); setMenuId(null); revealPanel(); }
-	function startEdit(event: BookingEvent) { setEditingId(event.isTemplate ? null : event.id); setForm({ ...formFromEvent(event), enabled: event.isTemplate ? true : event.enabled }); setMenuId(null); if (!panelOpen) revealPanel(); }
+	function startCreate() { if (!currentUserId) return; setEditingId(null); setForm(emptyBookingForm(getUserTimeZone(), currentUserId));  revealPanel(); }
+	function startEdit(event: BookingEvent) { setEditingId(event.isTemplate ? null : event.id); setForm({ ...formFromEvent(event), enabled: event.isTemplate ? true : event.enabled });  if (!panelOpen) revealPanel(); }
 	function closeEditor() { setPanelOpen(false); }
 
 	async function save() {
@@ -89,19 +93,19 @@ export default function BookingsPage() {
 			if (!response.ok || !data.event) throw new Error(data.error);
 			setEvents((current) => event.isTemplate ? [...current, data.event!] : current.map((item) => item.id === event.id ? data.event! : item));
 			if (editingId === event.id && form) setForm({ ...form, enabled });
-			setMenuId(null);
+
 		} catch { toast.error(event.isTemplate ? t("booking.enableFailed") : t("booking.updateFailed")); }
 		finally { if (event.isTemplate) setSavingTemplateId(null); }
 	}
 
 	async function remove(event: BookingEvent) {
-		if (!window.confirm(t("booking.deleteConfirm", { name: event.name }))) return;
+		if (!await confirm(t("booking.deleteConfirm", { name: event.name }))) return;
 		try {
 			const response = await authFetch(`/api/booking/${event.id}`, { method: "DELETE" });
 			if (!response.ok) throw new Error();
 			setEvents((current) => current.filter((item) => item.id !== event.id));
 			if (editingId === event.id) closeEditor();
-			setMenuId(null);
+
 		} catch { toast.error(t("booking.deleteFailed")); }
 	}
 
@@ -111,33 +115,33 @@ export default function BookingsPage() {
 		catch { toast.error(t("booking.copyFailed")); }
 	}
 
-	return <div className={clsx("flex h-full min-h-0 flex-col bg-[#f6f8fc] pl-3 max-md:pl-0 transition-[gap] duration-200 ease-in-out motion-reduce:transition-none lg:flex-row", minimal ? "gap-0" : "gap-3")}>
-		<Toaster position="bottom-left" />
+	return <div className={clsx("flex h-full min-h-0 flex-col bg-sidebar pl-3 max-md:pl-0 transition-[gap] duration-200 ease-in-out motion-reduce:transition-none lg:flex-row", minimal ? "gap-0" : "gap-3")}>
+
 		{loading && <RouteLoadingBarPortal />}
-		<UpcomingSidebar />
-		<section className="min-h-0 min-w-0 flex-1 overflow-hidden overscroll-contain max-md:rounded-t-3xl max-md:bg-white">
+		{confirmation}<UpcomingSidebar />
+		<section className="min-h-0 min-w-0 flex-1 overflow-hidden overscroll-contain max-md:rounded-t-3xl max-md:bg-card">
 			<div className="flex h-full min-h-0 min-w-0">
 				<div className="min-w-0 flex-1 overflow-y-auto overscroll-contain scrollbar-gutter-stable">
 					<div className="mx-auto max-w-6xl px-5 md:px-8">
-						<section aria-label={t("booking.events")} className="space-y-1 pt-3 max-md:pb-24">
+						<section aria-label={t("booking.events")} className="flex flex-col gap-1 pt-3 max-md:pb-24">
 
 							<div className="flex flex-wrap items-start justify-between gap-4 pb-6 max-md:flex-nowrap max-md:gap-2">
-								<div className="min-w-0"><h1 className="text-xl font-semibold text-neutral-900 md:text-3xl">{t("booking.title")}</h1><p className="mt-1 text-sm text-neutral-500">{t("booking.description")}</p></div>
+								<div className="min-w-0"><h1 className="text-xl font-semibold text-foreground md:text-3xl">{t("booking.title")}</h1><p className="mt-1 text-sm text-muted-foreground">{t("booking.description")}</p></div>
 								<div className="flex shrink-0 items-center gap-2">
 
-									<Button asChild variant="ghost" className="w-10 max-md:-mr-2">
-										<Link href={`/c/${username}`} target="_blank" rel="noopener noreferrer" aria-label={t("booking.openPage", { name: username })} className="text-blue-700">
+									<Button asChild variant="ghost" className= "w-10 max-md:-mr-2 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11">
+										<Link href={`/c/${username}`} target="_blank" rel="noopener noreferrer" aria-label={t("booking.openPage", { name: username })} className="text-signal">
 											<ExternalLink size={18} aria-hidden="true" />
 										</Link>
 									</Button>
 
-									<Button type="button" onClick={startCreate} disabled={!currentUserId} className={clsx("rounded-full", mobilePrimaryActionClass)}><Plus size={18} />{t("booking.newEvent")}</Button></div>
+									<Button type="button" onClick={startCreate} disabled={!currentUserId} className={clsx("rounded-full", mobilePrimaryActionClass)}><Plus data-icon="inline-start" />{t("booking.newEvent")}</Button></div>
 							</div>
 
-							{loading ? <BookingListSkeleton /> : listEvents.length === 0 ? <div className="rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-12 text-center"><CalendarDays className="mx-auto mb-3 h-8 w-8 text-neutral-400" /><h2 className="font-medium text-neutral-900">{t("booking.none")}</h2><p className="mt-1 text-sm text-neutral-500">{t("booking.noneHint")}</p></div> : listEvents.map((event, i) => <article key={event.id} className={clsx(!event.enabled && "opacity-65", `relative flex flex-wrap items-center gap-4 rounded-md bg-white px-5 py-5 max-md:gap-3 max-md:rounded-none max-md:border-b max-md:border-neutral-100 max-md:px-0 max-md:py-4 max-md:last:border-b-0`, i === 0 && "rounded-t-3xl")}>
-								<div className="flex min-w-0 flex-1 items-start gap-4"><span className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${event.enabled ? "border-blue-600 bg-blue-600 text-white" : "border-neutral-300"}`}>{event.enabled && <Check className="h-3.5 w-3.5" />}</span><div className="min-w-0"><button type="button" onClick={() => startEdit(event)} className="text-left text-lg font-semibold text-neutral-900 hover:text-blue-700 max-md:text-base">{event.name}</button>{event.description && <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-neutral-600">{event.description}</p>}<p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-500"><span className="inline-flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" />{durationLabel(event.durationMinutes, t)}</span><span>·</span><span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{event.location || t("booking.noLocation")}</span></p><p className="mt-2 text-sm text-neutral-500">{availabilityLabel(event, t)}</p></div></div>
-								<div className="ml-auto flex items-center gap-2 max-md:ml-9 max-md:w-full">{event.enabled ? <><Button type="button" variant="outline" onClick={() => void copyLink(event)} className="h-9 rounded-full px-3"><Copy className="h-4 w-4" />{t("booking.copyLink")}</Button>{username && <Link href={`/c/${username}/${event.slug}`} target="_blank" aria-label={t("booking.openPage", { name: event.name })} className="rounded-full p-2 text-neutral-600 hover:bg-neutral-100"><ExternalLink className="h-4 w-4" /></Link>}</> : <Button type="button" variant="outline" disabled={event.isTemplate && savingTemplateId !== null} onClick={() => void setEnabled(event, true)} className="h-9 rounded-full px-3">{savingTemplateId === event.id ? t("booking.turningOn") : t("booking.turnOn")}</Button>}
-									{!event.isTemplate && <div className="relative"><button type="button" aria-label={t("booking.moreOptions", { name: event.name })} aria-expanded={menuId === event.id} onClick={() => setMenuId(menuId === event.id ? null : event.id)} className="rounded-full p-2 text-neutral-600 hover:bg-neutral-100"><MoreHorizontal className="h-5 w-5" /></button>{menuId === event.id && <div className="absolute right-0 top-10 z-10 w-36 rounded-xl border border-neutral-200 bg-white p-1 shadow-lg"><button type="button" onClick={() => startEdit(event)} className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100">{t("booking.edit")}</button><button type="button" onClick={() => void setEnabled(event, !event.enabled)} className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100">{event.enabled ? t("booking.turnOff") : t("booking.turnOn")}</button><button type="button" onClick={() => void remove(event)} className="block w-full rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">{t("common.delete")}</button></div>}</div>}</div>
+							{loading ? <BookingListSkeleton /> : listEvents.length === 0 ? <Empty><EmptyHeader><CalendarDays className="size-8" /><EmptyTitle>{t("booking.none")}</EmptyTitle><EmptyDescription>{t("booking.noneHint")}</EmptyDescription></EmptyHeader></Empty> : listEvents.map((event, i) => <article key={event.id} className={clsx(!event.enabled && "opacity-65", `relative flex flex-wrap items-center gap-4 rounded-md bg-card px-5 py-5 max-md:gap-3 max-md:rounded-none max-md:border-b max-md:border-border max-md:px-0 max-md:py-4 max-md:last:border-b-0`, i === 0 && "rounded-t-3xl")}>
+								<div className="flex min-w-0 flex-1 items-start gap-4"><span className={`mt-1 flex size-5 shrink-0 items-center justify-center rounded-md border ${event.enabled ? "border-ring bg-primary text-primary-foreground" : "border-input"}`}>{event.enabled && <Check className="h-3.5 w-3.5" />}</span><div className="min-w-0"><Button variant="ghost" type="button" onClick={() => startEdit(event)} className= "text-left text-lg font-semibold max-md:text-base [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11">{event.name}</Button>{event.description && <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-muted-foreground">{event.description}</p>}<p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground"><span className="inline-flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" />{durationLabel(event.durationMinutes, t)}</span><span>·</span><span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{event.location || t("booking.noLocation")}</span></p><p className="mt-2 text-sm text-muted-foreground">{availabilityLabel(event, t)}</p></div></div>
+								<div className="ml-auto flex items-center gap-2 max-md:ml-9 max-md:w-full">{event.enabled ? <><Button type="button" variant="outline" onClick={() => void copyLink(event)} className= "h-9 px-3 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"><Copy data-icon="inline-start" />{t("booking.copyLink")}</Button>{username && <Link href={`/c/${username}/${event.slug}`} target="_blank" aria-label={t("booking.openPage", { name: event.name })} className="rounded-full p-2 text-muted-foreground hover:bg-accent"><ExternalLink className="size-4" /></Link>}</> : <Button type="button" variant="outline" disabled={event.isTemplate && savingTemplateId !== null} onClick={() => void setEnabled(event, true)} className= "h-9 px-3 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11">{savingTemplateId === event.id ? t("booking.turningOn") : t("booking.turnOn")}</Button>}
+									{!event.isTemplate && <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label={t("booking.moreOptions", { name: event.name })}><MoreHorizontal /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuGroup><DropdownMenuItem onSelect={() => startEdit(event)}>{t("booking.edit")}</DropdownMenuItem><DropdownMenuItem onSelect={() => void setEnabled(event, !event.enabled)}>{event.enabled ? t("booking.turnOff") : t("booking.turnOn")}</DropdownMenuItem><DropdownMenuItem variant="destructive" onSelect={() => void remove(event)}>{t("common.delete")}</DropdownMenuItem></DropdownMenuGroup></DropdownMenuContent></DropdownMenu>}</div>
 							</article>)}
 						</section>
 					</div>

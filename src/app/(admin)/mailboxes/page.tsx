@@ -1,6 +1,10 @@
 "use client";
+import { Empty } from "@/components/ui/empty";
+import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 
-import { mobilePrimaryActionClass } from "@/components/page-header-utils";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { mobilePrimaryActionClass } from "../admin-ui-utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -8,18 +12,11 @@ import { useEffect, useState } from "react";
 import { Plus, UsersRound } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
+import { AdminFormPanel as Dialog, AdminFormPanelContent as DialogContent, AdminFormPanelDescription as DialogDescription, AdminFormPanelHeader as DialogHeader, AdminFormPanelTitle as DialogTitle, AdminFormPanelTrigger as DialogTrigger } from "../admin-form-panel";
+import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupText } from "@/components/ui/input-group";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { List, ListRow } from "@/components/ui/list";
+import { NativeSelect } from "@/components/ui/native-select";
+import { ItemGroup as List, Item as ListRow } from "@/components/ui/item";
 import { SectionRowSkeleton } from "@/components/page-skeletons";
 import { clearMailboxesCache } from "@/components/mailbox-provider-utils";
 import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
@@ -123,13 +120,13 @@ export default function MailboxesPage() {
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="flex flex-col gap-6">
 			<div className="flex items-center justify-between gap-4">
 				<h1 className="text-2xl md:text-3xl font-medium">{t("mailboxes.title")}</h1>
 				<Dialog open={createOpen} onOpenChange={setCreateOpen}>
 					<DialogTrigger asChild>
 						<Button className={mobilePrimaryActionClass}>
-							<Plus className="h-4 w-4" />
+							<Plus data-icon="inline-start" />
 							{t("mailboxes.new")}
 						</Button>
 					</DialogTrigger>
@@ -138,25 +135,25 @@ export default function MailboxesPage() {
 							<DialogTitle>{t("mailboxes.createTitle")}</DialogTitle>
 							<DialogDescription>{t("mailboxes.createDescription")}</DialogDescription>
 						</DialogHeader>
-						<div className="space-y-4">
+						<FieldGroup className="flex flex-col gap-4">
 							{mailboxes.data?.canCreateShared && (
-								<div className="space-y-2">
-									<Label htmlFor="mailbox-type">{t("mailboxes.type")}</Label>
-									<Select
+								<Field className="flex flex-col gap-2">
+									<FieldLabel htmlFor="mailbox-type">{t("mailboxes.type")}</FieldLabel>
+									<NativeSelect
 										id="mailbox-type"
 										value={mailboxType}
 										onChange={(event) => setMailboxType(event.target.value as "personal" | "shared")}
-										className="flex h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm shadow-sm shadow-neutral-200/50 focus-visible:border-blue-600 focus-visible:outline-none"
+										className="flex h-10 w-full rounded-md border border-border bg-card px-3 text-sm shadow-sm focus-visible:border-ring focus-visible:outline-none"
 									>
 										<option value="personal">{t("mailboxes.personalInbox")}</option>
 										<option value="shared">{t("mailboxes.sharedInbox")}</option>
-									</Select>
-								</div>
+									</NativeSelect>
+								</Field>
 							)}
 							{mailboxType === "personal" ? (
-							<div className="space-y-2">
-								<Label htmlFor="mailbox-owner">{t("mailboxes.account")}</Label>
-								<Select
+							<Field className="flex flex-col gap-2">
+								<FieldLabel htmlFor="mailbox-owner">{t("mailboxes.account")}</FieldLabel>
+								<NativeSelect
 									id="mailbox-owner"
 									value={ownerUserId}
 									onChange={(event) => {
@@ -164,43 +161,44 @@ export default function MailboxesPage() {
 										setOwnerUserId(event.target.value);
 										if (owner) setDisplayName(owner.name);
 									}}
-									className="flex h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm shadow-sm shadow-neutral-200/50 focus-visible:border-blue-600 focus-visible:outline-none"
+									className="flex h-10 w-full rounded-md border border-border bg-card px-3 text-sm shadow-sm focus-visible:border-ring focus-visible:outline-none"
 								>
 									{mailboxOwners.map((owner) => (
 										<option key={owner.id} value={owner.id}>
 											{owner.name} ({owner.email})
 										</option>
 									))}
-								</Select>
-							</div>
+								</NativeSelect>
+							</Field>
 							) : (
-								<p className="rounded-2xl bg-blue-50 px-4 py-3 text-sm text-blue-800">
+								<p className="rounded-lg bg-signal-soft px-4 py-3 text-sm text-signal-soft-foreground">
 									{t("mailboxes.sharedHint")}
 								</p>
 							)}
-							<div className="space-y-2">
-								<Label htmlFor="mailbox-name">{t("common.name")}</Label>
+							<Field className="flex flex-col gap-2">
+								<FieldLabel htmlFor="mailbox-name">{t("common.name")}</FieldLabel>
 								<Input
 									id="mailbox-name"
 									value={displayName}
 									onChange={(event) => setDisplayName(event.target.value)}
 									placeholder={t("mailboxes.namePlaceholder")}
 								/>
-							</div>
-							<div className="space-y-2">
-								<Label htmlFor="mailbox-username">{t("mailboxes.emailAddress")}</Label>
-								<div className="flex h-10 overflow-hidden rounded-md border border-neutral-200 bg-white shadow-sm shadow-neutral-200/50 focus-within:border-blue-600">
-									<Input
+							</Field>
+							<Field className="flex flex-col gap-2">
+								<FieldLabel htmlFor="mailbox-username">{t("mailboxes.emailAddress")}</FieldLabel>
+								<InputGroup>
+									<InputGroupInput
 										id="mailbox-username"
 										value={localPart}
 										onChange={(event) => setLocalPart(event.target.value)}
 										placeholder={t("mailboxes.localPlaceholder")}
-										className="min-w-0 flex-1 rounded-none border-0 shadow-none focus-visible:border-0"
+
 									/>
-									<span className="flex items-center text-sm text-neutral-500">@</span>
-									<Select
+									<InputGroupAddon align="inline-end"><InputGroupText>@</InputGroupText>
+									<NativeSelect
 										aria-label={t("accounts.domain")}
-										className="min-w-0 max-w-[55%] bg-transparent px-3 text-sm text-neutral-700 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+										containerClassName="w-36 shrink-0"
+										className="rounded-none border-0 shadow-none"
 										value={domainId}
 										onChange={(event) => setDomainId(event.target.value)}
 									>
@@ -210,9 +208,9 @@ export default function MailboxesPage() {
 												{domain.hostname}
 											</option>
 										))}
-									</Select>
-								</div>
-							</div>
+									</NativeSelect></InputGroupAddon>
+								</InputGroup>
+							</Field>
 							{create.isError && (
 								<p role="alert" className="text-sm text-red-600">{(create.error as Error).message}</p>
 							)}
@@ -222,13 +220,13 @@ export default function MailboxesPage() {
 							>
 								{create.isPending ? t("accounts.creating") : t("mailboxes.createButton")}
 							</Button>
-						</div>
+						</FieldGroup>
 					</DialogContent>
 				</Dialog>
 			</div>
-			<section className="space-y-3">
+			<section className="flex flex-col gap-3">
 				{/* <div className="flex items-center justify-between">
-					<span className="text-sm text-neutral-500">
+					<span className="text-sm text-muted-foreground">
 						{(mailboxes.data?.mailboxes ?? []).length} total
 					</span>
 				</div> */}
@@ -236,11 +234,15 @@ export default function MailboxesPage() {
 					<SectionRowSkeleton />
 				)}
 				{!mailboxes.isLoading && (mailboxes.data?.mailboxes ?? []).length === 0 && (
-					<p className="rounded-2xl bg-white px-5 py-4 text-sm text-neutral-500">
+					<Empty className="rounded-lg bg-card px-5 py-4 text-sm text-muted-foreground">
 						{t("mailboxes.none")}
-					</p>
+					</Empty>
 				)}
-				<List>
+				<div className="hidden rounded-lg border bg-card md:block"><Table><TableHeader><TableRow><TableHead>{t("common.name")}</TableHead><TableHead>{t("mailboxes.emailAddress")}</TableHead><TableHead>{t("mailboxes.type")}</TableHead></TableRow></TableHeader><TableBody>{(mailboxes.data?.mailboxes ?? []).map((mailbox) => {
+					const item = { ...mailbox, hostname: mailbox.hostname ?? domainMap.get(mailbox.domainId) ?? "?" };
+					return <TableRow key={mailbox.id}><TableCell className="py-4"><Link href={`${base}/${mailbox.id}`} className="font-medium hover:underline">{getMailboxName(item)}</Link></TableCell><TableCell className="text-muted-foreground">{getMailboxAddress(item)}</TableCell><TableCell><Badge variant="secondary">{mailbox.type === "shared" ? t("mailboxes.shared") : t("mailboxes.personalInbox")}</Badge></TableCell></TableRow>;
+				})}</TableBody></Table></div>
+				<List className="gap-2 md:hidden">
 					{(mailboxes.data?.mailboxes ?? []).map((mailbox) => {
 						const mailboxWithHostname = {
 							...mailbox,
@@ -248,12 +250,12 @@ export default function MailboxesPage() {
 						};
 
 						return (
-							<ListRow key={mailbox.id} asChild>
+							<ListRow variant="outline" key={mailbox.id} asChild>
 								<Link
 									href={`${base}/${mailbox.id}`}
-									className="group px-5 py-4 transition-colors hover:bg-blue-50/40"
+									className="group flex-nowrap px-4 py-4"
 								>
-									<span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
+									<span className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-signal-soft text-sm font-semibold text-signal">
 										{getMailboxName(mailboxWithHostname).trim().charAt(0).toUpperCase() || "?"}
 										{mailbox.hasAvatar && (
 											<ProgressiveAvatarImage
@@ -263,19 +265,19 @@ export default function MailboxesPage() {
 											/>
 										)}
 									</span>
-									<span className="min-w-0">
+									<span className="min-w-0 flex-1">
 										<span className="flex min-w-0 items-center gap-2">
-											<span className="block truncate text-sm font-semibold text-neutral-900">
+											<span className="block truncate text-sm font-semibold text-foreground">
 												{getMailboxName(mailboxWithHostname)}
 											</span>
 											{mailbox.type === "shared" && (
-												<span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
-													<UsersRound className="h-3 w-3" />
+												<span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-signal-soft px-2 py-0.5 text-xs font-medium text-signal">
+													<UsersRound className="size-3" />
 													{t("mailboxes.shared")}
 												</span>
 											)}
 										</span>
-										<span className="block truncate no-font-mono text-sm text-neutral-500">
+										<span className="block truncate no-font-mono text-sm text-muted-foreground">
 											{getMailboxAddress(mailboxWithHostname)}
 										</span>
 									</span>

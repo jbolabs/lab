@@ -1,16 +1,28 @@
 "use client";
-
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FieldLabel, Field, FieldGroup } from "@/components/ui/field";
 import { useEffect, useState } from "react";
 import { Copy, ShieldCheck, ShieldOff } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "./settings-dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { MfaStatusResponse } from "./types";
 import type { MfaDialogStep } from "./mfa-settings-types";
-import { beginMfaEnrollment, confirmMfaEnrollment, disableMfa, loadMfaStatus, regenerateRecoveryCodes } from "./utils";
-
+import {
+	beginMfaEnrollment,
+	confirmMfaEnrollment,
+	disableMfa,
+	loadMfaStatus,
+	regenerateRecoveryCodes,
+} from "./utils";
 /**
  * Settings > Account > Security card for TOTP. Enrolment is a three-step
  * dialog (password, scan and confirm, save recovery codes); turning it off
@@ -23,30 +35,35 @@ export function MfaSettings() {
 	const [enrollOpen, setEnrollOpen] = useState(false);
 	const [disableOpen, setDisableOpen] = useState(false);
 	const [codesOpen, setCodesOpen] = useState(false);
-
 	useEffect(() => {
-		loadMfaStatus().then(setStatus).catch((err) => setError(err instanceof Error ? err.message : t("mfa.loadFailed")));
+		loadMfaStatus()
+			.then(setStatus)
+			.catch((err) =>
+				setError(err instanceof Error ? err.message : t("mfa.loadFailed")),
+			);
 	}, [t]);
-
 	async function refresh() {
 		setStatus(await loadMfaStatus());
 	}
-
-	if (!status) return <p className="text-sm text-neutral-500">{error ?? t("mfa.loading")}</p>;
-
+	if (!status)
+		return (
+			<p className="text-sm text-muted-foreground">
+				{error ?? t("mfa.loading")}
+			</p>
+		);
 	return (
-		<div className="space-y-4">
-			<div className="flex items-start gap-3 rounded-2xl bg-neutral-50 p-4">
+		<div className="flex flex-col gap-4">
+			<div className="flex items-start gap-3 rounded-lg bg-muted/60 p-4">
 				{status.enabled ? (
 					<ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
 				) : (
-					<ShieldOff className="mt-0.5 h-5 w-5 shrink-0 text-neutral-400" />
+					<ShieldOff className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground/70" />
 				)}
 				<div className="min-w-0 flex-1">
-					<p className="text-sm font-medium text-neutral-900">
+					<p className="text-sm font-medium text-foreground">
 						{status.enabled ? t("mfa.on") : t("mfa.off")}
 					</p>
-					<p className="mt-1 text-sm text-neutral-500">
+					<p className="mt-1 text-sm text-muted-foreground">
 						{status.enabled
 							? t("mfa.onDescription", { count: status.recoveryCodesLeft })
 							: t("mfa.offDescription")}
@@ -68,19 +85,30 @@ export function MfaSettings() {
 				)}
 			</div>
 
-			<EnrollDialog open={enrollOpen} onOpenChange={setEnrollOpen} onDone={refresh} />
-			<DisableDialog open={disableOpen} onOpenChange={setDisableOpen} onDone={refresh} />
-			<RecoveryCodesDialog open={codesOpen} onOpenChange={setCodesOpen} onDone={refresh} />
+			<EnrollDialog
+				open={enrollOpen}
+				onOpenChange={setEnrollOpen}
+				onDone={refresh}
+			/>
+			<DisableDialog
+				open={disableOpen}
+				onOpenChange={setDisableOpen}
+				onDone={refresh}
+			/>
+			<RecoveryCodesDialog
+				open={codesOpen}
+				onOpenChange={setCodesOpen}
+				onDone={refresh}
+			/>
 		</div>
 	);
 }
-
 function RecoveryCodesList({ codes }: { codes: string[] }) {
 	const { t } = useLanguage();
 	const [copied, setCopied] = useState(false);
 	return (
-		<div className="space-y-3">
-			<ul className="grid grid-cols-2 gap-2 rounded-xl bg-neutral-50 p-4 font-mono text-sm text-neutral-800">
+		<div className="flex flex-col gap-3">
+			<ul className="grid grid-cols-2 gap-2 py-3 font-mono text-sm text-foreground">
 				{codes.map((code) => (
 					<li key={code}>{code}</li>
 				))}
@@ -90,20 +118,27 @@ function RecoveryCodesList({ codes }: { codes: string[] }) {
 				variant="outline"
 				size="sm"
 				onClick={() => {
-					void navigator.clipboard.writeText(codes.join("\n")).then(() => setCopied(true));
+					void navigator.clipboard
+						.writeText(codes.join("\n"))
+						.then(() => setCopied(true));
 				}}
 			>
-				<Copy className="h-4 w-4" />
+				<Copy data-icon="inline-start" />
 				{copied ? t("common.copied") : t("mfa.copyCodes")}
 			</Button>
-			<p className="text-xs text-neutral-500">
-				{t("mfa.codesHint")}
-			</p>
+			<p className="text-xs text-muted-foreground">{t("mfa.codesHint")}</p>
 		</div>
 	);
 }
-
-function EnrollDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenChange: (open: boolean) => void; onDone: () => Promise<void> }) {
+function EnrollDialog({
+	open,
+	onOpenChange,
+	onDone,
+}: {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onDone: () => Promise<void>;
+}) {
 	const { t } = useLanguage();
 	const [step, setStep] = useState<MfaDialogStep>("password");
 	const [password, setPassword] = useState("");
@@ -113,7 +148,6 @@ function EnrollDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
 	const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
-
 	function reset() {
 		setStep("password");
 		setPassword("");
@@ -123,7 +157,6 @@ function EnrollDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
 		setRecoveryCodes([]);
 		setError(null);
 	}
-
 	async function start(event: React.FormEvent) {
 		event.preventDefault();
 		setBusy(true);
@@ -139,7 +172,6 @@ function EnrollDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
 			setBusy(false);
 		}
 	}
-
 	async function confirm(event: React.FormEvent) {
 		event.preventDefault();
 		setBusy(true);
@@ -154,7 +186,6 @@ function EnrollDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
 			setBusy(false);
 		}
 	}
-
 	return (
 		<Dialog
 			open={open}
@@ -163,62 +194,122 @@ function EnrollDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCha
 				if (!next) reset();
 			}}
 		>
-			<DialogContent className="max-h-[calc(100vh-4rem)] overflow-y-auto sm:max-w-[480px]">
+			<DialogContent className="max-h-[calc(100dvh-4rem)] overflow-y-auto sm:max-w-[480px]">
 				{step === "password" && (
-					<form onSubmit={start} className="space-y-4">
-						<DialogHeader>
-							<DialogTitle>{t("mfa.enrollTitle")}</DialogTitle>
-							<DialogDescription>{t("mfa.enrollDescription")}</DialogDescription>
-						</DialogHeader>
-						<div className="space-y-2">
-							<Label htmlFor="mfa-password">{t("common.password")}</Label>
-							<Input id="mfa-password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus />
-						</div>
-						{error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-						<Button type="submit" disabled={busy}>{busy ? t("common.pleaseWait") : t("common.continue")}</Button>
+					<form onSubmit={start} className="flex flex-col gap-4">
+						<FieldGroup>
+							<DialogHeader>
+								<DialogTitle>{t("mfa.enrollTitle")}</DialogTitle>
+								<DialogDescription>
+									{t("mfa.enrollDescription")}
+								</DialogDescription>
+							</DialogHeader>
+							<Field>
+								<FieldLabel htmlFor="mfa-password">
+									{t("common.password")}
+								</FieldLabel>
+								<Input
+									id="mfa-password"
+									type="password"
+									autoComplete="current-password"
+									value={password}
+									onChange={(e) => setPassword(e.target.value)}
+									required
+									autoFocus
+								/>
+							</Field>
+							{error && (
+								<Alert variant="destructive">
+									<AlertDescription>{error}</AlertDescription>
+								</Alert>
+							)}
+							<Button type="submit" disabled={busy}>
+								{busy ? t("common.pleaseWait") : t("common.continue")}
+							</Button>
+						</FieldGroup>
 					</form>
 				)}
 				{step === "scan" && (
-					<form onSubmit={confirm} className="space-y-4">
-						<DialogHeader>
-							<DialogTitle>{t("mfa.scanTitle")}</DialogTitle>
-							<DialogDescription>{t("mfa.scanDescription")}</DialogDescription>
-						</DialogHeader>
-						<div role="img" aria-label={t("mfa.scanTitle")} className="mx-auto w-48 rounded-xl border border-neutral-200 bg-white p-2" dangerouslySetInnerHTML={{ __html: qrSvg }} />
-						<details className="text-xs text-neutral-500">
-							<summary className="cursor-pointer">{t("mfa.cantScan")}</summary>
-							<code className="mt-2 block break-all rounded-md bg-neutral-50 p-2 font-mono text-neutral-800">{secret}</code>
-						</details>
-						<div className="space-y-2">
-							<Label htmlFor="mfa-code">{t("mfa.sixDigitCode")}</Label>
-							<Input id="mfa-code" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value)} placeholder="123 456" required autoFocus />
-						</div>
-						{error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-						<Button type="submit" disabled={busy}>{busy ? t("mfa.checking") : t("mfa.verifyAndTurnOn")}</Button>
+					<form onSubmit={confirm} className="flex flex-col gap-4">
+						<FieldGroup>
+							<DialogHeader>
+								<DialogTitle>{t("mfa.scanTitle")}</DialogTitle>
+								<DialogDescription>
+									{t("mfa.scanDescription")}
+								</DialogDescription>
+							</DialogHeader>
+							<div
+								role="img"
+								aria-label={t("mfa.scanTitle")}
+								className="mx-auto w-48 rounded-xl border border-border bg-card p-2"
+								dangerouslySetInnerHTML={{ __html: qrSvg }}
+							/>
+							<details className="text-xs text-muted-foreground">
+								<summary className="cursor-pointer">
+									{t("mfa.cantScan")}
+								</summary>
+								<code className="mt-2 block break-all rounded-md bg-muted/60 p-2 font-mono text-foreground">
+									{secret}
+								</code>
+							</details>
+							<Field>
+								<FieldLabel htmlFor="mfa-code">
+									{t("mfa.sixDigitCode")}
+								</FieldLabel>
+								<Input
+									id="mfa-code"
+									inputMode="numeric"
+									autoComplete="one-time-code"
+									value={code}
+									onChange={(e) => setCode(e.target.value)}
+									placeholder="123 456"
+									required
+									autoFocus
+								/>
+							</Field>
+							{error && (
+								<Alert variant="destructive">
+									<AlertDescription>{error}</AlertDescription>
+								</Alert>
+							)}
+							<Button type="submit" disabled={busy}>
+								{busy ? t("mfa.checking") : t("mfa.verifyAndTurnOn")}
+							</Button>
+						</FieldGroup>
 					</form>
 				)}
 				{step === "codes" && (
-					<div className="space-y-4">
+					<div className="flex flex-col gap-4">
 						<DialogHeader>
 							<DialogTitle>{t("mfa.saveCodesTitle")}</DialogTitle>
-							<DialogDescription>{t("mfa.saveCodesDescription")}</DialogDescription>
+							<DialogDescription>
+								{t("mfa.saveCodesDescription")}
+							</DialogDescription>
 						</DialogHeader>
 						<RecoveryCodesList codes={recoveryCodes} />
-						<Button type="button" onClick={() => onOpenChange(false)}>{t("common.done")}</Button>
+						<Button type="button" onClick={() => onOpenChange(false)}>
+							{t("common.done")}
+						</Button>
 					</div>
 				)}
 			</DialogContent>
 		</Dialog>
 	);
 }
-
-function DisableDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenChange: (open: boolean) => void; onDone: () => Promise<void> }) {
+function DisableDialog({
+	open,
+	onOpenChange,
+	onDone,
+}: {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onDone: () => Promise<void>;
+}) {
 	const { t } = useLanguage();
 	const [password, setPassword] = useState("");
 	const [code, setCode] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
-
 	async function submit(event: React.FormEvent) {
 		event.preventDefault();
 		setBusy(true);
@@ -235,38 +326,69 @@ function DisableDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenCh
 			setBusy(false);
 		}
 	}
-
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-h-[calc(100vh-4rem)] overflow-y-auto sm:max-w-[480px]">
-				<form onSubmit={submit} className="space-y-4">
-					<DialogHeader>
-						<DialogTitle>{t("mfa.turnOffTitle")}</DialogTitle>
-						<DialogDescription>{t("mfa.turnOffDescription")}</DialogDescription>
-					</DialogHeader>
-					<div className="space-y-2">
-						<Label htmlFor="mfa-off-password">{t("common.password")}</Label>
-						<Input id="mfa-off-password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-					</div>
-					<div className="space-y-2">
-						<Label htmlFor="mfa-off-code">{t("mfa.code")}</Label>
-						<Input id="mfa-off-code" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(e) => setCode(e.target.value)} required />
-					</div>
-					{error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-					<Button type="submit" variant="destructive" disabled={busy}>{busy ? t("common.pleaseWait") : t("mfa.turnOff")}</Button>
+		<AlertDialog open={open} onOpenChange={onOpenChange}>
+			<AlertDialogContent className="max-h-[calc(100dvh-4rem)] overflow-y-auto sm:max-w-[480px]">
+				<form onSubmit={submit} className="flex flex-col gap-4">
+					<FieldGroup>
+						<AlertDialogHeader>
+							<AlertDialogTitle>{t("mfa.turnOffTitle")}</AlertDialogTitle>
+							<AlertDialogDescription>
+								{t("mfa.turnOffDescription")}
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<Field>
+							<FieldLabel htmlFor="mfa-off-password">
+								{t("common.password")}
+							</FieldLabel>
+							<Input
+								id="mfa-off-password"
+								type="password"
+								autoComplete="current-password"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								required
+							/>
+						</Field>
+						<Field>
+							<FieldLabel htmlFor="mfa-off-code">{t("mfa.code")}</FieldLabel>
+							<Input
+								id="mfa-off-code"
+								inputMode="numeric"
+								autoComplete="one-time-code"
+								value={code}
+								onChange={(e) => setCode(e.target.value)}
+								required
+							/>
+						</Field>
+						{error && (
+							<Alert variant="destructive">
+								<AlertDescription>{error}</AlertDescription>
+							</Alert>
+						)}
+						<Button type="submit" variant="destructive" disabled={busy}>
+							{busy ? t("common.pleaseWait") : t("mfa.turnOff")}
+						</Button>
+					<AlertDialogCancel disabled={busy}>{t("common.cancel")}</AlertDialogCancel></FieldGroup>
 				</form>
-			</DialogContent>
-		</Dialog>
+			</AlertDialogContent>
+		</AlertDialog>
 	);
 }
-
-function RecoveryCodesDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenChange: (open: boolean) => void; onDone: () => Promise<void> }) {
+function RecoveryCodesDialog({
+	open,
+	onOpenChange,
+	onDone,
+}: {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	onDone: () => Promise<void>;
+}) {
 	const { t } = useLanguage();
 	const [password, setPassword] = useState("");
 	const [codes, setCodes] = useState<string[] | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
-
 	async function submit(event: React.FormEvent) {
 		event.preventDefault();
 		setBusy(true);
@@ -281,7 +403,6 @@ function RecoveryCodesDialog({ open, onOpenChange, onDone }: { open: boolean; on
 			setBusy(false);
 		}
 	}
-
 	return (
 		<Dialog
 			open={open}
@@ -290,28 +411,52 @@ function RecoveryCodesDialog({ open, onOpenChange, onDone }: { open: boolean; on
 				if (!next) setCodes(null);
 			}}
 		>
-			<DialogContent className="max-h-[calc(100vh-4rem)] overflow-y-auto sm:max-w-[480px]">
+			<DialogContent className="max-h-[calc(100dvh-4rem)] overflow-y-auto sm:max-w-[480px]">
 				{codes ? (
-					<div className="space-y-4">
+					<div className="flex flex-col gap-4">
 						<DialogHeader>
 							<DialogTitle>{t("mfa.newCodesTitle")}</DialogTitle>
-							<DialogDescription>{t("mfa.newCodesDescription")}</DialogDescription>
+							<DialogDescription>
+								{t("mfa.newCodesDescription")}
+							</DialogDescription>
 						</DialogHeader>
 						<RecoveryCodesList codes={codes} />
-						<Button type="button" onClick={() => onOpenChange(false)}>{t("common.done")}</Button>
+						<Button type="button" onClick={() => onOpenChange(false)}>
+							{t("common.done")}
+						</Button>
 					</div>
 				) : (
-					<form onSubmit={submit} className="space-y-4">
-						<DialogHeader>
-							<DialogTitle>{t("mfa.generateTitle")}</DialogTitle>
-							<DialogDescription>{t("mfa.generateDescription")}</DialogDescription>
-						</DialogHeader>
-						<div className="space-y-2">
-							<Label htmlFor="rc-password">{t("common.password")}</Label>
-							<Input id="rc-password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus />
-						</div>
-						{error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-						<Button type="submit" disabled={busy}>{busy ? t("common.pleaseWait") : t("mfa.generate")}</Button>
+					<form onSubmit={submit} className="flex flex-col gap-4">
+						<FieldGroup>
+							<DialogHeader>
+								<DialogTitle>{t("mfa.generateTitle")}</DialogTitle>
+								<DialogDescription>
+									{t("mfa.generateDescription")}
+								</DialogDescription>
+							</DialogHeader>
+							<Field>
+								<FieldLabel htmlFor="rc-password">
+									{t("common.password")}
+								</FieldLabel>
+								<Input
+									id="rc-password"
+									type="password"
+									autoComplete="current-password"
+									value={password}
+									onChange={(e) => setPassword(e.target.value)}
+									required
+									autoFocus
+								/>
+							</Field>
+							{error && (
+								<Alert variant="destructive">
+									<AlertDescription>{error}</AlertDescription>
+								</Alert>
+							)}
+							<Button type="submit" disabled={busy}>
+								{busy ? t("common.pleaseWait") : t("mfa.generate")}
+							</Button>
+						</FieldGroup>
 					</form>
 				)}
 			</DialogContent>

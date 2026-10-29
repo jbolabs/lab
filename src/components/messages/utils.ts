@@ -36,7 +36,7 @@ export function getMessagePartyClassName(message: Message, folder: MessageFolder
 	if (folder === "drafts") return "truncate font-medium text-red-600";
 
 	const unread = isMessageListRowUnread(message);
-	return `truncate ${unread ? "font-bold text-neutral-900" : "text-neutral-800"}`;
+	return `truncate ${unread ? "font-bold text-foreground" : "text-foreground"}`;
 }
 
 /** A grouped row is read only after every message represented by it is read. */

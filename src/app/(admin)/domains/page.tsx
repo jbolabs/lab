@@ -1,6 +1,9 @@
 "use client";
+import { useAdminConfirmation } from "../admin-confirmation-provider";
+import { Empty } from "@/components/ui/empty";
+import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 
-import { mobilePrimaryActionClass } from "@/components/page-header-utils";
+import { mobilePrimaryActionClass } from "../admin-ui-utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { useLanguage } from "@/components/language-provider";
@@ -13,8 +16,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { List } from "@/components/ui/list";
 import { CheckCircle2, LoaderCircle, Plus } from "lucide-react";
@@ -27,6 +30,7 @@ import { confirmMxReplacement } from "./api";
 
 export default function DomainsPage() {
   const { t } = useLanguage();
+	const confirm = useAdminConfirmation();
   const qc = useQueryClient();
   const [hostname, setHostname] = useState("");
   // Self-hosted installs without Cloudflare credentials manage DNS by hand.
@@ -177,7 +181,7 @@ export default function DomainsPage() {
       };
       let { res, json } = await put(false);
       // Cloudflare sending refuses while another service's MX records exist.
-      if (confirmMxReplacement(res, json)) ({ res, json } = await put(true));
+      if (await confirmMxReplacement(res, json, confirm)) ({ res, json } = await put(true));
       if (!res.ok) throw new Error(json.error ?? t("domains.sendingChangeFailed"));
       if (json.warning) setSendingMessage(json.warning);
       await loadDns(id);
@@ -245,7 +249,7 @@ export default function DomainsPage() {
         };
       };
       let { res, json } = await post(false);
-      if (confirmMxReplacement(res, json)) ({ res, json } = await post(true));
+      if (await confirmMxReplacement(res, json, confirm)) ({ res, json } = await post(true));
       if (!res.ok) throw new Error(json.error ?? t("domains.dnsSetupFailed"));
       if (json.domain && json.dns) {
         const updatedView = { domain: json.domain, dns: json.dns };
@@ -280,11 +284,11 @@ export default function DomainsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-medium">{t("domains.title")}</h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {managesDns
               ? t("domains.descriptionManaged")
               : t("domains.descriptionManual")}
@@ -293,20 +297,20 @@ export default function DomainsPage() {
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button className={mobilePrimaryActionClass}>
-              <Plus className="h-4 w-4" />
+              <Plus data-icon="inline-start" />
               {t("domains.new")}
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[calc(100dvh-4rem)] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t("domains.addTitle")}</DialogTitle>
               <DialogDescription>
                 {t("domains.addDescription")}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="hostname">{t("domains.hostname")}</Label>
+            <FieldGroup className="flex flex-col gap-4">
+              <Field className="flex flex-col gap-2">
+                <FieldLabel htmlFor="hostname">{t("domains.hostname")}</FieldLabel>
                 <Input
                   id="hostname"
                   value={hostname}
@@ -319,14 +323,14 @@ export default function DomainsPage() {
                   onBlur={() => void inspectDomain()}
                   placeholder="example.com"
                 />
-              </div>
-              <div className="flex items-center justify-between gap-4 rounded-xl bg-neutral-50 px-4 py-3">
-                <div>
-                  <Label htmlFor="skip-dns">{t("setup.skipDns")}</Label>
-                  <p className="mt-1 text-xs leading-5 text-neutral-500">
+              </Field>
+              <FieldGroup className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3">
+                <Field>
+                  <FieldLabel htmlFor="skip-dns">{t("setup.skipDns")}</FieldLabel>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
                     {skipDns ? t("setup.skipDnsOn") : t("setup.skipDnsHint")}
                   </p>
-                </div>
+                </Field>
                 <Switch
                   id="skip-dns"
                   checked={skipDns}
@@ -335,36 +339,36 @@ export default function DomainsPage() {
                     setDomainCheckError(null);
                   }}
                 />
-              </div>
+              </FieldGroup>
               {!skipDns && (
                 <>
-              <div className="flex items-center justify-between gap-4 rounded-xl bg-neutral-50 px-4 py-3">
-                <div>
-                  <Label htmlFor="receiving-provider">{t("domains.receiveWith")}</Label>
-                  <p className="mt-1 text-xs leading-5 text-neutral-500">
+              <FieldGroup className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3">
+                <Field>
+                  <FieldLabel htmlFor="receiving-provider">{t("domains.receiveWith")}</FieldLabel>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
                     {receivingProvider === "cloudflare"
                       ? t("domains.receiveHintCloudflare")
                       : receivingProvider === "none"
                         ? t("domains.receiveHintNone")
                         : t("domains.providerHintLater")}
                   </p>
-                </div>
-                <select
+                </Field>
+                <NativeSelect
                   id="receiving-provider"
                   value={receivingProvider}
                   onChange={(e) => setReceivingProvider(e.target.value as ReceivingProvider)}
-                  className="h-9 shrink-0 rounded-md border border-neutral-200 bg-white px-3 text-sm"
+                  className="h-9 shrink-0 rounded-md border border-border bg-card px-3 text-sm"
                 >
                   <option value="cloudflare">{t("domains.cloudflareRouting")}</option>
                   <option value="resend">Resend</option>
                   <option value="ses">Amazon SES</option>
                   <option value="none">{t("domains.notSelected")}</option>
-                </select>
-              </div>
-              <div className="flex items-center justify-between gap-4 rounded-xl bg-neutral-50 px-4 py-3">
-                <div>
-                  <Label htmlFor="sending-provider">{t("domains.sendWith")}</Label>
-                  <p className="mt-1 text-xs leading-5 text-neutral-500">
+                </NativeSelect>
+              </FieldGroup>
+              <FieldGroup className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3">
+                <Field>
+                  <FieldLabel htmlFor="sending-provider">{t("domains.sendWith")}</FieldLabel>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
                     {domainChecking
                       ? t("setup.checkingCloudflare")
                       : sendingProvider === "cloudflare"
@@ -373,25 +377,25 @@ export default function DomainsPage() {
                           ? t("domains.sendHintNone")
                           : t("domains.providerHintLater")}
                   </p>
-                </div>
-                {domainChecking && <LoaderCircle className="h-4 w-4 shrink-0 animate-spin text-neutral-500" />}
-                <select
+                </Field>
+                {domainChecking && <LoaderCircle className="size-4 shrink-0 animate-spin text-muted-foreground" />}
+                <NativeSelect
                   id="sending-provider"
                   value={sendingProvider}
                   onChange={(e) => setSendingProvider(e.target.value as SendingProvider)}
-                  className="h-9 shrink-0 rounded-md border border-neutral-200 bg-white px-3 text-sm"
+                  className="h-9 shrink-0 rounded-md border border-border bg-card px-3 text-sm"
                 >
                   <option value="cloudflare">{t("domains.cloudflareSending")}</option>
                   <option value="resend">Resend</option>
                   <option value="ses">Amazon SES</option>
                   <option value="none">{t("domains.notSelected")}</option>
-                </select>
-              </div>
+                </NativeSelect>
+              </FieldGroup>
                 </>
               )}
               {domainCheck && !skipDns && (
                 <div className="flex items-center gap-3 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
-                  <CheckCircle2 className="h-4 w-4" />
+                  <CheckCircle2 className="size-4" />
                   {t("setup.domainFound", { zone: domainCheck.zone.name })}
                 </div>
               )}
@@ -401,13 +405,13 @@ export default function DomainsPage() {
                 </p>
               )}
               {create.isError && (
-                <div className="space-y-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="flex flex-col gap-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
                   <p>{(create.error as Error).message}</p>
-                  <div className="space-y-2">
+                  <div className="flex flex-col gap-2">
                     <p className="font-medium">
                       {t("domains.tokenPermissions")}
                     </p>
-                    <ul className="list-disc space-y-1 pl-5">
+                    <ul className="list-disc flex flex-col gap-1 pl-5">
                       <li>
                         {t("domains.tokenAccounts")}
                       </li>
@@ -424,23 +428,23 @@ export default function DomainsPage() {
               >
                 {create.isPending ? t("onboarding.adding") : t("domains.addTitle")}
               </Button>
-            </div>
+            </FieldGroup>
           </DialogContent>
         </Dialog>
       </div>
-      <section className="space-y-3">
+      <section className="flex flex-col gap-3">
         {/* <div className="flex items-center justify-between">
-					<span className="text-sm text-neutral-500">{(data?.domains ?? []).length} total</span>
+					<span className="text-sm text-muted-foreground">{(data?.domains ?? []).length} total</span>
 				</div> */}
         {isLoading && (
           <SectionRowSkeleton />
         )}
         {!isLoading && (data?.domains ?? []).length === 0 && (
-          <p className="rounded-2xl bg-white px-5 py-4 text-sm text-neutral-500">
+          <Empty className="rounded-lg bg-card px-5 py-4 text-sm text-muted-foreground">
             {t("domains.none")}
-          </p>
+          </Empty>
         )}
-        <List>
+        <List className="gap-2">
           {(data?.domains ?? []).map((d) => {
             const dns = data?.dns?.[d.id];
             return (

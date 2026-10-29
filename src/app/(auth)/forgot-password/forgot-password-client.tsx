@@ -8,7 +8,9 @@ import { AuthShell } from "@/components/auth/auth-shell";
 import { TurnstileField } from "@/components/auth/turnstile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 import { requestPasswordReset } from "./utils";
 
 export function ForgotPasswordClient() {
@@ -23,7 +25,9 @@ export function ForgotPasswordClient() {
 		setLoading(true);
 		setError(null);
 		try {
-			const result = await requestPasswordReset(new FormData(event.currentTarget));
+			const result = await requestPasswordReset(
+				new FormData(event.currentTarget),
+			);
 			if (!result.ok) {
 				setError(result.error ?? t("auth.forgot.error"));
 				setTurnstileReset((value) => value + 1);
@@ -42,30 +46,50 @@ export function ForgotPasswordClient() {
 		<AuthShell
 			icon={KeyRound}
 			title={t("auth.forgot.title")}
-			description={
-				sent
-					? t("auth.forgot.sent")
-					: t("auth.forgot.description")
-			}
+			description={sent ? t("auth.forgot.sent") : t("auth.forgot.description")}
 			footer={
-				<Link href="/login" className="text-sm text-neutral-500 hover:text-neutral-800">
+				<Link
+					href="/login"
+					className="text-sm text-muted-foreground hover:text-foreground"
+				>
 					{t("auth.backToSignIn")}
 				</Link>
 			}
 		>
 			{!sent && (
-				<form onSubmit={onSubmit} className="space-y-5">
-					<div className="space-y-2">
-						<Label htmlFor="email">{t("auth.email")}</Label>
-						<Input id="email" name="email" type="email" autoComplete="email" required autoFocus />
-					</div>
-					{error && (
-						<p role="alert" className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</p>
-					)}
-					<TurnstileField resetSignal={turnstileReset} />
-					<Button type="submit" className="h-11 w-full rounded-full px-6 active:scale-[0.98]" disabled={loading}>
-						{loading ? t("auth.sending") : t("auth.sendReset")}
-					</Button>
+				<form onSubmit={onSubmit} className="flex flex-col">
+					<FieldGroup className="flex-1 gap-5 [&>button[type=submit]]:mt-auto lg:[&>button[type=submit]]:mt-0">
+						<Field data-invalid={!!error}>
+							<FieldLabel htmlFor="email">{t("auth.email")}</FieldLabel>
+							<Input
+								aria-describedby={error ? "auth-error" : undefined}
+								aria-invalid={!!error}
+								id="email"
+								name="email"
+								type="email"
+								inputMode="email"
+								autoCapitalize="none"
+								spellCheck={false}
+								autoComplete="email"
+								required
+								autoFocus
+							/>
+						</Field>
+						{error && (
+							<Alert id="auth-error" variant="destructive">
+								<AlertDescription>{error}</AlertDescription>
+							</Alert>
+						)}
+						<TurnstileField resetSignal={turnstileReset} />
+						<Button
+							type="submit"
+							className="min-h-12 w-full"
+							disabled={loading}
+						>
+							{loading && <Spinner data-icon="inline-start" />}
+							{loading ? t("auth.sending") : t("auth.sendReset")}
+						</Button>
+					</FieldGroup>
 				</form>
 			)}
 		</AuthShell>

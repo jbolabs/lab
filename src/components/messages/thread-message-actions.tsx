@@ -1,14 +1,14 @@
 "use client";
 
-import { createElement, useEffect, useRef, useState } from "react";
-import { Ban, FileCode2, Forward, Mail, MailOpen, MoreVertical, Reply, ReplyAll, Star } from "lucide-react";
+import { createElement, useEffect, useState } from "react";
+import { Ban, FileCode2, Forward, Mail, Reply, ReplyAll, Star } from "lucide-react";
 import { useCompose } from "@/components/compose/compose-context";
 import { MessageSourceDialog } from "@/components/messages/message-source-dialog";
-import { useDismissible } from "@/components/use-dismissible";
+import { MessageActionMenu } from "./message-action-menu";
 import { getOwnAddressForMessage } from "@/app/(dashboard)/inbox/[messageId]/utils";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
-import { Tooltip } from "@/components/ui/tooltip";
+import { HintTooltip } from "@/components/hint-tooltip";
 import {
 	blockMessageContact,
 	createForwardDraft,
@@ -34,8 +34,6 @@ export function ThreadMessageActions({
 	const { openDraftComposer } = useCompose();
 	const [starred, setStarred] = useState(message.starred);
 	const [moreOpen, setMoreOpen] = useState(false);
-	const moreRef = useRef<HTMLDivElement>(null);
-	useDismissible(moreOpen, () => setMoreOpen(false), moreRef);
 	const [sourceOpen, setSourceOpen] = useState(false);
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -137,87 +135,44 @@ export function ThreadMessageActions({
 	return (
 		<div className="flex items-center gap-0.5">
 			{error && <span role="alert" className="mr-1 max-w-32 truncate text-xs text-red-600" title={error}>{error}</span>}
-			<Tooltip label={starred ? t("message.removeStar") : t("message.star")}>
+			<HintTooltip label={starred ? t("message.removeStar") : t("message.star")}>
 				<Button
 					type="button"
 					variant="ghost"
-					size="sm"
-					className="h-8 w-8 px-0"
+					size="icon"
+					className="pointer-coarse:size-11"
 					aria-label={starred ? t("message.removeStar") : t("message.star")}
 					aria-pressed={starred}
 					disabled={pending}
 					onClick={() => void onToggleStar()}
 				>
-					<Star className={starred ? "h-4 w-4 fill-amber-400 text-amber-400" : "h-4 w-4"} />
+					<Star className={starred ? "fill-current" : ""} />
 				</Button>
-			</Tooltip>
+			</HintTooltip>
 			{!starOnly && (
 				<>
-			<Tooltip label={t("message.reply")}>
+			<HintTooltip label={t("message.reply")}>
 				<Button
 					type="button"
 					variant="ghost"
-					size="sm"
-					className="h-8 w-8 px-0"
+					size="icon"
+					className="pointer-coarse:size-11"
 					aria-label={t("message.reply")}
 					disabled={pending}
 					onClick={() => void onReply("reply")}
 				>
-					<Reply className="h-4 w-4" />
+					<Reply data-icon="inline-start" />
 				</Button>
-			</Tooltip>
-			<div ref={moreRef} className="relative">
-				<Tooltip label={t("common.moreActions")}>
-					<Button
-						type="button"
-						variant="ghost"
-						size="sm"
-						className="h-8 w-8 px-0"
-						aria-label={t("common.moreActions")}
-						aria-expanded={moreOpen}
-						disabled={pending}
-						onClick={() => setMoreOpen((open) => !open)}
-					>
-						<MoreVertical className="h-4 w-4" />
-					</Button>
-				</Tooltip>
-				{moreOpen && (
-					<div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-neutral-200 bg-white p-2 text-neutral-700 shadow-lg">
-						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onReply("reply")}>
-							<Reply className="h-4 w-4" /> {t("message.reply")}
-						</button>
-						{canReplyAll && (
-							<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onReply("replyAll")}>
-								<ReplyAll className="h-4 w-4" /> {t("message.replyAll")}
-							</button>
-						)}
-						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onForward()}>
-							<Forward className="h-4 w-4" /> {t("message.forward")}
-						</button>
-						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => { setMoreOpen(false); setSourceOpen(true); }}>
-							<FileCode2 className="h-4 w-4" /> {t("message.showOriginal")}
-						</button>
-						<hr className="my-1 border-neutral-100" />
-						<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onMessageAction(message.read ? "unread" : "read")}>
-							{message.read ? <Mail className="h-4 w-4" /> : <MailOpen className="h-4 w-4" />}
-							{message.read ? t("common.markUnread") : t("common.markRead")}
-						</button>
-						{moveActions.map((item) => (
-							<button key={item.action} type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onMessageAction(item.action)}>
-								{createElement(item.icon, { size: 16 })} {t(item.labelKey)}
-							</button>
-						))}
-						{message.direction === "inbound" && mailboxId && (
-							<>
-								<hr className="my-1 border-neutral-100" />
-								<button type="button" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100" onClick={() => void onBlock()}>
-									<Ban className="h-4 w-4" /> {t("message.blockContact")}
-								</button>
-							</>
-						)}
-					</div>
-				)}
-			</div>
+			</HintTooltip>
+			<MessageActionMenu open={moreOpen} onOpenChange={setMoreOpen} disabled={pending} actions={[
+				{ label: t("message.reply"), icon: <Reply data-icon="inline-start" />, onSelect: () => void onReply("reply") },
+				...(canReplyAll ? [{ label: t("message.replyAll"), icon: <ReplyAll data-icon="inline-start" />, onSelect: () => void onReply("replyAll") }] : []),
+				{ label: t("message.forward"), icon: <Forward data-icon="inline-start" />, onSelect: () => void onForward() },
+				{ label: t("message.showOriginal"), icon: <FileCode2 data-icon="inline-start" />, onSelect: () => setSourceOpen(true) },
+				{ label: message.read ? t("common.markUnread") : t("common.markRead"), icon: <Mail data-icon="inline-start" />, onSelect: () => void onMessageAction(message.read ? "unread" : "read") },
+				...moveActions.map(item => ({ label: t(item.labelKey), icon: createElement(item.icon, { "data-icon": "inline-start" }), onSelect: () => void onMessageAction(item.action) })),
+				...(message.direction === "inbound" && mailboxId ? [{ label: t("message.blockContact"), icon: <Ban data-icon="inline-start" />, onSelect: () => void onBlock() }] : []),
+			]} />
 			<MessageSourceDialog messageId={message.id} open={sourceOpen} onOpenChange={setSourceOpen} />
 				</>
 			)}

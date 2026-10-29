@@ -84,6 +84,6 @@ export function formatBackupSize(value: number | null): string {
 export function getStatusClass(status: BackupItem["status"]): string {
 	if (status === "completed") return "border-green-200 bg-green-50 text-green-700";
 	if (status === "failed") return "border-red-200 bg-red-50 text-red-700";
-	if (status === "running") return "border-blue-200 bg-blue-50 text-blue-700";
+	if (status === "running") return "border-signal/30 bg-signal-soft text-signal";
 	return "border-amber-200 bg-amber-50 text-amber-700";
 }

@@ -2,12 +2,30 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AlertTriangle, ArrowRight, CheckCircle2, LoaderCircle, MailPlus } from "lucide-react";
+import {
+	AlertTriangle,
+	ArrowRight,
+	CheckCircle2,
+	MailPlus,
+} from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
+import {
+	InputGroup,
+	InputGroupInput,
+	InputGroupAddon,
+} from "@/components/ui/input-group";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+	Field,
+	FieldGroup,
+	FieldLabel,
+	FieldDescription,
+	FieldContent,
+} from "@/components/ui/field";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { checkDomain, createDomain, createMailbox, getDomains } from "./utils";
 import type { DomainPreflight } from "./types";
@@ -47,7 +65,10 @@ export function OnboardingClient() {
 		let checkedDomain = domainCheck;
 		let sendingRequested = enableSending;
 		if (skipDns) {
-			checkedDomain = { hostname: normalized, zone: { id: "manual", name: normalized } };
+			checkedDomain = {
+				hostname: normalized,
+				zone: { id: "manual", name: normalized },
+			};
 		} else if (checkedDomain?.hostname !== normalized) {
 			const result = await checkDomain(normalized);
 			if (!result.ok || !result.domain) {
@@ -66,7 +87,12 @@ export function OnboardingClient() {
 			return;
 		}
 
-		const { ok, data } = await createDomain(checkedDomain.hostname, skipDns ? true : sendingRequested, replaceMxRecords, skipDns);
+		const { ok, data } = await createDomain(
+			checkedDomain.hostname,
+			skipDns ? true : sendingRequested,
+			replaceMxRecords,
+			skipDns,
+		);
 		setLoading(false);
 		if (!ok || !data.domain) {
 			if (data.code === "MX_RECORDS_CONFLICT") {
@@ -84,7 +110,12 @@ export function OnboardingClient() {
 
 	async function inspectDomain() {
 		const normalized = hostname.toLowerCase().trim();
-		if (skipDns || normalized.length < 3 || domainCheck?.hostname === normalized) return;
+		if (
+			skipDns ||
+			normalized.length < 3 ||
+			domainCheck?.hostname === normalized
+		)
+			return;
 
 		setDomainChecking(true);
 		setError(null);
@@ -118,7 +149,11 @@ export function OnboardingClient() {
 	return (
 		<AuthShell
 			icon={MailPlus}
-			title={step === 1 ? t("onboarding.connectTitle") : t("onboarding.firstMailboxTitle")}
+			title={
+				step === 1
+					? t("onboarding.connectTitle")
+					: t("onboarding.firstMailboxTitle")
+			}
 			description={
 				step === 1
 					? t("onboarding.connectDescription")
@@ -129,26 +164,53 @@ export function OnboardingClient() {
 				{ label: t("onboarding.stepMailbox"), active: step === 2 },
 			]}
 			footer={
-				<span className="inline-flex items-center gap-2 text-neutral-500">
+				<span className="inline-flex items-center gap-2 text-muted-foreground">
 					{t("onboarding.completesInInbox")}
-					<ArrowRight className="h-4 w-4" />
+					<ArrowRight className="size-4" />
 				</span>
 			}
 		>
-			<div className="space-y-5">
+			<FieldGroup className="flex-1 gap-5 [&>button:last-of-type]:mt-auto lg:[&>button:last-of-type]:mt-0">
 				{step === 1 && (
 					<>
-						<p className="rounded-2xl bg-[#eaf1fb] px-4 py-3 text-sm leading-6 text-neutral-700">
-							{t("onboarding.cloudflareDns", { token: "\u0001" }).split("\u0001").flatMap((part, index) => index === 0 ? [part] : [<code key={index} className="no-font-mono text-xs font-semibold text-blue-800">CF_TOKEN</code>, part])}
-						</p>
-						<div className="space-y-2">
-							<Label htmlFor="domain">{t("onboarding.domain")}</Label>
+						<Alert>
+							<AlertDescription>
+								<p>
+									{t("onboarding.cloudflareDns", { token: "\u0001" })
+										.split("\u0001")
+										.flatMap((part, index) =>
+											index === 0
+												? [part]
+												: [
+														<code
+															key={index}
+															className="font-mono text-xs font-semibold text-signal-soft-foreground"
+														>
+															CF_TOKEN
+														</code>,
+														part,
+													],
+										)}
+								</p>
+							</AlertDescription>
+						</Alert>
+						<Field data-invalid={!!error}>
+							<FieldLabel htmlFor="domain">{t("onboarding.domain")}</FieldLabel>
 							<Input
+								aria-describedby={error ? "auth-error" : undefined}
+								aria-invalid={!!error}
 								id="domain"
+								inputMode="url"
+								autoComplete="off"
+								autoCapitalize="none"
+								spellCheck={false}
 								value={hostname}
 								onChange={(e) => {
 									setHostname(e.target.value);
-									if (domainCheck?.hostname !== e.target.value.toLowerCase().trim()) {
+									if (
+										domainCheck?.hostname !==
+										e.target.value.toLowerCase().trim()
+									) {
 										setDomainCheck(null);
 										setEnableSending(false);
 										setMxConflict(false);
@@ -157,14 +219,19 @@ export function OnboardingClient() {
 								onBlur={() => void inspectDomain()}
 								placeholder="example.com"
 							/>
-						</div>
-						<div className="flex items-center justify-between gap-4 rounded-2xl bg-neutral-50 px-4 py-3">
-							<div>
-								<Label htmlFor="onboarding-skip-dns">{t("setup.skipDns")}</Label>
-								<p className="mt-1 text-xs leading-5 text-neutral-500">
+						</Field>
+						<Field orientation="horizontal" className="rounded-lg border p-4">
+							<FieldContent>
+								<FieldLabel
+									className="min-h-11 items-center"
+									htmlFor="onboarding-skip-dns"
+								>
+									{t("setup.skipDns")}
+								</FieldLabel>
+								<FieldDescription>
 									{skipDns ? t("setup.skipDnsOn") : t("setup.skipDnsHint")}
-								</p>
-							</div>
+								</FieldDescription>
+							</FieldContent>
 							<Switch
 								id="onboarding-skip-dns"
 								checked={skipDns}
@@ -174,62 +241,75 @@ export function OnboardingClient() {
 									setError(null);
 								}}
 							/>
-						</div>
+						</Field>
 						{!skipDns && (
-						<div className="flex items-center justify-between gap-4 rounded-2xl bg-neutral-50 px-4 py-3">
-							<div>
-								<Label htmlFor="onboarding-enable-sending">{t("setup.enableSending")}</Label>
-								<p className="mt-1 text-xs leading-5 text-neutral-500">
-									{domainChecking
-										? t("setup.checkingCloudflare")
-										: domainCheck
-											? enableSending
-												? t("setup.requiredToSend")
-												: t("setup.receiveOnly")
-											: t("onboarding.leaveToVerify")}
-								</p>
-							</div>
-							{domainChecking ? (
-								<LoaderCircle className="h-4 w-4 animate-spin text-neutral-500" />
-							) : (
-								<Switch
-									id="onboarding-enable-sending"
-									checked={enableSending}
-									onCheckedChange={setEnableSending}
-									disabled={!domainCheck || skipDns}
-								/>
-							)}
-						</div>
+							<Field orientation="horizontal" className="rounded-lg border p-4">
+								<FieldContent>
+									<FieldLabel
+										className="min-h-11 items-center"
+										htmlFor="onboarding-enable-sending"
+									>
+										{t("setup.enableSending")}
+									</FieldLabel>
+									<FieldDescription>
+										{domainChecking
+											? t("setup.checkingCloudflare")
+											: domainCheck
+												? enableSending
+													? t("setup.requiredToSend")
+													: t("setup.receiveOnly")
+												: t("onboarding.leaveToVerify")}
+									</FieldDescription>
+								</FieldContent>
+								{domainChecking ? (
+									<Spinner />
+								) : (
+									<Switch
+										id="onboarding-enable-sending"
+										checked={enableSending}
+										onCheckedChange={setEnableSending}
+										disabled={!domainCheck || skipDns}
+									/>
+								)}
+							</Field>
 						)}
 						{domainCheck && !skipDns && (
-							<div className="flex items-center gap-3 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">
-								<CheckCircle2 className="h-4 w-4" />
-								{t("setup.domainFound", { zone: domainCheck.zone.name })}
-							</div>
+							<Alert>
+								<CheckCircle2 className="size-4" />
+								<AlertDescription>
+									{t("setup.domainFound", { zone: domainCheck.zone.name })}
+								</AlertDescription>
+							</Alert>
 						)}
 						{mxConflict && (
-							<div className="space-y-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-amber-900">
-								<div className="flex items-start gap-3">
-									<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-									<p className="text-sm leading-6">
-										{t("onboarding.mxConflict")}
-									</p>
-								</div>
-								<Button
-									onClick={() => void addDomain(true)}
-									disabled={loading}
-									className="h-11 w-full rounded-full px-6 active:scale-[0.98]"
-								>
-									{loading ? t("onboarding.replacingMx") : t("onboarding.deleteMxContinue")}
-								</Button>
-							</div>
+							<Alert>
+								<AlertDescription className="gap-4">
+									<div className="flex items-start gap-3">
+										<AlertTriangle className="mt-0.5 size-4 shrink-0" />
+										<p className="text-sm leading-6">
+											{t("onboarding.mxConflict")}
+										</p>
+									</div>
+									<Button
+										onClick={() => void addDomain(true)}
+										disabled={loading}
+										className="min-h-12 w-full"
+									>
+										{loading && <Spinner data-icon="inline-start" />}
+										{loading
+											? t("onboarding.replacingMx")
+											: t("onboarding.deleteMxContinue")}
+									</Button>
+								</AlertDescription>
+							</Alert>
 						)}
 						{!mxConflict && (
 							<Button
 								onClick={() => void addDomain()}
 								disabled={!hostname || loading || domainChecking}
-								className="h-11 w-full rounded-full px-6 active:scale-[0.98]"
+								className="min-h-12 w-full"
 							>
+								{loading && <Spinner data-icon="inline-start" />}
 								{loading ? t("onboarding.adding") : t("onboarding.addDomain")}
 							</Button>
 						)}
@@ -237,33 +317,46 @@ export function OnboardingClient() {
 				)}
 				{step === 2 && (
 					<>
-						<div className="space-y-2">
-							<Label htmlFor="localPart">{t("onboarding.mailboxAddress")}</Label>
-							<div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-								<Input
+						<Field data-invalid={!!error}>
+							<FieldLabel htmlFor="localPart">
+								{t("onboarding.mailboxAddress")}
+							</FieldLabel>
+							<InputGroup>
+								<InputGroupInput
+									aria-describedby={error ? "auth-error" : undefined}
+									aria-invalid={!!error}
 									id="localPart"
+									autoComplete="username"
+									autoCapitalize="none"
+									spellCheck={false}
 									value={localPart}
 									onChange={(e) => setLocalPart(e.target.value)}
 									className="min-w-0"
 								/>
-								<span className="max-w-36 truncate text-sm font-medium text-neutral-500">@{hostname}</span>
-							</div>
-						</div>
+								<InputGroupAddon
+									align="inline-end"
+									className="max-w-36 truncate"
+								>
+									@{hostname}
+								</InputGroupAddon>
+							</InputGroup>
+						</Field>
 						<Button
 							onClick={addMailbox}
 							disabled={!localPart || loading}
-							className="h-11 w-full rounded-full px-6 active:scale-[0.98]"
+							className="min-h-12 w-full"
 						>
+							{loading && <Spinner data-icon="inline-start" />}
 							{loading ? t("setup.creating") : t("onboarding.goToInbox")}
 						</Button>
 					</>
 				)}
 				{error && (
-					<p role="alert" className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-						{error}
-					</p>
+					<Alert id="auth-error" variant="destructive">
+						<AlertDescription>{error}</AlertDescription>
+					</Alert>
 				)}
-			</div>
+			</FieldGroup>
 		</AuthShell>
 	);
 }

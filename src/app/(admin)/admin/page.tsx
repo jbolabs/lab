@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { BadgeDollarSign, Bot, Globe2, KeyRound, Mail, Palette, Users } from "lucide-react";
+import { Bot, Globe2, KeyRound, Mail, Users } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import type { TranslationKey } from "@/lib/i18n/types";
-import { AdminUpdateCard } from "@/components/admin-update-card";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { DatabaseMigrationsNotice } from "@/components/database-migrations-notice";
+import { Item, ItemGroup, ItemMedia, ItemContent, ItemTitle, ItemDescription } from "@/components/ui/item";
+import { ChevronRight } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 type AdminSection = {
@@ -36,20 +37,6 @@ const sections: AdminSection[] = [
 		descriptionKey: "admin.section.domains",
 		icon: Globe2,
 		permission: "domains",
-	},
-	{
-		href: "/branding",
-		titleKey: "admin.nav.branding",
-		descriptionKey: "admin.section.branding",
-		icon: Palette,
-		permission: "primary",
-	},
-	{
-		href: "/licenses",
-		titleKey: "admin.nav.licenses",
-		descriptionKey: "admin.section.licenses",
-		icon: BadgeDollarSign,
-		permission: "primary",
 	},
 	{
 		href: "/accounts",
@@ -93,35 +80,26 @@ export default function AdminSettingsPage() {
 	return (
 		<div>
 			<div className="mb-8">
-				<h1 className="text-2xl md:text-3xl font-medium text-neutral-900">{t("admin.title")}</h1>
-				<p className="mt-2 text-sm text-neutral-500">
+				<h1 className="text-2xl md:text-3xl font-medium text-foreground">{t("admin.title")}</h1>
+				<p className="mt-2 text-sm text-muted-foreground">
 					{t("admin.description")}
 				</p>
 			</div>
-			<div className="grid lg:grid-cols-2 gap-4">
+			<ItemGroup className="divide-y rounded-lg border bg-card">
 				{sections.filter(canSee).map((section) => {
 					const Icon = section.icon;
-
-					return (
-						<Link key={section.href} href={section.href}>
-							<Card className="h-full rounded-3xl border-0 bg-white p-6 transition-colors hover:bg-blue-50/60">
-								<CardHeader className="flex-row items-center gap-4 space-y-0 py-0">
-									<div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-700">
-										<Icon className="h-5 w-5" />
-									</div>
-									<h2 className="text-base font-semibold leading-none">{t(section.titleKey)}</h2>
-								</CardHeader>
-								<CardContent className="pt-4">
-									<p className="text-sm text-neutral-500">{t(section.descriptionKey)}</p>
-								</CardContent>
-							</Card>
+					return <Item asChild key={section.href}>
+						<Link href={section.href}>
+							<ItemMedia variant="icon"><Icon /></ItemMedia>
+							<ItemContent className="min-w-0"><ItemTitle>{t(section.titleKey)}</ItemTitle><ItemDescription>{t(section.descriptionKey)}</ItemDescription></ItemContent>
+							<ChevronRight className="size-4 text-muted-foreground" />
 						</Link>
-					);
+					</Item>;
 				})}
-			</div>
+			</ItemGroup>
 			{user?.isPrimaryAdmin && (
 				<div className="mt-8">
-					<AdminUpdateCard />
+					<DatabaseMigrationsNotice />
 				</div>
 			)}
 		</div>

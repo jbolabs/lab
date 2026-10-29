@@ -1,13 +1,16 @@
 "use client";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
+import { useMessageConfirmation } from "./use-message-confirmation";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { MouseEvent } from "react";
-import { Archive, ChevronLeft, ChevronRight, ListFilter, Mail, MailOpen, Trash2 } from "lucide-react";
+import { Archive, ChevronLeft, ChevronRight, ListFilter, Mail, MailOpen, Trash2, Star } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Tooltip } from "@/components/ui/tooltip";
+import { HintTooltip } from "@/components/hint-tooltip";
 import { useMailSearch } from "@/components/mail-search/mail-search-context";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { usePageLoading } from "@/components/page-loading";
@@ -47,7 +50,10 @@ import {
 	PartialDeleteError,
 	supportsPermanentDelete,
 } from "@/lib/messages/permanent-delete-utils";
-import clsx from "clsx";
+import { cn as clsx } from "@/lib/utils";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { SkeletonRows } from "@/components/ui/skeleton";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 
 const pageSize = 25;
 
@@ -128,11 +134,11 @@ function MessageListRow({
 		const compactRow = (
 			<div
 				role={swipeable ? undefined : "listitem"}
-				className={`group grid grid-cols-[20px_minmax(0,1fr)] gap-3 border-l-2 px-4 py-3 transition-colors ${active
-					? "border-l-blue-600 bg-blue-50"
+				className={`group grid grid-cols-[28px_minmax(0,1fr)_32px] gap-2 border-l-2 px-4 py-3 transition-colors ${active
+					? "border-l-signal bg-signal-soft"
 					: selected
-						? "border-l-transparent bg-neutral-50"
-						: "border-l-transparent hover:bg-neutral-50"
+						? "border-l-transparent bg-muted/60"
+						: "border-l-transparent hover:bg-accent/60"
 					} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
 				draggable={draggable}
 				onDragStart={(event) => {
@@ -143,34 +149,35 @@ function MessageListRow({
 				<MessageNavigationProgress progress={navigation.progress} />
 				<Checkbox
 					checked={selected}
-					onChange={(event) => onSelectedChange(message.id, event.target.checked)}
-					className="mt-1 h-4 w-4 rounded border-neutral-300"
+					onCheckedChange={(checked) => onSelectedChange(message.id, (checked === true))}
+					className="mt-1 relative after:absolute after:-inset-3.5"
 					aria-label={t("list.selectFrom", { sender: party })}
 				/>
 				<Link href={href} onClick={config.folder === "drafts" ? undefined : onMessageNavigate} aria-current={active ? "true" : undefined} className="min-w-0">
 					<span className="flex items-baseline justify-between gap-3">
 						<span className={clsx(unread && "font-semibold",getMessagePartyClassName(rowMessage, config.folder))}>
-							{unread && <span className="sr-only">{t("list.unread")} </span>}
+							{unread && <><span aria-hidden="true" className="mr-2 inline-block size-1.5 rounded-full bg-signal align-middle" /><span className="sr-only">{t("list.unread")} </span></>}
 							{party}
 
 							{(message.threadCount ?? 1) > 1 && (
-								<span className="ml-2 text-xs font-normal text-neutral-500">{message.threadCount}</span>
+								<span className="ml-2 text-xs font-normal text-muted-foreground">{message.threadCount}</span>
 							)}
 						</span>
-						<span className={clsx(unread ?"font-medium":"text-neutral-500","shrink-0 text-[11px]")}>
+						<span className={clsx(unread ?"font-medium":"text-muted-foreground","shrink-0 text-[11px]")}>
 							{message.scheduledAt ? formatScheduledSendTime(message.scheduledAt, t) : formatMessageListTimestamp(message.createdAt)}
 						</span>
 					</span>
 					<span
-						className={`mt-1 block truncate text-sm ${unread ? "font-semibold text-neutral-900" : "text-neutral-700"
+						className={`mt-1 block truncate text-sm ${unread ? "font-semibold text-foreground" : "text-foreground/80"
 							}`}
 					>
 						{message.subject ?? t("list.noSubject")}
 					</span>
-					<span className="mt-0.5 block truncate text-xs leading-5 text-neutral-500">
+					<span className="mt-0.5 block truncate text-xs leading-5 text-muted-foreground">
 						{preview}
 					</span>
 				</Link>
+				<Button variant="ghost" size="icon" className="self-center pointer-coarse:min-h-11 pointer-coarse:min-w-11" aria-label={starred ? t("message.removeStar") : t("message.star")} aria-pressed={starred} onClick={() => void toggleMessageStar(message.id).then(result => setStarred(result.starred)).catch(() => toast.error(t("message.error.star")))}><Star data-icon="inline-start" className={starred ? "fill-current" : undefined} /></Button>
 			</div>
 		);
 		if (!swipeable) return compactRow;
@@ -180,7 +187,7 @@ function MessageListRow({
 				startAction={{
 					label: read ? t("list.markUnread") : t("list.markRead"),
 					icon: read ? Mail : MailOpen,
-					className: "bg-blue-600",
+					className: "bg-primary",
 					onTrigger: () => void runRowAction(read ? "unread" : "read").catch(() => undefined),
 				}}
 				endAction={{
@@ -196,55 +203,54 @@ function MessageListRow({
 	}
 
 	const className =
-		`group relative grid min-h-12 w-full grid-cols-[24px_32px_minmax(160px,80px)_1fr_auto] items-center gap-3 px-6 text-left text-sm hover:z-10 hover:bg-[#f2f6fc] hover:shadow-sm has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-inset has-[a:focus-visible]:ring-blue-600 ${active || selected ? "bg-blue-50" : ""
+		`group relative grid min-h-16 w-full grid-cols-[24px_36px_minmax(160px,190px)_1fr_auto] items-center gap-3 px-6 text-left text-sm hover:bg-accent/60 has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-inset has-[a:focus-visible]:ring-ring ${active || selected ? "bg-signal-soft" : ""
 		} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`;
 	const content = (
 		<>
-			{config.folder === "inbox" && message.direction === "inbound" && (
-				<Tooltip label={starred ? t("list.starred") : t("list.notStarred")}>
+			{message.direction === "inbound" && (
+				<HintTooltip label={starred ? t("list.starred") : t("list.notStarred")}>
 					<Button
 						type="button"
 						variant="ghost"
-						size="sm"
+						size="icon"
 						className="relative z-10"
 						onClick={() => {
-							void toggleMessageStar(message.id).then((result) => setStarred(result.starred));
+							void toggleMessageStar(message.id).then((result) => setStarred(result.starred)).catch(() => toast.error(t("message.error.star")));
 						}}
 						aria-label={t("message.star")}
 						aria-pressed={starred}
 					>
-						<Icon className={`h-4 w-4 ${starred ? "fill-amber-400 text-amber-400" : "text-neutral-300"}`} />
+						<Star data-icon="inline-start" className={starred ? "fill-current" : undefined} />
 					</Button>
-				</Tooltip>
+				</HintTooltip>
 			)}
-			{(config.folder !== "inbox" || message.direction !== "inbound") && (
-				<Icon className="h-4 w-4 text-neutral-300" />
+			{message.direction !== "inbound" && (
+				<Icon className="h-4 w-4 text-muted-foreground/50" />
 			)}
 			<span className={clsx(unread && "font-semibold", getMessagePartyClassName(rowMessage, config.folder))}>
-				{unread && <span className="sr-only">{t("list.unread")} </span>}
+				{unread && <><span aria-hidden="true" className="mr-2 inline-block size-1.5 rounded-full bg-signal align-middle" /><span className="sr-only">{t("list.unread")} </span></>}
 				{party}
 
 				{(message.threadCount ?? 1) > 1 && (
-					<span className="ml-2 text-xs text-neutral-500">{message.threadCount}</span>
+					<span className="ml-2 text-xs text-muted-foreground">{message.threadCount}</span>
 				)}
 			</span>
-			<span className="truncate text-neutral-700">
+			<span className="truncate text-foreground/80">
 				<Link
 					href={href}
 					onClick={config.folder === "drafts" ? undefined : onMessageNavigate}
 					aria-current={active ? "true" : undefined}
 					className="focus-visible:outline-none after:absolute after:inset-0"
 				>
-					<span className={unread ? "font-semibold text-neutral-900" : ""}>
+					<span className={unread ? "font-semibold text-foreground" : ""}>
 						{rowMessage.subject ?? t("list.noSubject")}
 					</span>
-					<span className="text-neutral-500"> - {getMessagePreview(rowMessage, config.folder, t)}</span>
+					<span className="text-muted-foreground"> - {getMessagePreview(rowMessage, config.folder, t)}</span>
 				</Link>
 			</span>
 			<time
 				dateTime={message.createdAt}
-				className={`min-w-[96px] whitespace-nowrap text-right text-xs group-hover:opacity-0 ${unread ? "font-semibold text-neutral-800" : "text-neutral-500"
-					}`}
+				className={clsx("min-w-[96px] whitespace-nowrap text-right text-xs", (config.folder === "inbox" || config.folder === "snoozed") && message.direction === "inbound" && "[@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-0", unread ? "font-semibold text-foreground" : "text-muted-foreground")}
 			>
 				{message.scheduledAt ? formatScheduledSendTime(message.scheduledAt, t) : formatMessageListTimestamp(message.createdAt)}
 			</time>
@@ -256,8 +262,8 @@ function MessageListRow({
 			<div role="listitem" className={className}>
 				<Checkbox
 					checked={selected}
-					onChange={(event) => onSelectedChange(message.id, event.target.checked)}
-					className="relative z-10 h-4 w-4 rounded border-neutral-300"
+					onCheckedChange={(checked) => onSelectedChange(message.id, (checked === true))}
+					className="relative z-10 after:absolute after:-inset-3.5"
 					aria-label={t("list.selectMessage")}
 				/>
 				{content}
@@ -278,8 +284,8 @@ function MessageListRow({
 			<MessageNavigationProgress progress={navigation.progress} />
 			<Checkbox
 				checked={selected}
-				onChange={(event) => onSelectedChange(message.id, event.target.checked)}
-				className="relative z-10 h-4 w-4 rounded border-neutral-300"
+				onCheckedChange={(checked) => onSelectedChange(message.id, (checked === true))}
+				className="relative z-10 after:absolute after:-inset-3.5"
 				aria-label={t("list.selectFrom", { sender: party })}
 			/>
 			{content}
@@ -300,6 +306,7 @@ export function MessageFolderPage({
 	selection,
 }: MessageFolderPageProps) {
 	const { t } = useLanguage();
+	const { confirm, confirmation } = useMessageConfirmation();
 	const title = config.titleKey ? t(config.titleKey) : config.title;
 	const { selectedMailbox, isLoading: mailboxesLoading } = useSelectedMailbox();
 	const { query } = useMailSearch();
@@ -417,14 +424,14 @@ export function MessageFolderPage({
 	const permanentDeleteFolder = !config.folderId && supportsPermanentDelete(config.folder) ? config.folder : null;
 	async function emptyFolder() {
 		if (!permanentDeleteFolder || !selectedMailbox?.id) return;
-		if (!window.confirm(getEmptyFolderConfirmText(permanentDeleteFolder, titleTotal, t))) return;
+		if (!(await confirm(getEmptyFolderConfirmText(permanentDeleteFolder, titleTotal, t)))) return;
 		setEmptyingFolder(true);
 		try {
 			await emptyMessageFolder(selectedMailbox.id, permanentDeleteFolder);
 			setOffset(0);
 		} catch (error) {
 			console.error(error);
-			window.alert(t("list.emptyFailed", { folder: getPermanentDeleteFolderLabel(permanentDeleteFolder, t) }));
+			toast.error(t("list.emptyFailed", { folder: getPermanentDeleteFolderLabel(permanentDeleteFolder, t) }));
 		} finally {
 			setEmptyingFolder(false);
 		}
@@ -449,7 +456,7 @@ export function MessageFolderPage({
 		if (selectedIds.length === 0) return;
 		if (action === "delete") {
 			const ids = expandSelectedIds(selectedIds);
-			if (!window.confirm(getPermanentDeleteConfirmText(ids.length, t))) return;
+			if (!(await confirm(getPermanentDeleteConfirmText(ids.length, t)))) return;
 		}
 
 		setPendingBulkAction(true);
@@ -485,18 +492,19 @@ export function MessageFolderPage({
 
 	return (
 		<div className="flex h-full min-h-0 flex-col">
-			<div className={`flex h-14 shrink-0 items-center justify-between border-b border-neutral-200 ${compact ? "px-4" : "px-4.5 md:px-6"}`}>
+			{confirmation}
+			<div className={`flex h-14 shrink-0 items-center justify-between border-b border-border ${compact ? "px-4" : "px-4.5 md:px-6"}`}>
 				{selectedMessageId ? <h2 className="sr-only">{title}</h2> : <h1 className="sr-only">{title}</h1>}
-				<div className="flex items-center gap-3 w-full">
-					<Tooltip label={t("list.selectAll")}>
+				<div className="flex min-w-0 flex-1 items-center gap-4">
+					<HintTooltip label={t("list.selectAll")}>
 						<Checkbox
 							checked={allVisibleSelected}
 							disabled={messages.length === 0}
-							onChange={(event) => toggleAllVisible(event.target.checked)}
-							className="h-4 w-4 rounded border-neutral-300"
+							onCheckedChange={(checked) => toggleAllVisible((checked === true))}
+							className="relative after:absolute after:-inset-3.5"
 							aria-label={t("list.selectAll")}
 						/>
-					</Tooltip>
+					</HintTooltip>
 					{selectedIds.length > 0 && !compact ? (
 						<BulkMessageToolbar
 							selectedCount={selectedIds.length}
@@ -507,55 +515,46 @@ export function MessageFolderPage({
 							folder={config.folderId ? undefined : config.folder}
 						/>
 					) : (
-						(compact || isMobile) && (
-							<p aria-hidden="true" className="truncate font-semibold text-neutral-900 pl-1">{title}</p>
+						(
+							<p aria-hidden="true" className="truncate font-semibold text-foreground pl-1">{title}</p>
 						)
 					)}
 				</div>
 				{(selectedIds.length === 0 || compact) && (
-					<div className="flex items-center gap-2 text-neutral-500">
-						<span className="text-xs text-neutral-500 whitespace-nowrap">
+					<div className="flex shrink-0 items-center gap-1 text-muted-foreground [&_button]:pointer-coarse:size-11">
+						<span className="text-xs text-muted-foreground whitespace-nowrap">
 							{t("list.range", { start: pageRange.start, end: pageRange.end, total: pageRange.total })}
 						</span>
-						<Tooltip label={t("list.previousPage")}>
+						<HintTooltip label={t("list.previousPage")}>
 							<Button
 								variant="ghost"
-								size="sm"
+								size="icon"
 								disabled={offset === 0 || isLoading}
 								onClick={() => setOffset(Math.max(offset - limit, 0))}
 								aria-label={t("list.previousPage")}
 							>
-								<ChevronLeft className="h-4 w-4" />
+								<ChevronLeft data-icon="inline-start" />
 							</Button>
-						</Tooltip>
-						<Tooltip label={t("list.nextPage")}>
+						</HintTooltip>
+						<HintTooltip label={t("list.nextPage")}>
 							<Button
 								variant="ghost"
-								size="sm"
+								size="icon"
 								disabled={offset + messages.length >= total || isLoading}
 								onClick={() => setOffset(offset + limit)}
 								aria-label={t("list.nextPage")}
 							>
-								<ChevronRight className="h-4 w-4" />
+								<ChevronRight data-icon="inline-start" />
 							</Button>
-						</Tooltip>
+						</HintTooltip>
 						{config.folder === "inbox" && (
-							<Tooltip label={unreadOnly ? t("list.showingUnread") : t("list.showUnreadOnly")}>
-								<Button
-									type="button"
-									variant="ghost"
-									size="sm"
-									aria-label={t("list.showUnreadOnly")}
-									aria-pressed={unreadOnly}
-									onClick={() => setUnreadOnly((current) => !current)}
-									className={unreadOnly ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : undefined}
-								>
-									<ListFilter className="h-4 w-4" />
-								</Button>
-							</Tooltip>
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label={t("list.showUnreadOnly")}><ListFilter data-icon="inline-start" /></Button></DropdownMenuTrigger>
+								<DropdownMenuContent align="end"><DropdownMenuGroup><DropdownMenuCheckboxItem checked={unreadOnly} onCheckedChange={setUnreadOnly}>{t("list.showUnreadOnly")}</DropdownMenuCheckboxItem></DropdownMenuGroup></DropdownMenuContent>
+							</DropdownMenu>
 						)}
 						{permanentDeleteFolder && (
-							<Tooltip label={getEmptyFolderLabel(permanentDeleteFolder, t)}>
+							<HintTooltip label={getEmptyFolderLabel(permanentDeleteFolder, t)}>
 								<Button
 									type="button"
 									variant="ghost"
@@ -563,12 +562,12 @@ export function MessageFolderPage({
 									aria-label={getEmptyFolderLabel(permanentDeleteFolder, t)}
 									disabled={emptyingFolder || isLoading || total === 0}
 									onClick={() => void emptyFolder()}
-									className="gap-1.5 text-xs font-medium text-red-600 hover:text-red-700"
+									className="shrink-0"
 								>
-									<Trash2 className="h-4 w-4" />
+									<Trash2 data-icon="inline-start" />
 									{!compact && <span className="max-md:hidden">{emptyingFolder ? t("list.emptying") : getEmptyFolderLabel(permanentDeleteFolder, t)}</span>}
 								</Button>
-							</Tooltip>
+							</HintTooltip>
 						)}
 						{!compact && headerIcons.map((Icon, index) => (
 							<Icon key={index} className="h-4 w-4" />
@@ -578,13 +577,11 @@ export function MessageFolderPage({
 			</div>
 
 			{actionError && (
-				<p role="alert" className="shrink-0 border-b border-red-100 bg-red-50 px-6 py-2 text-sm font-medium text-red-700">
-					{actionError}
-				</p>
+				<Alert variant="destructive" className="shrink-0"><AlertDescription>{actionError}</AlertDescription></Alert>
 			)}
 
 			<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-gutter-stable">
-				<div role="list" aria-label={title} className="divide-y divide-neutral-100">
+				<div role="list" aria-label={title} className="divide-y divide-border">
 					{messages.map((message) => (
 						<MessageListRow
 							key={message.id}
@@ -606,10 +603,9 @@ export function MessageFolderPage({
 						/>
 					))}
 				</div>
+				{isLoading && messages.length === 0 && <SkeletonRows compact={compact || isMobile} />}
 				{!isLoading && messages.length === 0 && (
-					<p className="px-6 py-4 text-sm text-neutral-500">
-						{hasActiveFilters ? t("list.noMatch") : config.emptyTextKey ? t(config.emptyTextKey) : config.emptyText}
-					</p>
+					<Empty className="min-h-72"><EmptyHeader><EmptyMedia variant="icon"><config.icon /></EmptyMedia><EmptyTitle>{title}</EmptyTitle><EmptyDescription>{hasActiveFilters ? t("list.noMatch") : config.emptyTextKey ? t(config.emptyTextKey) : config.emptyText}</EmptyDescription></EmptyHeader></Empty>
 				)}
 			</div>
 		</div>

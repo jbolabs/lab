@@ -1,5 +1,11 @@
 "use client";
-
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+	Field,
+	FieldContent,
+	FieldLabel,
+	FieldDescription,
+} from "@/components/ui/field";
 import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -7,7 +13,6 @@ import {
 	enablePushNotifications,
 	getPushState,
 } from "@/lib/push/client";
-
 type State = {
 	loading: boolean;
 	supported: boolean;
@@ -16,7 +21,6 @@ type State = {
 	subscribed: boolean;
 	error: string | null;
 };
-
 const initialState: State = {
 	loading: true,
 	supported: false,
@@ -25,10 +29,8 @@ const initialState: State = {
 	subscribed: false,
 	error: null,
 };
-
 export function PushNotificationSettings() {
 	const [state, setState] = useState<State>(initialState);
-
 	useEffect(() => {
 		let cancelled = false;
 		getPushState()
@@ -40,7 +42,10 @@ export function PushNotificationSettings() {
 					setState((current) => ({
 						...current,
 						loading: false,
-						error: error instanceof Error ? error.message : "Failed to load notification settings",
+						error:
+							error instanceof Error
+								? error.message
+								: "Failed to load notification settings",
 					}));
 				}
 			});
@@ -48,44 +53,56 @@ export function PushNotificationSettings() {
 			cancelled = true;
 		};
 	}, []);
-
 	const disabled =
 		state.loading ||
 		!state.supported ||
 		(!state.configured && !state.subscribed) ||
 		(state.permission === "denied" && !state.subscribed);
-	let description = "Get new mail alerts even when Lab is closed.";
-	if (!state.supported) description = "This browser does not support Web Push for Lab.";
-	else if (!state.configured) description = "Web Push has not been configured on this Lab server.";
-	else if (state.permission === "denied") description = "Notifications are blocked in your browser settings.";
-
+	let description = "Get new mail alerts even when the Lab is closed.";
+	if (!state.supported)
+		description = "This browser does not support Web Push for the Lab.";
+	else if (!state.configured)
+		description = "Web Push has not been configured on this Lab server.";
+	else if (state.permission === "denied")
+		description = "Notifications are blocked in your browser settings.";
 	return (
 		<div>
-			<label className="flex items-start gap-3 rounded-xl bg-neutral-50 p-4">
-				<span className="flex-1">
-					<span className="block text-sm font-medium text-neutral-900">Browser push notifications</span>
-					<span className="mt-1 block text-sm text-neutral-500">{description}</span>
-				</span>
-				<Switch
+			<Field orientation="horizontal">
+				<FieldContent>
+					<FieldLabel htmlFor="push-notification-settings-0">Browser push notifications</FieldLabel>
+					<FieldDescription>{description}</FieldDescription>
+				</FieldContent>
+				<Switch id="push-notification-settings-0"
 					checked={state.subscribed}
 					disabled={disabled}
 					onCheckedChange={(enabled) => {
 						setState((current) => ({ ...current, loading: true, error: null }));
-						void (enabled ? enablePushNotifications() : disablePushNotifications())
+						void (
+							enabled ? enablePushNotifications() : disablePushNotifications()
+						)
 							.then(() => getPushState())
-							.then((next) => setState({ ...next, loading: false, error: null }))
+							.then((next) =>
+								setState({ ...next, loading: false, error: null }),
+							)
 							.catch((error) => {
 								setState((current) => ({
 									...current,
 									loading: false,
-									error: error instanceof Error ? error.message : "Failed to update notifications",
+									error:
+										error instanceof Error
+											? error.message
+											: "Failed to update notifications",
 								}));
 							});
 					}}
 					aria-label="Enable browser push notifications"
 				/>
-			</label>
-			{state.error && <p role="alert" className="mt-2 px-4 text-sm text-red-600">{state.error}</p>}
+			</Field>
+			{state.error && (
+				<Alert variant="destructive">
+					<AlertDescription>{state.error}</AlertDescription>
+				</Alert>
+			)}
 		</div>
 	);
 }

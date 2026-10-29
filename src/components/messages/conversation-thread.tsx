@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { formatUserDate } from "@/lib/time/utils";
 import { ChevronsUpDown, Paperclip } from "lucide-react";
-import { ContactAvatar } from "@/components/contacts/contact-avatar";
+import { Button } from "@/components/ui/button";
+import { Item } from "@/components/ui/item";
+import { MessageAvatar } from "@/components/messages/message-avatar";
 import { QuotedEmailToggle } from "@/components/messages/quoted-email-toggle";
 import { runSingleMessageAction } from "@/components/message-actions/utils";
 import { EmailHtmlRenderer } from "./email-html-renderer";
@@ -55,7 +57,7 @@ export function ConversationThread({
 			aria-label={position === "before" ? t("thread.earlier") : t("thread.later")}
 			className={cn(position === (latestMessagesFirst ? "before" : "after") ? "pb-6" : "")}
 		>
-			<ol className={cn(!collapsed && "divide-y divide-neutral-200/50", latestMessagesFirst ? "border-t" : "border-b", "border-neutral-200")}>
+			<ol className={cn(!collapsed && "divide-y divide-border/50", latestMessagesFirst ? "border-t" : "border-b", "border-border")}>
 				<li className={"border-t-0"}>
 					<ConversationMessageCard
 						message={firstMessage}
@@ -67,18 +69,18 @@ export function ConversationThread({
 					/>
 				</li>
 				{collapsed ? (
-					<li className="flex items-center justify-center gap-1 py-2 text-center border-y border-neutral-100 h-px my-4">
-						<span className="bg-white px-6 flex flex-row items-center gap-2">
-							<span className="text-sm font-medium text-neutral-600">{collapsedLabel}</span>
-							<button
+					<li className="flex items-center justify-center gap-1 py-2 text-center border-y border-border h-px my-4">
+						<span className="bg-card px-6 flex flex-row items-center gap-2">
+							<span className="text-sm font-medium text-muted-foreground">{collapsedLabel}</span>
+							<Button variant="ghost" size="icon"
 								type="button"
 								onClick={() => onExpandedAllChange(true)}
 								aria-label={t("thread.expand", { label: collapsedLabel })}
 								title={t("thread.expand", { label: collapsedLabel })}
-								className="inline-flex h-6 w-6 items-center justify-center rounded-full text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+								className="pointer-coarse:size-11"
 							>
 								<ChevronsUpDown className="h-4 w-4" />
-							</button>
+							</Button>
 						</span>
 					</li>
 				) : (
@@ -151,7 +153,7 @@ export function ConversationMessageCard({
 
 
 	return (
-		<article className={cn("bg-white transition-colors px-3 sm:px-6", !expanded && "hover:bg-neutral-50", !isAnyPanelVisible && "sm:pl-12")}>
+		<article className={cn("bg-card transition-colors px-3 sm:px-6", !expanded && "hover:bg-accent/60", !isAnyPanelVisible && "sm:pl-12")}>
 			<div className="w-full">
 				<div className="flex w-full flex-wrap items-start gap-x-3 py-3 sm:pl-4">
 					<button
@@ -164,9 +166,9 @@ export function ConversationMessageCard({
 							void runSingleMessageAction(message.id, "read").catch(() => setLocallyRead(false));
 						}}
 						aria-expanded={expanded}
-						className="flex min-w-0 flex-1 basis-40 items-center gap-3 text-left cursor-pointer"
+						className="flex min-h-11 min-w-0 flex-1 basis-40 items-center gap-3 text-left cursor-pointer"
 					>
-						<ContactAvatar
+						<MessageAvatar
 							mailboxId={mailboxId}
 							address={message.fromAddr}
 							name={sender}
@@ -176,14 +178,14 @@ export function ConversationMessageCard({
 						/>
 						<span className="min-w-0 flex-1">
 							<div className="flex flex-col">
-								<span className={cn("truncate text-sm font-semibold mt-1", locallyRead || outbound ? "text-neutral-900" : "font-semibold text-neutral-900")}>
+								<span className={cn("truncate text-sm font-semibold mt-1", locallyRead || outbound ? "text-foreground" : "font-semibold text-foreground")}>
 									{sender}
 									{expanded && <span className="hidden sm:inline text-xs ml-1 opacity-50 font-normal">&lt;{senderEmail}&gt;</span>}
 								</span>
-								{expanded && recipients && <span className="text-xs font-normal text-neutral-500">{t("thread.to", { recipients })}</span>}
+								{expanded && recipients && <span className="text-xs font-normal text-muted-foreground">{t("thread.to", { recipients })}</span>}
 							</div>
 							{!expanded && (
-								<span className={clsx(!locallyRead ? "font-semibold" : "text-neutral-500", "block truncate text-[13px]")}>{message.snippet || t("thread.noPreview")}</span>
+								<span className={clsx(!locallyRead ? "font-semibold" : "text-muted-foreground", "block truncate text-[13px]")}>{message.snippet || t("thread.noPreview")}</span>
 							)}
 						</span>
 					</button>
@@ -198,15 +200,15 @@ export function ConversationMessageCard({
 						ownAddresses={ownAddresses}
 						starOnly={!expanded}
 					/>
-					<div className={clsx("sm:hidden flex w-full items-center gap-2 pl-12 text-xs", locallyRead ? "text-neutral-500" : "font-semibold text-neutral-700")}>
+					<div className={clsx("sm:hidden flex w-full items-center gap-2 pl-12 text-xs", locallyRead ? "text-muted-foreground" : "font-semibold text-foreground/80")}>
 						{attachments.length > 0 && <Paperclip className="h-3.5 w-3.5" aria-label={t("thread.attachmentCount", { count: attachments.length })} />}
 						<span>{formatUserDate(message.createdAt, { month: "short", day: "2-digit", year: "numeric" })}</span>
-							<button type="button" className="text-blue-600 hover:underline" aria-expanded={detailsOpen} onClick={() => setDetailsOpen((open) => !open)}>
+							<Button variant="link" size="sm" type="button" className="min-h-11" aria-expanded={detailsOpen} onClick={() => setDetailsOpen((open) => !open)}>
 							{t("message.details")}
-						</button>
+						</Button>
 					</div>
 					{detailsOpen && (
-						<dl className="sm:hidden w-full space-y-0.5 break-words pt-2 text-xs text-neutral-500">
+						<dl className="sm:hidden w-full flex flex-col gap-0.5 break-words pt-2 text-xs text-muted-foreground">
 							<div><dt className="inline font-medium">{t("source.from")}:</dt> <dd className="inline">{sender} &lt;{senderEmail}&gt;</dd></div>
 							{recipients && <div><dt className="inline font-medium">{t("source.to")}:</dt> <dd className="inline">{recipients}</dd></div>}
 							<div><dt className="inline font-medium">{t("message.date")}:</dt> <dd className="inline">{formatUserDate(message.createdAt, { month: "short", day: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</dd></div>
@@ -218,20 +220,20 @@ export function ConversationMessageCard({
 						{body.html ? (
 							<EmailHtmlRenderer html={body.html} autoAllowRemote={remote.autoAllow} onAllowRemote={remote.allowSender} />
 						) : (
-							<pre className="whitespace-pre-wrap font-sans text-sm text-neutral-900">{body.text}</pre>
+							<pre className="whitespace-pre-wrap font-sans text-sm text-foreground">{body.text}</pre>
 						)}
 						{body.quotedHtml && <QuotedEmailToggle html={body.quotedHtml} autoAllowRemote={remote.autoAllow} onAllowRemote={remote.allowSender} />}
 						{attachments.length > 0 && (
 							<ul className="mt-4 flex flex-wrap gap-2">
 								{attachments.map((attachment) => (
 									<li key={attachment.id}>
-										<a
+										<Item variant="outline" size="sm" asChild><a
 											href={`/api/messages/${message.id}/attachments/${attachment.id}`}
-											className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2.5 py-1 text-xs text-neutral-700 hover:bg-neutral-50"
+											className="min-h-11"
 										>
 											<Paperclip className="h-3 w-3" />
 											<span className="max-w-48 truncate">{attachment.filename}</span>
-										</a>
+										</a></Item>
 									</li>
 								))}
 							</ul>

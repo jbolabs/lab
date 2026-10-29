@@ -1,32 +1,31 @@
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors",
-  {
-    variants: {
-      variant: {
-        success: "border-transparent bg-green-600/10 text-green-800",
-        default:
-          "border-transparent bg-neutral-900 text-neutral-50",
-        secondary:
-          "border-transparent bg-neutral-100 text-neutral-900",
-        outline: "bg-neutral-100 border-transparent",
-      },
-    },
-    defaultVariants: { variant: "default" },
-  },
+export const badgeVariants = cva(
+	"inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [&>svg]:pointer-events-none [&>svg]:size-3",
+	{
+		variants: {
+			variant: {
+				default: "border-transparent bg-primary text-primary-foreground",
+				secondary: "border-transparent bg-secondary text-secondary-foreground",
+				destructive: "border-transparent bg-destructive text-white",
+				outline: "text-foreground",
+				success: "border-transparent bg-green-600/10 text-green-800",
+				signal: "border-transparent bg-signal-soft text-signal-soft-foreground",
+			},
+		},
+		defaultVariants: { variant: "default" },
+	},
 );
 
 export function Badge({
-  className,
-  variant,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof badgeVariants>) {
-  return (
-    <div
-      className={cn(badgeVariants({ variant }), "text-[9px] uppercase", className)}
-      {...props}
-    />
-  );
+	className,
+	variant,
+	asChild = false,
+	...props
+}: React.ComponentProps<"span"> & VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
+	const Comp = asChild ? Slot : "span";
+	return <Comp data-slot="badge" className={cn(badgeVariants({ variant }), className)} {...props} />;
 }
