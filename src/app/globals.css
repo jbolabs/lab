@@ -300,7 +300,10 @@ pre {
 	animation: none;
 }
 
-[data-slot="app-top-bar"][data-persistent] {
+/* Named only while a push or pop runs: a view-transition name makes a stacking context, which
+   would trap fixed controls portalled into the bar (calendar's New event) under the page. */
+:root:active-view-transition-type(push, pop)
+	[data-slot="app-top-bar"][data-persistent] {
 	view-transition-name: app-top-bar;
 }
 
