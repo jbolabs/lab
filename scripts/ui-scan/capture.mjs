@@ -271,7 +271,10 @@ async function capturePages(browser, storageState, metrics) {
 				await page.goto(`${args.base}${await resolvePath(context, spec)}`);
 				await settle(page);
 				if (spec.open) {
-					await spec.open(page);
+					// Screenshot whatever is there if the page cannot be reached; the error is the finding.
+					await spec.open(page).catch((error) => {
+						errors.push(`open failed: ${String(error.message).split("\n")[0]}`);
+					});
 					await settle(page);
 				}
 				await page.screenshot({ path: join(dir, `${spec.name}.png`) });

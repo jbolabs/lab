@@ -3,6 +3,12 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// A select needs a name: an `id` its <label htmlFor> points at, or an explicit ARIA name.
+type SelectName =
+	| { id: string }
+	| { "aria-label": string }
+	| { "aria-labelledby": string };
+
 function NativeSelect({
 	className,
 	size = "default",
@@ -13,7 +19,7 @@ function NativeSelect({
 	size?: "sm" | "default";
 	variant?: "default" | "ghost";
 	containerClassName?: string;
-}) {
+} & SelectName) {
 	return (
 		<div
 			className={cn(

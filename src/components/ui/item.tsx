@@ -7,18 +7,24 @@ import * as React from "react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
+// Items inside a group are list items. They are often rendered as links or buttons, which must
+// keep their own role, so each one gets a layout-neutral listitem wrapper instead.
+const ItemGroupContext = React.createContext(false);
+
 function ItemGroup({ className, ...props }: React.ComponentProps<"div">) {
 	return (
-		<div
-			// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- The upstream div list contains polymorphic Item children; switching to ul would require changing every child to li.
-			role="list"
-			data-slot="item-group"
-			className={cn(
-				"group/item-group flex w-full flex-col gap-4 has-data-[size=sm]:gap-2.5 has-data-[size=xs]:gap-2",
-				className
-			)}
-			{...props}
-		/>
+		<ItemGroupContext.Provider value>
+			<div
+				// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- The upstream div list contains polymorphic Item children; switching to ul would require changing every child to li.
+				role="list"
+				data-slot="item-group"
+				className={cn(
+					"group/item-group flex w-full flex-col gap-4 has-data-[size=sm]:gap-2.5 has-data-[size=xs]:gap-2",
+					className
+				)}
+				{...props}
+			/>
+		</ItemGroupContext.Provider>
 	);
 }
 
@@ -68,7 +74,8 @@ function Item({
 	render,
 	...props
 }: useRender.ComponentProps<"div"> & VariantProps<typeof itemVariants>) {
-	return useRender({
+	const inGroup = React.use(ItemGroupContext);
+	const element = useRender({
 		defaultTagName: "div",
 		props: mergeProps<"div">(
 			{
@@ -83,6 +90,15 @@ function Item({
 			variant,
 		},
 	});
+	if (!inGroup) {
+		return element;
+	}
+	return (
+		// oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- Matches ItemGroup's div list.
+		<div role="listitem" data-slot="item-listitem" className="contents">
+			{element}
+		</div>
+	);
 }
 
 const itemMediaVariants = cva(

@@ -8,6 +8,8 @@ import { readFileSync } from "node:fs";
 import nodePath from "node:path";
 import { parseArgs } from "node:util";
 
+import { GROUPS } from "./pages.mjs";
+
 const { join } = nodePath;
 
 const { values: args } = parseArgs({
@@ -42,7 +44,13 @@ if (base.git?.dirty !== false) {
 	);
 }
 
+// Pages dropped from the manifest since the baseline (see UNSCANNED) are not regressions.
+const scanned = new Set(GROUPS[args.group].pages.map((page) => page.name));
+
 for (const [key, b] of Object.entries(base.pages)) {
+	if (!scanned.has(key.split("@")[0])) {
+		continue;
+	}
 	const h = head.pages[key];
 	if (!h) {
 		failures.push(`${key}: missing from head capture`);

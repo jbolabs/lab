@@ -31,10 +31,10 @@ export function LanguageSelector({
 	if (variant === "text") {
 		return (
 			<DropdownMenu>
-				<DropdownMenuTrigger
-					render={<Button variant="ghost" aria-label={t("language.label")} />}
-				>
+				<DropdownMenuTrigger render={<Button variant="ghost" />}>
+					{/* The visible language name leads the accessible name, so voice control can say it. */}
 					{locales[locale].label}
+					<span className="sr-only">, {t("language.label")}</span>
 					<ChevronDown data-icon="inline-end" />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">

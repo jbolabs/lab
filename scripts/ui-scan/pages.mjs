@@ -9,7 +9,11 @@ const firstRow = 'a[href^="/inbox/"]';
 
 // Opens the first link under `prefix` on the current page (detail pages with generated ids).
 const openFirst = (prefix) => async (page) => {
-	await page.locator(`main a[href^="${prefix}"]`).first().click();
+	await page
+		.locator(`main a[href^="${prefix}"]`)
+		.filter({ visible: true })
+		.first()
+		.click();
 	await page.waitForURL((url) => url.pathname.startsWith(prefix));
 };
 
@@ -41,7 +45,6 @@ export const GROUPS = {
 				"routing",
 				"webhooks",
 				"activity",
-				"audit-logs",
 				"branding",
 				"general",
 				"backups",
@@ -209,6 +212,7 @@ export const UNSCANNED = {
 	"/accounts/$id/mailboxes": "tab of the account page",
 	"/accounts/$id/password": "tab of the account page",
 	"/accounts/$id/permissions": "tab of the account page",
+	"/audit-logs": "redirects to /activity",
 	"/agent/review/$id": "needs an agent approval; none are seeded",
 	"/book/$userId/$eventId": "needs a booking event; none are seeded",
 	"/c/$username/$slug": "needs a booking event; none are seeded",
