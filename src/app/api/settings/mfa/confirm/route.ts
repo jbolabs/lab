@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { requireSessionUser } from "@/lib/api/auth";
 import { confirmMfaEnrollment } from "@/lib/auth/mfa";
 import { getSessionTokenFromRequestHeaders } from "@/lib/auth/session";
@@ -18,10 +16,7 @@ export async function POST(request: Request) {
 		await readJsonBody(request, 16 * 1024).catch(() => null)
 	);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: "Enter the 6-digit code" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "Enter the 6-digit code" }, { status: 400 });
 	}
 	const result = await confirmMfaEnrollment(
 		env,
@@ -30,9 +25,9 @@ export async function POST(request: Request) {
 		getSessionTokenFromRequestHeaders(request)
 	);
 	if (!result.ok) {
-		return NextResponse.json({ error: result.error }, { status: 400 });
+		return Response.json({ error: result.error }, { status: 400 });
 	}
-	return NextResponse.json(
+	return Response.json(
 		{ ok: true, recoveryCodes: result.recoveryCodes },
 		{ headers: { "Cache-Control": "no-store" } }
 	);

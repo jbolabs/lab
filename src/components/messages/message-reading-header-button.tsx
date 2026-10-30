@@ -1,11 +1,11 @@
 "use client";
 
 import { ArrowLeft, Columns2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 import { HintTooltip } from "@/components/hint-tooltip";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "@/lib/navigation";
 
 import { useMessageListVisibility } from "./message-list-visibility";
 import type { MessageReadingHeaderButtonProps } from "./message-reading-header-button-types";

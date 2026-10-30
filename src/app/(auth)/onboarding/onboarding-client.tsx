@@ -6,7 +6,6 @@ import {
 	CheckCircle2,
 	MailPlus,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -28,6 +27,7 @@ import {
 } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
+import { useRouter } from "@/lib/navigation";
 
 import type { DomainPreflight } from "./types";
 import { checkDomain, createDomain, createMailbox, getDomains } from "./utils";

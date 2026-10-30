@@ -814,3 +814,9 @@ pre {
 		animation: none;
 	}
 }
+
+:root {
+	--font-figtree: "Figtree Variable";
+	--font-montserrat: "Montserrat Variable";
+	--font-geist-mono: "Geist Mono Variable";
+}

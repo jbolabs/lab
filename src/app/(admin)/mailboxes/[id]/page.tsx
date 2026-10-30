@@ -1,7 +1,6 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AtSign, Save, Trash2, UserPlus } from "lucide-react";
-import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useLanguage } from "@/components/language-provider";
@@ -39,6 +38,7 @@ import {
 	PageDescription,
 } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useParams, usePathname, useRouter } from "@/lib/navigation";
 
 import {
 	AdminConfirmationProvider,

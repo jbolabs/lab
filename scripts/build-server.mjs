@@ -1,7 +1,7 @@
 import { build } from "esbuild";
 
 // Bundle the self-hosted entrypoint (server/index.ts) and the app modules it
-// pulls in. Next, native modules and network libraries stay external and are
+// pulls in. Native modules and network libraries stay external and are
 // resolved from node_modules at runtime.
 await build({
 	alias: { "cloudflare:workers": "./server/runtime/cloudflare-workers.ts" },
@@ -12,7 +12,7 @@ await build({
 	define: { "process.env.MAILFLARE_RUNTIME": '"node"' },
 	entryPoints: ["server/index.ts"],
 	external: [
-		"next",
+		"vite",
 		"better-sqlite3",
 		"nodemailer",
 		"smtp-server",

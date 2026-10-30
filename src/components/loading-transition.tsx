@@ -129,7 +129,6 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 						aria-hidden="true"
 						className="flex w-64 flex-col items-center gap-6"
 					>
-						{/* oxlint-disable-next-line next/no-img-element -- Runtime branding uses the original image URL without an image optimization service. */}
 						<img
 							src={iconUrl}
 							onError={() => setFailedIconUrl(branding.iconUrl)}

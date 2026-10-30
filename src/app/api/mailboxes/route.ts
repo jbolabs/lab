@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { domains, mailboxAliases, mailboxes, users } from "@/db/schema";
@@ -20,7 +19,7 @@ export async function GET(request: Request) {
 	const user = await requireUser(env, request);
 	const db = getDb(env);
 	const rows = await ensurePersonalMailbox(env, db, user);
-	return NextResponse.json({
+	return Response.json({
 		canCreateShared: user.role === "admin",
 		mailboxes: await Promise.all(
 			rows.map(async (mailbox) => ({
@@ -40,16 +39,13 @@ export async function POST(request: Request) {
 	const user = await requireUser(env, request);
 	const parsed = mailboxSchema.safeParse(await request.json());
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	const db = getDb(env);
 	const mailboxType = parsed.data.type ?? "personal";
 	if (mailboxType === "shared" && user.role !== "admin") {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Only admins can create shared inboxes" },
 			{ status: 403 }
 		);
@@ -58,7 +54,7 @@ export async function POST(request: Request) {
 		mailboxType === "shared" ? user.id : (parsed.data.ownerUserId ?? user.id);
 	if (ownerUserId !== user.id) {
 		if (user.role !== "admin") {
-			return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+			return Response.json({ error: "Forbidden" }, { status: 403 });
 		}
 		const [owner] = await db
 			.select({ id: users.id })
@@ -66,7 +62,7 @@ export async function POST(request: Request) {
 			.where(and(eq(users.id, ownerUserId), eq(users.createdByUserId, user.id)))
 			.limit(1);
 		if (!owner) {
-			return NextResponse.json({ error: "Account not found" }, { status: 404 });
+			return Response.json({ error: "Account not found" }, { status: 404 });
 		}
 	}
 	const [domain] = await db
@@ -81,7 +77,7 @@ export async function POST(request: Request) {
 				!!user.createdByUserId &&
 				domain.userId === user.createdByUserId));
 	if (!canUseDomain) {
-		return NextResponse.json({ error: "Domain not found" }, { status: 404 });
+		return Response.json({ error: "Domain not found" }, { status: 404 });
 	}
 
 	const localPart = parsed.data.localPart.toLowerCase();
@@ -93,10 +89,7 @@ export async function POST(request: Request) {
 		)
 		.limit(1);
 	if (existing) {
-		return NextResponse.json(
-			{ error: "Mailbox already exists" },
-			{ status: 409 }
-		);
+		return Response.json({ error: "Mailbox already exists" }, { status: 409 });
 	}
 	const [existingAlias] = await db
 		.select({ id: mailboxAliases.id })
@@ -109,7 +102,7 @@ export async function POST(request: Request) {
 		)
 		.limit(1);
 	if (existingAlias) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "An alias already uses this address" },
 			{ status: 409 }
 		);
@@ -137,12 +130,12 @@ export async function POST(request: Request) {
 			error instanceof Error
 				? error.message
 				: "Failed to create Cloudflare routing rule";
-		return NextResponse.json({ error: message }, { status: 502 });
+		return Response.json({ error: message }, { status: 502 });
 	}
 
 	const address = `${localPart}@${domain.hostname}`;
 
-	return NextResponse.json({
+	return Response.json({
 		address,
 		id,
 		type: mailboxType,

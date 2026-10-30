@@ -376,7 +376,6 @@ function EnrollDialog({
 									{t("mfa.scanDescription")}
 								</DialogDescription>
 							</DialogHeader>
-							{/* oxlint-disable-next-line next/no-img-element -- The generated SVG QR is a local data image; no remote optimization is needed. */}
 							<img
 								alt={t("mfa.scanTitle")}
 								className="mx-auto w-48 rounded-lg border bg-card p-2"

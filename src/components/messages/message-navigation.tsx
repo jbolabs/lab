@@ -1,11 +1,11 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { CSSProperties, MouseEvent } from "react";
 
 import type { Message } from "@/hooks/types";
 import { primeMessageDetail } from "@/lib/messages/detail-cache";
+import { usePathname, useRouter } from "@/lib/navigation";
 
 import type { MessageNavigationState } from "./message-navigation-types";
 

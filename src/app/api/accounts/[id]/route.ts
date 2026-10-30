@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
@@ -19,10 +18,10 @@ export async function GET(request: Request, { params }: AccountRouteParams) {
 	const { id } = await params;
 	const account = await selectAccountById(getDb(access.env), id);
 	if (!account) {
-		return NextResponse.json({ error: "Account not found" }, { status: 404 });
+		return Response.json({ error: "Account not found" }, { status: 404 });
 	}
 	const actor = access.user;
-	return NextResponse.json({
+	return Response.json({
 		account: {
 			canChangeRole: isPrimaryAdmin(actor),
 			canForwardEmail: true,
@@ -57,10 +56,10 @@ export async function PATCH(request: Request, { params }: AccountRouteParams) {
 	const db = getDb(access.env);
 	const account = await selectAccountById(db, id);
 	if (!account) {
-		return NextResponse.json({ error: "Account not found" }, { status: 404 });
+		return Response.json({ error: "Account not found" }, { status: 404 });
 	}
 	if (account.deletedAt) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "This account is deleted. Restore it first" },
 			{ status: 409 }
 		);
@@ -68,27 +67,24 @@ export async function PATCH(request: Request, { params }: AccountRouteParams) {
 	const actor = access.user;
 	const actorIsPrimary = isPrimaryAdmin(actor);
 	if (!actorIsPrimary && !canManageUsers(actor)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "You do not have permission to manage users" },
 			{ status: 403 }
 		);
 	}
 	// Admins without the primary role can only manage plain user accounts.
 	if (!actorIsPrimary && (account.role === "admin" || account.isPrimaryAdmin)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Only the primary admin can manage admin accounts" },
 			{ status: 403 }
 		);
 	}
 	const parsed = updateManagedAccountSchema.safeParse(await request.json());
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 	if (!actorIsPrimary && parsed.data.role !== account.role) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Only the primary admin can change roles" },
 			{ status: 403 }
 		);
@@ -129,5 +125,5 @@ export async function PATCH(request: Request, { params }: AccountRouteParams) {
 				: { forwardingEmail: parsed.data.forwardingEmail }),
 		})
 		.where(eq(users.id, id));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

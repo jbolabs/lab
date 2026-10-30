@@ -1,5 +1,4 @@
 import { and, desc, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { driveItems, driveShares } from "@/db/schema";
 import {
@@ -71,7 +70,7 @@ export async function GET(request: Request) {
 		items: Awaited<ReturnType<typeof toDriveItemDtos>>,
 		extra: { path?: ReturnType<typeof toDriveCrumbs>; role: DriveRole }
 	) =>
-		NextResponse.json({
+		Response.json({
 			items,
 			path: extra.path ?? [],
 			role: extra.role,
@@ -85,7 +84,7 @@ export async function GET(request: Request) {
 				? await getDriveRole(db, user.id, folder)
 				: null;
 		if (!folder || !role) {
-			return NextResponse.json({ error: "Folder not found" }, { status: 404 });
+			return Response.json({ error: "Folder not found" }, { status: 404 });
 		}
 		const rows = await db
 			.select()
@@ -229,7 +228,7 @@ export async function POST(request: Request) {
 	};
 	const name = normalizeDriveName(body.name);
 	if (!name) {
-		return NextResponse.json({ error: "Enter a folder name" }, { status: 400 });
+		return Response.json({ error: "Enter a folder name" }, { status: 400 });
 	}
 	let ownerId = user.id;
 	let parentId: string | null = null;
@@ -240,7 +239,7 @@ export async function POST(request: Request) {
 				? await getDriveRole(db, user.id, parent)
 				: null;
 		if (!parent || !canEditDrive(role)) {
-			return NextResponse.json({ error: "Folder not found" }, { status: 404 });
+			return Response.json({ error: "Folder not found" }, { status: 404 });
 		}
 		parentId = parent.id;
 		({ ownerId } = parent);
@@ -267,5 +266,5 @@ export async function POST(request: Request) {
 	const [item] = await toDriveItemDtos(db, [row], user.id, () =>
 		ownerId === user.id ? "owner" : "edit"
 	);
-	return NextResponse.json({ item });
+	return Response.json({ item });
 }

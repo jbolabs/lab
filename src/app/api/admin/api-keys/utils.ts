@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getDb } from "@/db";
@@ -28,7 +27,7 @@ async function authorize(request: Request) {
 	if (!isPrimaryAdmin(session.user)) {
 		return {
 			env,
-			error: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+			error: Response.json({ error: "Forbidden" }, { status: 403 }),
 			user: null,
 		};
 	}
@@ -52,7 +51,7 @@ export async function GET(request: Request) {
 		})
 		.from(apiKeys)
 		.where(eq(apiKeys.userId, access.user.id));
-	return NextResponse.json({
+	return Response.json({
 		apiKeys: rows
 			.filter((row) => !row.id.startsWith("oauth_"))
 			.map((row) => ({
@@ -71,16 +70,13 @@ export async function POST(request: Request) {
 		return access.error;
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const parsed = createKeySchema.safeParse(
 		await request.json().catch(() => null)
 	);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 	const db = getDb(access.env);
 	const { fullKey, prefix, hash } = generateApiKey();
@@ -94,7 +90,7 @@ export async function POST(request: Request) {
 		scopes: scopesToJson([...new Set(parsed.data.scopes)]),
 		userId: access.user.id,
 	});
-	return NextResponse.json({ key: fullKey });
+	return Response.json({ key: fullKey });
 }
 
 export async function DELETE(request: Request) {
@@ -103,11 +99,11 @@ export async function DELETE(request: Request) {
 		return access.error;
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const id = new URL(request.url).searchParams.get("id");
 	if (!id) {
-		return NextResponse.json({ error: "Key required" }, { status: 400 });
+		return Response.json({ error: "Key required" }, { status: 400 });
 	}
 	const db = getDb(access.env);
 	const [key] = await db
@@ -119,7 +115,7 @@ export async function DELETE(request: Request) {
 		!key ||
 		!parseScopes(key.scopes).some((scope) => adminScopes.has(scope))
 	) {
-		return NextResponse.json({ error: "Key not found" }, { status: 404 });
+		return Response.json({ error: "Key not found" }, { status: 404 });
 	}
 	await db
 		.update(agentSendApprovals)
@@ -131,5 +127,5 @@ export async function DELETE(request: Request) {
 			)
 		);
 	await db.delete(apiKeys).where(eq(apiKeys.id, id));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

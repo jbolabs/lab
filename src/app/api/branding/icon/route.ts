@@ -5,9 +5,6 @@ import { appSettings } from "@/db/schema";
 import { APP_SETTINGS_ID } from "@/lib/branding/service";
 import { getEnvAsync } from "@/lib/cloudflare";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 async function getDefaultIcon(env: CloudflareEnv): Promise<Response> {
 	const asset = await env.ASSETS.fetch("https://mailflare.local/icon-96.png");
 	return new Response(await asset.arrayBuffer(), {

@@ -14,7 +14,6 @@ import {
 	ShieldAlert,
 	Trash2,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { createElement, useState, useMemo, useCallback } from "react";
 
 import type { BulkMessageAction } from "@/app/api/messages/bulk/types";
@@ -36,6 +35,7 @@ import {
 	PartialDeleteError,
 	supportsPermanentDelete,
 } from "@/lib/messages/permanent-delete-utils";
+import { useRouter } from "@/lib/navigation";
 
 import { MessageSnoozeDialog } from "./message-snooze-dialog";
 import type { MessageActionsProps, ReplyMode } from "./types";

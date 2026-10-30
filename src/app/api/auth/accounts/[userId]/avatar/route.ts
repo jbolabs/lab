@@ -1,5 +1,3 @@
-import { cookies } from "next/headers";
-
 import {
 	ACCOUNTS_COOKIE,
 	parseAccountTokens,
@@ -8,6 +6,7 @@ import {
 import { getSessionTokenFromRequestHeaders } from "@/lib/auth/session";
 import { getAvatarImageResponse } from "@/lib/avatar-images";
 import { getEnv } from "@/lib/cloudflare";
+import { cookies } from "@/lib/http/request";
 
 /** Avatar of an account signed in on this browser; other users' avatars stay private. */
 export async function GET(

@@ -1,7 +1,6 @@
 "use client";
 
 import { CalendarClock } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -10,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { requireSuccessfulResponse } from "@/lib/async-cleanup";
 import { authFetch } from "@/lib/auth/client";
 import { clearMessageDetailCache } from "@/lib/messages/detail-cache";
+import { useRouter } from "@/lib/navigation";
 
 import { formatScheduledSendTime } from "./scheduled-send-utils";
 

@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { requireTeamSharingAdmin } from "@/app/api/accounts/utils";
 import { getDb } from "@/db";
@@ -22,10 +21,7 @@ export async function GET(
 	const db = getDb(access.env);
 	const mailbox = await getSharedMailboxForAdmin(db, id, access.user.id);
 	if (!mailbox) {
-		return NextResponse.json(
-			{ error: "Shared inbox not found" },
-			{ status: 404 }
-		);
+		return Response.json({ error: "Shared inbox not found" }, { status: 404 });
 	}
 
 	const [members, availableUsers] = await Promise.all([
@@ -57,7 +53,7 @@ export async function GET(
 			),
 	]);
 
-	return NextResponse.json({ availableUsers, members });
+	return Response.json({ availableUsers, members });
 }
 
 export async function POST(
@@ -70,19 +66,13 @@ export async function POST(
 	}
 	const parsed = mailboxAccessSchema.safeParse(await request.json());
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: "Choose a valid account" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "Choose a valid account" }, { status: 400 });
 	}
 	const { id } = await params;
 	const db = getDb(access.env);
 	const mailbox = await getSharedMailboxForAdmin(db, id, access.user.id);
 	if (!mailbox) {
-		return NextResponse.json(
-			{ error: "Shared inbox not found" },
-			{ status: 404 }
-		);
+		return Response.json({ error: "Shared inbox not found" }, { status: 404 });
 	}
 	const [user] = await db
 		.select({ id: users.id })
@@ -96,7 +86,7 @@ export async function POST(
 		)
 		.limit(1);
 	if (!user) {
-		return NextResponse.json({ error: "Account not found" }, { status: 404 });
+		return Response.json({ error: "Account not found" }, { status: 404 });
 	}
 
 	await db
@@ -115,7 +105,7 @@ export async function POST(
 			},
 			target: [mailboxAccess.mailboxId, mailboxAccess.userId],
 		});
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }
 
 export async function DELETE(
@@ -129,20 +119,17 @@ export async function DELETE(
 	const { id } = await params;
 	const userId = new URL(request.url).searchParams.get("userId");
 	if (!userId) {
-		return NextResponse.json({ error: "Account is required" }, { status: 400 });
+		return Response.json({ error: "Account is required" }, { status: 400 });
 	}
 	const db = getDb(access.env);
 	const mailbox = await getSharedMailboxForAdmin(db, id, access.user.id);
 	if (!mailbox) {
-		return NextResponse.json(
-			{ error: "Shared inbox not found" },
-			{ status: 404 }
-		);
+		return Response.json({ error: "Shared inbox not found" }, { status: 404 });
 	}
 	await db
 		.delete(mailboxAccess)
 		.where(
 			and(eq(mailboxAccess.mailboxId, id), eq(mailboxAccess.userId, userId))
 		);
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

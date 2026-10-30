@@ -1,10 +1,9 @@
 "use client";
 
 import { LockKeyhole } from "lucide-react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import Link from "@/components/app-link";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { PasswordInput } from "@/components/auth/password-input";
 import { useLanguage } from "@/components/language-provider";
@@ -13,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
 import { withCleanup } from "@/lib/async-cleanup";
+import { useSearchParams } from "@/lib/navigation";
 
 import { confirmPasswordReset } from "./utils";
 

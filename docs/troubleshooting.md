@@ -65,7 +65,7 @@ Do not commit that account-specific ID to a reusable public repository.
 
 ## Scheduled backups are not running
 
-Deploy the complete Worker with `npm run deploy`. A local Next.js server or a source-only update does not provision the cron trigger declared in `wrangler.jsonc`.
+Deploy the complete Worker with `npm run deploy`. A local development server or a source-only update does not provision the cron trigger declared in `wrangler.jsonc`.
 
 Also confirm that automatic backups are enabled under **Admin → Backups** and that the Worker has its `DB` and `BUCKET` bindings.
 

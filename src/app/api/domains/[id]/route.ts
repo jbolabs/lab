@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { domains } from "@/db/schema";
@@ -19,9 +18,9 @@ export async function GET(request: Request, { params }: Params) {
 	const user = await requireUser(env, request);
 	const domain = await getDomainForUser(env, user.id, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
-	return NextResponse.json({ domain });
+	return Response.json({ domain });
 }
 
 /** Clears the "DNS skipped" warning once the operator has set the records themselves. */
@@ -30,29 +29,29 @@ export async function PATCH(request: Request, { params }: Params) {
 	const env = getEnv();
 	const user = await requireUser(env, request);
 	if (!canManageDomains(user)) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const body = (await request.json().catch(() => null)) as {
 		dnsSkipped?: unknown;
 	} | null;
 	if (typeof body?.dnsSkipped !== "boolean") {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "dnsSkipped must be a boolean" },
 			{ status: 400 }
 		);
 	}
 	const domain = await getDomainForUser(env, user.id, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	await getDb(env)
 		.update(domains)
 		.set({ dnsSkipped: body.dnsSkipped })
 		.where(eq(domains.id, id));
-	return NextResponse.json({
+	return Response.json({
 		domain: { ...domain, dnsSkipped: body.dnsSkipped },
 	});
 }
@@ -62,17 +61,17 @@ export async function DELETE(request: Request, { params }: Params) {
 	const env = getEnv();
 	const user = await requireUser(env, request);
 	if (!canManageDomains(user)) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	try {
 		await removeDomainForUser(env, user.id, id);
-		return NextResponse.json({ ok: true });
+		return Response.json({ ok: true });
 	} catch (error) {
 		const message =
 			error instanceof Error ? error.message : "Failed to remove domain";
-		return NextResponse.json({ error: message }, { status: 400 });
+		return Response.json({ error: message }, { status: 400 });
 	}
 }

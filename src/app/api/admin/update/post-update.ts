@@ -1,16 +1,14 @@
-import { NextResponse } from "next/server";
-
 import { isNodeRuntime } from "@/lib/runtime";
 
 import { authorizeAdminRequest, dispatchUpdateWorkflow } from "./utils";
 
 export async function POST(request: Request) {
 	const authorization = await authorizeAdminRequest(request);
-	if ("error" in authorization) {
+	if (authorization.error) {
 		return authorization.error;
 	}
 	if (isNodeRuntime(authorization.env)) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error:
 					"Self-hosted installs update by pulling the new container image and restarting.",
@@ -23,18 +21,18 @@ export async function POST(request: Request) {
 		// assume it's already passed
 		// const status = await getUpdateStatus(authorization.env);
 		// if (!status.available) {
-		// 	return NextResponse.json({ error: "Mailflare is already up to date", ...status }, { status: 409 });
+		// 	return Response.json({ error: "Mailflare is already up to date", ...status }, { status: 409 });
 		// }
 
 		const dispatch = await dispatchUpdateWorkflow();
 
-		return NextResponse.json({ ok: true, ...dispatch }, { status: 202 });
+		return Response.json({ ok: true, ...dispatch }, { status: 202 });
 	} catch (error) {
 		const message =
 			error instanceof Error
 				? error.message
 				: "Could not trigger the update workflow";
 		const status = message.includes("must be configured") ? 503 : 502;
-		return NextResponse.json({ error: message }, { status });
+		return Response.json({ error: message }, { status });
 	}
 }

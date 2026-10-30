@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { completePasswordReset } from "@/lib/auth/password-reset";
 import { allowLoginAttempt } from "@/lib/auth/rate-limit";
 import { getEnv } from "@/lib/cloudflare";
@@ -14,17 +12,17 @@ export async function POST(request: Request) {
 		body = await readJsonBody(request, 16 * 1024);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json({ error: "Invalid request" }, { status });
+		return Response.json({ error: "Invalid request" }, { status });
 	}
 	const parsed = passwordResetConfirmSchema.safeParse(body);
 	if (!parsed.success) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Choose a password of at least 8 characters" },
 			{ status: 400 }
 		);
 	}
 	if (!(await allowLoginAttempt(env, request))) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Too many attempts. Try again shortly." },
 			{ headers: { "Retry-After": "60" }, status: 429 }
 		);
@@ -37,9 +35,9 @@ export async function POST(request: Request) {
 		request
 	);
 	if (!result.ok) {
-		return NextResponse.json({ error: result.error }, { status: 400 });
+		return Response.json({ error: result.error }, { status: 400 });
 	}
-	return NextResponse.json(
+	return Response.json(
 		{ ok: true },
 		{ headers: { "Cache-Control": "no-store" } }
 	);

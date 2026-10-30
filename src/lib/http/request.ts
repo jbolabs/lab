@@ -1,3 +1,5 @@
+import { getCookies, getRequestHeaders } from "@tanstack/react-start/server";
+
 import { RequestBodyTooLargeError } from "./errors";
 
 export async function readJsonBody<T>(
@@ -42,4 +44,15 @@ export async function readFormDataBody(
 		headers: request.headers,
 		method: request.method,
 	}).formData();
+}
+
+export async function cookies() {
+	const values = await Promise.resolve(getCookies());
+	return {
+		get: (name: string) =>
+			values[name] === undefined ? undefined : { name, value: values[name] },
+	};
+}
+export async function headers() {
+	return new Headers(await Promise.resolve(getRequestHeaders()));
 }

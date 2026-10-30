@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { getCurrentUser } from "@/lib/auth/cookies";
 import { getEnv } from "@/lib/cloudflare";
 import { hasCloudflareCredentials, isNodeRuntime } from "@/lib/runtime";
@@ -9,7 +7,7 @@ export async function GET(request: Request) {
 	const env = getEnv();
 	const user = await getCurrentUser(env, request);
 	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	let hasMailboxes = false;
@@ -22,7 +20,7 @@ export async function GET(request: Request) {
 	} catch {
 		// Authentication remains valid when optional mailbox/setup metadata is unavailable.
 	}
-	return NextResponse.json({
+	return Response.json({
 		hasMailboxes,
 		isSetup,
 		managesDns: hasCloudflareCredentials(env),

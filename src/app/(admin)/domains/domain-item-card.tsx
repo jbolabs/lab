@@ -5,7 +5,6 @@ import {
 	ChevronRight,
 	Globe2,
 } from "lucide-react";
-import Image from "next/image";
 import { Fragment } from "react";
 
 import { useLanguage } from "@/components/language-provider";
@@ -58,8 +57,7 @@ export default function DomainItemCard({
 			<div className="flex flex-col items-start gap-3 md:flex-row md:gap-4">
 				<span className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-muted-foreground">
 					<Globe2 className="size-5" />
-					<Image
-						unoptimized
+					<img
 						width={48}
 						height={48}
 						src={`https://${item.hostname}/favicon.ico`}

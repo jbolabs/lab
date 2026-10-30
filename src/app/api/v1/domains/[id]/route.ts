@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { authenticateAdminApiKey } from "@/lib/api/admin-auth";
 import { getEnv } from "@/lib/cloudflare";
 import { getDomainForUser, removeDomainForUser } from "@/lib/domains/service";
@@ -20,30 +18,30 @@ async function authorize(request: Request) {
 export async function GET(request: Request, { params }: Params) {
 	const auth = await authorize(request);
 	if (!auth) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const { id } = await params;
 	const domain = await getDomainForUser(getEnv(), auth.userId, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
-	return NextResponse.json({ domain });
+	return Response.json({ domain });
 }
 
 export async function DELETE(request: Request, { params }: Params) {
 	const auth = await authorize(request);
 	if (!auth) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const { id } = await params;
 	try {
 		await removeDomainForUser(getEnv(), auth.userId, id);
-		return NextResponse.json({ ok: true });
+		return Response.json({ ok: true });
 	} catch (error) {
 		const message =
 			error instanceof Error ? error.message : "Failed to remove domain";
-		return NextResponse.json({ error: message }, { status: 400 });
+		return Response.json({ error: message }, { status: 400 });
 	}
 }

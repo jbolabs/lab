@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { canManageDomains } from "@/lib/auth/admin";
 import { requireUser } from "@/lib/auth/cookies";
 import { hasValidSessionMutationOrigin } from "@/lib/auth/origin";
@@ -22,22 +20,22 @@ export async function GET(request: Request, { params }: Params) {
 	const user = await requireUser(env, request);
 	const domain = await getDomainForUser(env, user.id, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	if (!(await getAwsConfig(env))) {
-		return NextResponse.json(
+		return Response.json(
 			{ credentials: false, ses: null },
 			{ headers: noStore }
 		);
 	}
 	try {
-		return NextResponse.json(
+		return Response.json(
 			{ credentials: true, ses: await getSesSendingView(env, domain) },
 			{ headers: noStore }
 		);
 	} catch (error) {
 		if (error instanceof AwsError && error.accessDenied) {
-			return NextResponse.json(
+			return Response.json(
 				{
 					credentials: true,
 					error:
@@ -47,7 +45,7 @@ export async function GET(request: Request, { params }: Params) {
 				{ headers: noStore }
 			);
 		}
-		return NextResponse.json(
+		return Response.json(
 			{ error: error instanceof Error ? error.message : "Could not reach AWS" },
 			{ status: 502 }
 		);
@@ -59,14 +57,14 @@ export async function POST(request: Request, { params }: Params) {
 	const env = getEnv();
 	const user = await requireUser(env, request);
 	if (!canManageDomains(user)) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const domain = await getDomainForUser(env, user.id, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	const body = (await request.json().catch(() => ({}))) as { action?: string };
 	try {
@@ -78,30 +76,30 @@ export async function POST(request: Request, { params }: Params) {
 				to: user.email,
 			});
 			if (!sent) {
-				return NextResponse.json(
+				return Response.json(
 					{
 						error: `Create a mailbox on ${domain.hostname} to send the test from.`,
 					},
 					{ status: 400 }
 				);
 			}
-			return NextResponse.json({ ok: true, to: user.email });
+			return Response.json({ ok: true, to: user.email });
 		}
 		if (body.action === "setup") {
-			return NextResponse.json(
+			return Response.json(
 				{ ses: await setupSesSending(env, domain) },
 				{ headers: noStore }
 			);
 		}
 		if (body.action === "verify") {
-			return NextResponse.json(
+			return Response.json(
 				{ ses: await getSesSendingView(env, domain) },
 				{ headers: noStore }
 			);
 		}
-		return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+		return Response.json({ error: "Unknown action" }, { status: 400 });
 	} catch (error) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: error instanceof Error ? error.message : "AWS request failed" },
 			{ status: 502 }
 		);

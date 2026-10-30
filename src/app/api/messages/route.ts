@@ -15,7 +15,6 @@ import {
 	sum,
 } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { messages, outboundJobs } from "@/db/schema";
@@ -42,7 +41,7 @@ export async function GET(request: Request) {
 	const env = getEnv();
 	const user = await getCurrentUser(env, request);
 	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const url = new URL(request.url);
@@ -71,10 +70,7 @@ export async function GET(request: Request) {
 		if (mailboxId) {
 			const access = await getMailboxAccessLevel(db, user, mailboxId);
 			if (!access?.canRead) {
-				return NextResponse.json(
-					{ error: "Mailbox not found" },
-					{ status: 404 }
-				);
+				return Response.json({ error: "Mailbox not found" }, { status: 404 });
 			}
 			conditions.push(eq(messages.mailboxId, mailboxId));
 		} else if (accessibleMailboxIds.length > 0) {
@@ -353,7 +349,7 @@ export async function GET(request: Request) {
 		};
 	});
 
-	return NextResponse.json({
+	return Response.json({
 		grouped: groupByThread,
 		limit,
 		messages: enrichedRows,

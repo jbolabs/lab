@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { getDb } from "@/db";
@@ -16,7 +15,7 @@ export async function GET(request: Request) {
 	if (auth.error) {
 		return auth.error;
 	}
-	return NextResponse.json({ enabled: auth.user.spamProtectionEnabled });
+	return Response.json({ enabled: auth.user.spamProtectionEnabled });
 }
 
 export async function PATCH(request: Request) {
@@ -29,7 +28,7 @@ export async function PATCH(request: Request) {
 	try {
 		input = await parseUpdateSpamSettingsRequest(request);
 	} catch (error) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error: error instanceof ZodError ? error.flatten() : "Invalid request",
 			},
@@ -40,5 +39,5 @@ export async function PATCH(request: Request) {
 		.update(users)
 		.set({ spamProtectionEnabled: input.enabled })
 		.where(eq(users.id, auth.user.id));
-	return NextResponse.json({ enabled: input.enabled });
+	return Response.json({ enabled: input.enabled });
 }

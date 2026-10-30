@@ -1,5 +1,4 @@
 import { and, eq, gte, lt, ne, or } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { calendarEvents } from "@/db/schema";
@@ -47,7 +46,7 @@ export async function GET(request: Request) {
 			)
 		)
 		.orderBy(calendarEvents.startsAt);
-	return NextResponse.json({ events });
+	return Response.json({ events });
 }
 
 export async function POST(request: Request) {
@@ -69,7 +68,7 @@ export async function POST(request: Request) {
 		Number.isNaN(endsAt.getTime()) ||
 		endsAt <= startsAt;
 	if (hasInvalidEventTimes()) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Enter a title and valid event times" },
 			{ status: 400 }
 		);
@@ -80,7 +79,7 @@ export async function POST(request: Request) {
 			? normalizeCalendarRepeatDays(input.repeatDays ?? DEFAULT_REPEAT_DAYS)
 			: [];
 	if (repeat === "weekdays" && repeatDays.length === 0) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Choose at least one weekday" },
 			{ status: 400 }
 		);
@@ -93,7 +92,7 @@ export async function POST(request: Request) {
 		input.mailboxId &&
 		!calendarKeyCanSendInvitations(key, input.mailboxId)
 	) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error:
 					"Sending invitations requires mail send permission for this mailbox",
@@ -154,5 +153,5 @@ export async function POST(request: Request) {
 			)
 		);
 	}
-	return NextResponse.json({ event: savedEvent });
+	return Response.json({ event: savedEvent });
 }

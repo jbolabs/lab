@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { messages } from "@/db/schema";
@@ -15,7 +14,7 @@ export async function POST(
 	const env = getEnv();
 	const user = await getCurrentUser(env, _request);
 	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const db = getDb(env);
@@ -29,15 +28,15 @@ export async function POST(
 		.where(eq(messages.id, messageId))
 		.limit(1);
 	if (!message?.mailboxId) {
-		return NextResponse.json({ error: "Message not found" }, { status: 404 });
+		return Response.json({ error: "Message not found" }, { status: 404 });
 	}
 
 	const access = await getMailboxAccessLevel(db, user, message.mailboxId);
 	if (!access?.canRead) {
-		return NextResponse.json({ error: "Message not found" }, { status: 404 });
+		return Response.json({ error: "Message not found" }, { status: 404 });
 	}
 
 	const starred = !message.starred;
 	await db.update(messages).set({ starred }).where(eq(messages.id, message.id));
-	return NextResponse.json({ starred });
+	return Response.json({ starred });
 }

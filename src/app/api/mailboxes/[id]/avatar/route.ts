@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { avatarKeyFor } from "@/app/api/profile/avatar/utils";
 import { getDb } from "@/db";
@@ -66,21 +65,21 @@ export async function POST(
 	const db = getDb(env);
 	const access = await getMailboxAccessLevel(db, user, id);
 	if (!access?.canManage) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 
 	let form: FormData;
 	try {
 		form = await request.formData();
 	} catch {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Expected multipart form data" },
 			{ status: 400 }
 		);
 	}
 	const images = getOptimizedAvatarFiles(form);
 	if (!images) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "A resized WebP image and preview are required" },
 			{ status: 400 }
 		);
@@ -101,7 +100,7 @@ export async function POST(
 		.where(eq(mailboxes.id, id))
 		.limit(1);
 	if (!mailbox) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 
 	// The primary mailbox shares the account avatar; every other mailbox stores its own.
@@ -115,5 +114,5 @@ export async function POST(
 				userId: mailbox.userId,
 			})
 		: db.update(mailboxes).set({ avatarKey: key }).where(eq(mailboxes.id, id)));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

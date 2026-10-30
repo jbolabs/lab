@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { domains } from "@/db/schema";
@@ -21,13 +20,13 @@ export async function POST(request: Request, { params }: Params) {
 	const env = getEnv();
 	const auth = await authenticateAdminApiKey(env, request, "domains");
 	if (!auth) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const { id } = await params;
 	const domain = await getDomainForUser(env, auth.userId, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 
 	const body = (await request.json().catch(() => ({}))) as {
@@ -36,7 +35,7 @@ export async function POST(request: Request, { params }: Params) {
 	};
 	const record = body.record as DnsAuthRecord | undefined;
 	if (!record || !DNS_RECORDS.has(record)) {
-		return NextResponse.json({ error: "Unknown DNS record" }, { status: 400 });
+		return Response.json({ error: "Unknown DNS record" }, { status: 400 });
 	}
 
 	try {
@@ -49,20 +48,20 @@ export async function POST(request: Request, { params }: Params) {
 			.from(domains)
 			.where(eq(domains.id, domain.id))
 			.limit(1);
-		return NextResponse.json({
+		return Response.json({
 			dns,
 			domain: { ...(updated ?? domain), sendingEnabled: dns.sendingEnabled },
 		});
 	} catch (error) {
 		// 409 MX_CONFLICT asks the caller to confirm and retry with replaceMx.
 		if (error instanceof MxConflictError) {
-			return NextResponse.json(
+			return Response.json(
 				{ code: error.code, error: error.message, records: error.records },
 				{ status: 409 }
 			);
 		}
 		const message =
 			error instanceof Error ? error.message : "Failed to set up DNS record";
-		return NextResponse.json({ error: message }, { status: 500 });
+		return Response.json({ error: message }, { status: 500 });
 	}
 }

@@ -1,5 +1,4 @@
 import { inArray } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { chunks } from "@/app/api/drive/bulk-utils";
 import { driveItems } from "@/db/schema";
@@ -39,7 +38,7 @@ export async function POST(request: Request) {
 			]
 		: [];
 	if (!ids.length || ids.length > MAX_BULK_ITEMS) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Select between 1 and 200 items" },
 			{ status: 400 }
 		);
@@ -52,7 +51,7 @@ export async function POST(request: Request) {
 	);
 	const owned: DriveRow[] = groups.flat();
 	if (owned.length !== ids.length) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	const permissions = await Promise.all(
 		owned.map(
@@ -63,7 +62,7 @@ export async function POST(request: Request) {
 		)
 	);
 	if (permissions.some((allowed) => !allowed)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Only the owner can change these items" },
 			{ status: 403 }
 		);
@@ -85,7 +84,7 @@ export async function POST(request: Request) {
 	};
 
 	if (body.action === "trash") {
-		return NextResponse.json({
+		return Response.json({
 			count: await update(
 				owned.filter((row) => !row.trashedAt),
 				{ trashedAt: new Date() }
@@ -93,7 +92,7 @@ export async function POST(request: Request) {
 		});
 	}
 	if (body.action === "restore") {
-		return NextResponse.json({
+		return Response.json({
 			count: await update(
 				owned.filter((row) => row.trashedAt),
 				{ trashedAt: null }
@@ -105,7 +104,7 @@ export async function POST(request: Request) {
 		if (trashed.length) {
 			await deleteDriveItems(env, trashed);
 		}
-		return NextResponse.json({ count: trashed.length });
+		return Response.json({ count: trashed.length });
 	}
 	if (body.action === "move") {
 		let parentId: string | null = null;
@@ -118,28 +117,25 @@ export async function POST(request: Request) {
 				destination.trashedAt ||
 				destination.uploadId
 			) {
-				return NextResponse.json(
-					{ error: "Folder not found" },
-					{ status: 404 }
-				);
+				return Response.json({ error: "Folder not found" }, { status: 404 });
 			}
 			// A folder cannot move into itself or anything beneath it.
 			const ancestors = await getDriveChain(db, destination);
 			const chain = new Set(ancestors.map((row) => row.id));
 			if (owned.some((row) => chain.has(row.id))) {
-				return NextResponse.json(
+				return Response.json(
 					{ error: "Cannot move a folder into itself" },
 					{ status: 400 }
 				);
 			}
 			parentId = destination.id;
 		}
-		return NextResponse.json({
+		return Response.json({
 			count: await update(
 				owned.filter((row) => row.parentId !== parentId || row.trashedAt),
 				{ parentId, trashedAt: null }
 			),
 		});
 	}
-	return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+	return Response.json({ error: "Unknown action" }, { status: 400 });
 }

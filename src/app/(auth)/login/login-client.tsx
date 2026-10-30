@@ -1,10 +1,9 @@
 "use client";
 
 import { Mail, ShieldCheck } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import Link from "@/components/app-link";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { PasswordInput } from "@/components/auth/password-input";
 import { TurnstileField } from "@/components/auth/turnstile";
@@ -15,6 +14,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { withCleanup } from "@/lib/async-cleanup";
+import { useRouter } from "@/lib/navigation";
 
 import { submitLogin, submitMfaCode } from "./utils";
 

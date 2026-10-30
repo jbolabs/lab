@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { mailboxes, users } from "@/db/schema";
@@ -14,6 +13,7 @@ import { getDomainProvisioningError } from "@/lib/domains/errors";
 import { rollbackDomainProvisioning } from "@/lib/domains/rollback";
 import { addDomainForUser } from "@/lib/domains/service";
 import type { DomainProvisioningChanges } from "@/lib/domains/types";
+import { setResponseCookie } from "@/lib/http/cookies";
 import { RequestBodyTooLargeError } from "@/lib/http/errors";
 import { readJsonBody } from "@/lib/http/request";
 import { newId } from "@/lib/ids";
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 	const env = getEnv();
 	const db = getDb(env);
 	if (await hasAdminAccount(env)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Registration is closed after the first account is created" },
 			{ status: 403 }
 		);
@@ -35,14 +35,11 @@ export async function POST(request: Request) {
 		body = await readJsonBody(request, 16 * 1024);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json(
-			{ error: "Invalid registration request" },
-			{ status }
-		);
+		return Response.json({ error: "Invalid registration request" }, { status });
 	}
 	const firstRunParsed = firstRunRegisterSchema.safeParse(body);
 	if (!firstRunParsed.success) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: firstRunParsed.error.flatten() },
 			{ status: 400 }
 		);
@@ -54,7 +51,7 @@ export async function POST(request: Request) {
 			(body as Record<string, unknown>).turnstileToken
 		))
 	) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Verification failed. Please try again." },
 			{ status: 400 }
 		);
@@ -72,7 +69,7 @@ export async function POST(request: Request) {
 		.where(eq(users.email, email))
 		.limit(1);
 	if (existing) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Email already registered" },
 			{ status: 409 }
 		);
@@ -139,15 +136,15 @@ export async function POST(request: Request) {
 			"Domain setup failed",
 			502
 		);
-		return NextResponse.json(
+		return Response.json(
 			{ code: failure.code, error: failure.message },
 			{ status: failure.status }
 		);
 	}
 
-	const response = NextResponse.json({ ok: true, redirect: "/login" });
+	const response = Response.json({ ok: true, redirect: "/login" });
 	response.headers.set("Cache-Control", "no-store");
-	response.cookies.set(SESSION_COOKIE, "", {
+	setResponseCookie(response, SESSION_COOKIE, "", {
 		httpOnly: true,
 		maxAge: 0,
 		path: "/",

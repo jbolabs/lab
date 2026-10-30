@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronUp } from "lucide-react";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { ReactNode } from "react";
 
@@ -13,6 +12,7 @@ import {
 	DrawerTitle,
 	DrawerTrigger,
 } from "@/components/ui/drawer";
+import { usePathname } from "@/lib/navigation";
 
 import { useIsMobile } from "./sidebar-mobile-utils";
 

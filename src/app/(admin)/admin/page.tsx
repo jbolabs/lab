@@ -1,8 +1,8 @@
 "use client";
 
 import { Bot, Globe2, KeyRound, Mail, Users, ChevronRight } from "lucide-react";
-import Link from "next/link";
 
+import Link from "@/components/app-link";
 import { DatabaseMigrationsNotice } from "@/components/database-migrations-notice";
 import { useLanguage } from "@/components/language-provider";
 import {

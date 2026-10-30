@@ -1,10 +1,10 @@
 "use client";
 
 import { Copy, KeyRound } from "lucide-react";
-import Link from "next/link";
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
 
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -224,7 +224,6 @@ export function EmailClientsSettings() {
 					/>
 					{key && qr && (
 						<div className="flex flex-col items-center gap-2 rounded-lg bg-card p-4">
-							{/* eslint-disable-next-line @next/next/no-img-element */}
 							<img
 								src={qr}
 								alt={t("emailClients.qrAlt")}

@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { getDb } from "@/db";
 import { routingRules } from "@/db/schema";
 import { requireSessionUser } from "@/lib/api/auth";
@@ -28,30 +26,27 @@ export async function GET(request: Request) {
 	if (searchParams.get("list") === "true") {
 		const domains = await listAdminRoutingDomains(db, user);
 		if (!domains) {
-			return NextResponse.json(
+			return Response.json(
 				{ error: "Domain management permission is required" },
 				{ status: 403 }
 			);
 		}
-		return NextResponse.json({ domains });
+		return Response.json({ domains });
 	}
 	const domainId = searchParams.get("domainId");
 	if (!domainId) {
-		return NextResponse.json(
-			{ error: "domainId is required" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "domainId is required" }, { status: 400 });
 	}
 
 	const adminDomain = await getAdminDomain(db, user, domainId);
 	if (!adminDomain) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Domain management permission is required" },
 			{ status: 403 }
 		);
 	}
 
-	return NextResponse.json({
+	return Response.json({
 		mailboxes: await listAdminDomainMailboxes(db, domainId),
 		rules: await listDomainRules(db, domainId),
 	});
@@ -65,20 +60,17 @@ export async function POST(request: Request) {
 	}
 	const { user } = auth;
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const parsed = domainRoutingRuleSchema.safeParse(await request.json());
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	const db = getDb(env);
 	const adminDomain = await getAdminDomain(db, user, parsed.data.domainId);
 	if (!adminDomain) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Domain management permission is required" },
 			{ status: 403 }
 		);
@@ -92,7 +84,7 @@ export async function POST(request: Request) {
 			)
 		: true;
 	if (!destinationAllowed) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Mailbox access is required for the destination" },
 			{ status: 403 }
 		);
@@ -106,5 +98,5 @@ export async function POST(request: Request) {
 		...toRuleColumns(parsed.data),
 	});
 
-	return NextResponse.json({ id });
+	return Response.json({ id });
 }

@@ -1,5 +1,4 @@
 import { eq, inArray } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { domains, mailboxAliases, mailboxes, users } from "@/db/schema";
@@ -27,7 +26,7 @@ export async function createAccountResponse(
 		input.domainId
 	);
 	if (!primaryDomain) {
-		return NextResponse.json({ error: "Domain not found" }, { status: 404 });
+		return Response.json({ error: "Domain not found" }, { status: 404 });
 	}
 	const username = input.username.toLowerCase().trim();
 	const email = `${username}@${primaryDomain.hostname}`;
@@ -44,21 +43,21 @@ export async function createAccountResponse(
 	for (const [index, address] of requested.entries()) {
 		const domain = byId.get(address.domainId);
 		if (!domain || (index > 0 && domain.status !== "active")) {
-			return NextResponse.json(
+			return Response.json(
 				{ error: "Choose an active alias domain owned by this admin account" },
 				{ status: 400 }
 			);
 		}
 		const localPart = normalizeRecipientLocalPart(address.localPart);
 		if (!localPart) {
-			return NextResponse.json(
+			return Response.json(
 				{ error: "Enter a valid address username" },
 				{ status: 400 }
 			);
 		}
 		const key = `${localPart}@${domain.id}`;
 		if (seen.has(key)) {
-			return NextResponse.json(
+			return Response.json(
 				{
 					error:
 						"Each alias must be distinct from the primary address and other aliases",
@@ -74,7 +73,7 @@ export async function createAccountResponse(
 		.where(eq(users.email, email))
 		.limit(1);
 	if (registered) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Email already registered" },
 			{ status: 409 }
 		);
@@ -104,7 +103,7 @@ export async function createAccountResponse(
 			)
 		)
 	) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "An email address is already assigned to a mailbox or alias" },
 			{ status: 409 }
 		);
@@ -157,7 +156,7 @@ export async function createAccountResponse(
 		inserted = true;
 		await ensureBookingUsername(env, userId, email);
 		await ensureMailboxDomainRouting(env, db, mailbox, changes);
-		return NextResponse.json(
+		return Response.json(
 			{ account: accountListItemFromUser(accounts[0]) },
 			{ status: 201 }
 		);
@@ -167,7 +166,7 @@ export async function createAccountResponse(
 			...(inserted ? [db.delete(users).where(eq(users.id, userId))] : []),
 		]);
 		if (cleanup.some((result) => result.status === "rejected")) {
-			return NextResponse.json(
+			return Response.json(
 				{
 					error:
 						"Account creation failed and cleanup could not finish. Check the account and Cloudflare routing before retrying.",
@@ -177,12 +176,12 @@ export async function createAccountResponse(
 		}
 		const cause = error instanceof Error ? error.cause : null;
 		if (/UNIQUE constraint failed/iu.test(`${error} ${cause}`)) {
-			return NextResponse.json(
+			return Response.json(
 				{ error: "An email address is already assigned" },
 				{ status: 409 }
 			);
 		}
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Failed to create account mailbox routing. Please try again." },
 			{ status: 502 }
 		);

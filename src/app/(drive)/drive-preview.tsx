@@ -34,7 +34,6 @@ export function DrivePreviewBody({
 	}
 	if (contentType.startsWith("image/")) {
 		return (
-			// oxlint-disable-next-line next/no-img-element -- Private file APIs require browser cookies; the optimizer cannot authenticate.
 			<img
 				src={src}
 				alt={name}

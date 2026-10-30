@@ -1,5 +1,4 @@
 "use client";
-import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useLanguage } from "@/components/language-provider";
@@ -13,6 +12,7 @@ import {
 	PageDescription,
 } from "@/components/ui/page-header";
 import { runAsyncAction } from "@/lib/async-cleanup";
+import { useParams } from "@/lib/navigation";
 
 import type { ManagedAccount } from "../types";
 import { fetchManagedAccount } from "../utils";

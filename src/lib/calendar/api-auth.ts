@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { authenticateApiRequest, hasScope } from "@/lib/api/key-auth";
 import type { ApiAuthResult } from "@/lib/api/key-auth-types";
 import { getCurrentUser } from "@/lib/auth/cookies";
@@ -19,17 +17,14 @@ export async function authorizeCalendarRequest(
 		const key = await authenticateApiRequest(env, request);
 		if (!key) {
 			return {
-				error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+				error: Response.json({ error: "Unauthorized" }, { status: 401 }),
 				key: null,
 				user: null,
 			};
 		}
 		if (!hasScope(key.scopes, scope)) {
 			return {
-				error: NextResponse.json(
-					{ error: "Permission denied" },
-					{ status: 403 }
-				),
+				error: Response.json({ error: "Permission denied" }, { status: 403 }),
 				key: null,
 				user: null,
 			};
@@ -40,7 +35,7 @@ export async function authorizeCalendarRequest(
 	return user
 		? { error: null, key: null, user }
 		: {
-				error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+				error: Response.json({ error: "Unauthorized" }, { status: 401 }),
 				key: null,
 				user: null,
 			};

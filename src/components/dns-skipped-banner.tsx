@@ -1,9 +1,9 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

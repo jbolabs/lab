@@ -1,10 +1,10 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 import { useBranding } from "@/components/branding-provider";
 import { useLanguage } from "@/components/language-provider";
+import { usePathname } from "@/lib/navigation";
 
 import { getRouteTitleKey } from "./route-title-utils";
 

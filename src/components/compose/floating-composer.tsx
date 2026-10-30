@@ -1,7 +1,6 @@
 "use client";
 
 import { MailPlus } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -10,6 +9,7 @@ import { ComposeForm } from "@/components/compose/compose-form";
 import { useLanguage } from "@/components/language-provider";
 import { useSidebar } from "@/components/sidebar-state";
 import { Button } from "@/components/ui/button";
+import { usePathname, useRouter } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 import { hidesComposeButton } from "./utils";

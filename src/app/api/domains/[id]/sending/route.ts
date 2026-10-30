@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getDb } from "@/db";
@@ -56,18 +55,18 @@ export async function PUT(request: Request, { params }: Params) {
 	const env = getEnv();
 	const user = await requireUser(env, request);
 	if (!canManageDomains(user)) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	let domain = await getDomainForUser(env, user.id, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	const parsed = schema.safeParse(await request.json().catch(() => null));
 	if (!parsed.success) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Unknown sending provider" },
 			{ status: 400 }
 		);
@@ -79,7 +78,7 @@ export async function PUT(request: Request, { params }: Params) {
 		try {
 			domain = await adoptCloudflareZone(env, domain);
 		} catch (error) {
-			return NextResponse.json(
+			return Response.json(
 				{
 					error:
 						error instanceof Error
@@ -113,7 +112,7 @@ export async function PUT(request: Request, { params }: Params) {
 			);
 		} catch (error) {
 			if (error instanceof MxConflictError) {
-				return NextResponse.json(
+				return Response.json(
 					{ code: error.code, error: error.message, records: error.records },
 					{ status: 409 }
 				);
@@ -125,7 +124,7 @@ export async function PUT(request: Request, { params }: Params) {
 		}
 	}
 	const updated = await getDomainForUser(env, user.id, id);
-	return NextResponse.json(
+	return Response.json(
 		{ domain: updated, warning },
 		{ headers: { "Cache-Control": "no-store" } }
 	);
@@ -138,7 +137,7 @@ export async function GET(request: Request, { params }: Params) {
 	const user = await requireUser(env, request);
 	const domain = await getDomainForUser(env, user.id, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	const [cloudflare, resendStatus, ses] = await Promise.all([
 		findCloudflareSending(env, domain),
@@ -147,7 +146,7 @@ export async function GET(request: Request, { params }: Params) {
 	]);
 	const resend =
 		resendStatus === null ? null : resendStatus !== "not_registered";
-	return NextResponse.json(
+	return Response.json(
 		{
 			cloudflare: !!cloudflare,
 			resend,
@@ -169,21 +168,21 @@ export async function DELETE(request: Request, { params }: Params) {
 	const env = getEnv();
 	const user = await requireUser(env, request);
 	if (!canManageDomains(user)) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const domain = await getDomainForUser(env, user.id, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	const parsed = removeSchema.safeParse(await request.json().catch(() => null));
 	if (!parsed.success) {
-		return NextResponse.json({ error: "Unknown provider" }, { status: 400 });
+		return Response.json({ error: "Unknown provider" }, { status: 400 });
 	}
 	if (parsed.data.target === domain.sendingProvider) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Switch to another provider before removing this one" },
 			{ status: 400 }
 		);
@@ -196,9 +195,9 @@ export async function DELETE(request: Request, { params }: Params) {
 		} else {
 			await removeSesSending(env, domain);
 		}
-		return NextResponse.json({ ok: true });
+		return Response.json({ ok: true });
 	} catch (error) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error:
 					error instanceof Error

@@ -1,5 +1,4 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useLanguage } from "@/components/language-provider";
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetch } from "@/lib/auth/client";
 import { normalizeCalendarColor } from "@/lib/calendar/colors";
+import { useRouter } from "@/lib/navigation";
 import { cn as clsx } from "@/lib/utils";
 
 import type { CalendarEvent } from "./calendar/types";

@@ -1,10 +1,10 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { LoadingTransition } from "@/components/loading-transition";
 import { authFetch } from "@/lib/auth/client";
+import { usePathname, useRouter } from "@/lib/navigation";
 import { saveUserTimeZonePreference } from "@/lib/time/client";
 
 import type { AuthGuardProps } from "./auth-guard-types";

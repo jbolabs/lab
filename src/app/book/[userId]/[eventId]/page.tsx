@@ -10,10 +10,9 @@ import {
 	MapPin,
 	Users,
 } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import Link from "@/components/app-link";
 import { useBranding } from "@/components/branding-provider";
 import { useLanguage } from "@/components/language-provider";
 import { LanguageSelector } from "@/components/language-selector";
@@ -30,6 +29,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { PageTitle } from "@/components/ui/page-header";
 import { Textarea } from "@/components/ui/textarea";
 import { requireSuccessfulResponse, withCleanup } from "@/lib/async-cleanup";
+import { useParams } from "@/lib/navigation";
 import { getDisplayLocale, getUserTimeZone } from "@/lib/time/utils";
 import { cn } from "@/lib/utils";
 
@@ -336,7 +336,6 @@ export default function PublicBookingEventPage() {
 										<LanguageSelector />
 									</div>
 									<div className="flex min-w-0 items-center gap-3 max-sm:order-first max-sm:mb-5">
-										{/* oxlint-disable-next-line next/no-img-element -- Runtime branding and avatar API URLs are served directly; Workers has no configured image optimizer. */}
 										<img
 											src={branding.iconUrl}
 											width={24}

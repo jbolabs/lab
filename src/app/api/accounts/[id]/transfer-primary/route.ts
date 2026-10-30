@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
@@ -17,28 +16,28 @@ export async function POST(request: Request, { params }: AccountRouteParams) {
 	}
 	const actor = access.user;
 	if (!isPrimaryAdmin(actor)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Only the primary admin can transfer the role" },
 			{ status: 403 }
 		);
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const { id } = await params;
 	const db = getDb(access.env);
 	const target = await selectAccountById(db, id);
 	if (!target) {
-		return NextResponse.json({ error: "Account not found" }, { status: 404 });
+		return Response.json({ error: "Account not found" }, { status: 404 });
 	}
 	if (target.id === actor.id) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "You are already the primary admin" },
 			{ status: 400 }
 		);
 	}
 	if (target.disabled) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error: "Enable this account before transferring the primary admin role",
 			},
@@ -56,5 +55,5 @@ export async function POST(request: Request, { params }: AccountRouteParams) {
 			.set({ isPrimaryAdmin: true, role: "admin" })
 			.where(eq(users.id, target.id)),
 	]);
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

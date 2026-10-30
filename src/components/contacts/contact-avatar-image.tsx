@@ -59,7 +59,6 @@ export function ContactAvatarImage({
 	const onError = () => setFailed((current) => new Set(current).add(src));
 	if (src === brandUrl) {
 		return (
-			// oxlint-disable-next-line next/no-img-element -- An authenticated API image; no Next image optimizer is available.
 			<img
 				key={src}
 				src={src}

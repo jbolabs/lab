@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { requireSessionUser } from "@/lib/api/auth";
 import { assertAdmin } from "@/lib/auth/admin";
 import { getEnv } from "@/lib/cloudflare";
@@ -18,9 +16,9 @@ export async function GET(request: Request) {
 	try {
 		assertAdmin(auth.user);
 	} catch {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
-	return NextResponse.json(await getSearchIndexStatus(env));
+	return Response.json(await getSearchIndexStatus(env));
 }
 
 /** Re-index every message from the messages table. Safe to run at any time. */
@@ -33,8 +31,8 @@ export async function POST(request: Request) {
 	try {
 		assertAdmin(auth.user);
 	} catch {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 	await rebuildSearchIndex(env);
-	return NextResponse.json(await getSearchIndexStatus(env));
+	return Response.json(await getSearchIndexStatus(env));
 }

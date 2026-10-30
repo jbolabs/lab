@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { messages } from "@/db/schema";
@@ -20,7 +19,7 @@ export async function POST(
 	const env = getEnv();
 	const user = await getCurrentUser(env, request);
 	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const db = getDb(env);
@@ -35,15 +34,15 @@ export async function POST(
 		.where(eq(messages.id, messageId))
 		.limit(1);
 	if (!message?.mailboxId) {
-		return NextResponse.json({ error: "Message not found" }, { status: 404 });
+		return Response.json({ error: "Message not found" }, { status: 404 });
 	}
 
 	const access = await getMailboxAccessLevel(db, user, message.mailboxId);
 	if (!access?.canRead) {
-		return NextResponse.json({ error: "Message not found" }, { status: 404 });
+		return Response.json({ error: "Message not found" }, { status: 404 });
 	}
 	if (!access.canSendAs && !access.canSendOnBehalf) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "You cannot cancel sends from this mailbox" },
 			{ status: 403 }
 		);
@@ -54,16 +53,16 @@ export async function POST(
 		message.status !== "queued" ||
 		!(await getScheduledTime(db, message.id))
 	) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "This message is not scheduled" },
 			{ status: 409 }
 		);
 	}
 	if (!(await cancelScheduledSend(db, message.id))) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "This message is already being sent" },
 			{ status: 409 }
 		);
 	}
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

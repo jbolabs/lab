@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
@@ -24,7 +23,7 @@ function json(
 	status = 200,
 	headers: Record<string, string> = {}
 ) {
-	return NextResponse.json(body, {
+	return Response.json(body, {
 		headers: { "Cache-Control": "no-store", ...headers },
 		status,
 	});

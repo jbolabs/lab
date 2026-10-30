@@ -1,6 +1,5 @@
-import { cookies } from "next/headers";
-
 import { getEnv } from "@/lib/cloudflare";
+import { cookies } from "@/lib/http/request";
 
 import type { Locale, Messages } from "./types";
 import {

@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { availableBookingSlots } from "@/lib/booking/availability";
 import { createBookedCalendarEvents } from "@/lib/booking/create";
 import { getEnv } from "@/lib/cloudflare";
@@ -20,13 +18,10 @@ export async function GET(
 		new URL(request.url).searchParams.get("username")
 	);
 	if (!found) {
-		return NextResponse.json(
-			{ error: "Booking event not found" },
-			{ status: 404 }
-		);
+		return Response.json({ error: "Booking event not found" }, { status: 404 });
 	}
 	const slots = await availableBookingSlots(getEnv(), found.event, 60);
-	return NextResponse.json({
+	return Response.json({
 		event: found.event,
 		hostName: found.hostName,
 		slots,
@@ -43,10 +38,7 @@ export async function POST(
 		new URL(request.url).searchParams.get("username")
 	);
 	if (!found) {
-		return NextResponse.json(
-			{ error: "Booking event not found" },
-			{ status: 404 }
-		);
+		return Response.json({ error: "Booking event not found" }, { status: 404 });
 	}
 	const body = (await request
 		.json()
@@ -61,7 +53,7 @@ export async function POST(
 		email.length > 254 ||
 		typeof body?.startsAt !== "string";
 	if (hasInvalidBookingDetails()) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Enter your name, email, and a time." },
 			{ status: 400 }
 		);
@@ -73,7 +65,7 @@ export async function POST(
 		notes.length > 2000 ||
 		(body?.notes !== undefined && typeof body.notes !== "string")
 	) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Check the guest emails and meeting notes." },
 			{ status: 400 }
 		);
@@ -81,7 +73,7 @@ export async function POST(
 	const slots = await availableBookingSlots(getEnv(), found.event, 60);
 	const slot = slots.find((item) => item.startsAt === body?.startsAt);
 	if (!slot) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "That time is no longer available." },
 			{ status: 409 }
 		);
@@ -98,12 +90,12 @@ export async function POST(
 			notes
 		))
 	) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "That time is no longer available." },
 			{ status: 409 }
 		);
 	}
-	return NextResponse.json({
+	return Response.json({
 		booked: true,
 		endsAt: slot.endsAt,
 		startsAt: slot.startsAt,

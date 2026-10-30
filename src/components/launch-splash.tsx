@@ -83,7 +83,6 @@ export function LaunchSplash() {
 	}
 	return (
 		<div ref={root} className="launch-splash" aria-hidden="true">
-			{/* oxlint-disable-next-line next/no-img-element -- Runtime branding uses the original image URL without an image optimization service. */}
 			<img
 				ref={mark}
 				src="/icon-512.png"

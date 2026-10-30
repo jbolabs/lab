@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { authenticateApiRequest, hasScope } from "@/lib/api/key-auth";
@@ -29,13 +28,13 @@ async function authenticate(env: CloudflareEnv, request: Request) {
 	if (!auth) {
 		return {
 			auth: null,
-			error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+			error: Response.json({ error: "Unauthorized" }, { status: 401 }),
 		} as const;
 	}
 	if (!hasScope(auth.scopes, "jmap")) {
 		return {
 			auth: null,
-			error: NextResponse.json(
+			error: Response.json(
 				{ error: "This key does not have the jmap scope" },
 				{ status: 403 }
 			),
@@ -58,13 +57,10 @@ export async function PUT(request: Request) {
 		await readJsonBody(request, 8 * 1024).catch(() => null)
 	);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: "Invalid registration" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "Invalid registration" }, { status: 400 });
 	}
 	if (parsed.data.publicKey && !isValidDevicePublicKey(parsed.data.publicKey)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "publicKey must be a raw uncompressed P-256 point" },
 			{ status: 400 }
 		);
@@ -78,7 +74,7 @@ export async function PUT(request: Request) {
 			: registration.token.toLowerCase(),
 	});
 	// Registrations are kept without APNs secrets, but nothing is sent; the app shows that instead of "On".
-	return NextResponse.json({
+	return Response.json({
 		deliverable: canDeliverTo(env, registration.token),
 		ok: true,
 	});
@@ -91,5 +87,5 @@ export async function DELETE(request: Request) {
 		return error;
 	}
 	await unregisterPushDevice(env, auth.keyId);
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

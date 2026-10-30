@@ -1,5 +1,3 @@
-import vinextHandler from "vinext/server/fetch-handler";
-
 import { runAccountRetention } from "./src/lib/accounts/deletion";
 import { processAgentDraftJob } from "./src/lib/agent/jobs/utils";
 import { runAgentMaintenance } from "./src/lib/agent/maintenance";
@@ -24,6 +22,7 @@ import { runJmapChangeRetention } from "./src/lib/jmap/changes";
 import { getSessionTokenFromRequest } from "./src/lib/realtime/utils";
 import { withoutHttpsUpgradeOnHttp } from "./src/lib/security/headers";
 import { withStorage } from "./src/lib/storage";
+import startHandler from "./src/server";
 import { isInboundQueueMessage, isWebhookRetryMessage } from "./worker-utils";
 
 export { RealtimeHub } from "./src/lib/realtime/hub";
@@ -92,7 +91,7 @@ export default {
 		}
 	},
 
-	async fetch(request: Request, rawEnv: CloudflareEnv, ctx: ExecutionContext) {
+	async fetch(request: Request, rawEnv: CloudflareEnv, _ctx: ExecutionContext) {
 		const env = withStorage(rawEnv);
 		const url = new URL(request.url);
 		if (url.pathname === "/api/realtime") {
@@ -122,7 +121,7 @@ export default {
 
 		return withoutHttpsUpgradeOnHttp(
 			request,
-			await vinextHandler.fetch(request, env, ctx)
+			await startHandler.fetch(request)
 		);
 	},
 

@@ -37,16 +37,16 @@ await build({
 				builder.onResolve(
 					{
 						filter:
-							/^(?:next\/navigation|next\/link|@\/hooks\/use-current-user)$/,
+							/^(?:@\/lib\/navigation|@\/components\/app-link|@\/hooks\/use-current-user)$/,
 					},
 					(args) => ({ namespace: "fixture", path: args.path })
 				);
 				builder.onLoad({ filter: /.*/, namespace: "fixture" }, (args) => ({
 					contents: (() => {
-						if (args.path === "next/navigation") {
+						if (args.path === "@/lib/navigation") {
 							return "export function usePathname(){return '/drive'} export function useRouter(){return {}} export function useSearchParams(){return new URLSearchParams(globalThis.window?.location.search ?? '')}";
 						}
-						if (args.path === "next/link") {
+						if (args.path === "@/components/app-link") {
 							return "import {createElement} from 'react';export default function Link(props){return createElement('a',props)}";
 						}
 						return "export function useCurrentUser(){return {id:'user'}}";

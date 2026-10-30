@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { webhooks } from "@/db/schema";
 import { hasValidSessionMutationOrigin } from "@/lib/auth/origin";
@@ -18,7 +17,7 @@ export async function GET(request: Request, { params }: WebhookRouteParams) {
 	}
 
 	const { hook } = loaded;
-	return NextResponse.json({
+	return Response.json({
 		webhook: {
 			createdAt: hook.createdAt,
 			description: hook.description,
@@ -38,15 +37,12 @@ export async function PATCH(request: Request, { params }: WebhookRouteParams) {
 		return loaded.error;
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 
 	const parsed = webhookUpdateSchema.safeParse(await request.json());
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	const updates: Partial<typeof webhooks.$inferInsert> = {};
@@ -71,11 +67,11 @@ export async function PATCH(request: Request, { params }: WebhookRouteParams) {
 	}
 
 	if (Object.keys(updates).length === 0) {
-		return NextResponse.json({ error: "No changes provided" }, { status: 400 });
+		return Response.json({ error: "No changes provided" }, { status: 400 });
 	}
 
 	await loaded.db.update(webhooks).set(updates).where(eq(webhooks.id, id));
-	return NextResponse.json({ ok: true, ...(secret ? { secret } : {}) });
+	return Response.json({ ok: true, ...(secret ? { secret } : {}) });
 }
 
 export async function DELETE(request: Request, { params }: WebhookRouteParams) {
@@ -85,10 +81,10 @@ export async function DELETE(request: Request, { params }: WebhookRouteParams) {
 		return loaded.error;
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 
 	// Deliveries cascade with the webhook row.
 	await loaded.db.delete(webhooks).where(eq(webhooks.id, id));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

@@ -1,11 +1,10 @@
+import { useParams } from "@tanstack/react-router";
+
 import DraftsPage from "../page";
 import { OpenDraftOnRoute } from "./open-draft-on-route";
-import type { DraftRoutePageProps } from "./types";
 
-export default async function DraftMessagePage({
-	params,
-}: DraftRoutePageProps) {
-	const { messageId } = await params;
+export default function DraftMessagePage() {
+	const { messageId } = useParams({ from: "/_dashboard/drafts/$messageId/" });
 	return (
 		<>
 			<DraftsPage />

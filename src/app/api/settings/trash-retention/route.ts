@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { getDb } from "@/db";
@@ -17,7 +16,7 @@ export async function GET(request: Request) {
 	if (auth.error) {
 		return auth.error;
 	}
-	return NextResponse.json({
+	return Response.json({
 		days: normalizeTrashRetentionDays(auth.user.trashRetentionDays),
 	});
 }
@@ -33,7 +32,7 @@ export async function PATCH(request: Request) {
 	try {
 		input = await parseUpdateTrashRetentionSettingsRequest(request);
 	} catch (error) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error: error instanceof ZodError ? error.flatten() : "Invalid request",
 			},
@@ -46,5 +45,5 @@ export async function PATCH(request: Request) {
 		.set({ trashRetentionDays: input.days })
 		.where(eq(users.id, auth.user.id));
 
-	return NextResponse.json({ days: input.days });
+	return Response.json({ days: input.days });
 }

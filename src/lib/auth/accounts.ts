@@ -3,6 +3,7 @@ import { and, eq, gt, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { sessions, users } from "@/db/schema";
 import { hashSessionToken } from "@/lib/auth/session";
+import { setResponseCookie } from "@/lib/http/cookies";
 
 export const MAX_ACCOUNTS = 5;
 
@@ -119,21 +120,14 @@ export const ACCOUNTS_COOKIE = "ep_accounts";
  */
 export async function rememberLogin(
 	env: CloudflareEnv,
-	response: {
-		cookies: {
-			set: (
-				name: string,
-				value: string,
-				options: ReturnType<typeof cookieOptions>
-			) => unknown;
-		};
-	},
+	response: Response,
 	existing: string | undefined,
 	token: string,
 	previousActive?: string
 ): Promise<void> {
 	try {
-		response.cookies.set(
+		setResponseCookie(
+			response,
 			ACCOUNTS_COOKIE,
 			await addAccountToken(env, existing, token, previousActive),
 			cookieOptions()

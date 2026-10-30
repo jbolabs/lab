@@ -1,12 +1,11 @@
 "use client";
 import { Sparkles } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { layoutLength } from "@/app/layout-values";
 import { AgentPanel } from "@/components/agent/agent-panel";
 import { AssistantOpenContext } from "@/components/agent/assistant-open-state";
+import Link from "@/components/app-link";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ComposeProvider } from "@/components/compose/compose-context";
 import { FloatingComposer } from "@/components/compose/floating-composer";
@@ -22,6 +21,7 @@ import { SidebarProvider } from "@/components/sidebar-state";
 import { SkipToContent } from "@/components/skip-to-content";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
+import { usePathname, useRouter } from "@/lib/navigation";
 import { cn as clsx } from "@/lib/utils";
 
 import { useDashboardState } from "../(dashboard)/dashboard-state";

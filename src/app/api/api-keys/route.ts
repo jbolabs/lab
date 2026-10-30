@@ -1,5 +1,4 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getDb } from "@/db";
@@ -47,7 +46,7 @@ export async function GET(request: Request) {
 				.from(mcpKeyMailboxes)
 				.where(inArray(mcpKeyMailboxes.keyId, keyIds))
 		: [];
-	return NextResponse.json({
+	return Response.json({
 		apiKeys: rows
 			.filter(
 				(row) =>
@@ -70,16 +69,13 @@ export async function POST(request: Request) {
 	const env = getEnv();
 	const user = await requireUser(env, request);
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const parsed = createKeySchema.safeParse(
 		await request.json().catch(() => null)
 	);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	const isAppPassword =
@@ -93,7 +89,7 @@ export async function POST(request: Request) {
 		!mailboxIds.length &&
 		parsed.data.scopes.some((scope) => !scope.startsWith("calendar:"))
 	) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Choose a mailbox for mail permissions" },
 			{ status: 400 }
 		);
@@ -102,7 +98,7 @@ export async function POST(request: Request) {
 		mailboxIds.map((mailboxId) => getMailboxAccessLevel(db, user, mailboxId))
 	);
 	if (mailboxAccess.some((access) => !access?.canRead)) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 403 });
+		return Response.json({ error: "Mailbox not found" }, { status: 403 });
 	}
 	const id = newId("key");
 	await db.insert(apiKeys).values({
@@ -120,7 +116,7 @@ export async function POST(request: Request) {
 			.values(mailboxIds.map((mailboxId) => ({ keyId: id, mailboxId })));
 	}
 
-	return NextResponse.json({
+	return Response.json({
 		id,
 		key: fullKey,
 		mailboxIds,
@@ -133,11 +129,11 @@ export async function DELETE(request: Request) {
 	const env = getEnv();
 	const user = await requireUser(env, request);
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const id = new URL(request.url).searchParams.get("id");
 	if (!id) {
-		return NextResponse.json({ error: "Key required" }, { status: 400 });
+		return Response.json({ error: "Key required" }, { status: 400 });
 	}
 	const db = getDb(env);
 	const [key] = await db
@@ -146,14 +142,14 @@ export async function DELETE(request: Request) {
 		.where(and(eq(apiKeys.id, id), eq(apiKeys.userId, user.id)))
 		.limit(1);
 	if (!key) {
-		return NextResponse.json({ error: "Key not found" }, { status: 404 });
+		return Response.json({ error: "Key not found" }, { status: 404 });
 	}
 	if (
 		parseScopes(key.scopes).some((scope) =>
 			(ADMIN_API_KEY_SCOPES as readonly string[]).includes(scope)
 		)
 	) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Manage this key in Admin API keys" },
 			{ status: 403 }
 		);
@@ -170,5 +166,5 @@ export async function DELETE(request: Request) {
 	await db
 		.delete(apiKeys)
 		.where(and(eq(apiKeys.id, id), eq(apiKeys.userId, user.id)));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

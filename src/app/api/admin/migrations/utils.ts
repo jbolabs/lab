@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { authorizeAdminRequest } from "@/app/api/admin/update/utils";
 
 export async function authorizeMigrationRequest(request: Request) {
@@ -12,7 +10,7 @@ export async function authorizeMigrationRequest(request: Request) {
 		request.headers.get("Origin") !== new URL(request.url).origin
 	) {
 		return {
-			error: NextResponse.json(
+			error: Response.json(
 				{ error: "Invalid request origin" },
 				{ status: 403 }
 			),

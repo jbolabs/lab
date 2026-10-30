@@ -1,6 +1,3 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-
 import { canManageDomains } from "@/lib/auth/admin";
 import { requireUser } from "@/lib/auth/cookies";
 import { hasValidSessionMutationOrigin } from "@/lib/auth/origin";
@@ -11,7 +8,7 @@ import { getDomainProvisioningError } from "@/lib/domains/errors";
 import { addDomainForUser, listUserDomains } from "@/lib/domains/service";
 import { addDomainSchema } from "@/lib/validators";
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
 	const env = getEnv();
 	const user = await requireUser(env, request);
 	const domainOwnerId =
@@ -20,7 +17,8 @@ export async function GET(request: NextRequest) {
 			: user.id;
 	const domains = await listUserDomains(env, domainOwnerId);
 
-	const includeDns = request.nextUrl.searchParams.get("includeDns") === "true";
+	const includeDns =
+		new URL(request.url).searchParams.get("includeDns") === "true";
 
 	const dns: Record<string, DnsStatusSummary> = {};
 	let domainViews = domains;
@@ -48,7 +46,7 @@ export async function GET(request: NextRequest) {
 		}));
 	}
 
-	return NextResponse.json({
+	return Response.json({
 		dns: includeDns ? dns : undefined,
 		domains: domainViews,
 	});
@@ -58,17 +56,14 @@ export async function POST(request: Request) {
 	const env = getEnv();
 	const user = await requireUser(env, request);
 	if (!canManageDomains(user)) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const parsed = addDomainSchema.safeParse(await request.json());
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	try {
@@ -80,10 +75,10 @@ export async function POST(request: Request) {
 			sendingProvider: parsed.data.sendingProvider,
 			skipDns: parsed.data.skipDns,
 		});
-		return NextResponse.json(result);
+		return Response.json(result);
 	} catch (error) {
 		const failure = getDomainProvisioningError(error, "Failed to add domain");
-		return NextResponse.json(
+		return Response.json(
 			{ code: failure.code, error: failure.message },
 			{ status: failure.status }
 		);

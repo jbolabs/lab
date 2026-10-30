@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { domains, mailboxes, users } from "@/db/schema";
@@ -20,10 +19,10 @@ export async function GET(request: Request) {
 	const env = getEnv();
 	const auth = await authenticateApiRequest(env, request);
 	if (!auth) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 	if (!hasScope(auth.scopes, "jmap")) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "This key does not have the jmap scope" },
 			{ status: 403 }
 		);

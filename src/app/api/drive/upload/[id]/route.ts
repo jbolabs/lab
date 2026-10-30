@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { driveItems, driveUploadParts } from "@/db/schema";
 import {
@@ -29,7 +28,7 @@ async function loadPending(
 	const role = item ? await getDriveRole(auth.db, auth.user.id, item) : null;
 	if (!item || !item.uploadId || !role || !canEditDrive(role)) {
 		return {
-			error: NextResponse.json({ error: "Upload not found" }, { status: 404 }),
+			error: Response.json({ error: "Upload not found" }, { status: 404 }),
 		} as const;
 	}
 	const upload = auth.env.BUCKET.resumeMultipartUpload(
@@ -54,13 +53,13 @@ export async function PUT(request: Request, { params }: DriveItemParams) {
 		partNumber < 1 ||
 		partNumber > Math.min(total, DRIVE_MAX_PARTS)
 	) {
-		return NextResponse.json({ error: "Invalid part number" }, { status: 400 });
+		return Response.json({ error: "Invalid part number" }, { status: 400 });
 	}
 	// R2 needs every part but the last to be the same size, and the size the client declared must add up.
 	const expected =
 		partNumber < total ? partSize : ctx.item.size - (total - 1) * partSize;
 	if (!request.body || length !== expected) {
-		return NextResponse.json({ error: "Invalid part size" }, { status: 400 });
+		return Response.json({ error: "Invalid part size" }, { status: 400 });
 	}
 	const part = await ctx.upload.uploadPart(partNumber, request.body);
 	await ctx.db
@@ -74,7 +73,7 @@ export async function PUT(request: Request, { params }: DriveItemParams) {
 		.update(driveItems)
 		.set({ updatedAt: new Date() })
 		.where(eq(driveItems.id, ctx.item.id));
-	return NextResponse.json({ etag: part.etag, partNumber });
+	return Response.json({ etag: part.etag, partNumber });
 }
 
 /** Finishes the upload from the recorded parts and makes the file visible. */
@@ -94,16 +93,13 @@ export async function POST(request: Request, { params }: DriveItemParams) {
 		? Math.ceil(ctx.item.size / ctx.item.uploadPartSize)
 		: 0;
 	if (!total || parts.length !== total) {
-		return NextResponse.json(
-			{ error: "Some parts are missing" },
-			{ status: 409 }
-		);
+		return Response.json({ error: "Some parts are missing" }, { status: 409 });
 	}
 	let object;
 	try {
 		object = await ctx.upload.complete(parts);
 	} catch {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Could not complete the upload" },
 			{ status: 400 }
 		);
@@ -135,7 +131,7 @@ export async function POST(request: Request, { params }: DriveItemParams) {
 		ctx.user.id,
 		() => ctx.role
 	);
-	return NextResponse.json({ item });
+	return Response.json({ item });
 }
 
 /** Abandons an upload and discards what was sent. */
@@ -151,5 +147,5 @@ export async function DELETE(request: Request, { params }: DriveItemParams) {
 		.delete(driveUploadParts)
 		.where(eq(driveUploadParts.itemId, ctx.item.id));
 	await ctx.db.delete(driveItems).where(eq(driveItems.id, ctx.item.id));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

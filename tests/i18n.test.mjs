@@ -66,19 +66,16 @@ async function bundleI18n(bundleFile, extraLocale = false) {
 					builder.onResolve(
 						{
 							filter:
-								/^(?:next\/headers|next\/font\/google|@\/components\/providers|@\/lib\/cloudflare|\.\/home-server-utils)$/,
+								/^(?:@\/lib\/http\/request|@\/components\/providers|@\/lib\/cloudflare|@\/app\/home-server-utils)$/,
 						},
 						(args) => ({ namespace: "stub", path: args.path })
 					);
 					builder.onLoad({ filter: /.*/, namespace: "stub" }, ({ path }) => ({
 						contents: (() => {
-							if (path === "next/headers") {
+							if (path === "@/lib/http/request") {
 								return 'export async function cookies() { return { get(name) { return name === "mailflare-locale" && globalThis.testLocaleCookie !== undefined ? { value: globalThis.testLocaleCookie } : undefined; } }; }';
 							}
-							if (path === "next/font/google") {
-								return 'export const Figtree = () => ({ variable: "sans" }); export const Montserrat = () => ({ variable: "display" }); export const Geist_Mono = () => ({ variable: "mono" });';
-							}
-							if (path === "./home-server-utils") {
+							if (path === "@/app/home-server-utils") {
 								return 'export async function getHomeBranding() { return { appName: "Mailflare", hasCustomIcon: false, canCustomizeBranding: false }; }';
 							}
 							if (path === "@/lib/cloudflare") {
@@ -98,7 +95,8 @@ async function bundleI18n(bundleFile, extraLocale = false) {
 			contents: `
 				import { createElement } from "react";
 				import { renderToStaticMarkup } from "react-dom/server";
-				import RootLayout from "./src/app/layout";
+				import { AppDocument } from "./src/components/app-document";
+import { loadBootstrap } from "./src/lib/bootstrap.server";
 				import { LanguageProvider, useLanguage } from "./src/components/language-provider";
 				import { LanguageSelector } from "./src/components/language-selector";
 				import { loadMessages } from "./src/lib/i18n/utils";
@@ -111,7 +109,7 @@ async function bundleI18n(bundleFile, extraLocale = false) {
 				}
 				export async function renderLayout(cookieValue) {
 					globalThis.testLocaleCookie = cookieValue;
-					return renderToStaticMarkup(await RootLayout({ children: createElement(Probe) }));
+					return renderToStaticMarkup(createElement(AppDocument, { data: await loadBootstrap() }, createElement(Probe)));
 				}
 			`,
 			loader: "tsx",

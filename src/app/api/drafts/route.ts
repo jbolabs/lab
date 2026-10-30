@@ -1,5 +1,4 @@
 import { and, desc, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { messages } from "@/db/schema";
@@ -37,7 +36,7 @@ export async function GET(request: Request) {
 		.orderBy(desc(messages.createdAt))
 		.limit(100);
 
-	return NextResponse.json({ drafts: rows });
+	return Response.json({ drafts: rows });
 }
 
 export async function POST(request: Request) {
@@ -48,12 +47,12 @@ export async function POST(request: Request) {
 		input = await readJsonBody<DraftPayload>(request, 1024 * 1024);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json({ error: "Invalid draft request" }, { status });
+		return Response.json({ error: "Invalid draft request" }, { status });
 	}
 	const db = getDb(env);
 	const sender = await getDraftSender(env, user.id, input);
 	if ("error" in sender) {
-		return NextResponse.json({ error: sender.error }, { status: 403 });
+		return Response.json({ error: sender.error }, { status: 403 });
 	}
 	// Forwarding: the source must be readable by this user before its files are copied.
 	let forwardSourceId: string | null = null;
@@ -67,7 +66,7 @@ export async function POST(request: Request) {
 			? await getMailboxAccessLevel(db, user, source.mailboxId)
 			: null;
 		if (!source || !sourceAccess?.canRead) {
-			return NextResponse.json({ error: "Message not found" }, { status: 404 });
+			return Response.json({ error: "Message not found" }, { status: 404 });
 		}
 		forwardSourceId = source.id;
 	}
@@ -100,5 +99,5 @@ export async function POST(request: Request) {
 	const attachments = forwardSourceId
 		? await copyMessageAttachments(env, forwardSourceId, draftId)
 		: [];
-	return NextResponse.json({ draft: { attachments, id: draftId } });
+	return Response.json({ draft: { attachments, id: draftId } });
 }

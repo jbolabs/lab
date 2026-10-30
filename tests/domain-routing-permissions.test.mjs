@@ -26,8 +26,6 @@ const mocks = {
 	"@/lib/cloudflare": "export function getEnv(){return {}}",
 	"@/lib/mailboxes/access":
 		"export async function getMailboxAccessLevel(db,user,id){return globalThis.managedMailboxes.includes(id)?{canManage:true,mailbox:{id,domainId:'d-owner'}}:null} export async function listAccessibleMailboxes(){return []}",
-	"next/server":
-		"export const NextResponse={json:(data,init)=>Response.json(data,init)};",
 };
 await build({
 	alias: { "@": join(project, "src") },
@@ -44,7 +42,7 @@ await build({
 				builder.onResolve(
 					{
 						filter:
-							/^(?:next\/server|@\/db|@\/lib\/(?:cloudflare|auth\/cookies|api\/auth|mailboxes\/access))$/,
+							/^(?:@\/db|@\/lib\/(?:cloudflare|auth\/cookies|api\/auth|mailboxes\/access))$/,
 					},
 					(args) => ({ namespace: "mock", path: args.path })
 				);

@@ -1,5 +1,4 @@
 import { eq, inArray } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { chunks } from "@/app/api/drive/bulk-utils";
 import { getDb } from "@/db";
@@ -87,10 +86,10 @@ export async function POST(request: Request) {
 		body.action !== "restore" &&
 		body.action !== "delete"
 	) {
-		return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+		return Response.json({ error: "Unknown action" }, { status: 400 });
 	}
 	if (!ids.length || ids.length > MAX_BULK) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Select between 1 and 200 attachments" },
 			{ status: 400 }
 		);
@@ -98,7 +97,7 @@ export async function POST(request: Request) {
 
 	const { permitted, denied } = await getPermittedAttachments(db, user, ids);
 	if (denied && !permitted.length) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "You cannot change these attachments" },
 			{ status: 403 }
 		);
@@ -125,5 +124,5 @@ export async function POST(request: Request) {
 	if (body.action === "delete" && targets.length) {
 		await env.BUCKET.delete(targets.map((row) => row.r2Key));
 	}
-	return NextResponse.json({ count: targets.length, denied });
+	return Response.json({ count: targets.length, denied });
 }

@@ -1,6 +1,5 @@
 "use client";
 import { ImagePlus, Palette } from "lucide-react";
-import Image from "next/image";
 import { useRef, useState } from "react";
 
 import { useBranding } from "@/components/branding-provider";
@@ -116,8 +115,7 @@ function BrandingForm({
 									}
 								/>
 								<div className="flex items-center gap-4">
-									<Image
-										unoptimized
+									<img
 										width={48}
 										height={48}
 										src={preview ?? branding.iconUrl}

@@ -1,5 +1,4 @@
 import { and, desc, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import type { getDb } from "@/db";
 import { domains, mailboxes, users } from "@/db/schema";
@@ -104,7 +103,7 @@ export async function requireTeamAdmin(request: Request) {
 	} catch {
 		return {
 			env,
-			error: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+			error: Response.json({ error: "Forbidden" }, { status: 403 }),
 			user: null,
 		};
 	}

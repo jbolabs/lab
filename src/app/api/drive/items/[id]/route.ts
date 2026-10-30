@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { driveItems } from "@/db/schema";
 import {
@@ -23,7 +22,7 @@ export async function PATCH(request: Request, { params }: DriveItemParams) {
 	const { db, user } = auth;
 	const item = await getDriveItem(db, id);
 	if (!item) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	const body = (await request.json().catch(() => ({}))) as {
 		name?: unknown;
@@ -32,11 +31,11 @@ export async function PATCH(request: Request, { params }: DriveItemParams) {
 	const restoring = body.trashed === false && !!item.trashedAt;
 	const role = await getDriveRole(db, user.id, item, restoring);
 	if (!role || !canEditDrive(role)) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	// Editors may move an item to the trash; only the owner can bring it back.
 	if (body.trashed === false && role !== "owner") {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Only the owner can do that" },
 			{ status: 403 }
 		);
@@ -47,7 +46,7 @@ export async function PATCH(request: Request, { params }: DriveItemParams) {
 	if (body.name !== undefined) {
 		const name = normalizeDriveName(body.name);
 		if (!name) {
-			return NextResponse.json({ error: "Enter a name" }, { status: 400 });
+			return Response.json({ error: "Enter a name" }, { status: 400 });
 		}
 		patch.name = name;
 	}
@@ -61,7 +60,7 @@ export async function PATCH(request: Request, { params }: DriveItemParams) {
 		user.id,
 		() => role
 	);
-	return NextResponse.json({ item: updated });
+	return Response.json({ item: updated });
 }
 
 /** Permanently deletes an item the owner has already moved to the trash. */
@@ -74,14 +73,14 @@ export async function DELETE(request: Request, { params }: DriveItemParams) {
 	const { env, db, user } = auth;
 	const item = await getDriveItem(db, id);
 	if (!item || item.ownerId !== user.id) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	if (!item.trashedAt) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Move the item to trash first" },
 			{ status: 409 }
 		);
 	}
 	await deleteDriveItems(env, [item]);
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

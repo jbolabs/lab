@@ -16,7 +16,6 @@ import {
 	Star,
 	Trash2,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 
@@ -51,6 +50,7 @@ import {
 } from "@/lib/folders/colors";
 import type { FolderColor } from "@/lib/folders/types";
 import type { TranslationKey } from "@/lib/i18n/types";
+import { usePathname } from "@/lib/navigation";
 
 import { NavItem } from "./components-nav";
 import type { NavLink } from "./components-nav-types";

@@ -1,6 +1,4 @@
 import { eq } from "drizzle-orm";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
@@ -14,8 +12,9 @@ import { verifySecondFactor } from "@/lib/auth/mfa";
 import { allowLoginAttempt } from "@/lib/auth/rate-limit";
 import { createSession, SESSION_COOKIE } from "@/lib/auth/session";
 import { getEnv } from "@/lib/cloudflare";
+import { setResponseCookie } from "@/lib/http/cookies";
 import { RequestBodyTooLargeError } from "@/lib/http/errors";
-import { readJsonBody } from "@/lib/http/request";
+import { cookies, readJsonBody } from "@/lib/http/request";
 import { mfaVerifySchema } from "@/lib/validators";
 
 /** Second step of a login: trade a challenge plus a TOTP or recovery code for a session. */
@@ -26,18 +25,15 @@ export async function POST(request: Request) {
 		body = await readJsonBody(request, 16 * 1024);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json({ error: "Invalid request" }, { status });
+		return Response.json({ error: "Invalid request" }, { status });
 	}
 	const parsed = mfaVerifySchema.safeParse(body);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 	// Codes are six digits; the login limiter is what stops brute force.
 	if (!(await allowLoginAttempt(env, request))) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Too many attempts. Try again shortly." },
 			{ headers: { "Retry-After": "60" }, status: 429 }
 		);
@@ -45,7 +41,7 @@ export async function POST(request: Request) {
 
 	const userId = await getLoginChallengeUserId(env, parsed.data.challengeToken);
 	if (!userId) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "This sign-in attempt has expired. Start again." },
 			{ status: 401 }
 		);
@@ -57,14 +53,11 @@ export async function POST(request: Request) {
 		.where(eq(users.id, userId))
 		.limit(1);
 	if (!user || user.disabled) {
-		return NextResponse.json({ error: "Account disabled" }, { status: 403 });
+		return Response.json({ error: "Account disabled" }, { status: 403 });
 	}
 	const method = await verifySecondFactor(env, user, parsed.data.code);
 	if (!method) {
-		return NextResponse.json(
-			{ error: "That code did not match" },
-			{ status: 401 }
-		);
+		return Response.json({ error: "That code did not match" }, { status: 401 });
 	}
 
 	await consumeLoginChallenge(env, parsed.data.challengeToken);
@@ -79,14 +72,14 @@ export async function POST(request: Request) {
 		request,
 		userId: user.id,
 	});
-	const response = NextResponse.json({
+	const response = Response.json({
 		method,
 		ok: true,
 		redirect: "/inbox",
 		token,
 	});
 	response.headers.set("Cache-Control", "no-store");
-	response.cookies.set(SESSION_COOKIE, token, {
+	setResponseCookie(response, SESSION_COOKIE, token, {
 		httpOnly: true,
 		maxAge: 60 * 60 * 24 * 30,
 		path: "/",

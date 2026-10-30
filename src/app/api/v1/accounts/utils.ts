@@ -1,5 +1,4 @@
 import { eq, or } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { createAccountResponse } from "@/app/api/accounts/create";
 import { accountListItemFromUser } from "@/app/api/accounts/utils";
@@ -14,7 +13,7 @@ export async function GET(request: Request) {
 	const env = getEnv();
 	const auth = await authenticateAdminApiKey(env, request, "accounts");
 	if (!auth) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 	const rows = await getDb(env)
 		.select()
@@ -22,26 +21,23 @@ export async function GET(request: Request) {
 		.where(
 			or(eq(users.id, auth.userId), eq(users.createdByUserId, auth.userId))
 		);
-	return NextResponse.json({ accounts: rows.map(accountListItemFromUser) });
+	return Response.json({ accounts: rows.map(accountListItemFromUser) });
 }
 
 export async function POST(request: Request) {
 	const env = getEnv();
 	const auth = await authenticateAdminApiKey(env, request, "accounts");
 	if (!auth) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 	const parsed = createUserAccountSchema.safeParse(
 		await request.json().catch(() => null)
 	);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 	if (parsed.data.role === "admin" && !isPrimaryAdmin(auth.user)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Only the primary admin can create admin accounts" },
 			{ status: 403 }
 		);

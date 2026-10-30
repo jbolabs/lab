@@ -1,5 +1,4 @@
 import { and, desc, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { messages } from "@/db/schema";
@@ -32,7 +31,7 @@ export async function GET(request: Request) {
 		)
 		.orderBy(desc(messages.createdAt))
 		.limit(200);
-	return NextResponse.json({ templates: rows });
+	return Response.json({ templates: rows });
 }
 
 export async function POST(request: Request) {
@@ -42,7 +41,7 @@ export async function POST(request: Request) {
 		return auth.error;
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const input = (await request.json().catch(() => null)) as {
 		mailboxId?: string | null;
@@ -55,7 +54,7 @@ export async function POST(request: Request) {
 	const html = input?.html ?? "";
 	const text = input?.text ?? "";
 	if (!title || !(html.trim() || text.trim())) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Enter a title and content." },
 			{ status: 400 }
 		);
@@ -65,7 +64,7 @@ export async function POST(request: Request) {
 		mailboxId: input?.mailboxId,
 	});
 	if ("error" in sender) {
-		return NextResponse.json({ error: sender.error }, { status: 403 });
+		return Response.json({ error: sender.error }, { status: 403 });
 	}
 	const id = newId("msg");
 	const buildTemplateValues = () => ({
@@ -83,7 +82,7 @@ export async function POST(request: Request) {
 		userId: auth.user.id,
 	});
 	await getDb(env).insert(messages).values(buildTemplateValues());
-	return NextResponse.json(
+	return Response.json(
 		{
 			template: {
 				htmlBody: html || null,

@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { getEnv } from "@/lib/cloudflare";
 import { getResendWebhookSecret } from "@/lib/domains/resend-receiving";
 import { getEmailAddress, getEmailAddressList } from "@/lib/email/address";
@@ -7,8 +5,6 @@ import { getResendApiKey } from "@/lib/email/outbound-provider";
 import { intakeProviderMail } from "@/lib/email/provider-intake";
 import { getReceivedEmail } from "@/lib/email/resend-api";
 import { verifySvixSignature } from "@/lib/email/svix";
-
-export const dynamic = "force-dynamic";
 
 interface ReceivedEvent {
 	type?: string;
@@ -24,7 +20,7 @@ export async function POST(request: Request) {
 	const env = getEnv();
 	const secret = await getResendWebhookSecret(env);
 	if (!secret) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Resend receiving is not set up" },
 			{ status: 503 }
 		);
@@ -40,35 +36,35 @@ export async function POST(request: Request) {
 		body
 	);
 	if (!valid) {
-		return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+		return Response.json({ error: "Invalid signature" }, { status: 401 });
 	}
 
 	let event: ReceivedEvent;
 	try {
 		event = JSON.parse(body) as ReceivedEvent;
 	} catch {
-		return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+		return Response.json({ error: "Invalid body" }, { status: 400 });
 	}
 	if (event.type !== "email.received") {
-		return NextResponse.json({ ignored: true });
+		return Response.json({ ignored: true });
 	}
 	const emailId = event.data?.email_id ?? event.data?.id;
 	if (!emailId) {
-		return NextResponse.json({ error: "Missing email id" }, { status: 400 });
+		return Response.json({ error: "Missing email id" }, { status: 400 });
 	}
 
 	const apiKey = await getResendApiKey(env);
 	const email = await getReceivedEmail(apiKey, emailId);
 	const download = email.raw?.download_url;
 	if (!download) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Resend did not provide the raw message" },
 			{ status: 502 }
 		);
 	}
 	const rawResponse = await fetch(download);
 	if (!rawResponse.ok) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Could not download the raw message" },
 			{ status: 502 }
 		);
@@ -84,5 +80,5 @@ export async function POST(request: Request) {
 		raw: await rawResponse.arrayBuffer(),
 		recipients,
 	});
-	return NextResponse.json(result);
+	return Response.json(result);
 }

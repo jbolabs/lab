@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { domains, mailboxes } from "@/db/schema";
@@ -21,7 +20,7 @@ export async function GET(request: Request, { params }: AccountRouteParams) {
 		(account.id !== access.user.id &&
 			account.createdByUserId !== access.user.id)
 	) {
-		return NextResponse.json({ error: "Account not found" }, { status: 404 });
+		return Response.json({ error: "Account not found" }, { status: 404 });
 	}
 	const rows = await db
 		.select({
@@ -34,5 +33,5 @@ export async function GET(request: Request, { params }: AccountRouteParams) {
 		.from(mailboxes)
 		.innerJoin(domains, eq(mailboxes.domainId, domains.id))
 		.where(eq(mailboxes.userId, id));
-	return NextResponse.json({ mailboxes: rows });
+	return Response.json({ mailboxes: rows });
 }

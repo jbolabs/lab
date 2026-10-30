@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { routingRules } from "@/db/schema";
@@ -24,7 +23,7 @@ async function loadRule(request: Request, id: string) {
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
 		return {
-			error: NextResponse.json({ error: "Invalid origin" }, { status: 403 }),
+			error: Response.json({ error: "Invalid origin" }, { status: 403 }),
 		} as const;
 	}
 	const { user } = auth;
@@ -36,14 +35,14 @@ async function loadRule(request: Request, id: string) {
 		.limit(1);
 	if (!rule) {
 		return {
-			error: NextResponse.json({ error: "Rule not found" }, { status: 404 }),
+			error: Response.json({ error: "Rule not found" }, { status: 404 }),
 		} as const;
 	}
 
 	const adminDomain = await getAdminDomain(db, user, rule.domainId);
 	if (!adminDomain) {
 		return {
-			error: NextResponse.json(
+			error: Response.json(
 				{ error: "Domain management permission is required" },
 				{ status: 403 }
 			),
@@ -70,10 +69,7 @@ export async function PATCH(
 		domainId: loaded.rule.domainId,
 	});
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	const destinationAllowed = parsed.data.mailboxId
@@ -84,7 +80,7 @@ export async function PATCH(
 			)
 		: true;
 	if (!destinationAllowed) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Mailbox access is required for the destination" },
 			{ status: 403 }
 		);
@@ -94,7 +90,7 @@ export async function PATCH(
 		.update(routingRules)
 		.set(toRuleColumns(parsed.data))
 		.where(eq(routingRules.id, id));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }
 
 export async function DELETE(
@@ -108,5 +104,5 @@ export async function DELETE(
 	}
 
 	await loaded.db.delete(routingRules).where(eq(routingRules.id, id));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

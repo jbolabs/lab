@@ -119,14 +119,14 @@ npm run dev
 
 Add your Cloudflare credentials to `.dev.vars`, then open [http://localhost:3000](http://localhost:3000). To load sample data, run `npm run db:seed` while the dev server is running.
 
-The Cloudflare app uses Vite+, vinext, and the Cloudflare Vite plugin, with local D1, R2, Queues, and Durable Objects. Remote bindings are off by default. To use Workers AI locally, log in with Wrangler, set `CLOUDFLARE_ACCOUNT_ID`, and run `CLOUDFLARE_REMOTE_BINDINGS=true npm run dev`.
+The Cloudflare app uses TanStack Start, Vite+, and the Cloudflare Vite plugin, with local D1, R2, Queues, and Durable Objects. Remote bindings are off by default. To use Workers AI locally, log in with Wrangler, set `CLOUDFLARE_ACCOUNT_ID`, and run `CLOUDFLARE_REMOTE_BINDINGS=true npm run dev`.
 
 - `npm run build`: build the full Worker.
 - `npm run start`: preview that build locally.
 - `npm run deploy`: build and deploy.
-- `npm run lint`: run Vite+ lint and type checks, including the existing Next.js and React rules.
+- `npm run lint`: run Oxlint with the React and project rules. Run `npm run typecheck` separately.
 
-The Node/Docker runtime still uses Next.js with `build:node`, `start:node`, and `dev:node`.
+The Node/Docker runtime uses the same TanStack Start HTTP handler with `build:node`, `start:node`, and `dev:node`.
 
 ## Languages
 

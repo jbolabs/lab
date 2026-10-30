@@ -1,5 +1,4 @@
 import { and, eq, ne } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { domains, mailboxAliases, mailboxes } from "@/db/schema";
@@ -69,7 +68,7 @@ export async function GET(request: Request, { params }: MailboxRouteParams) {
 	const db = getDb(env);
 	const mailbox = await getManagedMailbox(db, user, id);
 	if (!mailbox) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 
 	const ownerId = await getDomainOwnerId(db, mailbox.domainId);
@@ -83,7 +82,7 @@ export async function GET(request: Request, { params }: MailboxRouteParams) {
 			: Promise.resolve([]),
 	]);
 
-	return NextResponse.json({ aliases, availableDomains });
+	return Response.json({ aliases, availableDomains });
 }
 
 export async function POST(request: Request, { params }: MailboxRouteParams) {
@@ -92,7 +91,7 @@ export async function POST(request: Request, { params }: MailboxRouteParams) {
 	const user = await requireUser(env, request);
 	const parsed = createMailboxAliasSchema.safeParse(await request.json());
 	if (!parsed.success) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Enter a valid alias username and domain" },
 			{ status: 400 }
 		);
@@ -101,7 +100,7 @@ export async function POST(request: Request, { params }: MailboxRouteParams) {
 	const db = getDb(env);
 	const mailbox = await getManagedMailbox(db, user, id);
 	if (!mailbox) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 
 	const ownerId = await getDomainOwnerId(db, mailbox.domainId);
@@ -123,7 +122,7 @@ export async function POST(request: Request, { params }: MailboxRouteParams) {
 				.limit(1)
 		: [];
 	if (!domain) {
-		return NextResponse.json({ error: "Domain not found" }, { status: 404 });
+		return Response.json({ error: "Domain not found" }, { status: 404 });
 	}
 
 	const { localPart } = parsed.data;
@@ -135,7 +134,7 @@ export async function POST(request: Request, { params }: MailboxRouteParams) {
 		)
 		.limit(1);
 	if (existingMailbox) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "A mailbox already uses this address" },
 			{ status: 409 }
 		);
@@ -151,7 +150,7 @@ export async function POST(request: Request, { params }: MailboxRouteParams) {
 		)
 		.limit(1);
 	if (existingAlias) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "An alias already uses this address" },
 			{ status: 409 }
 		);
@@ -169,7 +168,7 @@ export async function POST(request: Request, { params }: MailboxRouteParams) {
 		.onConflictDoNothing()
 		.returning({ id: mailboxAliases.id });
 	if (inserted.length === 0) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "An alias already uses this address" },
 			{ status: 409 }
 		);
@@ -184,7 +183,7 @@ export async function POST(request: Request, { params }: MailboxRouteParams) {
 	} catch (error) {
 		console.error("ensureEmailRoutingRuleToWorker", error);
 		await db.delete(mailboxAliases).where(eq(mailboxAliases.id, aliasId));
-		return NextResponse.json(
+		return Response.json(
 			{
 				error:
 					"Failed to create the Cloudflare Email Routing rule for this alias. Please try again.",
@@ -194,7 +193,7 @@ export async function POST(request: Request, { params }: MailboxRouteParams) {
 	}
 
 	const aliases = await listMailboxAliases(db, id);
-	return NextResponse.json({ aliases });
+	return Response.json({ aliases });
 }
 
 export async function DELETE(request: Request, { params }: MailboxRouteParams) {
@@ -203,13 +202,13 @@ export async function DELETE(request: Request, { params }: MailboxRouteParams) {
 	const user = await requireUser(env, request);
 	const aliasId = new URL(request.url).searchParams.get("aliasId");
 	if (!aliasId) {
-		return NextResponse.json({ error: "Alias is required" }, { status: 400 });
+		return Response.json({ error: "Alias is required" }, { status: 400 });
 	}
 
 	const db = getDb(env);
 	const mailbox = await getManagedMailbox(db, user, id);
 	if (!mailbox) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 
 	const [alias] = await db
@@ -227,7 +226,7 @@ export async function DELETE(request: Request, { params }: MailboxRouteParams) {
 		)
 		.limit(1);
 	if (!alias) {
-		return NextResponse.json({ error: "Alias not found" }, { status: 404 });
+		return Response.json({ error: "Alias not found" }, { status: 404 });
 	}
 
 	// Keep the Cloudflare rule when the address still resolves through a
@@ -254,7 +253,7 @@ export async function DELETE(request: Request, { params }: MailboxRouteParams) {
 			);
 		} catch (error) {
 			console.error("deleteEmailRoutingRuleForAddress", error);
-			return NextResponse.json(
+			return Response.json(
 				{
 					error:
 						"Failed to remove the Cloudflare Email Routing rule for this alias. Please try again.",
@@ -266,5 +265,5 @@ export async function DELETE(request: Request, { params }: MailboxRouteParams) {
 
 	await db.delete(mailboxAliases).where(eq(mailboxAliases.id, aliasId));
 	const aliases = await listMailboxAliases(db, id);
-	return NextResponse.json({ aliases });
+	return Response.json({ aliases });
 }

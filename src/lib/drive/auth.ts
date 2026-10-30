@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { getDb } from "@/db";
 import { requireSessionUser } from "@/lib/api/auth";
 import { hasValidSessionMutationOrigin } from "@/lib/auth/origin";
@@ -13,7 +11,7 @@ export async function authorizeDrive(request: Request, mutation = false) {
 	}
 	if (mutation && !hasValidSessionMutationOrigin(request)) {
 		return {
-			error: NextResponse.json({ error: "Invalid origin" }, { status: 403 }),
+			error: Response.json({ error: "Invalid origin" }, { status: 403 }),
 		} as const;
 	}
 	return { db: getDb(env), env, error: null, user } as const;

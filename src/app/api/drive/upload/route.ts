@@ -1,5 +1,4 @@
 import { and, eq, isNotNull, isNull, lt } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { driveItems, driveUploadParts } from "@/db/schema";
 import {
@@ -44,10 +43,10 @@ export async function POST(request: Request) {
 			: null;
 	const name = normalizeDriveName(body.name) ?? "Untitled";
 	if (size === null) {
-		return NextResponse.json({ error: "Invalid file size" }, { status: 400 });
+		return Response.json({ error: "Invalid file size" }, { status: 400 });
 	}
 	if (size > DRIVE_MAX_FILE_BYTES) {
-		return NextResponse.json({ error: "File is too large" }, { status: 413 });
+		return Response.json({ error: "File is too large" }, { status: 413 });
 	}
 
 	let ownerId = user.id;
@@ -60,10 +59,7 @@ export async function POST(request: Request) {
 					? await getDriveRole(db, user.id, parent)
 					: null;
 			if (!parent || !canEditDrive(role)) {
-				return NextResponse.json(
-					{ error: "Folder not found" },
-					{ status: 404 }
-				);
+				return Response.json({ error: "Folder not found" }, { status: 404 });
 			}
 			parentId = parent.id;
 			({ ownerId } = parent);
@@ -137,7 +133,7 @@ export async function POST(request: Request) {
 					.update(driveItems)
 					.set({ updatedAt: new Date() })
 					.where(eq(driveItems.id, pending.id));
-				return NextResponse.json({
+				return Response.json({
 					id: pending.id,
 					partSize: pending.uploadPartSize,
 					parts: Math.ceil(size / pending.uploadPartSize),
@@ -157,7 +153,7 @@ export async function POST(request: Request) {
 		limit !== null &&
 		(await getDriveStorageUsed(db, ownerId)) + size > limit
 	) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Not enough Drive storage left for this file" },
 			{ status: 413 }
 		);
@@ -201,7 +197,7 @@ export async function POST(request: Request) {
 			throw error;
 		}
 		const [item] = await toDriveItemDtos(db, [row], user.id, () => role);
-		return NextResponse.json({ complete: true, item });
+		return Response.json({ complete: true, item });
 	}
 
 	const upload = await env.BUCKET.createMultipartUpload(key, {
@@ -216,7 +212,7 @@ export async function POST(request: Request) {
 		await upload.abort();
 		throw error;
 	}
-	return NextResponse.json({
+	return Response.json({
 		id,
 		partSize: DRIVE_PART_BYTES,
 		parts: Math.ceil(size / DRIVE_PART_BYTES),

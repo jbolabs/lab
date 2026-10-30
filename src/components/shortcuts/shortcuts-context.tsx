@@ -13,7 +13,6 @@ import {
 	Settings,
 	HelpCircle,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import React, {
 	createContext,
 	useContext,
@@ -24,6 +23,7 @@ import React, {
 
 import { useCompose } from "@/components/compose/compose-context";
 import { useLanguage } from "@/components/language-provider";
+import { useRouter } from "@/lib/navigation";
 
 import { CommandPalette } from "./command-palette";
 import { ShortcutsHelpDialog } from "./shortcuts-help-dialog";

@@ -1,12 +1,12 @@
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import type { DragEvent, MouseEvent } from "react";
 import { useEffect, useState } from "react";
 
+import Link from "@/components/app-link";
 import { HintTooltip } from "@/components/hint-tooltip";
 import { Button } from "@/components/ui/button";
 import { withCleanup } from "@/lib/async-cleanup";
 import { getMessageDragData } from "@/lib/messages/drag-utils";
+import { usePathname, useRouter } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 import type { NavLink } from "./components-nav-types";

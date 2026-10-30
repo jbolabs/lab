@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { canManageDomains } from "@/lib/auth/admin";
 import { requireUser } from "@/lib/auth/cookies";
 import { hasValidSessionMutationOrigin } from "@/lib/auth/origin";
@@ -24,35 +22,35 @@ export async function GET(request: Request, { params }: Params) {
 	const user = await requireUser(env, request);
 	const domain = await getDomainForUser(env, user.id, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	if (domain.sendingProvider !== "resend") {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Resend is not selected for this domain" },
 			{ status: 400 }
 		);
 	}
 	const key = await getResendKeyStatus(env);
 	if (!key.configured) {
-		return NextResponse.json(
+		return Response.json(
 			{ keyConfigured: false, resend: null },
 			{ headers: { "Cache-Control": "no-store" } }
 		);
 	}
 	try {
-		return NextResponse.json(
+		return Response.json(
 			{ keyConfigured: true, resend: await getResendDomainView(env, domain) },
 			{ headers: { "Cache-Control": "no-store" } }
 		);
 	} catch (error) {
 		// A send-only key is valid; it just cannot look at domains.
 		if (error instanceof ResendRestrictedKeyError) {
-			return NextResponse.json(
+			return Response.json(
 				{ canManageDomains: false, keyConfigured: true, resend: null },
 				{ headers: { "Cache-Control": "no-store" } }
 			);
 		}
-		return NextResponse.json(
+		return Response.json(
 			{
 				error:
 					error instanceof Error ? error.message : "Could not reach Resend",
@@ -67,14 +65,14 @@ export async function POST(request: Request, { params }: Params) {
 	const env = getEnv();
 	const user = await requireUser(env, request);
 	if (!canManageDomains(user)) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const domain = await getDomainForUser(env, user.id, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	const body = (await request.json().catch(() => ({}))) as { action?: string };
 	if (
@@ -82,7 +80,7 @@ export async function POST(request: Request, { params }: Params) {
 		body.action !== "verify" &&
 		body.action !== "test"
 	) {
-		return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+		return Response.json({ error: "Unknown action" }, { status: 400 });
 	}
 	try {
 		if (body.action === "test") {
@@ -93,25 +91,25 @@ export async function POST(request: Request, { params }: Params) {
 				to: user.email,
 			});
 			if (!sent) {
-				return NextResponse.json(
+				return Response.json(
 					{
 						error: `Create a mailbox on ${domain.hostname} to send the test from.`,
 					},
 					{ status: 400 }
 				);
 			}
-			return NextResponse.json({ ok: true, to: user.email });
+			return Response.json({ ok: true, to: user.email });
 		}
 		const resend =
 			body.action === "setup"
 				? await setupResendDomain(env, domain)
 				: await verifyResendDomainView(env, domain);
-		return NextResponse.json(
+		return Response.json(
 			{ resend },
 			{ headers: { "Cache-Control": "no-store" } }
 		);
 	} catch (error) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error: error instanceof Error ? error.message : "Resend request failed",
 			},

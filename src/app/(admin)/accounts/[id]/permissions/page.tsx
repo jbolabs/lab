@@ -1,5 +1,4 @@
 "use client";
-import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { useLanguage } from "@/components/language-provider";
@@ -43,6 +42,7 @@ import {
 	clearCurrentUserCache,
 } from "@/hooks/use-current-user";
 import { runAsyncAction } from "@/lib/async-cleanup";
+import { useParams } from "@/lib/navigation";
 
 import type { ManagedAccount } from "../types";
 import {

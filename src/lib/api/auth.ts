@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { authenticateApiKeyValue } from "@/lib/api/key-auth";
 import type { ApiAuthResult } from "@/lib/api/key-auth-types";
 import { getCurrentUser } from "@/lib/auth/cookies";
@@ -15,7 +13,7 @@ export async function authenticateApiKey(
 }
 
 /**
- * Session auth for route handlers. `requireUser` throws a bare Error, which Next turns into
+ * Session auth for route handlers. `requireUser` throws a bare Error, which a server would turn into
  * a 500; this returns a proper 401 response instead so unauthenticated callers get the right
  * status.
  */
@@ -23,7 +21,7 @@ export async function requireSessionUser(env: CloudflareEnv, request: Request) {
 	const user = await getCurrentUser(env, request);
 	if (!user) {
 		return {
-			error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+			error: Response.json({ error: "Unauthorized" }, { status: 401 }),
 			user: null,
 		} as const;
 	}
