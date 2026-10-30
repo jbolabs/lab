@@ -3,7 +3,10 @@
 import { clsx } from "clsx";
 
 import { AdminNav } from "@/components/admin-nav";
-import { adminPageTitles } from "@/components/admin-page-titles";
+import {
+	adminPageTitles,
+	getAdminBackPath,
+} from "@/components/admin-page-titles";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ComposeProvider } from "@/components/compose/compose-context";
 import { FloatingComposer } from "@/components/compose/floating-composer";
@@ -45,6 +48,15 @@ export default function DashboardLayout({
 
 	const mobileTitleKey = adminPageTitles[pathname];
 	const mobileTitle = mobileTitleKey ? t(mobileTitleKey) : undefined;
+	const backPath = getAdminBackPath(pathname);
+	const backTitleKey = backPath ? adminPageTitles[backPath] : undefined;
+	const mobileBack =
+		backPath && backTitleKey
+			? {
+					href: backPath,
+					label: t("message.nav.backTo", { folder: t(backTitleKey) }),
+				}
+			: undefined;
 
 	return (
 		<AuthGuard
@@ -66,7 +78,7 @@ export default function DashboardLayout({
 									<SidebarResizeBoundary />
 								</SidebarAside>
 								<div className="relative flex min-h-0 min-w-0 flex-col">
-									<MobileTopBar title={mobileTitle} />
+									<MobileTopBar title={mobileTitle} back={mobileBack} />
 									<div className="absolute top-safe-2 right-4 z-10 flex items-center gap-4">
 										<MailboxSelector />
 									</div>
