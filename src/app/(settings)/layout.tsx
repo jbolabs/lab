@@ -49,7 +49,7 @@ export default function DashboardLayout({
 										<DashboardNav />
 									</SidebarAside>
 									<div className="flex min-h-0 min-w-0 flex-col">
-										<AppTopBar className="gap-4 pr-4">
+										<AppTopBar persistent className="gap-4 pr-4">
 											<MobileMenuButton className="ml-2" />
 											<MailSearchInput />
 											{/* <Link

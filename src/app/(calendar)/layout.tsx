@@ -136,7 +136,10 @@ export default function CalendarLayout({
 										<CalendarMobileUpcoming />
 									</SidebarAside>
 									<div className="flex min-h-0 min-w-0 flex-col">
-										<AppTopBar className="gap-3 pr-4 max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-2 max-md:pr-2 max-md:pb-2">
+										<AppTopBar
+											persistent
+											className="gap-3 pr-4 max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-2 max-md:pr-2 max-md:pb-2"
+										>
 											<MobileMenuButton className="ml-1" />
 											<div
 												className={clsx(

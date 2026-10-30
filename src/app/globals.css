@@ -300,6 +300,14 @@ pre {
 	animation: none;
 }
 
+[data-slot="app-top-bar"][data-persistent] {
+	view-transition-name: app-top-bar;
+}
+
+::view-transition-group(app-top-bar) {
+	animation: none;
+}
+
 @keyframes page-push-in {
 	from {
 		transform: translateX(100%);

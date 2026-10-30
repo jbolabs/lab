@@ -52,7 +52,7 @@ function DriveFrame({ children }: { children: React.ReactNode }) {
 				<SidebarResizeBoundary />
 			</SidebarAside>
 			<div className="flex min-h-0 min-w-0 flex-col">
-				<AppTopBar className="gap-3 pr-4">
+				<AppTopBar persistent className="gap-3 pr-4">
 					<MobileMenuButton className="ml-2" />
 					<div
 						id="drive-header-slot"
