@@ -82,9 +82,12 @@ export default function DashboardLayout({
 									<div className="absolute top-safe-2 right-4 z-10 flex items-center gap-4">
 										<MailboxSelector />
 									</div>
+									{/* Focusable so keyboard users can scroll pages with no controls in them
+									    (activity, AI usage); the skip link still lands here. */}
 									<main
 										id="main-content"
-										tabIndex={-1}
+										// oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- A scrollable region must be keyboard reachable (axe scrollable-region-focusable).
+										tabIndex={0}
 										className={clsx(
 											"min-h-0 min-w-0 flex-1 scrollbar-gutter-stable overflow-y-auto overscroll-contain bg-background px-4 py-8 focus:outline-none max-md:pb-safe-add-24 md:px-6 md:pt-16 lg:px-12",
 											mobileTitle && "max-md:[&_h1]:sr-only"

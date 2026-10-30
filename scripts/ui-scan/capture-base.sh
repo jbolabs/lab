@@ -4,7 +4,8 @@
 # captures the groups from HEAD, then puts the work back. The stash is applied by SHA, never popped,
 # because the stash stack is shared with other worktrees.
 #
-#   scripts/ui-scan/capture-base.sh <label> <group>...
+#   scripts/ui-scan/capture-base.sh <label> [<group>...]   (no groups: every group, which is what
+#   a change to a shared component needs)
 set -eu
 label="$1"
 shift
@@ -23,4 +24,7 @@ restore() {
 }
 trap restore EXIT
 sleep 2 # let the dev server pick up the reverted files
+if [ "$#" -eq 0 ]; then
+	set -- admin auth calendar compose drive mail settings
+fi
 printf '%s\n' "$@" | xargs -P 3 -I{} node scripts/ui-scan/capture.mjs --group {} --label "$label"

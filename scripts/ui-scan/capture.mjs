@@ -424,7 +424,13 @@ async function captureInteraction(browser, storageState, spec, viewportName) {
 			);
 		})
 	);
-	const reducedMotion = animated.filter((_, index) => moved[index]);
+	const reducedMotion = animated.filter(
+		(animation, index) =>
+			moved[index] &&
+			animation.properties.some((p) =>
+				["transform", "translate", "scale"].includes(p)
+			)
+	);
 	await context.close();
 
 	return { animations, longFrames, reducedMotion };
