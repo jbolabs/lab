@@ -417,12 +417,12 @@ function CompactMessageListRow({
 				<span
 					className={clsx(
 						"mt-0.5 block truncate text-sm leading-5",
-						unread ? "font-semibold" : "text-foreground/85"
+						unread && "font-semibold"
 					)}
 				>
 					{message.subject ?? t("list.noSubject")}
 				</span>
-				<span className="mt-0.5 block truncate text-sm leading-5">
+				<span className="mt-0.5 block truncate text-sm leading-5 text-muted-foreground">
 					{preview}
 				</span>
 			</Link>
@@ -553,7 +553,7 @@ function DesktopMessageContent({
 					<span className="ml-2 text-xs">{message.threadCount}</span>
 				)}
 			</span>
-			<span className="truncate text-foreground/80">
+			<span className="truncate">
 				<Link
 					href={href}
 					onClick={config.folder === "drafts" ? undefined : onMessageNavigate}
@@ -563,7 +563,10 @@ function DesktopMessageContent({
 					<span className={unread ? "font-semibold" : ""}>
 						{rowMessage.subject ?? t("list.noSubject")}
 					</span>
-					<span> - {getMessagePreview(rowMessage, config.folder, t)}</span>
+					<span className="text-muted-foreground">
+						{" "}
+						- {getMessagePreview(rowMessage, config.folder, t)}
+					</span>
 				</Link>
 			</span>
 			<time
