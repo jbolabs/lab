@@ -104,6 +104,7 @@ async function newContext(
 ) {
 	const { safeArea, ...options } = VIEWPORTS[viewportName];
 	const context = await browser.newContext({
+		baseURL: args.base,
 		...options,
 		colorScheme: scheme,
 		reducedMotion,
@@ -160,6 +161,12 @@ function contactSheet(dir, viewportName) {
 	if (result.error) {
 		console.warn("ffmpeg not found; skipping contact sheet");
 	}
+}
+
+function resolvePath(context, spec) {
+	return typeof spec.path === "function"
+		? spec.path(context.request)
+		: spec.path;
 }
 
 async function settle(page) {
@@ -261,7 +268,7 @@ async function capturePages(browser, storageState, metrics) {
 					}
 				});
 				await emulateStandalone(page, safeArea);
-				await page.goto(`${args.base}${spec.path}`);
+				await page.goto(`${args.base}${await resolvePath(context, spec)}`);
 				await settle(page);
 				if (spec.open) {
 					await spec.open(page);
