@@ -35,7 +35,12 @@ export function LoginClient({
 	const [code, setCode] = useState("");
 
 	function finish(redirect?: string) {
-		router.replace(returnTo ?? redirect ?? "/inbox");
+		if (returnTo) {
+			// Authorization is an HTTP endpoint, so resume it with a document request.
+			window.location.replace(returnTo);
+			return;
+		}
+		router.replace(redirect ?? "/inbox");
 		router.refresh();
 	}
 

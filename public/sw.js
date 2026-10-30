@@ -72,7 +72,7 @@ self.addEventListener("notificationclick", (event) => {
 //   (src/lib/offline/cache-client.ts) and bump `generation`, so a request that started before the
 //   clear cannot write its response back afterwards.
 const STATIC_CACHE = "lab-static-v2";
-const PAGES_CACHE = "lab-pages-v1";
+const PAGES_CACHE = "lab-pages-v2";
 const API_CACHE_PREFIX = "lab-api-v2-";
 const NETWORK_TIMEOUT_MS = 4000;
 const MAX_API_ENTRIES = 300;
@@ -164,8 +164,7 @@ self.addEventListener("fetch", (event) => {
 		return;
 	}
 
-	// Full page loads. RSC payloads (`*.rsc?_rsc=`) are keyed to router state, so they are left to the
-	// network; offline, the router falls back to a full load, which lands here.
+	// Cache document navigations; Start server-function and router requests stay on the network.
 	if (request.mode === "navigate") {
 		const started = generation;
 		event.respondWith(
