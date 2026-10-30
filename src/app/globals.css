@@ -290,6 +290,79 @@ pre {
 	}
 }
 
+/* Phone push/pop between a list and what it opens; the router picks the type
+   (src/lib/navigation-transition-utils.ts). Untyped transitions stay instant. */
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation: none;
+}
+
+@keyframes page-push-in {
+	from {
+		transform: translateX(100%);
+	}
+}
+
+@keyframes page-push-out {
+	to {
+		transform: translateX(-30%);
+		filter: brightness(0.92);
+	}
+}
+
+@keyframes page-pop-in {
+	from {
+		transform: translateX(-30%);
+		filter: brightness(0.92);
+	}
+}
+
+@keyframes page-pop-out {
+	to {
+		transform: translateX(100%);
+	}
+}
+
+@keyframes page-fade-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes page-fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+	:root:active-view-transition-type(push)::view-transition-new(root) {
+		animation: page-push-in 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
+		box-shadow: -8px 0 24px rgb(0 0 0 / 0.12);
+	}
+	:root:active-view-transition-type(push)::view-transition-old(root) {
+		animation: page-push-out 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
+	}
+	:root:active-view-transition-type(pop)::view-transition-old(root) {
+		z-index: 1;
+		animation: page-pop-out 280ms cubic-bezier(0.32, 0.72, 0, 1) both;
+		box-shadow: -8px 0 24px rgb(0 0 0 / 0.12);
+	}
+	:root:active-view-transition-type(pop)::view-transition-new(root) {
+		animation: page-pop-in 280ms cubic-bezier(0.32, 0.72, 0, 1) both;
+	}
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+	:root:active-view-transition-type(push, pop)::view-transition-old(root) {
+		animation: page-fade-out 150ms ease-out both;
+	}
+	:root:active-view-transition-type(push, pop)::view-transition-new(root) {
+		animation: page-fade-in 150ms ease-out both;
+	}
+}
+
 /* Bottom-sheet dialogs (send options): slide up from the bottom edge. */
 @keyframes slide-sheet-out {
 	from {
