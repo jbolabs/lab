@@ -17,3 +17,27 @@ export const adminPageTitles: Record<string, TranslationKey> = {
 	"/routing": "admin.nav.routing",
 	"/webhooks": "admin.nav.webhooks",
 };
+
+// Pages reached from another page rather than from the nav, and where they go back to.
+const adminParents: Record<string, string> = {
+	"/ai-usage": "/agent",
+};
+
+// Where the phone top bar's back button goes: the declared parent, or the nearest titled
+// ancestor of a detail page (`/accounts/usr_1/permissions` → `/accounts`). Nav pages have none.
+export function getAdminBackPath(pathname: string): string | null {
+	if (adminParents[pathname]) {
+		return adminParents[pathname];
+	}
+	if (adminPageTitles[pathname]) {
+		return null;
+	}
+	const segments = pathname.split("/").filter(Boolean);
+	for (let length = segments.length - 1; length > 0; length -= 1) {
+		const candidate = `/${segments.slice(0, length).join("/")}`;
+		if (adminPageTitles[candidate]) {
+			return candidate;
+		}
+	}
+	return null;
+}

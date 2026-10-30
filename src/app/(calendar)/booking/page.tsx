@@ -397,7 +397,6 @@ export default function BookingsPage() {
 										<article
 											key={event.id}
 											className={clsx(
-												!event.enabled && "opacity-65",
 												"relative flex flex-wrap items-center gap-4 rounded-lg border bg-card px-5 py-5 max-md:gap-3 max-md:rounded-none max-md:border-0 max-md:border-b max-md:px-0 max-md:py-4 max-md:last:border-b-0"
 											)}
 										>

@@ -38,18 +38,25 @@ const buttonVariants = cva(
 				"icon-lg": "size-10 pointer-coarse:size-11",
 				"icon-sm": "size-8 pointer-coarse:size-10",
 				"icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3",
+				// Text-level links inside a sentence or metadata line: no box of their own, so they
+				// keep the line's height and alignment; the 44px touch target is an invisible overlay.
+				inline:
+					"relative h-auto rounded-sm p-0 align-baseline after:absolute after:-inset-x-1 after:-inset-y-3 has-[>svg]:p-0",
 				lg: "h-10 gap-1.5 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3 pointer-coarse:h-11",
 				none: "h-auto p-0 has-[>svg]:p-0",
 				sm: "h-8 gap-1 px-3 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 pointer-coarse:h-10",
 				xs: "h-6 gap-1 px-2.5 text-xs has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3",
 			},
 			variant: {
-				default: "bg-primary text-primary-foreground hover:bg-primary/80",
+				// Disabled primaries go flat and muted rather than half-transparent: 50% of near-black
+				// (or near-white in dark) reads as a heavy grey slab that outweighs enabled buttons.
+				default:
+					"bg-primary text-primary-foreground hover:bg-primary/80 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100",
 				destructive:
 					"bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
 				// Floating action buttons that sit above content (compose, new event).
 				floating:
-					"bg-primary text-primary-foreground shadow-lg hover:bg-primary/90",
+					"bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100",
 				ghost:
 					"hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
 				link: "text-signal underline-offset-4 hover:underline",
@@ -58,6 +65,9 @@ const buttonVariants = cva(
 				// A whole row or card that behaves as one button; pair with size="none".
 				plain:
 					"justify-start text-left font-normal whitespace-normal hover:bg-transparent",
+				// A name that opens details, not a destination: reads as text, underlines on hover.
+				"quiet-link":
+					"font-[inherit] text-inherit underline-offset-4 hover:underline",
 				secondary:
 					"bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
 			},

@@ -3,7 +3,10 @@
 import { clsx } from "clsx";
 
 import { AdminNav } from "@/components/admin-nav";
-import { adminPageTitles } from "@/components/admin-page-titles";
+import {
+	adminPageTitles,
+	getAdminBackPath,
+} from "@/components/admin-page-titles";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ComposeProvider } from "@/components/compose/compose-context";
 import { FloatingComposer } from "@/components/compose/floating-composer";
@@ -45,6 +48,15 @@ export default function DashboardLayout({
 
 	const mobileTitleKey = adminPageTitles[pathname];
 	const mobileTitle = mobileTitleKey ? t(mobileTitleKey) : undefined;
+	const backPath = getAdminBackPath(pathname);
+	const backTitleKey = backPath ? adminPageTitles[backPath] : undefined;
+	const mobileBack =
+		backPath && backTitleKey
+			? {
+					href: backPath,
+					label: t("message.nav.backTo", { folder: t(backTitleKey) }),
+				}
+			: undefined;
 
 	return (
 		<AuthGuard
@@ -66,13 +78,16 @@ export default function DashboardLayout({
 									<SidebarResizeBoundary />
 								</SidebarAside>
 								<div className="relative flex min-h-0 min-w-0 flex-col">
-									<MobileTopBar title={mobileTitle} />
-									<header className="absolute top-safe-2 right-4 z-10 flex items-center gap-4">
+									<MobileTopBar title={mobileTitle} back={mobileBack} />
+									<div className="absolute top-safe-2 right-4 z-10 flex items-center gap-4">
 										<MailboxSelector />
-									</header>
+									</div>
+									{/* Focusable so keyboard users can scroll pages with no controls in them
+									    (activity, AI usage); the skip link still lands here. */}
 									<main
 										id="main-content"
-										tabIndex={-1}
+										// oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- A scrollable region must be keyboard reachable (axe scrollable-region-focusable).
+										tabIndex={0}
 										className={clsx(
 											"min-h-0 min-w-0 flex-1 scrollbar-gutter-stable overflow-y-auto overscroll-contain bg-background px-4 py-8 focus:outline-none max-md:pb-safe-add-24 md:px-6 md:pt-16 lg:px-12",
 											mobileTitle && "max-md:[&_h1]:sr-only"

@@ -7,6 +7,7 @@ import type { CSSProperties } from "react";
 
 import { AgentPanel } from "@/components/agent/agent-panel";
 import { AssistantOpenContext } from "@/components/agent/assistant-open-state";
+import { AppTopBar } from "@/components/app-top-bar";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ComposeProvider } from "@/components/compose/compose-context";
 import { FloatingComposer } from "@/components/compose/floating-composer";
@@ -93,9 +94,9 @@ export default function DashboardLayout({
 										<SidebarResizeBoundary />
 									</SidebarAside>
 									<div className="flex min-h-0 min-w-0 flex-col">
-										<header
+										<AppTopBar
 											className={clsx(
-												"flex min-h-14 w-full shrink-0 items-center gap-1 border-b border-sidebar-border px-2 pt-safe text-sm md:h-16 md:gap-3 md:px-5",
+												"gap-1 border-b border-sidebar-border px-2 md:gap-3 md:px-5",
 												reading && "max-md:hidden"
 											)}
 										>
@@ -132,7 +133,7 @@ export default function DashboardLayout({
 												</Button>
 											)}
 											<MailboxSelector />
-										</header>
+										</AppTopBar>
 										<OfflineBanner />
 										<DnsSkippedBanner />
 										<div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">

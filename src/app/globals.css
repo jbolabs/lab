@@ -112,6 +112,8 @@
 	--font-display: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
 	--font-mono: var(--font-geist-mono), ui-monospace, monospace;
 	--ease-out-expo: cubic-bezier(0.23, 1, 0.32, 1);
+	/* iOS sheet and navigation curve: fast start, long settle. */
+	--ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
@@ -284,9 +286,110 @@ pre {
 	}
 }
 
+/* Desktop compose window: rises out of its corner. Individual translate/scale so the inline
+   transform that positions a dragged window is left alone. */
+@keyframes compose-window-in {
+	from {
+		opacity: 0;
+		translate: 0 8px;
+		scale: 0.98;
+	}
+}
+
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+	.compose-sheet {
+		transform-origin: bottom right;
+		animation: compose-window-in 200ms var(--ease-out-expo);
+	}
+}
+
 @media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
 	.compose-sheet {
 		animation: compose-sheet-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+}
+
+/* Phone push/pop between a list and what it opens; the router picks the type
+   (src/lib/navigation-transition-utils.ts). Untyped transitions stay instant. */
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation: none;
+}
+
+/* Named only while a push or pop runs: a view-transition name makes a stacking context, which
+   would trap fixed controls portalled into the bar (calendar's New event) under the page. */
+:root:active-view-transition-type(push, pop)
+	[data-slot="app-top-bar"][data-persistent] {
+	view-transition-name: app-top-bar;
+}
+
+::view-transition-group(app-top-bar) {
+	animation: none;
+}
+
+@keyframes page-push-in {
+	from {
+		transform: translateX(100%);
+	}
+}
+
+@keyframes page-push-out {
+	to {
+		transform: translateX(-30%);
+		filter: brightness(0.92);
+	}
+}
+
+@keyframes page-pop-in {
+	from {
+		transform: translateX(-30%);
+		filter: brightness(0.92);
+	}
+}
+
+@keyframes page-pop-out {
+	to {
+		transform: translateX(100%);
+	}
+}
+
+@keyframes page-fade-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes page-fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+	:root:active-view-transition-type(push)::view-transition-new(root) {
+		animation: page-push-in 320ms var(--ease-drawer) both;
+		box-shadow: -8px 0 24px rgb(0 0 0 / 0.12);
+	}
+	:root:active-view-transition-type(push)::view-transition-old(root) {
+		animation: page-push-out 320ms var(--ease-drawer) both;
+	}
+	:root:active-view-transition-type(pop)::view-transition-old(root) {
+		z-index: 1;
+		animation: page-pop-out 280ms var(--ease-drawer) both;
+		box-shadow: -8px 0 24px rgb(0 0 0 / 0.12);
+	}
+	:root:active-view-transition-type(pop)::view-transition-new(root) {
+		animation: page-pop-in 280ms var(--ease-drawer) both;
+	}
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+	:root:active-view-transition-type(push, pop)::view-transition-old(root) {
+		animation: page-fade-out 150ms ease-out both;
+	}
+	:root:active-view-transition-type(push, pop)::view-transition-new(root) {
+		animation: page-fade-in 150ms ease-out both;
 	}
 }
 

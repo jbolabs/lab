@@ -23,7 +23,7 @@ export function AuthShell({
 	return (
 		<div className="flex min-h-svh flex-col bg-background text-foreground">
 			{/* oxlint-disable-next-line shadcn/no-arbitrary-values -- Standalone PWA header must clear the device status bar safe area. */}
-			<header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 pt-safe sm:px-8">
+			<header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 pt-safe sm:px-8">
 				<Link
 					href="/"
 					className="flex min-h-20 items-center gap-2.5 rounded-md focus-visible:outline-ring"
@@ -33,7 +33,7 @@ export function AuthShell({
 				<LanguageSelector variant="text" />
 			</header>
 			{/* oxlint-disable-next-line shadcn/no-arbitrary-values -- The auth form must clear the home indicator while preserving its minimum page padding. */}
-			<main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 pt-10 pb-safe-6 sm:px-8 sm:py-16 lg:grid lg:grid-cols-2 lg:items-start lg:gap-24 lg:py-28">
+			<main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 pt-10 pb-safe-6 sm:px-8 sm:py-16 lg:grid lg:grid-cols-2 lg:content-center lg:items-start lg:gap-24 lg:py-16">
 				<PageHeader className="min-w-0">
 					<PageHeaderText className="gap-4">
 						<PageTitle>{title}</PageTitle>

@@ -199,6 +199,7 @@ function MailboxSettingsPage() {
 				)}
 				<div className="flex gap-2">
 					<NativeSelect
+						aria-label={t("mailbox.chooseAccount")}
 						value={selectedUserId}
 						onChange={(event) => setSelectedUserId(event.target.value)}
 						containerClassName="min-w-0 flex-1"
@@ -285,6 +286,7 @@ function MailboxSettingsPage() {
 				)}
 				<div className="flex gap-2">
 					<Input
+						aria-label={t("mailbox.aliases")}
 						value={aliasLocalPart}
 						onChange={(event) => setAliasLocalPart(event.target.value)}
 						placeholder={t("mailbox.aliasPlaceholder")}
@@ -292,6 +294,7 @@ function MailboxSettingsPage() {
 						disabled={addAlias.isPending}
 					/>
 					<NativeSelect
+						aria-label={t("accounts.domain")}
 						value={aliasDomainId}
 						onChange={(event) => setEditedAliasDomain(event.target.value)}
 						containerClassName="min-w-0 flex-1"

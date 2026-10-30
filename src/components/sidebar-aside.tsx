@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import { ChevronLeft, Menu } from "lucide-react";
 import { useRef, useState } from "react";
 import type { ReactNode, TouchEvent } from "react";
 
@@ -168,10 +168,30 @@ export function MobileMenuButton({ className }: { className?: string }) {
 	);
 }
 
-export function MobileTopBar({ title }: { title?: string }) {
+export function MobileTopBar({
+	title,
+	back,
+}: {
+	title?: string;
+	// A page with a parent shows a way back instead of the menu (the edge swipe follows it).
+	back?: { href: string; label: string };
+}) {
 	return (
 		<div className="flex min-h-14 shrink-0 items-center gap-1 border-b border-sidebar-border bg-sidebar pt-safe pl-1 md:hidden">
-			<MobileMenuButton />
+			{back ? (
+				<Button
+					variant="ghost"
+					size="icon-lg"
+					data-edge-swipe-back
+					aria-label={back.label}
+					nativeButton={false}
+					render={<Link href={back.href} />}
+				>
+					<ChevronLeft />
+				</Button>
+			) : (
+				<MobileMenuButton />
+			)}
 			{title && (
 				<p
 					aria-hidden="true"

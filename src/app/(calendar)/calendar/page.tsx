@@ -126,7 +126,11 @@ export default function CalendarPage() {
 	const [eventsVersion, setEventsVersion] = useState(0);
 	const [currentTime, setCurrentTime] = useState(() => Date.now());
 	const [visibleDate, setVisibleDate] = useState(() => new Date());
-	const [view, setView] = useState<CalendarView>("week");
+	// A week is seven 100px columns, wider than a phone, so phones open on today's day view
+	// until the user picks one.
+	const [chosenView, setChosenView] = useState<CalendarView | null>(null);
+	const view = chosenView ?? (isMobile ? "day" : "week");
+	const gridScroller = useRef<HTMLDivElement>(null);
 	const [monthPickerOpen, setMonthPickerOpen] = useState(false);
 	const [pickerMonth, setPickerMonth] = useState(() => new Date());
 	const openedEventFromUrl = useRef<string | null>(null);
@@ -224,6 +228,19 @@ export default function CalendarPage() {
 
 	const calendarRequest = `${today.toISOString()}:${visibleDate.toISOString()}:${weekStart.toISOString()}:${eventsVersion}`;
 	const loading = settledRequest !== calendarRequest;
+	// Open on the working part of the day, an hour before now, once the grid has its height.
+	const scrolledToNow = useRef(false);
+	useEffect(() => {
+		const scroller = gridScroller.current;
+		if (loading || scrolledToNow.current || !scroller) {
+			return;
+		}
+		scrolledToNow.current = true;
+		scroller.scrollTop = Math.max(
+			0,
+			currentTimePosition(new Date()) - CALENDAR_HOUR_HEIGHT
+		);
+	}, [loading]);
 
 	useEffect(() => {
 		let active = true;
@@ -1267,7 +1284,7 @@ export default function CalendarPage() {
 											{(["week", "day"] as const).map((option) => (
 												<DropdownMenu.DropdownMenuItem
 													key={option}
-													onClick={() => setView(option)}
+													onClick={() => setChosenView(option)}
 													className="justify-between"
 												>
 													{t(`calendar.${option}` as TranslationKey)}
@@ -1282,7 +1299,7 @@ export default function CalendarPage() {
 							</DropdownMenu.DropdownMenu>
 							<Tabs
 								value={view}
-								onValueChange={(value) => setView(value as CalendarView)}
+								onValueChange={(value) => setChosenView(value as CalendarView)}
 								className="max-md:hidden"
 							>
 								<TabsList>
@@ -1313,7 +1330,10 @@ export default function CalendarPage() {
 				aria-busy={loading}
 				className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-t-lg bg-card"
 			>
-				<div className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain">
+				<div
+					ref={gridScroller}
+					className="min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain"
+				>
 					<div
 						className={clsx(
 							"w-full",

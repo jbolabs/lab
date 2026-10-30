@@ -1,16 +1,23 @@
 import {
-	useLocation,
+	useRouterState,
 	useParams as useRouteParams,
 	useRouter as useTanStackRouter,
 	redirect as routeRedirect,
 } from "@tanstack/react-router";
 import { useMemo } from "react";
 
+// Like Next's hooks, these follow the committed route, not the one still loading: reading the
+// pending location re-renders the old screen as the new one, which the phone view transition
+// would then snapshot as its starting frame.
 export function usePathname() {
-	return useLocation({ select: (location) => location.pathname });
+	return useRouterState({
+		select: (state) => (state.resolvedLocation ?? state.location).pathname,
+	});
 }
 export function useSearchParams() {
-	const search = useLocation({ select: (location) => location.searchStr });
+	const search = useRouterState({
+		select: (state) => (state.resolvedLocation ?? state.location).searchStr,
+	});
 	return useMemo(() => new URLSearchParams(search), [search]);
 }
 export function useParams<T = Record<string, string>>() {

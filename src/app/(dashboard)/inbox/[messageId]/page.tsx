@@ -259,7 +259,7 @@ function MessageSenderHeader({
 						<span>{messageDate(false)}</span>
 						<Button
 							variant="link"
-							size="sm"
+							size="inline"
 							type="button"
 							aria-expanded={detailsOpen}
 							onClick={() => setDetailsOpen((open) => !open)}

@@ -118,6 +118,7 @@ export function LoadingTransition({ children, ready }: LoadingTransitionProps) {
 					</div>
 				)}
 				<output
+					data-app-loader
 					className={`fixed inset-0 z-100 flex items-center justify-center bg-sidebar transition-opacity duration-300 ${
 						loaderVisible ? "opacity-100" : "pointer-events-none opacity-0"
 					}`}

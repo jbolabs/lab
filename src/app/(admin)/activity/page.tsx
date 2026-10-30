@@ -4,6 +4,14 @@ import { LogIn, LogOut } from "lucide-react";
 
 import { useLanguage } from "@/components/language-provider";
 import { Badge } from "@/components/ui/badge";
+import { Empty, EmptyDescription } from "@/components/ui/empty";
+import {
+	Item,
+	ItemContent,
+	ItemDescription,
+	ItemGroup,
+	ItemTitle,
+} from "@/components/ui/item";
 import {
 	PageHeader,
 	PageHeaderText,
@@ -43,9 +51,60 @@ export default function ActivityPage() {
 				</PageHeaderText>
 			</PageHeader>
 
+			{/* Phones get one stacked row per event; the four-column table does not fit. */}
+			<ItemGroup className="gap-2 md:hidden" aria-label={t("activity.title")}>
+				{activity.isLoading &&
+					Array.from({ length: 5 }, (_, index) => (
+						<Skeleton key={index} className="h-20 w-full rounded-2xl" />
+					))}
+				{!activity.isLoading && (activity.data ?? []).length === 0 && (
+					<Empty>
+						<EmptyDescription>{t("activity.none")}</EmptyDescription>
+					</Empty>
+				)}
+				{(activity.data ?? []).map((log) => {
+					const metadata = getActivityMetadata(log);
+					const Icon = log.action === "auth.logout" ? LogOut : LogIn;
+					const where = [metadata.city, metadata.country]
+						.filter(Boolean)
+						.join(", ");
+					return (
+						<Item key={log.id} variant="outline" size="sm">
+							<ItemContent className="min-w-0">
+								<div className="flex items-center justify-between gap-2">
+									<Badge variant="outline">
+										<Icon className="size-3" />
+										{getActivityLabel(log.action, t)}
+									</Badge>
+									<span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+										{formatActivityDate(log.createdAt)}
+									</span>
+								</div>
+								<ItemTitle>
+									<span className="block truncate">
+										{log.actorEmail ?? t("activity.unknownEmail")}
+									</span>
+								</ItemTitle>
+								<ItemDescription>
+									<span className="block truncate">
+										{[
+											metadata.device ?? t("activity.unknownDevice"),
+											metadata.ipAddress,
+											where,
+										]
+											.filter(Boolean)
+											.join(" · ")}
+									</span>
+								</ItemDescription>
+							</ItemContent>
+						</Item>
+					);
+				})}
+			</ItemGroup>
+
 			<section
 				aria-label={t("activity.title")}
-				className="overflow-x-auto rounded-lg bg-card"
+				className="overflow-x-auto rounded-lg bg-card max-md:hidden"
 			>
 				<Table className="w-full min-w-[760px] table-fixed text-left">
 					<TableHeader className="">

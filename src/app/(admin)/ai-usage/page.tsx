@@ -69,8 +69,10 @@ export default function AiUsagePage() {
 					<PageDescription>{t("aiUsage.description")}</PageDescription>
 				</PageHeaderText>
 				<PageHeaderActions>
+					{/* The phone top bar has the back button. */}
 					<Button
 						variant="link"
+						className="max-md:hidden"
 						render={<Link href="/agent" />}
 						nativeButton={false}
 					>
