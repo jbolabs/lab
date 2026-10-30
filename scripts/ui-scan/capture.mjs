@@ -10,6 +10,7 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import nodePath from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import { parseArgs } from "node:util";
 
 import { AxeBuilder } from "@axe-core/playwright";
@@ -109,6 +110,11 @@ async function newContext(
 		storageState,
 	});
 	await context.addInitScript(INSTRUMENT);
+	// Every capture is a fresh tab, which the app treats as a new launch; skip the one-time splash
+	// so screenshots show the page instead of the splash mid-exit.
+	await context.addInitScript(() => {
+		sessionStorage.setItem("lab-launch-splash-seen", "1");
+	});
 	return { context, safeArea };
 }
 
@@ -159,7 +165,32 @@ function contactSheet(dir, viewportName) {
 async function settle(page) {
 	await page.waitForLoadState("networkidle").catch(ignore);
 	await page.evaluate(() => document.fonts.ready);
-	await page.waitForTimeout(400);
+	// The cold-load overlay holds for its minimum time and then fades; screenshots wait it out.
+	await page
+		.waitForFunction(
+			() => {
+				const loader = document.querySelector("[data-app-loader]");
+				return !loader || getComputedStyle(loader).opacity === "0";
+			},
+			undefined,
+			{ timeout: 12_000 }
+		)
+		.catch(ignore);
+	// Wait out finite animations (loader cross-fades, entrances) rather than guessing a delay,
+	// so a still never lands mid-transition. Infinite ones (spinners) are ignored.
+	await page.waitForTimeout(100);
+	await Promise.race([
+		page.evaluate(() =>
+			Promise.all(
+				document
+					.getAnimations()
+					.filter((a) => a.effect?.getComputedTiming().endTime !== Infinity)
+					.map((a) => a.finished.catch(() => null))
+			)
+		),
+		delay(3000),
+	]);
+	await page.waitForTimeout(100);
 }
 
 async function login(browser) {
