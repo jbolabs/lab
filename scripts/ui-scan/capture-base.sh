@@ -20,6 +20,7 @@ restore() {
 		git stash apply -q "$sha"
 		ref="$(git stash list --format='%gd %gs' | grep "$tag" | cut -d' ' -f1)"
 		[ -n "$ref" ] && git stash drop -q "$ref"
+		sleep 5 # the dev server reloads the restored files; let it settle before the next capture
 	fi
 }
 trap restore EXIT
