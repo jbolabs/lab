@@ -401,6 +401,7 @@ try {
 	const storageState = group.auth === false ? undefined : await login(browser);
 	const metrics = {
 		base: args.base,
+		capturedAt: new Date().toISOString(),
 		// compare.mjs refuses a baseline captured from a dirty tree: it would already contain
 		// the change being judged.
 		git: {
@@ -414,7 +415,6 @@ try {
 				encoding: "utf-8",
 			}).stdout.trim(),
 		},
-		capturedAt: new Date().toISOString(),
 		group: args.group,
 		interactions: {},
 		pages: {},
