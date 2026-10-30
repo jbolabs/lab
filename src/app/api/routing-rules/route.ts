@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { folders, routingRules } from "@/db/schema";
@@ -15,13 +14,13 @@ export async function GET(request: Request) {
 	const url = new URL(request.url);
 	const mailboxId = url.searchParams.get("mailboxId");
 	if (!mailboxId) {
-		return NextResponse.json({ rules: [] });
+		return Response.json({ rules: [] });
 	}
 
 	const db = getDb(env);
 	const access = await getMailboxAccessLevel(db, user, mailboxId);
 	if (!access?.canManage) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 
 	const rows = await db
@@ -33,7 +32,7 @@ export async function GET(request: Request) {
 				eq(routingRules.scope, "mailbox")
 			)
 		);
-	return NextResponse.json({ rules: rows });
+	return Response.json({ rules: rows });
 }
 
 export async function POST(request: Request) {
@@ -41,16 +40,13 @@ export async function POST(request: Request) {
 	const user = await requireUser(env, request);
 	const parsed = routingRuleSchema.safeParse(await request.json());
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	const db = getDb(env);
 	const access = await getMailboxAccessLevel(db, user, parsed.data.mailboxId);
 	if (!access?.canManage) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 	const { mailbox } = access;
 
@@ -64,10 +60,7 @@ export async function POST(request: Request) {
 		: null;
 
 	if (!systemAction && !folderId) {
-		return NextResponse.json(
-			{ error: "Destination is required" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "Destination is required" }, { status: 400 });
 	}
 
 	if (folderId) {
@@ -77,7 +70,7 @@ export async function POST(request: Request) {
 			.where(and(eq(folders.id, folderId), eq(folders.mailboxId, mailbox.id)))
 			.limit(1);
 		if (!folder) {
-			return NextResponse.json({ error: "Folder not found" }, { status: 404 });
+			return Response.json({ error: "Folder not found" }, { status: 404 });
 		}
 	}
 
@@ -98,5 +91,5 @@ export async function POST(request: Request) {
 		userId: user.id,
 	});
 
-	return NextResponse.json({ id, ...parsed.data });
+	return Response.json({ id, ...parsed.data });
 }

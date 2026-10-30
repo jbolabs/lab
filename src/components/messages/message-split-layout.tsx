@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import {
 	useEffect,
 	useLayoutEffect,
@@ -22,6 +21,7 @@ import { useSidebar } from "@/components/sidebar-state";
 import { ResizeHandle } from "@/components/ui/resize-handle";
 import { subscribeToStorage } from "@/hooks/storage-subscription";
 import { useMessageField } from "@/hooks/use-message-field";
+import { usePathname } from "@/lib/navigation";
 
 import { BulkMessageSelectionPane } from "./bulk-message-selection-pane";
 import { MessageDetailNavigationProvider } from "./message-detail-navigation";

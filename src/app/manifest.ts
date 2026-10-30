@@ -1,10 +1,8 @@
-import type { MetadataRoute } from "next";
-
 import { THEME_COLORS } from "@/components/theme-utils";
 import { APP_NAME } from "@/lib/app-identity";
 
 /** Lab is used mostly as a home-screen web app: it opens on the launcher, full screen, in portrait. */
-export default function manifest(): MetadataRoute.Manifest {
+export default function manifest() {
 	return {
 		background_color: THEME_COLORS.light,
 		description: "Personal mail, calendar, and files.",

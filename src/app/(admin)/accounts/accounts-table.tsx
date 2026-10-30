@@ -1,8 +1,8 @@
 "use client";
 
 import { MoreVertical, RotateCcw, Trash2 } from "lucide-react";
-import Link from "next/link";
 
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { ProgressiveAvatarImage } from "@/components/progressive-avatar-image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";

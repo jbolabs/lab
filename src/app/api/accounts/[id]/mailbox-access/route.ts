@@ -1,7 +1,5 @@
-import { NextResponse } from "next/server";
-
 const accountsRemovedResponse = () =>
-	NextResponse.json(
+	Response.json(
 		{ error: "Multiple accounts are not available in this build" },
 		{ status: 410 }
 	);

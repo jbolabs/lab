@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getDb } from "@/db";
@@ -36,7 +35,7 @@ export async function POST(request: Request) {
 		return auth.error;
 	}
 	if (!getVapidPublicKey(env)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Push notifications are not configured" },
 			{ status: 503 }
 		);
@@ -46,7 +45,7 @@ export async function POST(request: Request) {
 		await request.json().catch(() => null)
 	);
 	if (!parsed.success) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Invalid push subscription" },
 			{ status: 400 }
 		);
@@ -55,7 +54,7 @@ export async function POST(request: Request) {
 		!isSupportedPushEndpoint(parsed.data.endpoint) ||
 		!hasValidPushKeys(parsed.data.keys)
 	) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Unsupported push subscription" },
 			{ status: 400 }
 		);
@@ -66,7 +65,7 @@ export async function POST(request: Request) {
 		getSessionTokenFromRequestHeaders(request)
 	);
 	if (!session || session.userId !== auth.user.id) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const now = new Date();
@@ -93,7 +92,7 @@ export async function POST(request: Request) {
 			target: pushSubscriptions.endpoint,
 		});
 
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }
 
 export async function DELETE(request: Request) {
@@ -104,7 +103,7 @@ export async function DELETE(request: Request) {
 	}
 	const parsed = deleteSchema.safeParse(await request.json().catch(() => null));
 	if (!parsed.success) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Invalid push subscription" },
 			{ status: 400 }
 		);
@@ -118,5 +117,5 @@ export async function DELETE(request: Request) {
 				eq(pushSubscriptions.endpoint, parsed.data.endpoint)
 			)
 		);
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

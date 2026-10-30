@@ -1,7 +1,6 @@
 "use client";
 
 import { clsx } from "clsx";
-import { usePathname } from "next/navigation";
 
 import { AdminNav } from "@/components/admin-nav";
 import { adminPageTitles } from "@/components/admin-page-titles";
@@ -17,6 +16,7 @@ import { SidebarAside, MobileTopBar } from "@/components/sidebar-aside";
 import { SidebarResizeBoundary } from "@/components/sidebar-resize-boundary";
 import { SidebarProvider } from "@/components/sidebar-state";
 import { SkipToContent } from "@/components/skip-to-content";
+import { usePathname } from "@/lib/navigation";
 
 import { AdminConfirmationProvider } from "./admin-confirmation-provider";
 

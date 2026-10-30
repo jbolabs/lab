@@ -10,10 +10,9 @@ import {
 	UserPlus,
 	UsersRound,
 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { useSelectedMailbox } from "@/components/mailbox-provider";
 import { isIdentityMailbox } from "@/components/mailbox-provider-utils";
@@ -50,6 +49,7 @@ import type { BrowserAccount } from "@/lib/auth/accounts-client";
 import { logoutClientSession } from "@/lib/auth/logout";
 import { MAILBOX_AVATAR_CHANGED_EVENT } from "@/lib/mailboxes/avatar-client";
 import type { MailboxAvatarChangedDetail } from "@/lib/mailboxes/avatar-client-types";
+import { useRouter } from "@/lib/navigation";
 import {
 	PROFILE_AVATAR_CHANGED_EVENT,
 	getProfileAvatarUrl,

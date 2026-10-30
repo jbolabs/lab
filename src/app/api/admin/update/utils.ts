@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { assertPrimaryAdmin } from "@/lib/auth/admin";
 import { requireUser } from "@/lib/auth/cookies";
 import { getEnv } from "@/lib/cloudflare";
@@ -29,7 +27,7 @@ export async function authorizeAdminRequest(request: Request) {
 		user = await requireUser(env, request);
 	} catch {
 		return {
-			error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+			error: Response.json({ error: "Unauthorized" }, { status: 401 }),
 		};
 	}
 
@@ -37,7 +35,7 @@ export async function authorizeAdminRequest(request: Request) {
 		assertPrimaryAdmin(user);
 	} catch {
 		return {
-			error: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+			error: Response.json({ error: "Forbidden" }, { status: 403 }),
 		};
 	}
 

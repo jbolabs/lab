@@ -1,12 +1,12 @@
 "use client";
 import { ChevronRight } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { Item, ItemContent, ItemTitle, ItemGroup } from "@/components/ui/item";
 import { PageHeader, PageTitle } from "@/components/ui/page-header";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { usePathname } from "@/lib/navigation";
 
 import {
 	isActiveSettingsPath,

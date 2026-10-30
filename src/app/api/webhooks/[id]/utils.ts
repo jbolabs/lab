@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { webhooks } from "@/db/schema";
@@ -17,7 +16,7 @@ export async function loadOwnedWebhook(request: Request, id: string) {
 	const { user } = auth;
 	if (!isPrimaryAdmin(user)) {
 		return {
-			error: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+			error: Response.json({ error: "Forbidden" }, { status: 403 }),
 		} as const;
 	}
 	const db = getDb(env);
@@ -29,7 +28,7 @@ export async function loadOwnedWebhook(request: Request, id: string) {
 
 	if (!hook) {
 		return {
-			error: NextResponse.json({ error: "Webhook not found" }, { status: 404 }),
+			error: Response.json({ error: "Webhook not found" }, { status: 404 }),
 		} as const;
 	}
 	return { db, env, error: null, hook, user } as const;

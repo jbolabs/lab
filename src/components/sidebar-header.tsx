@@ -1,8 +1,8 @@
 "use client";
 
 import { TextAlignJustify } from "lucide-react";
-import Link from "next/link";
 
+import Link from "@/components/app-link";
 import { HintTooltip } from "@/components/hint-tooltip";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

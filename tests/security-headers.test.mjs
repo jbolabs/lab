@@ -23,9 +23,8 @@ await build({
 	outfile,
 	platform: "node",
 });
-const { getSecurityHeaders, withoutHttpsUpgradeOnHttp } = await import(
-	pathToFileURL(outfile).href
-);
+const { getSecurityHeaders, withoutHttpsUpgradeOnHttp, withSecurityHeaders } =
+	await import(pathToFileURL(outfile).href);
 
 const csp = getSecurityHeaders().find(
 	(header) => header.key === "Content-Security-Policy"
@@ -57,4 +56,33 @@ test("plain http drops only upgrade-insecure-requests, so a local server's asset
 	assert.match(policy, /default-src 'self'/u);
 	assert.equal(response.headers.get("Content-Type"), "text/html");
 	assert.equal(await response.text(), "<html></html>");
+});
+
+test("runtime policy preserves response streams, endpoint headers and separate login cookies", async () => {
+	const original = new Response("streamed content", {
+		headers: { "Content-Type": "text/plain", "Referrer-Policy": "no-referrer" },
+	});
+	original.headers.append("Set-Cookie", "ep_session=one; HttpOnly; Path=/");
+	original.headers.append("Set-Cookie", "ep_accounts=two; HttpOnly; Path=/");
+	const response = withSecurityHeaders(
+		new Request("https://lab.example.test/"),
+		original
+	);
+	assert.equal(response.headers.get("X-Content-Type-Options"), "nosniff");
+	assert.equal(response.headers.get("Referrer-Policy"), "no-referrer");
+	assert.equal(response.headers.getSetCookie().length, 2);
+	assert.equal(await response.text(), "streamed content");
+});
+
+test("runtime policy can wrap immutable redirect responses", () => {
+	const response = withSecurityHeaders(
+		new Request("http://localhost/login"),
+		Response.redirect("http://localhost/inbox", 307)
+	);
+	assert.equal(response.status, 307);
+	assert.equal(response.headers.get("Location"), "http://localhost/inbox");
+	assert.doesNotMatch(
+		response.headers.get("Content-Security-Policy"),
+		/upgrade-insecure-requests/u
+	);
 });

@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { backups } from "@/db/schema";
@@ -22,17 +21,11 @@ export async function GET(
 			.where(eq(backups.id, id))
 			.limit(1);
 		if (!backup?.r2Key) {
-			return NextResponse.json(
-				{ error: "Backup file not found" },
-				{ status: 404 }
-			);
+			return Response.json({ error: "Backup file not found" }, { status: 404 });
 		}
 		const object = await env.BUCKET.get(backup.r2Key);
 		if (!object) {
-			return NextResponse.json(
-				{ error: "Backup file not found" },
-				{ status: 404 }
-			);
+			return Response.json({ error: "Backup file not found" }, { status: 404 });
 		}
 		return new Response(object.body, {
 			headers: {
@@ -42,6 +35,6 @@ export async function GET(
 			},
 		});
 	} catch {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 }

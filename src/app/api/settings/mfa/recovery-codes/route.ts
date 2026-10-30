@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { requireSessionUser } from "@/lib/api/auth";
 import { verifyPassword } from "@/lib/auth/password";
 import { issueRecoveryCodes } from "@/lib/auth/recovery-codes";
@@ -18,21 +16,18 @@ export async function POST(request: Request) {
 		await readJsonBody(request, 16 * 1024).catch(() => null)
 	);
 	if (!parsed.success) {
-		return NextResponse.json({ error: "Enter your password" }, { status: 400 });
+		return Response.json({ error: "Enter your password" }, { status: 400 });
 	}
 	if (!verifyPassword(parsed.data.password, auth.user.passwordHash)) {
-		return NextResponse.json(
-			{ error: "Password is incorrect" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "Password is incorrect" }, { status: 400 });
 	}
 	if (!auth.user.totpEnabled) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Two-factor authentication is off" },
 			{ status: 400 }
 		);
 	}
-	return NextResponse.json(
+	return Response.json(
 		{ recoveryCodes: await issueRecoveryCodes(env, auth.user.id) },
 		{ headers: { "Cache-Control": "no-store" } }
 	);

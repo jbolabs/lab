@@ -1,10 +1,9 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Inbox, Plus, UsersRound } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { clearMailboxesCache } from "@/components/mailbox-provider-utils";
 import { SectionRowSkeleton } from "@/components/page-skeletons";
@@ -42,6 +41,7 @@ import {
 	TableCell,
 } from "@/components/ui/table";
 import { authFetch } from "@/lib/auth/client";
+import { usePathname, useRouter } from "@/lib/navigation";
 
 import {
 	AdminFormPanel as Dialog,

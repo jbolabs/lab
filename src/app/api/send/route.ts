@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { userOwnsDraft } from "@/app/api/drafts/utils";
 import { getDb } from "@/db";
@@ -22,19 +21,16 @@ export async function POST(request: Request) {
 		input = await parseSendRequest(request);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json({ error: "Invalid send request" }, { status });
+		return Response.json({ error: "Invalid send request" }, { status });
 	}
 	const { attachments = [], draftId, ...fields } = input;
 	const parsed = sendEmailSchema.omit({ attachments: true }).safeParse(fields);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	if (isPastSchedule(parsed.data.scheduledAt)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Scheduled time has already passed" },
 			{ status: 400 }
 		);
@@ -50,7 +46,7 @@ export async function POST(request: Request) {
 			.where(eq(messages.id, draftId))
 			.limit(1);
 		if (!userOwnsDraft(draft, user.id)) {
-			return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+			return Response.json({ error: "Draft not found" }, { status: 404 });
 		}
 		const [agent] = await db
 			.select({ draftId: agentDraftMetadata.draftId })
@@ -58,7 +54,7 @@ export async function POST(request: Request) {
 			.where(eq(agentDraftMetadata.draftId, draftId))
 			.limit(1);
 		if (agent) {
-			return NextResponse.json(
+			return Response.json(
 				{ error: "Review and confirm this AI draft before sending" },
 				{ status: 409 }
 			);
@@ -73,10 +69,10 @@ export async function POST(request: Request) {
 			attachments,
 			publicOrigin: new URL(request.url).origin,
 		});
-		return NextResponse.json(result);
+		return Response.json(result);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Send failed";
-		return NextResponse.json(
+		return Response.json(
 			{ error: message },
 			{ status: getSendErrorStatus(message) }
 		);

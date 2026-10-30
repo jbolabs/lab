@@ -1,9 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
 import { SidebarHeader } from "@/components/sidebar-header";
 import { useSidebar } from "@/components/sidebar-state";
+import { useRouter } from "@/lib/navigation";
 
 import { UpcomingSidebar } from "./upcoming-sidebar";
 

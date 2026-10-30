@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { requireSessionUser } from "@/lib/api/auth";
 import { listDeviceKeys } from "@/lib/auth/device-keys";
 import { getEnv } from "@/lib/cloudflare";
@@ -11,5 +9,5 @@ export async function GET(request: Request) {
 	if (error) {
 		return error;
 	}
-	return NextResponse.json({ devices: await listDeviceKeys(env, user.id) });
+	return Response.json({ devices: await listDeviceKeys(env, user.id) });
 }

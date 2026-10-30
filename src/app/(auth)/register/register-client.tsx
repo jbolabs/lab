@@ -1,9 +1,8 @@
 "use client";
 import { ArrowRight, CheckCircle2, MailPlus, XCircle } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState, useEffectEvent } from "react";
 
+import Link from "@/components/app-link";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { PasswordInput } from "@/components/auth/password-input";
 import { TurnstileField } from "@/components/auth/turnstile";
@@ -29,6 +28,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { withCleanup } from "@/lib/async-cleanup";
+import { useRouter } from "@/lib/navigation";
 
 import type {
 	DomainPreflight,

@@ -1,10 +1,9 @@
+import { useLoaderData } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
-import type { Metadata } from "next";
-import { cookies } from "next/headers";
-import Link from "next/link";
-import { redirect } from "next/navigation";
 
+import Link from "@/components/app-link";
 import { BrandName } from "@/components/brand-name";
+import { useLanguage } from "@/components/language-provider";
 import {
 	Item,
 	ItemActions,
@@ -13,26 +12,11 @@ import {
 	ItemTitle,
 } from "@/components/ui/item";
 import { APP_NAME } from "@/lib/app-identity";
-import { getUserFromSession, SESSION_COOKIE } from "@/lib/auth/session";
-import { getEnv } from "@/lib/cloudflare";
-import { getServerTranslator } from "@/lib/i18n/server";
+import type { loadHome } from "@/lib/home.server";
 import { cn as scopeLayoutClasses } from "@/lib/utils";
 
 import { HomeAccountMenu } from "./home-account-menu";
-import { getHomeBranding } from "./home-server-utils";
 import { greetingName, quickLinks } from "./utils";
-
-export const dynamic = "force-dynamic";
-
-export async function generateMetadata(): Promise<Metadata> {
-	const branding = await getHomeBranding();
-	return {
-		icons: {
-			icon: branding.hasCustomIcon ? "/api/branding/icon" : "/icon-96.png",
-		},
-		title: branding.appName,
-	};
-}
 
 /** `*text*` in a headline is set bold against the hairline display weight, as on jbolabs.com. */
 function Headline({ text }: { text: string }) {
@@ -48,19 +32,11 @@ function Headline({ text }: { text: string }) {
 }
 
 /** Lab has one person at the door: signed out goes to sign-in, signed in gets quick links. */
-export default async function HomePage() {
-	const env = getEnv();
-	const cookieStore = await cookies();
-	const user = await getUserFromSession(
-		env,
-		cookieStore.get(SESSION_COOKIE)?.value
-	);
-	if (!user || user.disabled) {
-		redirect("/login");
-	}
-
-	const branding = await getHomeBranding();
-	const t = await getServerTranslator();
+export default function HomePage() {
+	const { user, branding } = useLoaderData({ strict: false }) as Awaited<
+		ReturnType<typeof loadHome>
+	>;
+	const { t } = useLanguage();
 	const iconUrl = branding.hasCustomIcon
 		? "/api/branding/icon"
 		: "/icon-96.png";
@@ -81,7 +57,6 @@ export default async function HomePage() {
 					className="flex h-16 items-center gap-2.5"
 					aria-label={t("home.homeLabel", { app: branding.appName })}
 				>
-					{/* oxlint-disable-next-line next/no-img-element -- Runtime branding and avatar API URLs are served directly; Workers has no configured image optimizer. */}
 					<img
 						src={iconUrl}
 						height={30}

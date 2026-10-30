@@ -1,5 +1,4 @@
 import { desc, inArray, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { auditLogs, users } from "@/db/schema";
@@ -13,7 +12,7 @@ export async function GET(request: Request) {
 	try {
 		assertPrimaryAdmin(admin);
 	} catch {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 
 	const url = new URL(request.url);
@@ -32,5 +31,5 @@ export async function GET(request: Request) {
 		.orderBy(desc(auditLogs.createdAt))
 		.limit(limit);
 
-	return NextResponse.json({ activities: rows });
+	return Response.json({ activities: rows });
 }

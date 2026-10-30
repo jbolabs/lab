@@ -1,6 +1,5 @@
 "use client";
 import { Upload } from "lucide-react";
-import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useLanguage } from "@/components/language-provider";
@@ -23,6 +22,7 @@ import {
 } from "@/components/ui/page-header";
 import { Switch } from "@/components/ui/switch";
 import { runAsyncAction } from "@/lib/async-cleanup";
+import { useParams } from "@/lib/navigation";
 
 import type { ManagedAccount } from "./types";
 import {

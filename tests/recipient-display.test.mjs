@@ -25,7 +25,7 @@ async function bundle(entry, outfile) {
 		},
 		bundle: true,
 		entryPoints: [join(root, entry)],
-		external: ["react", "react-dom", "next", "next/*"],
+		external: ["react", "react-dom"],
 		format: "esm",
 		logLevel: "silent",
 		outfile: join(outDir, outfile),

@@ -1,6 +1,5 @@
-import { cookies } from "next/headers";
-
 import { SESSION_COOKIE, getUserFromSession } from "@/lib/auth/session";
+import { cookies } from "@/lib/http/request";
 
 function getBearerToken(request?: Request): string | undefined {
 	const authorization = request?.headers.get("Authorization");

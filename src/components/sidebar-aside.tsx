@@ -1,10 +1,10 @@
 "use client";
 
 import { Menu } from "lucide-react";
-import Link from "next/link";
 import { useRef, useState } from "react";
 import type { ReactNode, TouchEvent } from "react";
 
+import Link from "@/components/app-link";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { APP_NAME } from "@/lib/app-identity";

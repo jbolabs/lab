@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { avatarKeyFor } from "@/app/api/profile/avatar/utils";
 import { getDb } from "@/db";
@@ -35,12 +34,12 @@ export async function POST(request: Request, { params }: AccountRouteParams) {
 		return access.error;
 	}
 	if (!account) {
-		return NextResponse.json({ error: "Account not found" }, { status: 404 });
+		return Response.json({ error: "Account not found" }, { status: 404 });
 	}
 	const form = await request.formData();
 	const images = getOptimizedAvatarFiles(form);
 	if (!images) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "A resized WebP image and preview are required" },
 			{ status: 400 }
 		);
@@ -51,5 +50,5 @@ export async function POST(request: Request, { params }: AccountRouteParams) {
 		.update(users)
 		.set({ avatarKey: key })
 		.where(eq(users.id, account.id));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

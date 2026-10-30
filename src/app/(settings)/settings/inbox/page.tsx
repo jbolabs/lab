@@ -1,3 +1,4 @@
+import { useLanguage } from "@/components/language-provider";
 import { AppearanceSettings } from "@/components/settings/appearance-settings";
 import { InboxReadingLayoutSettings } from "@/components/settings/inbox-reading-layout-settings";
 import { InboxShortcutsSettings } from "@/components/settings/inbox-shortcuts-settings";
@@ -20,10 +21,9 @@ import {
 	PageHeaderText,
 	PageTitle,
 } from "@/components/ui/page-header";
-import { getServerTranslator } from "@/lib/i18n/server";
 
-export default async function SettingsInboxPage() {
-	const t = await getServerTranslator();
+export default function SettingsInboxPage() {
+	const { t } = useLanguage();
 	return (
 		<div className="flex flex-col gap-8 py-4">
 			<PageHeader>

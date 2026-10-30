@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getDb } from "@/db";
@@ -21,20 +20,20 @@ export async function PUT(request: Request, { params }: Params) {
 	const env = getEnv();
 	const user = await requireUser(env, request);
 	if (!canManageDomains(user)) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const domain = await getDomainForUser(env, user.id, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	const parsed = z
 		.object({ provider: z.enum(["none", "cloudflare", "resend", "ses"]) })
 		.safeParse(await request.json().catch(() => null));
 	if (!parsed.success) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Unknown receiving provider" },
 			{ status: 400 }
 		);
@@ -43,7 +42,7 @@ export async function PUT(request: Request, { params }: Params) {
 		.update(domains)
 		.set({ receivingProvider: parsed.data.provider })
 		.where(eq(domains.id, domain.id));
-	return NextResponse.json(
+	return Response.json(
 		{ domain: await getDomainForUser(env, user.id, id) },
 		{ headers: { "Cache-Control": "no-store" } }
 	);
@@ -56,9 +55,9 @@ export async function GET(request: Request, { params }: Params) {
 	const user = await requireUser(env, request);
 	const domain = await getDomainForUser(env, user.id, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
-	return NextResponse.json(await receivingPresence(env, domain), {
+	return Response.json(await receivingPresence(env, domain), {
 		headers: { "Cache-Control": "no-store" },
 	});
 }
@@ -69,32 +68,32 @@ export async function DELETE(request: Request, { params }: Params) {
 	const env = getEnv();
 	const user = await requireUser(env, request);
 	if (!canManageDomains(user)) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const domain = await getDomainForUser(env, user.id, id);
 	if (!domain) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	const parsed = z
 		.object({ target: z.enum(["cloudflare", "resend", "ses"]) })
 		.safeParse(await request.json().catch(() => null));
 	if (!parsed.success) {
-		return NextResponse.json({ error: "Unknown provider" }, { status: 400 });
+		return Response.json({ error: "Unknown provider" }, { status: 400 });
 	}
 	if (parsed.data.target === domain.receivingProvider) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Switch to another provider before removing this one" },
 			{ status: 400 }
 		);
 	}
 	try {
 		await removeReceiving(env, domain, parsed.data.target);
-		return NextResponse.json({ ok: true });
+		return Response.json({ ok: true });
 	} catch (error) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error:
 					error instanceof Error

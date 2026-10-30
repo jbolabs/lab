@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { getDb } from "@/db";
@@ -25,7 +24,7 @@ export async function GET(request: Request) {
 		?.trim()
 		.toLowerCase();
 	if (!sender || mode !== "new_sender") {
-		return NextResponse.json({ mode });
+		return Response.json({ mode });
 	}
 	const [contact] = await getDb(env)
 		.select({ allowed: contacts.remoteContentAllowed, source: contacts.source })
@@ -34,7 +33,7 @@ export async function GET(request: Request) {
 		.limit(1);
 	// Someone the user has written to or added is not a new sender.
 	const known = !!contact && (contact.allowed || contact.source !== "inbound");
-	return NextResponse.json({ mode, senderAllowed: known });
+	return Response.json({ mode, senderAllowed: known });
 }
 
 export async function PATCH(request: Request) {
@@ -48,7 +47,7 @@ export async function PATCH(request: Request) {
 	try {
 		({ mode } = updateRemoteContentSettingsSchema.parse(await request.json()));
 	} catch (error) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error: error instanceof ZodError ? error.flatten() : "Invalid request",
 			},
@@ -60,7 +59,7 @@ export async function PATCH(request: Request) {
 		.update(users)
 		.set({ remoteContentMode: mode })
 		.where(eq(users.id, auth.user.id));
-	return NextResponse.json({ mode });
+	return Response.json({ mode });
 }
 
 // Remembers that the user allowed remote content from this sender.
@@ -75,7 +74,7 @@ export async function POST(request: Request) {
 	try {
 		({ sender } = trustRemoteContentSenderSchema.parse(await request.json()));
 	} catch (error) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error: error instanceof ZodError ? error.flatten() : "Invalid request",
 			},
@@ -96,5 +95,5 @@ export async function POST(request: Request) {
 			set: { remoteContentAllowed: true },
 			target: [contacts.userId, contacts.email],
 		});
-	return NextResponse.json({ senderAllowed: true });
+	return Response.json({ senderAllowed: true });
 }

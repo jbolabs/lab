@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import {
 	createContext,
 	useCallback,
@@ -10,6 +9,8 @@ import {
 	useLayoutEffect,
 	useState,
 } from "react";
+
+import { usePathname } from "@/lib/navigation";
 
 import {
 	readColumnWidth,

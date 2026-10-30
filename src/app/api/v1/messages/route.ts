@@ -1,6 +1,5 @@
 import { eq, desc, and, inArray } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { messages, users } from "@/db/schema";
@@ -20,7 +19,7 @@ export async function GET(request: Request) {
 		request.headers.get("authorization")
 	);
 	if (!auth || !requireScope(auth.scopes, "read")) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const url = new URL(request.url);
@@ -36,16 +35,16 @@ export async function GET(request: Request) {
 		.where(eq(users.id, auth.userId))
 		.limit(1);
 	if (!user || user.disabled) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 	const conditions: SQL[] = [];
 	if (mailboxId) {
 		if (auth.mailboxIds && !auth.mailboxIds.includes(mailboxId)) {
-			return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+			return Response.json({ error: "Mailbox not found" }, { status: 404 });
 		}
 		const access = await getMailboxAccessLevel(db, user, mailboxId);
 		if (!access?.canRead) {
-			return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+			return Response.json({ error: "Mailbox not found" }, { status: 404 });
 		}
 		conditions.push(eq(messages.mailboxId, mailboxId));
 	} else {
@@ -57,7 +56,7 @@ export async function GET(request: Request) {
 			conditions.push(inArray(messages.mailboxId, accessibleMailboxIds));
 		} else {
 			if (auth.mailboxIds) {
-				return NextResponse.json({ messages: [] });
+				return Response.json({ messages: [] });
 			}
 			conditions.push(eq(messages.userId, auth.userId));
 		}
@@ -81,5 +80,5 @@ export async function GET(request: Request) {
 		.orderBy(desc(messages.createdAt))
 		.limit(limit);
 
-	return NextResponse.json({ messages: rows });
+	return Response.json({ messages: rows });
 }

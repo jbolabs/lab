@@ -1,9 +1,8 @@
 "use client";
 import { Plus } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +28,7 @@ import {
 	PageDescription,
 } from "@/components/ui/page-header";
 import { runAsyncAction } from "@/lib/async-cleanup";
+import { useParams } from "@/lib/navigation";
 
 import { AdminRowActions } from "../../../admin-row-actions";
 import type { ManagedAccount, ManagedDomain, ManagedMailbox } from "../types";

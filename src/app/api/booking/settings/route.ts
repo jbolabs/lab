@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
@@ -14,23 +13,23 @@ export async function PATCH(request: Request) {
 	const env = getEnv();
 	const user = await getCurrentUser(env, request);
 	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 	if (user.role !== "admin") {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Only administrators can change booking usernames." },
 			{ status: 403 }
 		);
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const body = (await request
 		.json()
 		.catch(() => null)) as BookingSettingsInput | null;
 	const username = normalizeBookingUsername(body?.username);
 	if (!username) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error:
 					"Use up to 64 lowercase letters, numbers, dots, underscores, plus signs, or hyphens.",
@@ -45,7 +44,7 @@ export async function PATCH(request: Request) {
 		.where(eq(users.bookingUsername, username))
 		.limit(1);
 	if (taken && taken.id !== user.id) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "This username is already taken." },
 			{ status: 409 }
 		);
@@ -55,7 +54,7 @@ export async function PATCH(request: Request) {
 			.update(users)
 			.set({ bookingUsername: username })
 			.where(eq(users.id, user.id));
-		return NextResponse.json({ username });
+		return Response.json({ username });
 	} catch (error) {
 		if (
 			error instanceof Error &&
@@ -63,7 +62,7 @@ export async function PATCH(request: Request) {
 				error.message
 			)
 		) {
-			return NextResponse.json(
+			return Response.json(
 				{ error: "This username is already taken." },
 				{ status: 409 }
 			);

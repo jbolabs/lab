@@ -1,5 +1,4 @@
 import { and, eq, isNull, ne } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { calendarEvents, users } from "@/db/schema";
@@ -14,17 +13,14 @@ export async function PATCH(request: Request) {
 	const env = getEnv();
 	const user = await getCurrentUser(env, request);
 	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const input = await parseTimeZoneUpdate(request);
 	if (!input) {
-		return NextResponse.json(
-			{ error: "Choose a valid timezone" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "Choose a valid timezone" }, { status: 400 });
 	}
 	const db = getDb(env);
 	// Legacy series have no recorded timezone. Freeze their current recurrence
@@ -43,5 +39,5 @@ export async function PATCH(request: Request) {
 		.update(users)
 		.set({ timeZone: input.timeZone })
 		.where(eq(users.id, user.id));
-	return NextResponse.json({ timeZone: input.timeZone });
+	return Response.json({ timeZone: input.timeZone });
 }

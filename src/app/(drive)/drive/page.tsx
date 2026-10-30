@@ -16,7 +16,6 @@ import {
 	UploadCloud,
 	X,
 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { createPortal } from "react-dom";
@@ -58,6 +57,7 @@ import {
 	DRIVE_MAX_FILE_BYTES,
 	formatDriveSize,
 } from "@/lib/drive/utils";
+import { useRouter, useSearchParams } from "@/lib/navigation";
 import { cn as clsx } from "@/lib/utils";
 
 import { DriveBulkActions } from "../drive-bulk-actions";

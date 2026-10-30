@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { getCurrentUser } from "@/lib/auth/cookies";
 import { getEnv } from "@/lib/cloudflare";
 import { updateMessageStatusForUser } from "@/lib/user";
@@ -15,15 +13,12 @@ export async function POST(
 	const env = getEnv();
 	const user = await getCurrentUser(env, request);
 	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const payload = (await request.json()) as MessageStatusPayload;
 	if (!isAllowedMessageStatus(payload.status)) {
-		return NextResponse.json(
-			{ error: "Invalid message status" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "Invalid message status" }, { status: 400 });
 	}
 
 	const success = await updateMessageStatusForUser(
@@ -33,8 +28,8 @@ export async function POST(
 		payload.status
 	);
 	if (!success) {
-		return NextResponse.json({ error: "Message not found" }, { status: 404 });
+		return Response.json({ error: "Message not found" }, { status: 404 });
 	}
 
-	return NextResponse.json({ success: true });
+	return Response.json({ success: true });
 }

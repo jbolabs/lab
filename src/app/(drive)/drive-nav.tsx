@@ -12,8 +12,6 @@ import {
 	UploadCloud,
 	UsersRound,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
 import {
 	useCallback,
 	useEffect,
@@ -24,6 +22,7 @@ import {
 import { toast } from "sonner";
 
 import { layoutLength } from "@/app/layout-values";
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { useSidebar } from "@/components/sidebar-state";
 import { Button } from "@/components/ui/button";
@@ -39,6 +38,7 @@ import { Progress } from "@/components/ui/progress";
 import { requireSuccessfulResponse, withCleanup } from "@/lib/async-cleanup";
 import { authFetch } from "@/lib/auth/client";
 import { formatDriveSize } from "@/lib/drive/utils";
+import { usePathname, useSearchParams } from "@/lib/navigation";
 import { cn as clsx } from "@/lib/utils";
 
 import { canDropDrive, driveDropHandlers } from "./drive-drag";

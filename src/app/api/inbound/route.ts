@@ -1,11 +1,7 @@
-import { NextResponse } from "next/server";
-
 import { getEnv } from "@/lib/cloudflare";
 import { inboundAttachmentLimitReasonFromRaw } from "@/lib/email/inbound-attachments";
 import { intakeIncomingMail } from "@/lib/email/intake";
 import { verifyInboundSignature } from "@/lib/email/intake-signature";
-
-export const dynamic = "force-dynamic";
 
 /**
  * Inbound mail from the Cloudflare email relay Worker (deploy/cloudflare-email-relay).
@@ -17,7 +13,7 @@ export async function POST(request: Request) {
 	const env = getEnv();
 	const secret = env.INBOUND_WEBHOOK_SECRET?.trim();
 	if (!secret) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "INBOUND_WEBHOOK_SECRET is not configured" },
 			{ status: 503 }
 		);
@@ -25,7 +21,7 @@ export async function POST(request: Request) {
 
 	const raw = await request.arrayBuffer();
 	if (raw.byteLength > 25 * 1024 * 1024) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Message exceeds the 25 MiB receiving limit" },
 			{ status: 413 }
 		);
@@ -38,11 +34,11 @@ export async function POST(request: Request) {
 		!to ||
 		!(await verifyInboundSignature(secret, signature, raw, from, to))
 	) {
-		return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+		return Response.json({ error: "Invalid signature" }, { status: 401 });
 	}
 	const attachmentLimitReason = await inboundAttachmentLimitReasonFromRaw(raw);
 	if (attachmentLimitReason) {
-		return NextResponse.json({
+		return Response.json({
 			action: "reject",
 			reason: attachmentLimitReason,
 		});
@@ -71,5 +67,5 @@ export async function POST(request: Request) {
 			},
 		}
 	);
-	return NextResponse.json({ ...result, forwardHeaders, forwardTo });
+	return Response.json({ ...result, forwardHeaders, forwardTo });
 }

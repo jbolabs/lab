@@ -1,6 +1,5 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { SendReview } from "@/components/agent/send-review";
@@ -14,6 +13,7 @@ import {
 } from "@/components/ui/page-header";
 import { SkeletonRows } from "@/components/ui/skeleton";
 import { authFetch } from "@/lib/auth/client";
+import { useParams, useRouter } from "@/lib/navigation";
 
 export default function AgentReviewPage() {
 	const { t } = useLanguage();

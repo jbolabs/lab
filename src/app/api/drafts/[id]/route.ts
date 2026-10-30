@@ -1,5 +1,4 @@
 import { eq, sql } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { agentDraftMetadata, messages } from "@/db/schema";
@@ -24,7 +23,7 @@ export async function GET(request: Request, { params }: DraftRouteParams) {
 	const draft = await selectDraftWithBody(db, user.id, id);
 
 	if (!draft) {
-		return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+		return Response.json({ error: "Draft not found" }, { status: 404 });
 	}
 
 	const attachments = await listMessageAttachments(env, id);
@@ -33,7 +32,7 @@ export async function GET(request: Request, { params }: DraftRouteParams) {
 		.from(agentDraftMetadata)
 		.where(eq(agentDraftMetadata.draftId, id))
 		.limit(1);
-	return NextResponse.json({
+	return Response.json({
 		draft: {
 			...draft,
 			agent: agent
@@ -57,7 +56,7 @@ export async function PATCH(request: Request, { params }: DraftRouteParams) {
 		input = await readJsonBody<DraftPayload>(request, 1024 * 1024);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json({ error: "Invalid draft request" }, { status });
+		return Response.json({ error: "Invalid draft request" }, { status });
 	}
 	const db = getDb(env);
 	const [draft] = await db
@@ -67,7 +66,7 @@ export async function PATCH(request: Request, { params }: DraftRouteParams) {
 		.limit(1);
 
 	if (!userOwnsDraft(draft, user.id)) {
-		return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+		return Response.json({ error: "Draft not found" }, { status: 404 });
 	}
 	const [agent] = await db
 		.select({ mailboxId: agentDraftMetadata.mailboxId })
@@ -75,7 +74,7 @@ export async function PATCH(request: Request, { params }: DraftRouteParams) {
 		.where(eq(agentDraftMetadata.draftId, id))
 		.limit(1);
 	if (agent && input.mailboxId !== agent.mailboxId) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Agent draft mailbox cannot be changed" },
 			{ status: 409 }
 		);
@@ -85,7 +84,7 @@ export async function PATCH(request: Request, { params }: DraftRouteParams) {
 		try {
 			scheduledAt = parseAgentScheduledAt(input.scheduledAt);
 		} catch (error) {
-			return NextResponse.json(
+			return Response.json(
 				{ error: error instanceof Error ? error.message : "Invalid schedule" },
 				{ status: 400 }
 			);
@@ -93,7 +92,7 @@ export async function PATCH(request: Request, { params }: DraftRouteParams) {
 	}
 	const sender = await getDraftSender(env, user.id, input);
 	if ("error" in sender) {
-		return NextResponse.json({ error: sender.error }, { status: 403 });
+		return Response.json({ error: sender.error }, { status: 403 });
 	}
 
 	const text = input.text ?? "";
@@ -119,7 +118,7 @@ export async function PATCH(request: Request, { params }: DraftRouteParams) {
 		})
 		.where(eq(agentDraftMetadata.draftId, id));
 
-	return NextResponse.json({ draft: { id } });
+	return Response.json({ draft: { id } });
 }
 
 export async function DELETE(request: Request, { params }: DraftRouteParams) {
@@ -134,9 +133,9 @@ export async function DELETE(request: Request, { params }: DraftRouteParams) {
 		.limit(1);
 
 	if (!userOwnsDraft(draft, user.id)) {
-		return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+		return Response.json({ error: "Draft not found" }, { status: 404 });
 	}
 
 	await deleteMessageWithObjects(env, db, id, draft.rawR2Key);
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

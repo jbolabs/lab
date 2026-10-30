@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { folders } from "@/db/schema";
@@ -24,7 +23,7 @@ export async function POST(request: Request) {
 		input = parseImapImportRequest(body);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json(
+		return Response.json(
 			{
 				error:
 					error instanceof Error
@@ -37,7 +36,7 @@ export async function POST(request: Request) {
 
 	const access = await getMailboxAccessLevel(getDb(env), user, input.mailboxId);
 	if (!access?.canManage) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 	if (input.destination.type === "folder") {
 		const db = getDb(env);
@@ -52,7 +51,7 @@ export async function POST(request: Request) {
 			)
 			.limit(1);
 		if (!folder) {
-			return NextResponse.json({ error: "Folder not found" }, { status: 404 });
+			return Response.json({ error: "Folder not found" }, { status: 404 });
 		}
 	}
 
@@ -72,9 +71,9 @@ export async function POST(request: Request) {
 				access.mailbox.userId
 			),
 		});
-		return NextResponse.json({ ...result, nextOffset, total });
+		return Response.json({ ...result, nextOffset, total });
 	} catch (error) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: error instanceof Error ? error.message : "IMAP import failed" },
 			{ status: 502 }
 		);

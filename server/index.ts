@@ -2,7 +2,9 @@ import { createServer } from "node:http";
 import nodePath from "node:path";
 import { parse } from "node:url";
 
-import createNextApp from "next";
+import { getRequestListener } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { Hono } from "hono";
 import { WebSocketServer } from "ws";
 
 import { processAgentDraftJob } from "@/lib/agent/jobs/utils";
@@ -13,6 +15,7 @@ import type { OutboundQueueMessage } from "@/lib/email/send";
 import { processWebhookRetry } from "@/lib/email/webhooks";
 import type { WebhookRetryMessage } from "@/lib/email/webhooks";
 import { getSessionTokenFromRequest } from "@/lib/realtime/utils";
+import { withSecurityHeaders } from "@/lib/security/headers";
 
 import { isInboundQueueMessage, isWebhookRetryMessage } from "../worker-utils";
 import { createNodeRuntime } from "./runtime/env";
@@ -23,14 +26,14 @@ import { startSmtpListener } from "./runtime/smtp";
 const { join, resolve } = nodePath;
 
 /**
- * The self-hosted entrypoint: one Node process serving the Next app, the
+ * The self-hosted entrypoint: one Node process serving the TanStack Start app, the
  * realtime WebSocket, the SMTP listener, the job queues and the backup
  * schedule, the same jobs worker.ts spreads across Cloudflare products.
  */
 async function main() {
 	const port = Number(process.env.PORT ?? 3000);
 	const host = process.env.HOST ?? "0.0.0.0";
-	const dev = process.env.NODE_ENV !== "production";
+
 	const runtime = createNodeRuntime();
 	const { env } = runtime;
 	globalThis.__mailflareNodeEnv = env;
@@ -68,22 +71,36 @@ async function main() {
 		}
 	});
 
-	const app = createNextApp({ dev, dir: process.cwd(), hostname: host, port });
-	const handle = app.getRequestHandler();
-	await app.prepare();
-
-	const server = createServer((request, response) =>
-		handle(request, response, parse(request.url ?? "/", true))
-	);
+	const dev = process.env.NODE_ENV !== "production";
+	const server = createServer();
+	let closeDevServer: (() => Promise<void>) | undefined;
+	if (dev) {
+		const { createServer: createViteServer } = await import("vite");
+		const vite = await createViteServer({
+			appType: "custom",
+			server: { middlewareMode: true, ws: { server } },
+		});
+		server.on("request", vite.middlewares);
+		closeDevServer = () => vite.close();
+	} else {
+		const { default: start } = await import(
+			new URL("server/index.js", import.meta.url).href
+		);
+		const app = new Hono();
+		app.use("*", async (context, proceed) => {
+			await proceed();
+			context.res = withSecurityHeaders(context.req.raw, context.res);
+		});
+		app.use("*", serveStatic({ root: "./dist/client" }));
+		app.all("*", (context) => start.fetch(context.req.raw));
+		server.on("request", getRequestListener(app.fetch));
+	}
 
 	const wss = new WebSocketServer({ noServer: true });
 	server.on("upgrade", (request, socket, head) => {
 		const { pathname } = parse(request.url ?? "/");
 		if (pathname !== "/api/realtime") {
-			// Next's own dev-mode HMR socket, or anything else, is not ours.
-			if (dev) {
-				app.getUpgradeHandler()(request, socket, head);
-			} else {
+			if (!dev) {
 				socket.destroy();
 			}
 			return;
@@ -130,6 +147,7 @@ async function main() {
 
 	const shutdown = () => {
 		stopScheduler();
+		void closeDevServer?.();
 		runtime.inboundQueue.stop();
 		runtime.outboundQueue.stop();
 		runtime.agentQueue.stop();

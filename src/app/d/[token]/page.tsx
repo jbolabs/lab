@@ -1,6 +1,6 @@
-"use client";
+import { useParams } from "@tanstack/react-router";
 import { ChevronRight, Download } from "lucide-react";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { DrivePreviewBody } from "@/app/(drive)/drive-preview";
 import {
@@ -72,12 +72,8 @@ function PublicRow({
 	);
 }
 
-export default function PublicDrivePage({
-	params,
-}: {
-	params: Promise<{ token: string }>;
-}) {
-	const { token } = use(params);
+export default function PublicDrivePage() {
+	const { token } = useParams({ from: "/d/$token/" });
 	const { t } = useLanguage();
 	const [itemId, setItemId] = useState<string | null>(null);
 	const [data, setData] = useState<PublicDriveListing | null>(null);

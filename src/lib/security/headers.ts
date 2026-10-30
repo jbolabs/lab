@@ -68,3 +68,27 @@ export function withoutHttpsUpgradeOnHttp(
 		statusText: response.statusText,
 	});
 }
+
+/** Apply the same policy to Start responses and Node-served static assets. */
+export function withSecurityHeaders(
+	request: Request,
+	response: Response
+): Response {
+	if (response.status === 101) {
+		return response;
+	}
+	const headers = new Headers(response.headers);
+	for (const { key, value } of getSecurityHeaders()) {
+		if (!headers.has(key)) {
+			headers.set(key, value);
+		}
+	}
+	return withoutHttpsUpgradeOnHttp(
+		request,
+		new Response(response.body, {
+			headers,
+			status: response.status,
+			statusText: response.statusText,
+		})
+	);
+}

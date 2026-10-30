@@ -1,10 +1,9 @@
 "use client";
 
 import { ArrowRight, Clock3, MapPin } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import Link from "@/components/app-link";
 import { Wordmark } from "@/components/brand";
 import { useBranding } from "@/components/branding-provider";
 import { useLanguage } from "@/components/language-provider";
@@ -17,6 +16,7 @@ import {
 	PageTitle,
 	PageDescription,
 } from "@/components/ui/page-header";
+import { useParams } from "@/lib/navigation";
 import { cn as scopeLayoutClasses } from "@/lib/utils";
 
 import { BookingListSkeleton } from "./booking-list-skeleton";
@@ -156,7 +156,6 @@ export default function PublicBookingListPage() {
 					<div className="w-44">
 						<LanguageSelector />
 					</div>
-					{/* oxlint-disable-next-line next/no-img-element -- Runtime branding and avatar API URLs are served directly; Workers has no configured image optimizer. */}
 					<img
 						src={branding.iconUrl}
 						width={24}

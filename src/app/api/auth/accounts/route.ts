@@ -1,6 +1,3 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-
 import {
 	ACCOUNTS_COOKIE,
 	parseAccountTokens,
@@ -8,6 +5,7 @@ import {
 } from "@/lib/auth/accounts";
 import { getSessionTokenFromRequestHeaders } from "@/lib/auth/session";
 import { getEnv } from "@/lib/cloudflare";
+import { cookies } from "@/lib/http/request";
 
 /** Accounts signed in on this browser. Tokens are never returned. */
 export async function GET(request: Request) {
@@ -21,7 +19,7 @@ export async function GET(request: Request) {
 			...(active ? [active] : []),
 		]),
 	]);
-	const response = NextResponse.json({
+	const response = Response.json({
 		accounts: accounts.map(({ token, avatarKey: _avatarKey, ...account }) => ({
 			...account,
 			active: token === active,

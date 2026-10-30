@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { hasAdminAccount } from "@/lib/auth/setup";
 import { getEnv } from "@/lib/cloudflare";
 import { hasConflictingMxRecords } from "@/lib/domains/mx-records";
@@ -11,7 +9,7 @@ import { setupDomainSchema } from "@/lib/validators";
 export async function POST(request: Request) {
 	const env = getEnv();
 	if (await hasAdminAccount(env)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Initial setup is already complete" },
 			{ status: 403 }
 		);
@@ -22,15 +20,12 @@ export async function POST(request: Request) {
 		body = await readJsonBody(request, 16 * 1024);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json({ error: "Invalid MX check request" }, { status });
+		return Response.json({ error: "Invalid MX check request" }, { status });
 	}
 
 	const parsed = setupDomainSchema.safeParse(body);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	try {
@@ -40,10 +35,10 @@ export async function POST(request: Request) {
 			domain.zone.id,
 			domain.hostname
 		);
-		return NextResponse.json({ hasExistingMx });
+		return Response.json({ hasExistingMx });
 	} catch (error) {
 		const message =
 			error instanceof Error ? error.message : "MX record check failed";
-		return NextResponse.json({ error: message }, { status: 502 });
+		return Response.json({ error: message }, { status: 502 });
 	}
 }

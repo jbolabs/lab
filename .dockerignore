@@ -1,7 +1,4 @@
 node_modules
-.next
-.next-node
-.vinext
 .wrangler
 dist
 data
@@ -19,3 +16,5 @@ docs/demo.mp4
 .alchemy
 deployment/node_modules
 deployment/.alchemy
+screenshots
+.tanstack

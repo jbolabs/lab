@@ -1,3 +1,4 @@
+import { useLanguage } from "@/components/language-provider";
 import { DomainRouting } from "@/components/settings/domain-routing/domain-routing";
 import { InboxRules } from "@/components/settings/inbox-rules";
 import {
@@ -5,10 +6,9 @@ import {
 	PageHeaderText,
 	PageTitle,
 } from "@/components/ui/page-header";
-import { getServerTranslator } from "@/lib/i18n/server";
 
-export default async function SettingsRulesPage() {
-	const t = await getServerTranslator();
+export default function SettingsRulesPage() {
+	const { t } = useLanguage();
 	return (
 		<div className="flex flex-col gap-8 py-4">
 			<PageHeader>

@@ -1,9 +1,9 @@
 "use client";
 
 import { KeyRound } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 
+import Link from "@/components/app-link";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { TurnstileField } from "@/components/auth/turnstile";
 import { useLanguage } from "@/components/language-provider";

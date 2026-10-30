@@ -1,6 +1,4 @@
 import { eq } from "drizzle-orm";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
@@ -12,8 +10,9 @@ import { allowLoginAttempt } from "@/lib/auth/rate-limit";
 import { createSession, SESSION_COOKIE } from "@/lib/auth/session";
 import { verifyTurnstileToken } from "@/lib/auth/turnstile";
 import { getEnv } from "@/lib/cloudflare";
+import { setResponseCookie } from "@/lib/http/cookies";
 import { RequestBodyTooLargeError } from "@/lib/http/errors";
-import { readJsonBody } from "@/lib/http/request";
+import { cookies, readJsonBody } from "@/lib/http/request";
 import { loginSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
@@ -23,17 +22,14 @@ export async function POST(request: Request) {
 		body = await readJsonBody(request, 16 * 1024);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json({ error: "Invalid login request" }, { status });
+		return Response.json({ error: "Invalid login request" }, { status });
 	}
 	const parsed = loginSchema.safeParse(body);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 	if (!(await allowLoginAttempt(env, request))) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Too many login attempts. Try again shortly." },
 			{ headers: { "Retry-After": "60" }, status: 429 }
 		);
@@ -45,7 +41,7 @@ export async function POST(request: Request) {
 			(body as Record<string, unknown>).turnstileToken
 		))
 	) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Verification failed. Please try again." },
 			{ status: 400 }
 		);
@@ -58,17 +54,17 @@ export async function POST(request: Request) {
 		.where(eq(users.email, parsed.data.email))
 		.limit(1);
 	if (!user || !verifyPassword(parsed.data.password, user.passwordHash)) {
-		return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+		return Response.json({ error: "Invalid credentials" }, { status: 401 });
 	}
 	if (user.disabled || user.deletedAt) {
-		return NextResponse.json({ error: "Account disabled" }, { status: 403 });
+		return Response.json({ error: "Account disabled" }, { status: 403 });
 	}
 
 	// The password is right but a second factor is on: hand back a short-lived
 	// challenge instead of a session and let /api/auth/mfa/verify finish.
 	if (user.totpEnabled && user.totpSecret) {
 		const challengeToken = await createLoginChallenge(env, user.id);
-		const pending = NextResponse.json({
+		const pending = Response.json({
 			challengeToken,
 			mfaRequired: true,
 			ok: true,
@@ -83,13 +79,13 @@ export async function POST(request: Request) {
 		request,
 		userId: user.id,
 	});
-	const response = NextResponse.json({
+	const response = Response.json({
 		ok: true,
 		redirect: "/inbox",
 		token,
 	});
 	response.headers.set("Cache-Control", "no-store");
-	response.cookies.set(SESSION_COOKIE, token, {
+	setResponseCookie(response, SESSION_COOKIE, token, {
 		httpOnly: true,
 		maxAge: 60 * 60 * 24 * 30,
 		path: "/",

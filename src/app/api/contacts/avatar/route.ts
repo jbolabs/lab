@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { avatarKeyFor } from "@/app/api/profile/avatar/utils";
 import { getDb } from "@/db";
@@ -64,7 +63,7 @@ export async function POST(request: Request) {
 	try {
 		form = await request.formData();
 	} catch {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Expected multipart form data" },
 			{ status: 400 }
 		);
@@ -77,7 +76,7 @@ export async function POST(request: Request) {
 	);
 	const images = getOptimizedAvatarFiles(form);
 	if (!mailboxId || !email || !images) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Mailbox, contact, and image file are required" },
 			{ status: 400 }
 		);
@@ -86,7 +85,7 @@ export async function POST(request: Request) {
 	const db = getDb(env);
 	const access = await getMailboxAccessLevel(db, user, mailboxId);
 	if (!access?.canManage) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 	const account = await getPersonalIdentityForAddress(
 		db,
@@ -95,7 +94,7 @@ export async function POST(request: Request) {
 	);
 	if (account) {
 		if (account.userId !== user.id) {
-			return NextResponse.json(
+			return Response.json(
 				{ error: "Only the account owner can change this contact" },
 				{ status: 403 }
 			);
@@ -103,7 +102,7 @@ export async function POST(request: Request) {
 		const key = avatarKeyFor(account.userId);
 		await storeAvatarImages(env.BUCKET, key, images.full, images.preview);
 		await syncPersonalIdentity(db, { ...account, avatarKey: key });
-		return NextResponse.json({ ok: true });
+		return Response.json({ ok: true });
 	}
 	const [existing] = await db
 		.select({ id: contacts.id })
@@ -129,7 +128,7 @@ export async function POST(request: Request) {
 		.where(
 			and(eq(contacts.userId, access.mailbox.userId), eq(contacts.email, email))
 		);
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }
 
 export async function DELETE(request: Request) {
@@ -139,7 +138,7 @@ export async function DELETE(request: Request) {
 	const mailboxId = url.searchParams.get("mailboxId");
 	const email = normalizeEmailAddress(url.searchParams.get("address") ?? "");
 	if (!mailboxId || !email) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Mailbox and contact are required" },
 			{ status: 400 }
 		);
@@ -148,7 +147,7 @@ export async function DELETE(request: Request) {
 	const db = getDb(env);
 	const access = await getMailboxAccessLevel(db, user, mailboxId);
 	if (!access?.canManage) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 	const account = await getPersonalIdentityForAddress(
 		db,
@@ -157,7 +156,7 @@ export async function DELETE(request: Request) {
 	);
 	if (account) {
 		if (account.userId !== user.id) {
-			return NextResponse.json(
+			return Response.json(
 				{ error: "Only the account owner can change this contact" },
 				{ status: 403 }
 			);
@@ -166,7 +165,7 @@ export async function DELETE(request: Request) {
 			await deleteAvatarImages(env.BUCKET, account.avatarKey);
 		}
 		await syncPersonalIdentity(db, { ...account, avatarKey: null });
-		return NextResponse.json({ ok: true });
+		return Response.json({ ok: true });
 	}
 	const [contact] = await db
 		.select({ avatarKey: contacts.avatarKey })
@@ -184,5 +183,5 @@ export async function DELETE(request: Request) {
 		.where(
 			and(eq(contacts.userId, access.mailbox.userId), eq(contacts.email, email))
 		);
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

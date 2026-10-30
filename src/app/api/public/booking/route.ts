@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { bookingEvents, users } from "@/db/schema";
@@ -10,10 +9,7 @@ export async function GET(request: Request) {
 	const username = url.searchParams.get("username");
 	const userId = url.searchParams.get("userId");
 	if (!username && !userId) {
-		return NextResponse.json(
-			{ error: "Missing booking page" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "Missing booking page" }, { status: 400 });
 	}
 	const db = getDb(getEnv());
 	const [user] = await db
@@ -29,10 +25,7 @@ export async function GET(request: Request) {
 		)
 		.limit(1);
 	if (!user) {
-		return NextResponse.json(
-			{ error: "Booking page not found" },
-			{ status: 404 }
-		);
+		return Response.json({ error: "Booking page not found" }, { status: 404 });
 	}
 	const events = await db
 		.select({
@@ -50,7 +43,7 @@ export async function GET(request: Request) {
 			and(eq(bookingEvents.userId, user.id), eq(bookingEvents.enabled, true))
 		)
 		.orderBy(bookingEvents.createdAt);
-	return NextResponse.json({
+	return Response.json({
 		events,
 		name: user.name,
 		username: user.username,

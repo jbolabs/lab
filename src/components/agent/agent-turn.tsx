@@ -1,11 +1,11 @@
 "use client";
 
 import { ChevronDown, Clock3 } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { Item, ItemContent } from "@/components/ui/item";
 

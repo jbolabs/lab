@@ -65,7 +65,6 @@ export function ProgressiveAvatarImage({
 	}
 
 	return (
-		// oxlint-disable-next-line next/no-img-element -- Avatar previews switch between authenticated API images and their full resolution source; no Next image optimizer is available.
 		<img
 			ref={imageRef}
 			src={showFull ? src : getAvatarPreviewUrl(src)}

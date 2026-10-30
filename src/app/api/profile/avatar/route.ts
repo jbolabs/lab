@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { getDb } from "@/db";
 import { getCurrentUser } from "@/lib/auth/cookies";
 import {
@@ -30,21 +28,21 @@ export async function POST(request: Request) {
 	const env = getEnv();
 	const user = await getCurrentUser(env, request);
 	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	let form: FormData;
 	try {
 		form = await request.formData();
 	} catch {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Expected multipart form data" },
 			{ status: 400 }
 		);
 	}
 	const images = getOptimizedAvatarFiles(form);
 	if (!images) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "A resized WebP image and preview are required" },
 			{ status: 400 }
 		);
@@ -58,14 +56,14 @@ export async function POST(request: Request) {
 		userId: user.id,
 	});
 
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }
 
 export async function DELETE(request: Request) {
 	const env = getEnv();
 	const user = await getCurrentUser(env, request);
 	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	if (user.avatarKey) {
@@ -76,5 +74,5 @@ export async function DELETE(request: Request) {
 		name: user.name,
 		userId: user.id,
 	});
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

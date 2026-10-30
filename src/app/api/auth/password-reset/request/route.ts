@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { requestPasswordReset } from "@/lib/auth/password-reset";
 import { allowLoginAttempt } from "@/lib/auth/rate-limit";
 import { verifyTurnstileToken } from "@/lib/auth/turnstile";
@@ -20,17 +18,17 @@ export async function POST(request: Request) {
 		body = await readJsonBody(request, 16 * 1024);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json({ error: "Invalid request" }, { status });
+		return Response.json({ error: "Invalid request" }, { status });
 	}
 	const parsed = passwordResetRequestSchema.safeParse(body);
 	if (!parsed.success) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Enter the email address you sign in with" },
 			{ status: 400 }
 		);
 	}
 	if (!(await allowLoginAttempt(env, request))) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Too many attempts. Try again shortly." },
 			{ headers: { "Retry-After": "60" }, status: 429 }
 		);
@@ -42,7 +40,7 @@ export async function POST(request: Request) {
 			(body as Record<string, unknown>).turnstileToken
 		))
 	) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Verification failed. Please try again." },
 			{ status: 400 }
 		);
@@ -60,7 +58,7 @@ export async function POST(request: Request) {
 		// Delivery problems are logged, never surfaced: the answer stays uniform.
 		console.error("Password reset request failed", error);
 	}
-	return NextResponse.json(
+	return Response.json(
 		{ ok: true },
 		{ headers: { "Cache-Control": "no-store" } }
 	);

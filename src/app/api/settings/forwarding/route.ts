@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { getDb } from "@/db";
@@ -18,9 +17,9 @@ export async function PATCH(request: Request) {
 		input = await parseUpdateForwardingEmailRequest(request);
 	} catch (error) {
 		if (error instanceof ZodError) {
-			return NextResponse.json({ error: error.flatten() }, { status: 400 });
+			return Response.json({ error: error.flatten() }, { status: 400 });
 		}
-		return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+		return Response.json({ error: "Invalid request" }, { status: 400 });
 	}
 
 	await getDb(env)
@@ -28,5 +27,5 @@ export async function PATCH(request: Request) {
 		.set({ forwardingEmail: input.forwardingEmail })
 		.where(eq(users.id, user.id));
 
-	return NextResponse.json({ forwardingEmail: input.forwardingEmail });
+	return Response.json({ forwardingEmail: input.forwardingEmail });
 }

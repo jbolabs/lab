@@ -1,13 +1,12 @@
 "use client";
 import { ArrowLeft, FileText, Lock } from "lucide-react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { ComponentProps } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { useConfirmation } from "@/app/(calendar)/use-confirmation";
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { requireSuccessfulResponse, withCleanup } from "@/lib/async-cleanup";
 import { authFetch } from "@/lib/auth/client";
 import type { DriveItemDto } from "@/lib/drive/types";
+import { useSearchParams } from "@/lib/navigation";
 
 import { DRIVE_REFRESH_EVENT } from "../../drive-events";
 

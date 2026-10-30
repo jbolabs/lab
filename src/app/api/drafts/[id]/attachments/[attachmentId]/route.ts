@@ -1,5 +1,4 @@
 import { eq, sql } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { agentDraftMetadata, messages } from "@/db/schema";
@@ -29,15 +28,12 @@ export async function DELETE(
 		.limit(1);
 
 	if (!userOwnsDraft(draft, user.id)) {
-		return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+		return Response.json({ error: "Draft not found" }, { status: 404 });
 	}
 
 	const removed = await deleteMessageAttachment(env, id, attachmentId);
 	if (!removed) {
-		return NextResponse.json(
-			{ error: "Attachment not found" },
-			{ status: 404 }
-		);
+		return Response.json({ error: "Attachment not found" }, { status: 404 });
 	}
 	await db
 		.update(agentDraftMetadata)
@@ -46,5 +42,5 @@ export async function DELETE(
 			revision: sql`${agentDraftMetadata.revision} + 1`,
 		})
 		.where(eq(agentDraftMetadata.draftId, id));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

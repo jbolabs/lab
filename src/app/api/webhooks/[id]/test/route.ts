@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { sendTestDelivery } from "@/lib/email/webhooks";
 
 import type { WebhookRouteParams } from "../types";
@@ -13,5 +11,5 @@ export async function POST(request: Request, { params }: WebhookRouteParams) {
 	}
 
 	const result = await sendTestDelivery(loaded.env, loaded.hook);
-	return NextResponse.json(result);
+	return Response.json(result);
 }

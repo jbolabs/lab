@@ -1,3 +1,4 @@
+import { useLanguage } from "@/components/language-provider";
 import { ChangePasswordForm } from "@/components/settings/change-password-form";
 import { DeviceSettings } from "@/components/settings/device-settings";
 import { MfaSettings } from "@/components/settings/mfa-settings";
@@ -14,10 +15,9 @@ import {
 	PageTitle,
 	PageDescription,
 } from "@/components/ui/page-header";
-import { getServerTranslator } from "@/lib/i18n/server";
 
-export default async function SecuritySettingsPage() {
-	const t = await getServerTranslator();
+export default function SecuritySettingsPage() {
+	const { t } = useLanguage();
 	return (
 		<div className="flex flex-col gap-8 py-4">
 			<section className="flex flex-col gap-4">

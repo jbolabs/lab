@@ -21,7 +21,6 @@ const bundleDirectory = mkdtempSync(
 await build({
 	alias: {
 		"cloudflare:workers": "./server/runtime/cloudflare-workers.ts",
-		"next/headers": "next/headers.js",
 	},
 	bundle: true,
 	format: "esm",

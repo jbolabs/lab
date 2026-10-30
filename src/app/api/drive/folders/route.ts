@@ -1,5 +1,4 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { driveItems } from "@/db/schema";
 import { withoutTrashedAncestors } from "@/lib/drive/access";
@@ -24,7 +23,7 @@ export async function GET(request: Request) {
 		)
 		.limit(2000);
 	const folders = await withoutTrashedAncestors(db, rows);
-	return NextResponse.json({
+	return Response.json({
 		folders: folders.map((folder) => ({
 			id: folder.id,
 			name: folder.name,

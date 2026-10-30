@@ -1,10 +1,10 @@
 "use client";
 import { ChevronLeft } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
+import { usePathname } from "@/lib/navigation";
 
 import { SettingsNav } from "./settings-nav";
 

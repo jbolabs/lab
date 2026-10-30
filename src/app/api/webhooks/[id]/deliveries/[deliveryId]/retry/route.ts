@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { runDelivery } from "@/lib/email/webhooks";
 
 import type { WebhookDeliveryRouteParams } from "../../../types";
@@ -19,8 +17,8 @@ export async function POST(
 		userId: loaded.user.id,
 	});
 	if (!result) {
-		return NextResponse.json({ error: "Delivery not found" }, { status: 404 });
+		return Response.json({ error: "Delivery not found" }, { status: 404 });
 	}
 
-	return NextResponse.json({ status: result.status });
+	return Response.json({ status: result.status });
 }

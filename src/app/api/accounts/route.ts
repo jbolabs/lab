@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { getDb } from "@/db";
 import { deleteAccounts } from "@/lib/accounts/deletion";
 import { canManageUsers, isPrimaryAdmin } from "@/lib/auth/admin";
@@ -18,7 +16,7 @@ export async function GET(request: Request) {
 		return access.error;
 	}
 	const rows = await listAccountsForAdmin(getDb(access.env));
-	return NextResponse.json({
+	return Response.json({
 		accounts: rows.map((row) => accountListItemFromUser(row)),
 	});
 }
@@ -32,20 +30,17 @@ export async function POST(request: Request) {
 		await request.json().catch(() => null)
 	);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 	const actor = access.user;
 	if (!canManageUsers(actor)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "You do not have permission to manage users" },
 			{ status: 403 }
 		);
 	}
 	if (parsed.data.role === "admin" && !isPrimaryAdmin(actor)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Only the primary admin can create admin accounts" },
 			{ status: 403 }
 		);
@@ -72,10 +67,7 @@ export async function DELETE(request: Request) {
 		transferToId,
 	});
 	if (!result.ok) {
-		return NextResponse.json(
-			{ error: result.error },
-			{ status: result.status }
-		);
+		return Response.json({ error: result.error }, { status: result.status });
 	}
-	return NextResponse.json({ deleted: result.deleted, ok: true });
+	return Response.json({ deleted: result.deleted, ok: true });
 }

@@ -1,5 +1,4 @@
 import { desc, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { webhookDeliveries } from "@/db/schema";
 
@@ -28,7 +27,7 @@ export async function GET(request: Request, { params }: WebhookRouteParams) {
 
 	const filtered = status ? rows.filter((row) => row.status === status) : rows;
 
-	return NextResponse.json({
+	return Response.json({
 		deliveries: filtered.map((row) => ({
 			attempts: row.attempts,
 			createdAt: row.createdAt,

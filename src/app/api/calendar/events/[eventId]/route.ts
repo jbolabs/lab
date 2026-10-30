@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { calendarEvents } from "@/db/schema";
@@ -52,16 +51,13 @@ export async function PATCH(
 		Number.isNaN(endsAt.getTime()) ||
 		endsAt <= startsAt;
 	if (hasInvalidEventTimes()) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Enter a title and valid event times" },
 			{ status: 400 }
 		);
 	}
 	if (effectiveFrom && Number.isNaN(effectiveFrom.getTime())) {
-		return NextResponse.json(
-			{ error: "Invalid repeat start" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "Invalid repeat start" }, { status: 400 });
 	}
 	const db = getDb(env);
 	const [existing] = await db
@@ -75,7 +71,7 @@ export async function PATCH(
 		)
 		.limit(1);
 	if (!existing) {
-		return NextResponse.json({ error: "Event not found" }, { status: 404 });
+		return Response.json({ error: "Event not found" }, { status: 404 });
 	}
 	const resolveTimeZone = () =>
 		input.timeZone
@@ -88,10 +84,7 @@ export async function PATCH(
 			occurrence.startsAt < existing.startsAt ||
 			(existing.repeatUntil && occurrence.startsAt >= existing.repeatUntil));
 	if (isMissingOccurrence()) {
-		return NextResponse.json(
-			{ error: "Occurrence not found" },
-			{ status: 404 }
-		);
+		return Response.json({ error: "Occurrence not found" }, { status: 404 });
 	}
 	const hasNoFutureOccurrences = () =>
 		existing.repeat !== "none" &&
@@ -99,7 +92,7 @@ export async function PATCH(
 		existing.repeatUntil &&
 		effectiveFrom >= existing.repeatUntil;
 	if (hasNoFutureOccurrences()) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "No future occurrences remain" },
 			{ status: 404 }
 		);
@@ -113,7 +106,7 @@ export async function PATCH(
 		input.from &&
 		!calendarKeyCanSendInvitations(key, existing.mailboxId);
 	if (cannotSendInvitations()) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error:
 					"Sending invitations requires mail send permission for this mailbox",
@@ -142,14 +135,14 @@ export async function PATCH(
 	const moveOccurrenceToPast = async () => {
 		if (input.moveOccurrenceToPast) {
 			if (!occurrence || existing.repeat === "none" || startsAt >= new Date()) {
-				return NextResponse.json(
+				return Response.json(
 					{ error: "Choose a past time for this occurrence" },
 					{ status: 400 }
 				);
 			}
 			const excluded = parseExcludedOccurrences(existing.excludedOccurrences);
 			if (excluded.includes(occurrence.startsAt.getTime())) {
-				return NextResponse.json(
+				return Response.json(
 					{ error: "Occurrence already moved" },
 					{ status: 409 }
 				);
@@ -193,7 +186,7 @@ export async function PATCH(
 					)
 				);
 			}
-			return NextResponse.json({ ok: true });
+			return Response.json({ ok: true });
 		}
 	};
 	const response1 = await moveOccurrenceToPast();
@@ -214,7 +207,7 @@ export async function PATCH(
 			: [];
 	const repeatDays = resolveRepeatDays();
 	if (repeat === "weekdays" && repeatDays.length === 0) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Choose at least one weekday" },
 			{ status: 400 }
 		);
@@ -309,7 +302,7 @@ export async function PATCH(
 		}
 	};
 	await sendUpdatedInvitations();
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }
 
 export async function DELETE(
@@ -332,10 +325,7 @@ export async function DELETE(
 		? new Date(input.effectiveFrom)
 		: occurrence?.startsAt;
 	if (effectiveFrom && Number.isNaN(effectiveFrom.getTime())) {
-		return NextResponse.json(
-			{ error: "Invalid repeat start" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "Invalid repeat start" }, { status: 400 });
 	}
 	const db = getDb(env);
 	const [existing] = await db
@@ -349,7 +339,7 @@ export async function DELETE(
 		)
 		.limit(1);
 	if (!existing) {
-		return NextResponse.json({ error: "Event not found" }, { status: 404 });
+		return Response.json({ error: "Event not found" }, { status: 404 });
 	}
 	if (
 		occurrence &&
@@ -357,10 +347,7 @@ export async function DELETE(
 			occurrence.startsAt < existing.startsAt ||
 			(existing.repeatUntil && occurrence.startsAt >= existing.repeatUntil))
 	) {
-		return NextResponse.json(
-			{ error: "Occurrence not found" },
-			{ status: 404 }
-		);
+		return Response.json({ error: "Occurrence not found" }, { status: 404 });
 	}
 	await (existing.repeat !== "none" &&
 	effectiveFrom &&
@@ -370,5 +357,5 @@ export async function DELETE(
 				.set({ repeatUntil: effectiveFrom, updatedAt: new Date() })
 				.where(eq(calendarEvents.id, existing.id))
 		: db.delete(calendarEvents).where(eq(calendarEvents.id, existing.id)));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

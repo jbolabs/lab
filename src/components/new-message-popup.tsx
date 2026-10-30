@@ -1,8 +1,8 @@
 "use client";
 
 import { Mail, X } from "lucide-react";
-import Link from "next/link";
 
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { getEmailDisplayName } from "@/lib/email/address";

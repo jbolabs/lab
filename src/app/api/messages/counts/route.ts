@@ -1,6 +1,5 @@
 import { and, count, eq, inArray } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { messages } from "@/db/schema";
@@ -18,7 +17,7 @@ export async function GET(request: Request) {
 	const env = getEnv();
 	const user = await getCurrentUser(env, request);
 	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const url = new URL(request.url);
@@ -29,7 +28,7 @@ export async function GET(request: Request) {
 	if (mailboxId) {
 		const access = await getMailboxAccessLevel(db, user, mailboxId);
 		if (!access?.canRead) {
-			return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+			return Response.json({ error: "Mailbox not found" }, { status: 404 });
 		}
 		conditions.push(eq(messages.mailboxId, mailboxId));
 	} else {
@@ -71,5 +70,5 @@ export async function GET(request: Request) {
 	const counts = buildMessageCounts(rows);
 	counts.folders.scheduled.total = scheduledRow?.total ?? 0;
 
-	return NextResponse.json({ counts });
+	return Response.json({ counts });
 }

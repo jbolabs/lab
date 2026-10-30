@@ -14,11 +14,6 @@
 		"jsx": "react-jsx",
 		"noImplicitAny": false,
 		"incremental": true,
-		"plugins": [
-			{
-				"name": "next"
-			}
-		],
 		"paths": {
 			"@/*": ["./src/*"]
 		},
@@ -29,14 +24,6 @@
 			"@cloudflare/workers-types"
 		]
 	},
-	"include": [
-		"next-env.d.ts",
-		"**/*.ts",
-		"**/*.tsx",
-		".next/types/**/*.ts",
-		".next/dev/types/**/*.ts",
-		".next-node/types/**/*.ts",
-		".next-node/dev/types/**/*.ts"
-	],
+	"include": ["**/*.ts", "**/*.tsx"],
 	"exclude": ["node_modules", "deployment"]
 }

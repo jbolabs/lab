@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { requireSessionUser } from "@/lib/api/auth";
 import { revokeDeviceKey } from "@/lib/auth/device-keys";
 import { hasValidSessionMutationOrigin } from "@/lib/auth/origin";
@@ -16,11 +14,11 @@ export async function DELETE(
 		return error;
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const { id } = await params;
 	if (!(await revokeDeviceKey(env, user.id, id))) {
-		return NextResponse.json({ error: "Device not found" }, { status: 404 });
+		return Response.json({ error: "Device not found" }, { status: 404 });
 	}
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

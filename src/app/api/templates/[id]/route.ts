@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { messages } from "@/db/schema";
@@ -18,7 +17,7 @@ export async function DELETE(
 		return auth.error;
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const { id } = await params;
 	const db = getDb(env);
@@ -34,8 +33,8 @@ export async function DELETE(
 		)
 		.limit(1);
 	if (!row) {
-		return NextResponse.json({ error: "Template not found" }, { status: 404 });
+		return Response.json({ error: "Template not found" }, { status: 404 });
 	}
 	await deleteMessageWithObjects(env, db, row.id, row.rawR2Key);
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

@@ -11,12 +11,12 @@ import {
 	Trash2,
 	Star,
 } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
 import { toast } from "sonner";
 
 import type { BulkMessageAction } from "@/app/api/messages/bulk/types";
+import Link from "@/components/app-link";
 import { HintTooltip } from "@/components/hint-tooltip";
 import { useLanguage } from "@/components/language-provider";
 import { useMailSearch } from "@/components/mail-search/mail-search-context";

@@ -1,5 +1,4 @@
 import { count, desc, eq, max } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { webhookDeliveries, webhooks } from "@/db/schema";
@@ -23,7 +22,7 @@ export async function GET(request: Request) {
 	}
 	const { user } = auth;
 	if (!isPrimaryAdmin(user)) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 	const db = getDb(env);
 	const rows = await db
@@ -43,7 +42,7 @@ export async function GET(request: Request) {
 		.from(webhookDeliveries)
 		.groupBy(webhookDeliveries.webhookId, webhookDeliveries.status);
 
-	return NextResponse.json({
+	return Response.json({
 		webhooks: rows.map((w) => ({
 			createdAt: w.createdAt,
 			description: w.description,
@@ -65,24 +64,21 @@ export async function POST(request: Request) {
 	}
 	const { user } = auth;
 	if (!isPrimaryAdmin(user)) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	let body: unknown;
 	try {
 		body = await readJsonBody(request, 16 * 1024);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json({ error: "Invalid webhook request" }, { status });
+		return Response.json({ error: "Invalid webhook request" }, { status });
 	}
 	const parsed = webhookSchema.safeParse(body);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	const secret = newId("whsec");
@@ -100,7 +96,7 @@ export async function POST(request: Request) {
 	});
 
 	// The signing secret is shown once, at creation time, and never returned again.
-	return NextResponse.json({
+	return Response.json({
 		events: parsed.data.events,
 		id,
 		secret,

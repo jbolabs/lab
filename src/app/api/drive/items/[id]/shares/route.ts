@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { driveShares, users } from "@/db/schema";
 import { getDriveItem } from "@/lib/drive/access";
@@ -21,7 +20,7 @@ async function loadOwnedItem(
 	const item = await getDriveItem(auth.db, id);
 	if (!item || item.ownerId !== auth.user.id || item.trashedAt) {
 		return {
-			error: NextResponse.json({ error: "Not found" }, { status: 404 }),
+			error: Response.json({ error: "Not found" }, { status: 404 }),
 		} as const;
 	}
 	return { ...auth, item } as const;
@@ -47,7 +46,7 @@ export async function GET(request: Request, { params }: DriveItemParams) {
 	if (ctx.error) {
 		return ctx.error;
 	}
-	return NextResponse.json({
+	return Response.json({
 		linkToken: ctx.item.linkToken,
 		shares: await listShares(ctx.db, ctx.item.id),
 	});
@@ -67,10 +66,7 @@ export async function POST(request: Request, { params }: DriveItemParams) {
 		typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
 	const role = body.role === "edit" ? "edit" : "view";
 	if (!email) {
-		return NextResponse.json(
-			{ error: "Enter an email address" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "Enter an email address" }, { status: 400 });
 	}
 	const [target] = await db
 		.select({ id: users.id })
@@ -78,13 +74,13 @@ export async function POST(request: Request, { params }: DriveItemParams) {
 		.where(eq(users.email, email))
 		.limit(1);
 	if (!target) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "No account uses that email address" },
 			{ status: 404 }
 		);
 	}
 	if (target.id === user.id) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "You already own this item" },
 			{ status: 400 }
 		);
@@ -96,7 +92,7 @@ export async function POST(request: Request, { params }: DriveItemParams) {
 			set: { role },
 			target: [driveShares.itemId, driveShares.userId],
 		});
-	return NextResponse.json({ shares: await listShares(db, item.id) });
+	return Response.json({ shares: await listShares(db, item.id) });
 }
 
 export async function DELETE(request: Request, { params }: DriveItemParams) {
@@ -106,12 +102,12 @@ export async function DELETE(request: Request, { params }: DriveItemParams) {
 	}
 	const shareId = new URL(request.url).searchParams.get("shareId");
 	if (!shareId) {
-		return NextResponse.json({ error: "Missing share" }, { status: 400 });
+		return Response.json({ error: "Missing share" }, { status: 400 });
 	}
 	await ctx.db
 		.delete(driveShares)
 		.where(
 			and(eq(driveShares.id, shareId), eq(driveShares.itemId, ctx.item.id))
 		);
-	return NextResponse.json({ shares: await listShares(ctx.db, ctx.item.id) });
+	return Response.json({ shares: await listShares(ctx.db, ctx.item.id) });
 }

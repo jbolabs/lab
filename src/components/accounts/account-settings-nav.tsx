@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
-
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { Item, ItemContent, ItemTitle } from "@/components/ui/item";
+import { useParams, usePathname } from "@/lib/navigation";
 
 import { SectionNavSheet } from "../section-nav-sheet";
 import {

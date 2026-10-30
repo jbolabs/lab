@@ -14,7 +14,6 @@ import {
 	Trash2,
 	UsersRound,
 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
 import {
 	useCallback,
 	useEffect,
@@ -70,6 +69,7 @@ import {
 	FOLDER_COLOR_OPTIONS,
 } from "@/lib/folders/colors";
 import type { TranslationKey } from "@/lib/i18n/types";
+import { useRouter, useSearchParams } from "@/lib/navigation";
 import {
 	formatUserDate,
 	getUserTimeZone,

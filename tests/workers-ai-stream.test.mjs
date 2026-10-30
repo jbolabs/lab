@@ -20,7 +20,6 @@ after(() => rmSync(bundleDirectory, { force: true, recursive: true }));
 await build({
 	alias: {
 		"cloudflare:workers": "./server/runtime/cloudflare-workers.ts",
-		"next/headers": "next/headers.js",
 	},
 	bundle: true,
 	format: "esm",

@@ -1,5 +1,4 @@
 import { eq, inArray } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { folders, messages } from "@/db/schema";
@@ -22,13 +21,13 @@ export async function POST(request: Request) {
 	const env = getEnv();
 	const user = await getCurrentUser(env, request);
 	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const payload = (await request.json()) as BulkMessagePayload;
 	const messageIds = payload.messageIds?.filter(Boolean) ?? [];
 	if (messageIds.length === 0 || !isAllowedBulkMessageAction(payload.action)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Invalid bulk message action" },
 			{ status: 400 }
 		);
@@ -47,10 +46,7 @@ export async function POST(request: Request) {
 	const resolveTargetFolder = async () => {
 		if (payload.action === "folder") {
 			if (!payload.folderId) {
-				return NextResponse.json(
-					{ error: "Folder is required" },
-					{ status: 400 }
-				);
+				return Response.json({ error: "Folder is required" }, { status: 400 });
 			}
 			const [folder] = await db
 				.select({ id: folders.id, mailboxId: folders.mailboxId })
@@ -58,10 +54,7 @@ export async function POST(request: Request) {
 				.where(eq(folders.id, payload.folderId))
 				.limit(1);
 			if (!folder) {
-				return NextResponse.json(
-					{ error: "Folder not found" },
-					{ status: 404 }
-				);
+				return Response.json({ error: "Folder not found" }, { status: 404 });
 			}
 			const folderAccess = await getMailboxAccessLevel(
 				db,
@@ -69,10 +62,7 @@ export async function POST(request: Request) {
 				folder.mailboxId
 			);
 			if (!folderAccess?.canManage) {
-				return NextResponse.json(
-					{ error: "Folder not found" },
-					{ status: 404 }
-				);
+				return Response.json({ error: "Folder not found" }, { status: 404 });
 			}
 			folderId = folder.id;
 		} else if (clearsFolder()) {
@@ -93,10 +83,7 @@ export async function POST(request: Request) {
 	const values = buildMessageChanges();
 
 	if (payload.action !== "delete" && Object.keys(values).length === 0) {
-		return NextResponse.json(
-			{ error: "No changes requested" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "No changes requested" }, { status: 400 });
 	}
 
 	const selectedMessages = await db
@@ -131,10 +118,7 @@ export async function POST(request: Request) {
 	collectAccessibleMessages();
 
 	if (allowedMessageIds.length === 0) {
-		return NextResponse.json(
-			{ error: "No accessible messages" },
-			{ status: 404 }
-		);
+		return Response.json({ error: "No accessible messages" }, { status: 404 });
 	}
 	if (payload.action === "delete") {
 		// Only mail already in Trash or Spam can be destroyed; anything else is skipped.
@@ -150,7 +134,7 @@ export async function POST(request: Request) {
 			deletable,
 			"bulk"
 		);
-		return NextResponse.json({
+		return Response.json({
 			deleted,
 			ok: true,
 			skipped: allowedMessageIds.length - deleted,
@@ -160,7 +144,7 @@ export async function POST(request: Request) {
 		for (const messageId of allowedMessageIds) {
 			await applySpamFeedback(env, user, messageId, "spam");
 		}
-		return NextResponse.json({ ok: true });
+		return Response.json({ ok: true });
 	}
 	if (payload.action === "inbox") {
 		const spamMessageIds = selectedMessages
@@ -181,7 +165,7 @@ export async function POST(request: Request) {
 				.set(values)
 				.where(inArray(messages.id, normalMessageIds));
 		}
-		return NextResponse.json({ ok: true });
+		return Response.json({ ok: true });
 	}
 
 	await db
@@ -202,5 +186,5 @@ export async function POST(request: Request) {
 		)
 	);
 
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

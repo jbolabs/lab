@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { hasAdminAccount } from "@/lib/auth/setup";
 import { getEnv } from "@/lib/cloudflare";
 import { getPrimaryDomain } from "@/lib/user";
@@ -11,7 +9,7 @@ export async function GET() {
 			hasAdminAccount(env),
 			getPrimaryDomain(env),
 		]);
-		return NextResponse.json(
+		return Response.json(
 			{
 				hasAdminAccount: adminAccountExists,
 				hasPrimaryDomain: !!domain,
@@ -29,6 +27,6 @@ export async function GET() {
 	} catch (error) {
 		const message =
 			error instanceof Error ? error.message : "Could not load setup status";
-		return NextResponse.json({ error: message }, { status: 500 });
+		return Response.json({ error: message }, { status: 500 });
 	}
 }

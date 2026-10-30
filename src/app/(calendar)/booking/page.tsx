@@ -9,11 +9,11 @@ import {
 	MoreHorizontal,
 	Plus,
 } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { useConfirmation } from "@/app/(calendar)/use-confirmation";
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { RouteLoadingBarPortal } from "@/components/route-loading-bar-portal";
 import { useSidebar } from "@/components/sidebar-state";

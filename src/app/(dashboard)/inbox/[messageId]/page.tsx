@@ -2,7 +2,6 @@
 
 import { clsx } from "clsx";
 import { Cloud, ExternalLink, MailX } from "lucide-react";
-import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useAssistantOpen } from "@/components/agent/assistant-open-state";
@@ -49,6 +48,7 @@ import {
 	ItemMedia,
 } from "@/components/ui/item";
 import { splitEmailAddressList, getEmailAddress } from "@/lib/email/address";
+import { useParams } from "@/lib/navigation";
 import { formatUserDate } from "@/lib/time/utils";
 
 import { extractCloudAttachments } from "./cloud-attachment-utils";

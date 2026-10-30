@@ -14,10 +14,6 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/.next-node/
-/out/
 
 # production
 /build
@@ -44,10 +40,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
-# vinext
-/.vinext
 /src/lib/migrations/bundle.json
 
 # wrangler files
@@ -66,3 +59,6 @@ skills-lock.json
 
 # Local Alchemy plan/session artifacts may contain installation state.
 .alchemy/
+
+# TanStack Router temporary generation files
+/.tanstack/

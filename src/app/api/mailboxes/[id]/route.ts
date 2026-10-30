@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { mailboxes, users } from "@/db/schema";
@@ -27,17 +26,17 @@ export async function GET(request: Request, { params }: MailboxRouteParams) {
 	const db = getDb(env);
 	const access = await getMailboxAccessLevel(db, user, id);
 	if (!access?.canRead) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 	const [mailbox] = await selectMailboxForUser(db, user.id, id);
 
 	if (!mailbox) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 	const { avatarKey, ownerName, ownerAvatarKey, ...mailboxDetails } = mailbox;
 	const identity = tracksAccountIdentity(mailbox, user.email);
 
-	return NextResponse.json({
+	return Response.json({
 		mailbox: {
 			...mailboxDetails,
 			displayName: identity ? ownerName : mailbox.displayName,
@@ -55,10 +54,7 @@ export async function PATCH(request: Request, { params }: MailboxRouteParams) {
 	const parsed = updateMailboxSchema.safeParse(await request.json());
 
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	const db = getDb(env);
@@ -66,7 +62,7 @@ export async function PATCH(request: Request, { params }: MailboxRouteParams) {
 	const [existing] = await selectMailboxForUser(db, user.id, id);
 
 	if (!existing || !access?.canManage) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 
 	const updateValues = getMailboxUpdateValues(parsed.data);
@@ -78,7 +74,7 @@ export async function PATCH(request: Request, { params }: MailboxRouteParams) {
 	) {
 		const name = parsed.data.displayName?.trim();
 		if (!name) {
-			return NextResponse.json(
+			return Response.json(
 				{ error: "A valid account name is required" },
 				{ status: 400 }
 			);
@@ -100,7 +96,7 @@ export async function PATCH(request: Request, { params }: MailboxRouteParams) {
 			});
 		} catch (error) {
 			console.error("ensureMailboxDomainRouting", error);
-			return NextResponse.json(
+			return Response.json(
 				{
 					error:
 						"Failed to configure inbound routing for all domains. Please try saving again.",
@@ -117,7 +113,7 @@ export async function PATCH(request: Request, { params }: MailboxRouteParams) {
 	const { avatarKey, ownerName, ownerAvatarKey, ...mailboxDetails } = mailbox;
 	const identity = tracksAccountIdentity(mailbox, user.email);
 
-	return NextResponse.json({
+	return Response.json({
 		mailbox: {
 			...mailboxDetails,
 			displayName: identity ? ownerName : mailbox.displayName,
@@ -139,7 +135,7 @@ export async function DELETE(request: Request, { params }: MailboxRouteParams) {
 		.where(eq(mailboxes.id, id))
 		.limit(1);
 	if (!mailbox) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 
 	let allowed = mailbox.userId === user.id && user.canManageMailboxes;
@@ -152,7 +148,7 @@ export async function DELETE(request: Request, { params }: MailboxRouteParams) {
 		allowed = mailbox.userId === user.id || owner?.createdByUserId === user.id;
 	}
 	if (!allowed) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return Response.json({ error: "Forbidden" }, { status: 403 });
 	}
 
 	try {
@@ -167,9 +163,9 @@ export async function DELETE(request: Request, { params }: MailboxRouteParams) {
 			error instanceof Error
 				? error.message
 				: "Failed to remove Cloudflare routing rule";
-		return NextResponse.json({ error: message }, { status: 502 });
+		return Response.json({ error: message }, { status: 502 });
 	}
 
 	await db.delete(mailboxes).where(eq(mailboxes.id, id));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

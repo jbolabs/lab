@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { bookingEvents, users } from "@/db/schema";
@@ -15,7 +14,7 @@ export async function GET(request: Request) {
 	const env = getEnv();
 	const user = await getCurrentUser(env, request);
 	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 	const username = await ensureBookingUsername(env, user.id, user.email);
 	const db = getDb(env);
@@ -30,7 +29,7 @@ export async function GET(request: Request) {
 		.where(eq(users.id, user.id))
 		.limit(1);
 	const canManageHosts = user.role === "admin";
-	return NextResponse.json({
+	return Response.json({
 		canManageHosts,
 		currentUser: {
 			email: user.email,
@@ -47,14 +46,14 @@ export async function POST(request: Request) {
 	const env = getEnv();
 	const user = await getCurrentUser(env, request);
 	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 	if (!hasValidSessionMutationOrigin(request)) {
-		return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+		return Response.json({ error: "Invalid origin" }, { status: 403 });
 	}
 	const input = parseBookingEventInput(await request.json().catch(() => null));
 	if (!input) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Enter valid booking details and availability." },
 			{ status: 400 }
 		);
@@ -68,7 +67,7 @@ export async function POST(request: Request) {
 		canManageHosts
 	);
 	if (!hostIds) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Choose users from the host list." },
 			{ status: 400 }
 		);
@@ -81,7 +80,7 @@ export async function POST(request: Request) {
 		)
 		.limit(1);
 	if (taken) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "This event link is already in use." },
 			{ status: 409 }
 		);
@@ -98,7 +97,7 @@ export async function POST(request: Request) {
 				weekdays: JSON.stringify(input.weekdays),
 			})
 			.returning();
-		return NextResponse.json({ event });
+		return Response.json({ event });
 	} catch (error) {
 		if (
 			error instanceof Error &&
@@ -106,7 +105,7 @@ export async function POST(request: Request) {
 				error.message
 			)
 		) {
-			return NextResponse.json(
+			return Response.json(
 				{ error: "This event link is already in use." },
 				{ status: 409 }
 			);

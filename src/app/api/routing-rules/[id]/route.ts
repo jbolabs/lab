@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { folders, routingRules } from "@/db/schema";
@@ -19,10 +18,7 @@ export async function PATCH(
 	const user = await requireUser(env, request);
 	const parsed = routingRuleSchema.safeParse(await request.json());
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	const db = getDb(env);
@@ -36,11 +32,11 @@ export async function PATCH(
 		!rule.mailboxId ||
 		rule.mailboxId !== parsed.data.mailboxId
 	) {
-		return NextResponse.json({ error: "Rule not found" }, { status: 404 });
+		return Response.json({ error: "Rule not found" }, { status: 404 });
 	}
 	const access = await getMailboxAccessLevel(db, user, rule.mailboxId);
 	if (!access?.canManage) {
-		return NextResponse.json({ error: "Rule not found" }, { status: 404 });
+		return Response.json({ error: "Rule not found" }, { status: 404 });
 	}
 
 	const destination =
@@ -52,10 +48,7 @@ export async function PATCH(
 		? destination.slice("folder:".length)
 		: null;
 	if (!systemAction && !folderId) {
-		return NextResponse.json(
-			{ error: "Destination is required" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "Destination is required" }, { status: 400 });
 	}
 	if (folderId) {
 		const [folder] = await db
@@ -66,7 +59,7 @@ export async function PATCH(
 			)
 			.limit(1);
 		if (!folder) {
-			return NextResponse.json({ error: "Folder not found" }, { status: 404 });
+			return Response.json({ error: "Folder not found" }, { status: 404 });
 		}
 	}
 
@@ -84,7 +77,7 @@ export async function PATCH(
 		})
 		.where(eq(routingRules.id, id));
 
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }
 
 export async function DELETE(
@@ -101,14 +94,14 @@ export async function DELETE(
 		.where(eq(routingRules.id, id))
 		.limit(1);
 	if (rule?.scope !== "mailbox" || !rule.mailboxId) {
-		return NextResponse.json({ error: "Rule not found" }, { status: 404 });
+		return Response.json({ error: "Rule not found" }, { status: 404 });
 	}
 	const access = await getMailboxAccessLevel(db, user, rule.mailboxId);
 	if (!access?.canManage) {
-		return NextResponse.json({ error: "Rule not found" }, { status: 404 });
+		return Response.json({ error: "Rule not found" }, { status: 404 });
 	}
 
 	await db.delete(routingRules).where(eq(routingRules.id, id));
 
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRouter } from "next/navigation";
 import {
 	createContext,
 	useCallback,
@@ -21,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { authFetch } from "@/lib/auth/client";
 import { isEdgeSwipeStart } from "@/lib/edge-swipe-utils";
 import { haptic } from "@/lib/haptics";
+import { useRouter } from "@/lib/navigation";
 
 import type {
 	MessageDetailNavigationContextValue,

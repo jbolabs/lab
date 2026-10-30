@@ -1,6 +1,3 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-
 import {
 	ACCOUNTS_COOKIE,
 	cookieOptions,
@@ -15,6 +12,8 @@ import {
 	SESSION_COOKIE,
 } from "@/lib/auth/session";
 import { getEnv } from "@/lib/cloudflare";
+import { setResponseCookie } from "@/lib/http/cookies";
+import { cookies } from "@/lib/http/request";
 
 export async function POST(request: Request) {
 	const env = getEnv();
@@ -44,17 +43,19 @@ export async function POST(request: Request) {
 		)
 	);
 	const next = remaining.at(-1);
-	const response = NextResponse.json({
+	const response = Response.json({
 		ok: true,
 		...(next ? { redirect: "/inbox", token: next.token } : {}),
 	});
 	response.headers.set("Cache-Control", "no-store");
-	response.cookies.set(
+	setResponseCookie(
+		response,
 		SESSION_COOKIE,
 		next?.token ?? "",
 		cookieOptions(next ? undefined : 0)
 	);
-	response.cookies.set(
+	setResponseCookie(
+		response,
 		ACCOUNTS_COOKIE,
 		serializeAccountTokens(remaining.map((account) => account.token)),
 		cookieOptions(remaining.length ? undefined : 0)

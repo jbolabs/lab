@@ -1,7 +1,7 @@
 "use client";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

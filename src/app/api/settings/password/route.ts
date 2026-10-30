@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { getDb } from "@/db";
@@ -24,20 +23,20 @@ export async function PATCH(request: Request) {
 		parsed = await parseChangePasswordRequest(request);
 	} catch (error) {
 		if (error instanceof ZodError) {
-			return NextResponse.json({ error: error.flatten() }, { status: 400 });
+			return Response.json({ error: error.flatten() }, { status: 400 });
 		}
-		return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+		return Response.json({ error: "Invalid request" }, { status: 400 });
 	}
 
 	if (!verifyPassword(parsed.currentPassword, user.passwordHash)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Current password is incorrect" },
 			{ status: 400 }
 		);
 	}
 
 	if (verifyPassword(parsed.newPassword, user.passwordHash)) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "New password must be different from the current password" },
 			{ status: 400 }
 		);
@@ -55,5 +54,5 @@ export async function PATCH(request: Request) {
 		getSessionTokenFromRequestHeaders(request)
 	);
 
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

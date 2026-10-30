@@ -16,7 +16,6 @@ import {
 	Trash2,
 	X,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
 import {
 	useCallback,
 	useEffect,
@@ -51,6 +50,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { withCleanup, requireSuccessfulResponse } from "@/lib/async-cleanup";
 import { authFetch } from "@/lib/auth/client";
 import { fetchCachedMessageDetail } from "@/lib/messages/detail-cache";
+import { usePathname } from "@/lib/navigation";
 import { getUserTimeZone } from "@/lib/time/utils";
 
 import { AgentTurnView } from "./agent-turn";

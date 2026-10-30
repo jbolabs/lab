@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { getSendErrorStatus } from "@/app/api/send/error-utils";
 import { authenticateApiKey, requireScope } from "@/lib/api/auth";
 import { getEnv } from "@/lib/cloudflare";
@@ -16,7 +14,7 @@ export async function POST(request: Request) {
 		request.headers.get("authorization")
 	);
 	if (!auth || !requireScope(auth.scopes, "send")) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	let body: unknown;
@@ -24,17 +22,14 @@ export async function POST(request: Request) {
 		body = await readJsonBody(request, 40 * 1024 * 1024);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json({ error: "Invalid send request" }, { status });
+		return Response.json({ error: "Invalid send request" }, { status });
 	}
 	const parsed = sendEmailSchema.safeParse(body);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 	if (auth.mailboxIds && !auth.mailboxIds.includes(parsed.data.mailboxId)) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 
 	try {
@@ -50,10 +45,10 @@ export async function POST(request: Request) {
 			})),
 			publicOrigin: new URL(request.url).origin,
 		});
-		return NextResponse.json(result);
+		return Response.json(result);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Send failed";
-		return NextResponse.json(
+		return Response.json(
 			{ error: message },
 			{ status: getSendErrorStatus(message) }
 		);

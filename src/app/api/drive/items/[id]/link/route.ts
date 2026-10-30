@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { driveItems } from "@/db/schema";
 import { getDriveItem } from "@/lib/drive/access";
@@ -17,7 +16,7 @@ export async function POST(request: Request, { params }: DriveItemParams) {
 	}
 	const item = await getDriveItem(auth.db, id);
 	if (!item || item.ownerId !== auth.user.id || item.trashedAt) {
-		return NextResponse.json({ error: "Not found" }, { status: 404 });
+		return Response.json({ error: "Not found" }, { status: 404 });
 	}
 	const body = (await request.json().catch(() => ({}))) as {
 		enabled?: unknown;
@@ -30,5 +29,5 @@ export async function POST(request: Request, { params }: DriveItemParams) {
 		.update(driveItems)
 		.set({ linkToken })
 		.where(eq(driveItems.id, id));
-	return NextResponse.json({ linkToken });
+	return Response.json({ linkToken });
 }

@@ -8,4 +8,3 @@ export async function GET(request: Request) {
 		new Response("Not found", { status: 404 })
 	);
 }
-export const dynamic = "force-dynamic";

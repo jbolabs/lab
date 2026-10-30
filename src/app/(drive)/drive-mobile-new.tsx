@@ -1,10 +1,9 @@
 "use client";
 
 import { FilePlus2, FolderPlus, Plus, UploadCloud } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +12,7 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "@/components/ui/drawer";
+import { usePathname, useSearchParams } from "@/lib/navigation";
 
 import {
 	DRIVE_LOCATION_EVENT,

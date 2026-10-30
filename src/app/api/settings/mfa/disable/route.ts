@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { requireSessionUser } from "@/lib/api/auth";
 import { disableMfa, verifySecondFactor } from "@/lib/auth/mfa";
 import { verifyPassword } from "@/lib/auth/password";
@@ -18,23 +16,17 @@ export async function POST(request: Request) {
 		await readJsonBody(request, 16 * 1024).catch(() => null)
 	);
 	if (!parsed.success) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Enter your password and a code" },
 			{ status: 400 }
 		);
 	}
 	if (!verifyPassword(parsed.data.password, auth.user.passwordHash)) {
-		return NextResponse.json(
-			{ error: "Password is incorrect" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "Password is incorrect" }, { status: 400 });
 	}
 	if (!(await verifySecondFactor(env, auth.user, parsed.data.code))) {
-		return NextResponse.json(
-			{ error: "That code did not match" },
-			{ status: 400 }
-		);
+		return Response.json({ error: "That code did not match" }, { status: 400 });
 	}
 	await disableMfa(env, auth.user.id);
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

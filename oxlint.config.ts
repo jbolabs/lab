@@ -1,20 +1,18 @@
 import { defineConfig } from "oxlint";
 import core from "ultracite/oxlint/core";
-import next from "ultracite/oxlint/next";
 import react from "ultracite/oxlint/react";
 
 // components.json discovers src/components/ui and src/app/globals.css;
 // tsconfig.json resolves @/* to src/*. Custom @theme colors are read from CSS.
 export default defineConfig({
 	env: { ...core.env, node: true },
-	extends: [core, react, next],
+	extends: [core, react],
 	ignorePatterns: [
 		...(core.ignorePatterns ?? []),
 		"cloudflare-env.d.ts",
-		"next-env.d.ts",
 		"drizzle/**",
-		".next*/**",
 		"dist/**",
+		"src/routeTree.gen.ts",
 		"**/node_modules/**",
 		"src/lib/migrations/bundle.json",
 		"public/**",

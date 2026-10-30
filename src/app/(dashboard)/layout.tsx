@@ -2,7 +2,6 @@
 
 import { clsx } from "clsx";
 import { Sparkles } from "lucide-react";
-import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import type { CSSProperties } from "react";
 
@@ -28,6 +27,7 @@ import { SidebarProvider } from "@/components/sidebar-state";
 import { SkipToContent } from "@/components/skip-to-content";
 import { Button } from "@/components/ui/button";
 import { useAppBadge } from "@/hooks/use-app-badge";
+import { usePathname } from "@/lib/navigation";
 
 import { useDashboardState } from "./dashboard-state";
 import { useAssistantAvailability } from "./use-assistant-availability";

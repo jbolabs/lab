@@ -1,5 +1,4 @@
 import { and, eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { folders } from "@/db/schema";
@@ -16,17 +15,17 @@ export async function GET(request: Request) {
 	const url = new URL(request.url);
 	const mailboxId = url.searchParams.get("mailboxId");
 	if (!mailboxId) {
-		return NextResponse.json({ folders: [] });
+		return Response.json({ folders: [] });
 	}
 
 	const db = getDb(env);
 	const access = await getMailboxFolderAccess(db, user, mailboxId);
 	if (!access) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 
 	const rows = await listFoldersForMailbox(db, mailboxId);
-	return NextResponse.json({ folders: rows });
+	return Response.json({ folders: rows });
 }
 
 export async function POST(request: Request) {
@@ -34,16 +33,13 @@ export async function POST(request: Request) {
 	const user = await requireUser(env, request);
 	const parsed = folderSchema.safeParse(await request.json());
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	const db = getDb(env);
 	const access = await getMailboxFolderAccess(db, user, parsed.data.mailboxId);
 	if (!access?.canManage) {
-		return NextResponse.json({ error: "Mailbox not found" }, { status: 404 });
+		return Response.json({ error: "Mailbox not found" }, { status: 404 });
 	}
 
 	const name = parsed.data.name.trim();
@@ -55,10 +51,7 @@ export async function POST(request: Request) {
 		)
 		.limit(1);
 	if (existing) {
-		return NextResponse.json(
-			{ error: "Folder already exists" },
-			{ status: 409 }
-		);
+		return Response.json({ error: "Folder already exists" }, { status: 409 });
 	}
 
 	const id = newId("fld");
@@ -70,7 +63,7 @@ export async function POST(request: Request) {
 		userId: access.mailboxUserId,
 	});
 
-	return NextResponse.json({
+	return Response.json({
 		color: parsed.data.color,
 		id,
 		mailboxId: parsed.data.mailboxId,

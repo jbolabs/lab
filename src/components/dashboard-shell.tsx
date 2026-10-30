@@ -1,9 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-
 import { AdminNav } from "@/components/admin-nav";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { usePathname } from "@/lib/navigation";
 
 const adminPrefixes = [
 	"/admin",

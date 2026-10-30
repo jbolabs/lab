@@ -1,5 +1,4 @@
 import { and, eq, or } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { domains, mailboxAliases, mailboxes, users } from "@/db/schema";
@@ -13,7 +12,7 @@ export async function GET(request: Request) {
 	const env = getEnv();
 	const auth = await authenticateAdminApiKey(env, request, "mailboxes");
 	if (!auth) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 	const rows = await getDb(env)
 		.select({
@@ -33,23 +32,20 @@ export async function GET(request: Request) {
 		.where(
 			or(eq(users.id, auth.userId), eq(users.createdByUserId, auth.userId))
 		);
-	return NextResponse.json({ mailboxes: rows });
+	return Response.json({ mailboxes: rows });
 }
 
 export async function POST(request: Request) {
 	const env = getEnv();
 	const auth = await authenticateAdminApiKey(env, request, "mailboxes");
 	if (!auth) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 	const parsed = mailboxSchema.safeParse(
 		await request.json().catch(() => null)
 	);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 	const db = getDb(env);
 	const mailboxType = parsed.data.type ?? "personal";
@@ -66,7 +62,7 @@ export async function POST(request: Request) {
 			)
 			.limit(1);
 		if (!owner) {
-			return NextResponse.json({ error: "Account not found" }, { status: 404 });
+			return Response.json({ error: "Account not found" }, { status: 404 });
 		}
 	}
 	const [domain] = await db
@@ -77,7 +73,7 @@ export async function POST(request: Request) {
 		)
 		.limit(1);
 	if (!domain) {
-		return NextResponse.json({ error: "Domain not found" }, { status: 404 });
+		return Response.json({ error: "Domain not found" }, { status: 404 });
 	}
 	const localPart = parsed.data.localPart.toLowerCase();
 	const [existing] = await db
@@ -88,10 +84,7 @@ export async function POST(request: Request) {
 		)
 		.limit(1);
 	if (existing) {
-		return NextResponse.json(
-			{ error: "Mailbox already exists" },
-			{ status: 409 }
-		);
+		return Response.json({ error: "Mailbox already exists" }, { status: 409 });
 	}
 	const [alias] = await db
 		.select({ id: mailboxAliases.id })
@@ -104,7 +97,7 @@ export async function POST(request: Request) {
 		)
 		.limit(1);
 	if (alias) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "An alias already uses this address" },
 			{ status: 409 }
 		);
@@ -127,7 +120,7 @@ export async function POST(request: Request) {
 		});
 	} catch (error) {
 		await db.delete(mailboxes).where(eq(mailboxes.id, id));
-		return NextResponse.json(
+		return Response.json(
 			{
 				error:
 					error instanceof Error
@@ -137,7 +130,7 @@ export async function POST(request: Request) {
 			{ status: 502 }
 		);
 	}
-	return NextResponse.json(
+	return Response.json(
 		{ address: `${localPart}@${domain.hostname}`, id, type: mailboxType },
 		{ status: 201 }
 	);

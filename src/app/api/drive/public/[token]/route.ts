@@ -1,5 +1,4 @@
 import { and, eq, isNull } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { driveItems } from "@/db/schema";
@@ -27,7 +26,7 @@ export async function GET(request: Request, { params }: DriveTokenParams) {
 	const target = url.searchParams.get("item");
 	const resolved = await getPublicDriveItem(db, token, target);
 	if (!resolved) {
-		return NextResponse.json({ error: "Link not found" }, { status: 404 });
+		return Response.json({ error: "Link not found" }, { status: 404 });
 	}
 	const { root, item } = resolved;
 	if (
@@ -58,7 +57,7 @@ export async function GET(request: Request, { params }: DriveTokenParams) {
 	const path = chain
 		.slice(chain.findIndex((entry) => entry.id === root.id))
 		.map((entry) => ({ id: entry.id, name: entry.name }));
-	return NextResponse.json({
+	return Response.json({
 		item: publicItem(item),
 		items: children.map(publicItem),
 		path,

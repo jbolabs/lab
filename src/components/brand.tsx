@@ -17,7 +17,6 @@ export function BrandMark({
 }) {
 	const { iconUrl } = useBranding();
 	return (
-		// oxlint-disable-next-line next/no-img-element -- Runtime branding uses the original image URL without an image optimization service.
 		<img
 			src={iconUrl}
 			width={size}

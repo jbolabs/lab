@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-
+import Link from "@/components/app-link";
 import { Wordmark } from "@/components/brand";
 import { LanguageSelector } from "@/components/language-selector";
 import {

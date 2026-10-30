@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { requireUser } from "@/lib/auth/cookies";
 import { getEnv } from "@/lib/cloudflare";
 import { RequestBodyTooLargeError } from "@/lib/http/errors";
@@ -18,7 +16,7 @@ export async function POST(request: Request) {
 		input = parseImapFolderListRequest(body);
 	} catch (error) {
 		const status = error instanceof RequestBodyTooLargeError ? 413 : 400;
-		return NextResponse.json(
+		return Response.json(
 			{
 				error:
 					error instanceof Error
@@ -31,9 +29,9 @@ export async function POST(request: Request) {
 
 	try {
 		const folders = await listImapFolders(input);
-		return NextResponse.json({ folders });
+		return Response.json({ folders });
 	} catch (error) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error:
 					error instanceof Error

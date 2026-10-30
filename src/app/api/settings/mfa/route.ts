@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { requireSessionUser } from "@/lib/api/auth";
 import { getMfaStatus } from "@/lib/auth/mfa";
 import { getEnv } from "@/lib/cloudflare";
@@ -10,5 +8,5 @@ export async function GET(request: Request) {
 	if (auth.error) {
 		return auth.error;
 	}
-	return NextResponse.json(await getMfaStatus(env, auth.user));
+	return Response.json(await getMfaStatus(env, auth.user));
 }

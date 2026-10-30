@@ -1,5 +1,4 @@
 import { and, eq, or } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import { getMailboxUpdateValues } from "@/app/api/mailboxes/[id]/utils";
 import { getDb } from "@/db";
@@ -20,7 +19,7 @@ async function managedMailbox(request: Request, id: string) {
 	if (!auth) {
 		return {
 			env,
-			error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+			error: Response.json({ error: "Unauthorized" }, { status: 401 }),
 			mailbox: null,
 		};
 	}
@@ -48,7 +47,7 @@ async function managedMailbox(request: Request, id: string) {
 	if (!mailbox) {
 		return {
 			env,
-			error: NextResponse.json({ error: "Mailbox not found" }, { status: 404 }),
+			error: Response.json({ error: "Mailbox not found" }, { status: 404 }),
 			mailbox: null,
 		};
 	}
@@ -65,7 +64,7 @@ export async function GET(
 	if (access.error) {
 		return access.error;
 	}
-	return NextResponse.json({ mailbox: access.mailbox });
+	return Response.json({ mailbox: access.mailbox });
 }
 
 export async function PATCH(
@@ -82,10 +81,7 @@ export async function PATCH(
 		await request.json().catch(() => null)
 	);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 	const db = getDb(access.env);
 	if (parsed.data.useAllDomains === true) {
@@ -97,7 +93,7 @@ export async function PATCH(
 				useAllDomains: true,
 			});
 		} catch (error) {
-			return NextResponse.json(
+			return Response.json(
 				{
 					error:
 						error instanceof Error
@@ -115,7 +111,7 @@ export async function PATCH(
 			.set(values)
 			.where(eq(mailboxes.id, access.mailbox.id));
 	}
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }
 
 export async function DELETE(
@@ -132,7 +128,7 @@ export async function DELETE(
 	try {
 		await removeMailboxDomainRouting(access.env, db, access.mailbox);
 	} catch (error) {
-		return NextResponse.json(
+		return Response.json(
 			{
 				error:
 					error instanceof Error
@@ -143,5 +139,5 @@ export async function DELETE(
 		);
 	}
 	await db.delete(mailboxes).where(eq(mailboxes.id, access.mailbox.id));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
 
 import {
 	selectAccountById,
@@ -22,7 +21,7 @@ export async function GET(
 	const env = getEnv();
 	const auth = await authenticateAdminApiKey(env, request, "accounts");
 	if (!auth) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 	const { id } = await params;
 	const account = await selectAccountById(getDb(env), id);
@@ -30,9 +29,9 @@ export async function GET(
 		!account ||
 		(account.id !== auth.userId && account.createdByUserId !== auth.userId)
 	) {
-		return NextResponse.json({ error: "Account not found" }, { status: 404 });
+		return Response.json({ error: "Account not found" }, { status: 404 });
 	}
-	return NextResponse.json({
+	return Response.json({
 		account: {
 			canManageMailboxes: account.canManageMailboxes,
 			disabled: account.disabled,
@@ -53,7 +52,7 @@ export async function PATCH(
 	const env = getEnv();
 	const auth = await authenticateAdminApiKey(env, request, "accounts");
 	if (!auth) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 	const { id } = await params;
 	const db = getDb(env);
@@ -62,16 +61,13 @@ export async function PATCH(
 		!account ||
 		(account.id !== auth.userId && account.createdByUserId !== auth.userId)
 	) {
-		return NextResponse.json({ error: "Account not found" }, { status: 404 });
+		return Response.json({ error: "Account not found" }, { status: 404 });
 	}
 	const parsed = updateManagedAccountSchema.safeParse(
 		await request.json().catch(() => null)
 	);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 	if (
 		!isPrimaryAdmin(auth.user) &&
@@ -79,7 +75,7 @@ export async function PATCH(
 			account.role === "admin" ||
 			parsed.data.role !== account.role)
 	) {
-		return NextResponse.json(
+		return Response.json(
 			{ error: "Only the primary admin can manage admin accounts" },
 			{ status: 403 }
 		);
@@ -109,5 +105,5 @@ export async function PATCH(
 				: { forwardingEmail: parsed.data.forwardingEmail }),
 		})
 		.where(eq(users.id, id));
-	return NextResponse.json({ ok: true });
+	return Response.json({ ok: true });
 }

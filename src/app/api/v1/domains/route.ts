@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { authenticateAdminApiKey } from "@/lib/api/admin-auth";
 import { getEnv } from "@/lib/cloudflare";
 import type { DnsStatusSummary } from "@/lib/dns-status";
@@ -22,7 +20,7 @@ export async function GET(request: Request) {
 	const env = getEnv();
 	const auth = await authenticateAdminApiKey(env, request, "domains");
 	if (!auth) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const domains = await listUserDomains(env, ownerId(auth.user));
@@ -40,24 +38,21 @@ export async function GET(request: Request) {
 		return { ...domain, sendingEnabled: result.value.sendingEnabled };
 	});
 
-	return NextResponse.json({ dns, domains: domainViews });
+	return Response.json({ dns, domains: domainViews });
 }
 
 export async function POST(request: Request) {
 	const env = getEnv();
 	const auth = await authenticateAdminApiKey(env, request, "domains");
 	if (!auth) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		return Response.json({ error: "Unauthorized" }, { status: 401 });
 	}
 
 	const parsed = addDomainSchema.safeParse(
 		await request.json().catch(() => null)
 	);
 	if (!parsed.success) {
-		return NextResponse.json(
-			{ error: parsed.error.flatten() },
-			{ status: 400 }
-		);
+		return Response.json({ error: parsed.error.flatten() }, { status: 400 });
 	}
 
 	try {
@@ -82,10 +77,10 @@ export async function POST(request: Request) {
 				error
 			);
 		}
-		return NextResponse.json({ ...result, dns });
+		return Response.json({ ...result, dns });
 	} catch (error) {
 		const failure = getDomainProvisioningError(error, "Failed to add domain");
-		return NextResponse.json(
+		return Response.json(
 			{ code: failure.code, error: failure.message },
 			{ status: failure.status }
 		);

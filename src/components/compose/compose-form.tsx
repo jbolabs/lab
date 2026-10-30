@@ -12,7 +12,6 @@ import {
 	Trash2,
 	X,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import type { CSSProperties, DragEvent } from "react";
 import { toast as notify } from "sonner";
@@ -33,6 +32,7 @@ import { requireSuccessfulResponse, withCleanup } from "@/lib/async-cleanup";
 import { authFetch } from "@/lib/auth/client";
 import { formatEmailAddress, getEmailAddress } from "@/lib/email/address";
 import { haptic } from "@/lib/haptics";
+import { useRouter } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 import type { ComposeAttachmentPolicy } from "./attachment-policy-types";
