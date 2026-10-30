@@ -15,17 +15,18 @@ export function SettingsRowActions({ children }: { children: ReactNode }) {
 	const { t } = useLanguage();
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button
-					type="button"
-					variant="ghost"
-					size="icon"
-					aria-label={t("common.moreActions")}
-					// Rows open their editor on click; the menu trigger must not.
-					onClick={(event) => event.stopPropagation()}
-				>
-					<MoreHorizontal data-icon="inline-start" />
-				</Button>
+			<DropdownMenuTrigger
+				render={
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon"
+						aria-label={t("common.moreActions")}
+						onClick={(event) => event.stopPropagation()}
+					/>
+				}
+			>
+				<MoreHorizontal data-icon="inline-start" />
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
 				<DropdownMenuGroup>{children}</DropdownMenuGroup>

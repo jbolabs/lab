@@ -124,17 +124,20 @@ export default function AccountDetailsPage() {
 						)}
 					</span>
 					{account.editable && (
-						<Button asChild variant="outline">
-							<label className="cursor-pointer">
-								<Upload />
-								{t("account.changeAvatar")}
-								<Input
-									type="file"
-									accept="image/jpeg,image/png,image/webp,image/gif"
-									className="sr-only"
-									onChange={(event) => uploadAvatar(event.target.files?.[0])}
-								/>
-							</label>
+						<Button
+							variant="outline"
+							// oxlint-disable-next-line jsx-a11y/label-has-associated-control -- Base UI render: the text is this component's children.
+							render={<label className="cursor-pointer" />}
+							nativeButton={false}
+						>
+							<Upload />
+							{t("account.changeAvatar")}
+							<Input
+								type="file"
+								accept="image/jpeg,image/png,image/webp,image/gif"
+								className="sr-only"
+								onChange={(event) => uploadAvatar(event.target.files?.[0])}
+							/>
 						</Button>
 					)}
 				</div>

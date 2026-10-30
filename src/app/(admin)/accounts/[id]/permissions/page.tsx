@@ -360,10 +360,10 @@ export default function AccountPermissionsPage() {
 						</div>
 					)}
 					<div className="flex justify-end gap-2">
-						<DialogClose asChild>
-							<Button variant="outline" disabled={transferring}>
-								{t("common.cancel")}
-							</Button>
+						<DialogClose
+							render={<Button variant="outline" disabled={transferring} />}
+						>
+							{t("common.cancel")}
 						</DialogClose>
 						<Button
 							disabled={transferring || !transferTarget}

@@ -54,17 +54,18 @@ function PublicRow({
 			)}
 			{entry.kind === "file" && (
 				<Button
-					asChild
 					variant="ghost"
 					size="icon"
 					className="shrink-0 text-muted-foreground"
+					render={
+						<a
+							href={publicContentUrl(token, entry.id, true)}
+							aria-label={entry.name}
+						/>
+					}
+					nativeButton={false}
 				>
-					<a
-						href={publicContentUrl(token, entry.id, true)}
-						aria-label={entry.name}
-					>
-						<Download />
-					</a>
+					<Download />
 				</Button>
 			)}
 		</div>
@@ -152,11 +153,14 @@ export default function PublicDrivePage({
 					</span>
 				))}
 				{isFile && (
-					<Button asChild className="ml-auto">
-						<a href={publicContentUrl(token, item.id, true)}>
-							<Download data-icon="inline-start" />
-							{t("drive.download")}
-						</a>
+					<Button
+						className="ml-auto"
+						// oxlint-disable-next-line jsx-a11y/control-has-associated-label -- Base UI render: the text is this component's children.
+						render={<a href={publicContentUrl(token, item.id, true)} />}
+						nativeButton={false}
+					>
+						<Download data-icon="inline-start" />
+						{t("drive.download")}
 					</Button>
 				)}
 			</nav>

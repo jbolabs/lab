@@ -395,29 +395,33 @@ function MessageBody({
 						</h2>
 						<div className="grid gap-2 sm:grid-cols-2">
 							{cloudAttachmentResult.attachments.map((attachment) => (
-								<Item key={attachment.id} variant="outline" size="sm" asChild>
-									<a href={attachment.url} target="_blank" rel="noreferrer">
-										<ItemMedia variant="icon">
-											<Cloud />
-										</ItemMedia>
-										<ItemContent className="min-w-0">
-											<ItemTitle className="max-w-full">
-												<span className="truncate">{attachment.filename}</span>
-											</ItemTitle>
-											<ItemDescription>
-												{t("message.openFrom", {
-													provider: attachment.provider,
-												})}
-											</ItemDescription>
-										</ItemContent>
-										<ExternalLink
-											className="size-4 shrink-0 text-muted-foreground"
-											aria-hidden="true"
-										/>
-										<span className="sr-only">
-											({t("common.opensInNewTab")})
-										</span>
-									</a>
+								<Item
+									key={attachment.id}
+									variant="outline"
+									size="sm"
+									render={
+										// oxlint-disable-next-line jsx-a11y/control-has-associated-label -- Base UI render: the text is this component's children.
+										<a href={attachment.url} target="_blank" rel="noreferrer" />
+									}
+								>
+									<ItemMedia variant="icon">
+										<Cloud />
+									</ItemMedia>
+									<ItemContent className="min-w-0">
+										<ItemTitle className="max-w-full">
+											<span className="truncate">{attachment.filename}</span>
+										</ItemTitle>
+										<ItemDescription>
+											{t("message.openFrom", {
+												provider: attachment.provider,
+											})}
+										</ItemDescription>
+									</ItemContent>
+									<ExternalLink
+										className="size-4 shrink-0 text-muted-foreground"
+										aria-hidden="true"
+									/>
+									<span className="sr-only">({t("common.opensInNewTab")})</span>
 								</Item>
 							))}
 						</div>

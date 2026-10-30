@@ -58,7 +58,7 @@ export function AdminConfirmAction({
 				}
 			}}
 		>
-			{children && <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>}
+			{children && <AlertDialogTrigger render={children} />}
 			<AlertDialogContent className="max-h-[calc(100dvh-4rem)] overflow-y-auto">
 				<AlertDialogHeader>
 					<AlertDialogTitle>{title}</AlertDialogTitle>

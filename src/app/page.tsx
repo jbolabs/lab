@@ -128,18 +128,21 @@ export default async function HomePage() {
 					{links.map((link) => {
 						const Icon = link.icon;
 						return (
-							<Item key={link.href} variant="outline" asChild className=" ">
-								<Link href={link.href}>
-									<ItemMedia variant="icon" className=" ">
-										<Icon />
-									</ItemMedia>
-									<ItemContent>
-										<ItemTitle className="">{t(link.labelKey)}</ItemTitle>
-									</ItemContent>
-									<ItemActions>
-										<ChevronRight className="size-4 text-muted-foreground" />
-									</ItemActions>
-								</Link>
+							<Item
+								key={link.href}
+								variant="outline"
+								className=" "
+								render={<Link href={link.href} />}
+							>
+								<ItemMedia variant="icon" className=" ">
+									<Icon />
+								</ItemMedia>
+								<ItemContent>
+									<ItemTitle className="">{t(link.labelKey)}</ItemTitle>
+								</ItemContent>
+								<ItemActions>
+									<ChevronRight className="size-4 text-muted-foreground" />
+								</ItemActions>
 							</Item>
 						);
 					})}

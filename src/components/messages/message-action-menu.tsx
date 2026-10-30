@@ -53,7 +53,7 @@ export function MessageActionMenu({
 	if (mobile) {
 		return (
 			<Drawer open={open} onOpenChange={onOpenChange}>
-				<DrawerTrigger asChild>{trigger}</DrawerTrigger>
+				<DrawerTrigger render={trigger} />
 				<DrawerContent>
 					<DrawerHeader>
 						<DrawerTitle>{t("common.moreActions")}</DrawerTitle>
@@ -81,14 +81,14 @@ export function MessageActionMenu({
 	}
 	return (
 		<DropdownMenu open={open} onOpenChange={onOpenChange}>
-			<DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+			<DropdownMenuTrigger render={trigger} />
 			<DropdownMenuContent align="end" className="w-56">
 				<DropdownMenuGroup>
 					{actions.map((action, i) => (
 						<DropdownMenuItem
 							key={i}
 							disabled={action.disabled}
-							onSelect={() => select(action)}
+							onClick={() => select(action)}
 						>
 							{action.icon}
 							{action.label}

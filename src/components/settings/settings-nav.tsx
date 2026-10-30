@@ -38,20 +38,20 @@ export function SettingsNav() {
 								const active = isActiveSettingsPath(pathname, item.href);
 								return (
 									<Item
-										asChild
 										key={item.href}
 										size="navigation"
 										variant={active ? "selected" : "default"}
+										render={
+											<Link
+												href={item.href}
+												aria-current={active ? "page" : undefined}
+											/>
+										}
 									>
-										<Link
-											href={item.href}
-											aria-current={active ? "page" : undefined}
-										>
-											<ItemContent>
-												<ItemTitle>{t(item.labelKey)}</ItemTitle>
-											</ItemContent>
-											<ChevronRight className="size-4 text-muted-foreground md:hidden" />
-										</Link>
+										<ItemContent>
+											<ItemTitle>{t(item.labelKey)}</ItemTitle>
+										</ItemContent>
+										<ChevronRight className="size-4 text-muted-foreground md:hidden" />
 									</Item>
 								);
 							})}

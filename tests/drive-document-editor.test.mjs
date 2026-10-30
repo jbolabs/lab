@@ -8,6 +8,7 @@ import { build } from "esbuild";
 import { JSDOM } from "jsdom";
 
 import { deferredPromise } from "./helpers/deferred.mjs";
+import { installDomGlobals } from "./helpers/dom.mjs";
 
 const entry = () =>
 	[...document.querySelectorAll("[role=menuitem]")].find(
@@ -68,9 +69,7 @@ test("a save completing after navigation preserves a newer draft and does not re
 	const dom = new JSDOM("<!doctype html><div id='root'></div>", {
 		url: "https://mail.example/drive/document?id=document",
 	});
-	globalThis.window = dom.window;
-	globalThis.document = dom.window.document;
-	globalThis.localStorage = dom.window.localStorage;
+	installDomGlobals(dom);
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 	const { createElement, act } = await import("react");
 	const { createRoot } = await import("react-dom/client");
@@ -175,9 +174,7 @@ async function mountEditor(id, fetch) {
 	const dom = new JSDOM("<!doctype html><div id='root'></div>", {
 		url: `https://mail.example/drive/document?id=${id}`,
 	});
-	globalThis.window = dom.window;
-	globalThis.document = dom.window.document;
-	globalThis.localStorage = dom.window.localStorage;
+	installDomGlobals(dom);
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 	globalThis.fetch = fetch;
 	const NodeEvent = globalThis.Event;
@@ -382,14 +379,10 @@ test("New document stays disabled until the current folder has write access", as
 		);
 	try {
 		await act(() => Promise.resolve(root.render(createElement(DriveNav))));
+		// A click opens a Base UI menu synchronously; a pointer mousedown waits a frame.
 		await act(() =>
 			Promise.resolve(
-				document.querySelector('button[aria-label="New"]').dispatchEvent(
-					new dom.window.MouseEvent("pointerdown", {
-						bubbles: true,
-						button: 0,
-					})
-				)
+				document.querySelector('button[aria-label="New"]').click()
 			)
 		);
 

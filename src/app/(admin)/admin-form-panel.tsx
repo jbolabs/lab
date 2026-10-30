@@ -21,12 +21,15 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-export function AdminFormPanel(props: ComponentProps<typeof Sheet>) {
+export function AdminFormPanel(
+	props: ComponentProps<typeof Sheet> & ComponentProps<typeof Drawer>
+) {
 	const mobile = useIsMobile();
 	return mobile ? <Drawer {...props} /> : <Sheet {...props} />;
 }
 export function AdminFormPanelTrigger(
-	props: ComponentProps<typeof SheetTrigger>
+	props: ComponentProps<typeof SheetTrigger> &
+		ComponentProps<typeof DrawerTrigger>
 ) {
 	return useIsMobile() ? (
 		<DrawerTrigger {...props} />
@@ -37,7 +40,7 @@ export function AdminFormPanelTrigger(
 export function AdminFormPanelContent({
 	className,
 	...props
-}: ComponentProps<typeof SheetContent>) {
+}: ComponentProps<typeof SheetContent> & ComponentProps<typeof DrawerContent>) {
 	const mobile = useIsMobile();
 	const classes = cn(
 		"flex flex-col overflow-y-auto overscroll-contain",

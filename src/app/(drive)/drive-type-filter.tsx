@@ -39,17 +39,19 @@ export function DriveTypeFilter({
 	const active = value.length > 0;
 	return (
 		<DropdownMenu.DropdownMenu>
-			<DropdownMenu.DropdownMenuTrigger asChild>
-				<Button
-					variant="outline"
-					type="button"
-					aria-label={t("drive.typeFilter")}
-					className={clsx("shrink-0", active ? " " : "")}
-				>
-					<ListFilter data-icon="inline-start" />
-					{t("drive.typeFilter")}
-					{active && <Badge>{value.length}</Badge>}
-				</Button>
+			<DropdownMenu.DropdownMenuTrigger
+				render={
+					<Button
+						variant="outline"
+						type="button"
+						aria-label={t("drive.typeFilter")}
+						className={clsx("shrink-0", active ? " " : "")}
+					/>
+				}
+			>
+				<ListFilter data-icon="inline-start" />
+				{t("drive.typeFilter")}
+				{active && <Badge>{value.length}</Badge>}
 			</DropdownMenu.DropdownMenuTrigger>
 			<DropdownMenu.DropdownMenuPortal>
 				<DropdownMenu.DropdownMenuContent align="end" sideOffset={6}>
@@ -65,7 +67,7 @@ export function DriveTypeFilter({
 											: value.filter((entry) => entry !== category)
 									)
 								}
-								onSelect={(event) => event.preventDefault()}
+								closeOnClick={false}
 							>
 								{labels[category]}
 							</DropdownMenu.DropdownMenuCheckboxItem>
@@ -73,7 +75,7 @@ export function DriveTypeFilter({
 						{active && (
 							<>
 								<DropdownMenu.DropdownMenuSeparator />
-								<DropdownMenu.DropdownMenuItem onSelect={() => update([])}>
+								<DropdownMenu.DropdownMenuItem onClick={() => update([])}>
 									{t("drive.clearFilter")}
 								</DropdownMenu.DropdownMenuItem>
 							</>

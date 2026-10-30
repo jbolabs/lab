@@ -627,15 +627,8 @@ export default function DrivePage() {
 					)}
 				>
 					<Checkbox
-						checked={(() => {
-							if (allSelected) {
-								return true;
-							}
-							if (selectedItems.length > 0) {
-								return "indeterminate";
-							}
-							return false;
-						})()}
+						checked={allSelected}
+						indeterminate={!allSelected && selectedItems.length > 0}
 						onCheckedChange={() =>
 							setStoredSelectedIds(
 								allSelected
@@ -803,15 +796,17 @@ export default function DrivePage() {
 								function renderItemActions() {
 									return (
 										<DropdownMenu.DropdownMenu>
-											<DropdownMenu.DropdownMenuTrigger asChild>
-												<Button
-													variant="ghost"
-													type="button"
-													aria-label={t("drive.actions")}
-													size="icon"
-												>
-													<MoreVertical data-icon="inline-start" />
-												</Button>
+											<DropdownMenu.DropdownMenuTrigger
+												render={
+													<Button
+														variant="ghost"
+														type="button"
+														aria-label={t("drive.actions")}
+														size="icon"
+													/>
+												}
+											>
+												<MoreVertical data-icon="inline-start" />
 											</DropdownMenu.DropdownMenuTrigger>
 											<DropdownMenu.DropdownMenuPortal>
 												<DropdownMenu.DropdownMenuContent
@@ -821,39 +816,43 @@ export default function DrivePage() {
 													<DropdownMenu.DropdownMenuGroup>
 														{!item.trashedAt && (
 															<DropdownMenu.DropdownMenuItem
-																onSelect={() => open(item)}
+																onClick={() => open(item)}
 															>
 																{t("drive.open")}
 															</DropdownMenu.DropdownMenuItem>
 														)}
 														{item.kind === "file" &&
 															!(item.source && item.trashedAt) && (
-																<DropdownMenu.DropdownMenuItem asChild>
-																	<a href={driveFileUrl(item, true)}>
-																		<Download size={16} />
-																		{t("drive.download")}
-																	</a>
+																<DropdownMenu.DropdownMenuItem
+																	// oxlint-disable-next-line jsx-a11y/control-has-associated-label -- Base UI render: the text is this component's children.
+																	render={<a href={driveFileUrl(item, true)} />}
+																>
+																	<Download size={16} />
+																	{t("drive.download")}
 																</DropdownMenu.DropdownMenuItem>
 															)}
 														{item.source && !item.trashedAt && (
-															<DropdownMenu.DropdownMenuItem asChild>
-																<a
-																	href={emailUrl(item.source)}
-																	target="_blank"
-																	rel="noopener noreferrer"
-																>
-																	<Mail size={16} />
-																	{t("drive.openEmail")}
-																	<span className="sr-only">
-																		{" "}
-																		({t("common.opensInNewTab")})
-																	</span>
-																</a>
+															<DropdownMenu.DropdownMenuItem
+																render={
+																	// oxlint-disable-next-line jsx-a11y/control-has-associated-label -- Base UI render: the text is this component's children.
+																	<a
+																		href={emailUrl(item.source)}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																	/>
+																}
+															>
+																<Mail size={16} />
+																{t("drive.openEmail")}
+																<span className="sr-only">
+																	{" "}
+																	({t("common.opensInNewTab")})
+																</span>
 															</DropdownMenu.DropdownMenuItem>
 														)}
 														{item.role === "owner" && !item.trashedAt && (
 															<DropdownMenu.DropdownMenuItem
-																onSelect={() => setSharing(item)}
+																onClick={() => setSharing(item)}
 															>
 																<Share2 size={16} />
 																{t("drive.share")}
@@ -861,7 +860,7 @@ export default function DrivePage() {
 														)}
 														{canEditDrive(item.role) && !item.trashedAt && (
 															<DropdownMenu.DropdownMenuItem
-																onSelect={() =>
+																onClick={() =>
 																	setNaming({
 																		item,
 																		mode: "rename",
@@ -875,7 +874,7 @@ export default function DrivePage() {
 														)}
 														{item.source?.canDelete && !item.trashedAt && (
 															<DropdownMenu.DropdownMenuItem
-																onSelect={() =>
+																onClick={() =>
 																	mutate(
 																		"/api/drive/attachments",
 																		json("POST", {
@@ -894,7 +893,7 @@ export default function DrivePage() {
 															!item.source &&
 															!item.trashedAt && (
 																<DropdownMenu.DropdownMenuItem
-																	onSelect={() =>
+																	onClick={() =>
 																		mutate(
 																			`/api/drive/items/${item.id}`,
 																			json("PATCH", { trashed: true }),
@@ -908,7 +907,7 @@ export default function DrivePage() {
 															)}
 														{item.trashedAt && (
 															<DropdownMenu.DropdownMenuItem
-																onSelect={() =>
+																onClick={() =>
 																	item.source
 																		? mutate(
 																				"/api/drive/attachments",
@@ -932,7 +931,7 @@ export default function DrivePage() {
 														{item.trashedAt && (
 															<DropdownMenu.DropdownMenuItem
 																variant="destructive"
-																onSelect={async () => {
+																onClick={async () => {
 																	if (
 																		await confirm(
 																			t("drive.confirmDelete", {
@@ -996,7 +995,7 @@ export default function DrivePage() {
 							return (
 								<Item
 									key={item.id}
-									asChild
+									render={renderItemRow()}
 									style={gridStyle}
 									draggable={isDriveDraggable(item)}
 									onDragStart={(event) => onItemDragStart(event, item)}
@@ -1009,9 +1008,7 @@ export default function DrivePage() {
 											: "default"
 									}
 									className="group grid grid-cols-[2rem_minmax(0,1fr)_2.5rem] items-center md:grid-cols-(--drive-columns)"
-								>
-									{renderItemRow()}
-								</Item>
+								/>
 							);
 						});
 					})()}
@@ -1139,29 +1136,40 @@ export default function DrivePage() {
 									</span>
 									<span className="flex shrink-0 items-center gap-1">
 										{preview.source && (
-											<Button asChild variant="ghost" size="sm">
-												<a
-													href={emailUrl(preview.source)}
-													target="_blank"
-													rel="noopener noreferrer"
-												>
-													<Mail />
-													{t("drive.openEmail")}
-													<ExternalLink className="size-3" aria-hidden="true" />
-													<span className="sr-only">
-														{" "}
-														({t("common.opensInNewTab")})
-													</span>
-												</a>
+											<Button
+												variant="ghost"
+												size="sm"
+												render={
+													// oxlint-disable-next-line jsx-a11y/control-has-associated-label -- Base UI render: the text is this component's children.
+													<a
+														href={emailUrl(preview.source)}
+														target="_blank"
+														rel="noopener noreferrer"
+													/>
+												}
+												nativeButton={false}
+											>
+												<Mail />
+												{t("drive.openEmail")}
+												<ExternalLink className="size-3" aria-hidden="true" />
+												<span className="sr-only">
+													{" "}
+													({t("common.opensInNewTab")})
+												</span>
 											</Button>
 										)}
-										<Button asChild variant="ghost" size="icon">
-											<a
-												href={driveFileUrl(preview, true)}
-												aria-label={t("drive.download")}
-											>
-												<Download />
-											</a>
+										<Button
+											variant="ghost"
+											size="icon"
+											render={
+												<a
+													href={driveFileUrl(preview, true)}
+													aria-label={t("drive.download")}
+												/>
+											}
+											nativeButton={false}
+										>
+											<Download />
 										</Button>
 									</span>
 								</DialogTitle>

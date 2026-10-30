@@ -9,6 +9,8 @@ import { JSDOM } from "jsdom";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 
+import { installDomGlobals } from "./helpers/dom.mjs";
+
 const directory = mkdtempSync(
 	path.join(process.cwd(), "node_modules", "push-ui-test-")
 );
@@ -65,9 +67,7 @@ async function withDom(run) {
 	const dom = new JSDOM("<!doctype html><div id='root'></div>", {
 		pretendToBeVisual: true,
 	});
-	globalThis.window = dom.window;
-	globalThis.document = dom.window.document;
-	globalThis.HTMLFormElement = dom.window.HTMLFormElement;
+	const removeDomGlobals = installDomGlobals(dom);
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 	Object.defineProperty(globalThis, "navigator", {
 		configurable: true,
@@ -79,9 +79,7 @@ async function withDom(run) {
 	} finally {
 		await act(() => root.unmount());
 		dom.window.close();
-		delete globalThis.HTMLFormElement;
-		delete globalThis.window;
-		delete globalThis.document;
+		removeDomGlobals();
 		delete globalThis.IS_REACT_ACT_ENVIRONMENT;
 		delete globalThis.getTestPushState;
 		delete globalThis.registerTestWorker;
@@ -127,9 +125,9 @@ test("denying permission immediately shows blocked guidance and disables the swi
 		};
 		await act(() => root.render(createElement(PushNotificationSettings)));
 		const toggle = document.querySelector('[role="switch"]');
-		assert.equal(toggle.disabled, false);
+		assert.equal("disabled" in toggle.dataset, false);
 		await act(() => toggle.click());
-		assert.equal(toggle.disabled, true);
+		assert.equal("disabled" in toggle.dataset, true);
 		assert.match(document.body.textContent, /settings.push.blocked/);
 		assert.match(document.body.textContent, /settings.push.updateFailed/);
 	});

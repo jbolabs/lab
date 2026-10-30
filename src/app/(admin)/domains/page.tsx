@@ -560,11 +560,9 @@ export default function DomainsPage() {
 					</PageDescription>
 				</PageHeaderText>
 				<Dialog open={createOpen} onOpenChange={setCreateOpen}>
-					<DialogTrigger asChild>
-						<Button float="mobile">
-							<Plus data-icon="inline-start" />
-							{t("domains.new")}
-						</Button>
+					<DialogTrigger render={<Button float="mobile" />}>
+						<Plus data-icon="inline-start" />
+						{t("domains.new")}
 					</DialogTrigger>
 					<DialogContent className="max-h-[calc(100dvh-4rem)] overflow-y-auto">
 						<DialogHeader>

@@ -891,7 +891,7 @@ export default function CalendarPage() {
 									</NativeSelect>
 									{repeat === "weekdays" && (
 										<ToggleGroup
-											type="multiple"
+											multiple
 											variant="outline"
 											value={repeatDays.map(String)}
 											onValueChange={(values) =>
@@ -1081,28 +1081,30 @@ export default function CalendarPage() {
 					<div className="flex min-w-0 flex-1 items-center justify-between gap-3">
 						<div className="flex shrink-0 items-center gap-2">
 							<Popover open={monthPickerOpen} onOpenChange={setMonthPickerOpen}>
-								<PopoverTrigger asChild>
-									<Button
-										variant="ghost"
-										type="button"
-										onClick={() => {
-											setPickerMonth(startOfMonth(visibleDate));
-										}}
-										className="whitespace-nowrap"
-										aria-haspopup="dialog"
-										aria-expanded={monthPickerOpen}
-									>
-										<span className="text-lg font-semibold max-md:text-base max-md:font-medium">
-											{formatUserDate(visibleDate, {
-												month: "long",
-												year: "numeric",
-											})}
-										</span>
-										<ChevronDown
-											data-icon="inline-start"
-											className="text-muted-foreground"
+								<PopoverTrigger
+									render={
+										<Button
+											variant="ghost"
+											type="button"
+											onClick={() => {
+												setPickerMonth(startOfMonth(visibleDate));
+											}}
+											className="whitespace-nowrap"
+											aria-haspopup="dialog"
+											aria-expanded={monthPickerOpen}
 										/>
-									</Button>
+									}
+								>
+									<span className="text-lg font-semibold max-md:text-base max-md:font-medium">
+										{formatUserDate(visibleDate, {
+											month: "long",
+											year: "numeric",
+										})}
+									</span>
+									<ChevronDown
+										data-icon="inline-start"
+										className="text-muted-foreground"
+									/>
 								</PopoverTrigger>
 								<PopoverContent
 									align="start"
@@ -1240,22 +1242,24 @@ export default function CalendarPage() {
 								{t("calendar.today")}
 							</Button>
 							<DropdownMenu.DropdownMenu>
-								<DropdownMenu.DropdownMenuTrigger asChild>
-									<Button
-										variant="ghost"
-										type="button"
-										aria-label={t("calendar.options")}
-										size="icon-lg"
-										className="md:hidden"
-									>
-										<MoreVertical data-icon="inline-start" />
-									</Button>
+								<DropdownMenu.DropdownMenuTrigger
+									render={
+										<Button
+											variant="ghost"
+											type="button"
+											aria-label={t("calendar.options")}
+											size="icon-lg"
+											className="md:hidden"
+										/>
+									}
+								>
+									<MoreVertical data-icon="inline-start" />
 								</DropdownMenu.DropdownMenuTrigger>
 								<DropdownMenu.DropdownMenuPortal>
 									<DropdownMenu.DropdownMenuContent align="end" sideOffset={4}>
 										<DropdownMenu.DropdownMenuGroup>
 											<DropdownMenu.DropdownMenuItem
-												onSelect={() => setVisibleDate(new Date())}
+												onClick={() => setVisibleDate(new Date())}
 											>
 												{t("calendar.today")}
 											</DropdownMenu.DropdownMenuItem>
@@ -1263,7 +1267,7 @@ export default function CalendarPage() {
 											{(["week", "day"] as const).map((option) => (
 												<DropdownMenu.DropdownMenuItem
 													key={option}
-													onSelect={() => setView(option)}
+													onClick={() => setView(option)}
 													className="justify-between"
 												>
 													{t(`calendar.${option}` as TranslationKey)}

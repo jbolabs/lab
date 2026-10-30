@@ -183,11 +183,11 @@ export function ApiKeysSettings() {
 							}
 						}}
 					>
-						<DialogTrigger asChild>
-							<Button type="button" float="mobile-above-nav">
-								<Plus data-icon="inline-start" />
-								{t("apiKeys.new")}
-							</Button>
+						<DialogTrigger
+							render={<Button type="button" float="mobile-above-nav" />}
+						>
+							<Plus data-icon="inline-start" />
+							{t("apiKeys.new")}
 						</DialogTrigger>
 						<DialogContent className="max-h-[calc(100dvh_-_4rem)] overflow-y-auto">
 							<DialogHeader>

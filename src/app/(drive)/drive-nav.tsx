@@ -298,22 +298,24 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 			<div className="flex min-h-0 flex-1 flex-col">
 				<div className="min-h-0 flex-1 overflow-y-auto px-3 pt-1">
 					<DropdownMenu.DropdownMenu>
-						<DropdownMenu.DropdownMenuTrigger asChild>
-							<Button
-								type="button"
-								aria-label={t("drive.new")}
-								size={compact ? "icon-lg" : "lg"}
-								className={clsx("mb-3", !compact && "w-full justify-start")}
-							>
-								<Plus data-icon="inline-start" />
-								{!compact && t("drive.new")}
-							</Button>
+						<DropdownMenu.DropdownMenuTrigger
+							render={
+								<Button
+									type="button"
+									aria-label={t("drive.new")}
+									size={compact ? "icon-lg" : "lg"}
+									className={clsx("mb-3", !compact && "w-full justify-start")}
+								/>
+							}
+						>
+							<Plus data-icon="inline-start" />
+							{!compact && t("drive.new")}
 						</DropdownMenu.DropdownMenuTrigger>
 						<DropdownMenu.DropdownMenuPortal>
 							<DropdownMenu.DropdownMenuContent align="start" sideOffset={6}>
 								<DropdownMenu.DropdownMenuGroup>
 									<DropdownMenu.DropdownMenuItem
-										onSelect={() => {
+										onClick={() => {
 											window.dispatchEvent(new Event(DRIVE_NEW_FOLDER_EVENT));
 											onNavigate?.();
 										}}
@@ -322,14 +324,16 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 										{t("drive.newFolder")}
 									</DropdownMenu.DropdownMenuItem>
 									{canCreateDocument ? (
-										<DropdownMenu.DropdownMenuItem asChild>
-											<Link
-												href={`/drive/document${newDocumentParent ? `?parent=${encodeURIComponent(newDocumentParent)}` : ""}`}
-												onClick={() => onNavigate?.()}
-											>
-												<FilePlus2 size={18} />
-												{t("docs.create")}
-											</Link>
+										<DropdownMenu.DropdownMenuItem
+											render={
+												<Link
+													href={`/drive/document${newDocumentParent ? `?parent=${encodeURIComponent(newDocumentParent)}` : ""}`}
+													onClick={() => onNavigate?.()}
+												/>
+											}
+										>
+											<FilePlus2 size={18} />
+											{t("docs.create")}
 										</DropdownMenu.DropdownMenuItem>
 									) : (
 										<DropdownMenu.DropdownMenuItem disabled>
@@ -339,7 +343,7 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 									)}
 									<DropdownMenu.DropdownMenuSeparator />
 									<DropdownMenu.DropdownMenuItem
-										onSelect={() => {
+										onClick={() => {
 											window.dispatchEvent(new Event(DRIVE_UPLOAD_EVENT));
 											onNavigate?.();
 										}}

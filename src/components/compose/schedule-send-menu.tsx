@@ -99,15 +99,17 @@ export function ScheduleSendMenu({
 					}
 				}}
 			>
-				<DropdownMenuTrigger asChild>
-					<Button
-						type="button"
-						disabled={disabled}
-						aria-label={t("schedule.optionsLabel")}
-						size="icon-sm"
-					>
-						<ChevronDown data-icon="inline-start" />
-					</Button>
+				<DropdownMenuTrigger
+					render={
+						<Button
+							type="button"
+							disabled={disabled}
+							aria-label={t("schedule.optionsLabel")}
+							size="icon-sm"
+						/>
+					}
+				>
+					<ChevronDown data-icon="inline-start" />
 				</DropdownMenuTrigger>
 
 				<DropdownMenuContent align="start" sideOffset={6} className="min-w-64">
@@ -120,7 +122,7 @@ export function ScheduleSendMenu({
 						<DropdownMenuLabel>{t("schedule.heading")}</DropdownMenuLabel>
 						{value && (
 							<>
-								<DropdownMenuItem onSelect={() => onChange(null)}>
+								<DropdownMenuItem onClick={() => onChange(null)}>
 									<X />
 									{t("schedule.clear")}
 								</DropdownMenuItem>
@@ -130,7 +132,7 @@ export function ScheduleSendMenu({
 						{options.map((option) => (
 							<DropdownMenuItem
 								key={option.labelKey}
-								onSelect={() => onChange(option.value)}
+								onClick={() => onChange(option.value)}
 							>
 								{t(option.labelKey)}
 								<span className="ml-2">

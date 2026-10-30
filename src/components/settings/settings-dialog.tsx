@@ -7,7 +7,10 @@ import * as Mobile from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const MobileContext = createContext(false);
-export function Dialog(props: ComponentProps<typeof Desktop.Dialog>) {
+export function Dialog(
+	props: ComponentProps<typeof Desktop.Dialog> &
+		ComponentProps<typeof Mobile.Drawer>
+) {
 	const mobile = useIsMobile();
 	return (
 		<MobileContext.Provider value={mobile}>
@@ -16,7 +19,8 @@ export function Dialog(props: ComponentProps<typeof Desktop.Dialog>) {
 	);
 }
 export function DialogTrigger(
-	props: ComponentProps<typeof Desktop.DialogTrigger>
+	props: ComponentProps<typeof Desktop.DialogTrigger> &
+		ComponentProps<typeof Mobile.DrawerTrigger>
 ) {
 	return useContext(MobileContext) ? (
 		<Mobile.DrawerTrigger {...props} />

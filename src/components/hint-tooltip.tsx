@@ -30,8 +30,10 @@ export function HintTooltip({
 	}
 	return (
 		<Tooltip>
-			<TooltipTrigger asChild>
-				<span className={cn("inline-flex", className)}>{children}</span>
+			<TooltipTrigger
+				render={<span className={cn("inline-flex", className)} />}
+			>
+				{children}
 			</TooltipTrigger>
 			<TooltipContent side={side}>{label}</TooltipContent>
 		</Tooltip>

@@ -293,20 +293,20 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 					<Button
 						key={href}
 						variant="ghost"
-						asChild
 						className="w-full justify-start"
+						render={<Link href={href} onClick={() => setOpen(false)} />}
+						nativeButton={false}
 					>
-						<Link href={href} onClick={() => setOpen(false)}>
-							<Icon data-icon="inline-start" />
-							{label}
-						</Link>
+						<Icon data-icon="inline-start" />
+						{label}
 					</Button>
 				) : (
-					<DropdownMenuItem key={href} asChild>
-						<Link href={href} onClick={() => setOpen(false)}>
-							<Icon />
-							{label}
-						</Link>
+					<DropdownMenuItem
+						key={href}
+						render={<Link href={href} onClick={() => setOpen(false)} />}
+					>
+						<Icon />
+						{label}
 					</DropdownMenuItem>
 				)
 			)}
@@ -320,7 +320,7 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 					{t("account.signOut")}
 				</Button>
 			) : (
-				<DropdownMenuItem onSelect={() => logout()}>
+				<DropdownMenuItem onClick={() => logout()}>
 					<LogOut />
 					{t("account.signOut")}
 				</DropdownMenuItem>
@@ -380,7 +380,7 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 						</span>
 					</Button>
 				) : (
-					<DropdownMenuItem key={mailbox.id} onSelect={select}>
+					<DropdownMenuItem key={mailbox.id} onClick={select}>
 						{content}
 					</DropdownMenuItem>
 				);
@@ -421,7 +421,7 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 				) : (
 					<DropdownMenuItem
 						key={account.userId}
-						onSelect={() => switchAccount(account.userId)}
+						onClick={() => switchAccount(account.userId)}
 					>
 						{content}
 					</DropdownMenuItem>
@@ -448,7 +448,7 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 	if (mobile) {
 		return (
 			<Drawer open={open} onOpenChange={setOpen}>
-				<DrawerTrigger asChild>{trigger}</DrawerTrigger>
+				<DrawerTrigger render={trigger} />
 				<DrawerContent aria-describedby={undefined}>
 					<DrawerHeader>
 						<DrawerTitle>{t("account.openMenu")}</DrawerTitle>
@@ -464,7 +464,7 @@ export function MailboxSelector({ initialUser }: MailboxSelectorProps = {}) {
 	}
 	return (
 		<DropdownMenu open={open} onOpenChange={setOpen}>
-			<DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+			<DropdownMenuTrigger render={trigger} />
 			<DropdownMenuContent
 				align="end"
 				sideOffset={8}

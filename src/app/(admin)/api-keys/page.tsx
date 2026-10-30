@@ -123,11 +123,9 @@ export default function ApiKeysPage() {
 						}
 					}}
 				>
-					<DialogTrigger asChild>
-						<Button float="mobile">
-							<Plus data-icon="inline-start" />
-							{t("apiKeys.new")}
-						</Button>
+					<DialogTrigger render={<Button float="mobile" />}>
+						<Plus data-icon="inline-start" />
+						{t("apiKeys.new")}
 					</DialogTrigger>
 					<DialogContent>
 						<DialogHeader>

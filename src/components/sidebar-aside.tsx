@@ -93,12 +93,9 @@ export function SidebarAside({
 						side="left"
 						showCloseButton={false}
 						aria-describedby={undefined}
-						onCloseAutoFocus={(event) => {
-							event.preventDefault();
-							document
-								.querySelector<HTMLElement>("[data-mobile-menu]")
-								?.focus();
-						}}
+						finalFocus={() =>
+							document.querySelector<HTMLElement>("[data-mobile-menu]")
+						}
 						className={cn(
 							"w-[min(85vw,320px)] transform-(--drawer-transform)",
 							className
@@ -158,13 +155,14 @@ export function MobileMenuButton({ className }: { className?: string }) {
 			<Button
 				variant="ghost"
 				size="icon-lg"
-				asChild
 				className="shrink-0 md:hidden"
+				// Home: the launcher. On the home-screen web app there is no browser chrome, so this is the way back.
+				render={
+					<Link href="/" aria-label={t("home.homeLabel", { app: APP_NAME })} />
+				}
+				nativeButton={false}
 			>
-				{/* Home: the launcher. On the home-screen web app there is no browser chrome, so this is the way back. */}
-				<Link href="/" aria-label={t("home.homeLabel", { app: APP_NAME })}>
-					<BrandMark size={26} />
-				</Link>
+				<BrandMark size={26} />
 			</Button>
 		</>
 	);

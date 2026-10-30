@@ -38,14 +38,16 @@ export function AdminRowActions({
 	return (
 		<>
 			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button
-						variant="ghost"
-						size="icon"
-						aria-label={t("common.moreActions")}
-					>
-						<MoreVertical />
-					</Button>
+				<DropdownMenuTrigger
+					render={
+						<Button
+							variant="ghost"
+							size="icon"
+							aria-label={t("common.moreActions")}
+						/>
+					}
+				>
+					<MoreVertical />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					<DropdownMenuGroup>
@@ -53,7 +55,7 @@ export function AdminRowActions({
 						<DropdownMenuItem
 							variant="destructive"
 							disabled={disabled}
-							onSelect={() => setOpen(true)}
+							onClick={() => setOpen(true)}
 						>
 							<Trash2 />
 							{confirmLabel}

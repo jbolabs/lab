@@ -25,7 +25,7 @@ function findBackButton() {
 
 function blockedByOverlay() {
 	return !!document.querySelector(
-		'[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"], .compose-sheet'
+		'[role="dialog"][data-open], [role="alertdialog"][data-open], .compose-sheet'
 	);
 }
 

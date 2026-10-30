@@ -268,17 +268,19 @@ export function DriveBulkActions({
 						<DropdownMenu.DropdownMenu
 							onOpenChange={(open) => loadFolders(open)}
 						>
-							<DropdownMenu.DropdownMenuTrigger asChild>
-								<Button type="button" variant="ghost" disabled={busy}>
-									<FolderInput data-icon="inline-start" />
-									{t("drive.moveToFolder")}
-								</Button>
+							<DropdownMenu.DropdownMenuTrigger
+								render={
+									<Button type="button" variant="ghost" disabled={busy} />
+								}
+							>
+								<FolderInput data-icon="inline-start" />
+								{t("drive.moveToFolder")}
 							</DropdownMenu.DropdownMenuTrigger>
 							<DropdownMenu.DropdownMenuPortal>
 								<DropdownMenu.DropdownMenuContent
 									align="end"
 									sideOffset={6}
-									onCloseAutoFocus={(event) => event.preventDefault()}
+									finalFocus={false}
 									className="w-72"
 								>
 									<DropdownMenu.DropdownMenuGroup>
@@ -312,9 +314,7 @@ export function DriveBulkActions({
 										</form>
 										<DropdownMenu.DropdownMenuSeparator />
 										<div className="max-h-64 overflow-y-auto">
-											<DropdownMenu.DropdownMenuItem
-												onSelect={() => move(null)}
-											>
+											<DropdownMenu.DropdownMenuItem onClick={() => move(null)}>
 												<HardDrive />
 												{t("drive.myDrive")}
 											</DropdownMenu.DropdownMenuItem>
@@ -322,7 +322,7 @@ export function DriveBulkActions({
 												<DropdownMenu.DropdownMenuItem
 													key={folder.id}
 													disabled={folder.disabled}
-													onSelect={() => move(folder.id)}
+													onClick={() => move(folder.id)}
 													style={
 														{
 															"--folder-indent": `${8 + folder.depth * 14}px`,

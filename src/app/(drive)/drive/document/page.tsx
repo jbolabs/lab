@@ -258,15 +258,21 @@ function DocumentEditor({
 				className="flex h-full min-h-0 min-w-0 flex-col rounded-t-lg border-0 bg-card p-0 text-foreground"
 			>
 				<header className="flex min-h-17 shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-3 py-3 sm:px-5">
-					<Button asChild variant="ghost" size="icon-lg" className="shrink-0">
-						<Link
-							href={backHref}
-							data-edge-swipe-back
-							aria-label={t("docs.back")}
-							title={t("docs.back")}
-						>
-							<ArrowLeft className="size-5" />
-						</Link>
+					<Button
+						variant="ghost"
+						size="icon-lg"
+						className="shrink-0"
+						render={
+							<Link
+								href={backHref}
+								data-edge-swipe-back
+								aria-label={t("docs.back")}
+								title={t("docs.back")}
+							/>
+						}
+						nativeButton={false}
+					>
+						<ArrowLeft className="size-5" />
 					</Button>
 					<div className="flex min-w-0 flex-1 items-center gap-2">
 						<FileText

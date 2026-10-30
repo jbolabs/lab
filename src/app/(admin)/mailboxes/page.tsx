@@ -285,11 +285,9 @@ export default function MailboxesPage() {
 					<PageTitle>{t("mailboxes.title")}</PageTitle>
 				</PageHeaderText>
 				<Dialog open={createOpen} onOpenChange={setCreateOpen}>
-					<DialogTrigger asChild>
-						<Button float="mobile">
-							<Plus data-icon="inline-start" />
-							{t("mailboxes.new")}
-						</Button>
+					<DialogTrigger render={<Button float="mobile" />}>
+						<Plus data-icon="inline-start" />
+						{t("mailboxes.new")}
 					</DialogTrigger>
 					<DialogContent>
 						<DialogHeader>
@@ -371,43 +369,47 @@ export default function MailboxesPage() {
 						};
 
 						return (
-							<ListRow variant="outline" key={mailbox.id} asChild>
-								<Link
-									href={`${base}/${mailbox.id}`}
-									className="group flex-nowrap px-4 py-4"
-								>
-									<span className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-signal-soft text-sm font-semibold text-signal">
-										{getMailboxName(mailboxWithHostname)
-											.trim()
-											.charAt(0)
-											.toUpperCase() || "?"}
-										{mailbox.hasAvatar && (
-											<ProgressiveAvatarImage
-												src={`/api/mailboxes/${mailbox.id}/avatar`}
-												alt={t("mailboxes.profileAlt", {
-													name: getMailboxName(mailboxWithHostname),
-												})}
-												className="absolute inset-0 size-full object-cover"
-											/>
+							<ListRow
+								variant="outline"
+								key={mailbox.id}
+								render={
+									<Link
+										href={`${base}/${mailbox.id}`}
+										className="group flex-nowrap"
+									/>
+								}
+							>
+								<span className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-signal-soft text-sm font-semibold text-signal">
+									{getMailboxName(mailboxWithHostname)
+										.trim()
+										.charAt(0)
+										.toUpperCase() || "?"}
+									{mailbox.hasAvatar && (
+										<ProgressiveAvatarImage
+											src={`/api/mailboxes/${mailbox.id}/avatar`}
+											alt={t("mailboxes.profileAlt", {
+												name: getMailboxName(mailboxWithHostname),
+											})}
+											className="absolute inset-0 size-full object-cover"
+										/>
+									)}
+								</span>
+								<span className="min-w-0 flex-1">
+									<span className="flex min-w-0 items-center gap-2">
+										<span className="block truncate text-sm font-semibold text-foreground">
+											{getMailboxName(mailboxWithHostname)}
+										</span>
+										{mailbox.type === "shared" && (
+											<Badge variant="signal">
+												<UsersRound />
+												{t("mailboxes.shared")}
+											</Badge>
 										)}
 									</span>
-									<span className="min-w-0 flex-1">
-										<span className="flex min-w-0 items-center gap-2">
-											<span className="block truncate text-sm font-semibold text-foreground">
-												{getMailboxName(mailboxWithHostname)}
-											</span>
-											{mailbox.type === "shared" && (
-												<Badge variant="signal">
-													<UsersRound />
-													{t("mailboxes.shared")}
-												</Badge>
-											)}
-										</span>
-										<span className="block truncate font-sans text-sm text-muted-foreground">
-											{getMailboxAddress(mailboxWithHostname)}
-										</span>
+									<span className="block truncate font-sans text-sm text-muted-foreground">
+										{getMailboxAddress(mailboxWithHostname)}
 									</span>
-								</Link>
+								</span>
 							</ListRow>
 						);
 					})}

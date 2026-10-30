@@ -19,15 +19,17 @@ export function QuotedEmailToggle({
 	const { t } = useLanguage();
 	return (
 		<Collapsible className="mt-4">
-			<CollapsibleTrigger asChild>
-				<Button
-					variant="outline"
-					size="icon-sm"
-					aria-label={t("message.quote.toggle")}
-					title={t("message.quote.title")}
-				>
-					<MoreHorizontal data-icon="inline-start" />
-				</Button>
+			<CollapsibleTrigger
+				render={
+					<Button
+						variant="outline"
+						size="icon-sm"
+						aria-label={t("message.quote.toggle")}
+						title={t("message.quote.title")}
+					/>
+				}
+			>
+				<MoreHorizontal data-icon="inline-start" />
 			</CollapsibleTrigger>
 			<CollapsibleContent className="mt-3">
 				<EmailHtmlRenderer

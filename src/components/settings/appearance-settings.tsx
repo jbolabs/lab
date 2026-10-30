@@ -44,11 +44,10 @@ export function AppearanceSettings() {
 			<FieldLabel>{t("settings.theme.label")}</FieldLabel>
 			<FieldDescription>{t("settings.theme.description")}</FieldDescription>
 			<ToggleGroup
-				type="single"
 				variant="outline"
-				value={preference}
+				value={[preference]}
 				aria-label={t("settings.theme.label")}
-				onValueChange={(next) => {
+				onValueChange={([next]) => {
 					if (isThemePreference(next)) {
 						saveThemePreference(next);
 					}

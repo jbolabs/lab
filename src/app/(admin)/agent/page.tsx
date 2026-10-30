@@ -521,8 +521,12 @@ export default function AdminAgentPage() {
 					<PageDescription>{t("agentAdmin.description")}</PageDescription>
 				</PageHeaderText>
 				<PageHeaderActions>
-					<Button asChild variant="outline">
-						<Link href="/ai-usage">{t("agentAdmin.viewUsage")}</Link>
+					<Button
+						variant="outline"
+						render={<Link href="/ai-usage" />}
+						nativeButton={false}
+					>
+						{t("agentAdmin.viewUsage")}
 					</Button>
 				</PageHeaderActions>
 			</PageHeader>
