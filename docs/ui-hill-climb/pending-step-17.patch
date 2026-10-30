@@ -1,0 +1,16 @@
+diff --git a/src/components/ui/toggle.tsx b/src/components/ui/toggle.tsx
+index b0219bbc..3baaac4f 100644
+--- a/src/components/ui/toggle.tsx
++++ b/src/components/ui/toggle.tsx
+@@ -22,7 +22,10 @@ const toggleVariants = cva(
+ 			},
+ 			variant: {
+ 				default: "bg-transparent",
+-				outline: "border border-input bg-transparent hover:bg-muted",
++				// Outline toggles are segmented choices (theme, import source): the chosen one is
++				// filled so it reads at a glance in both schemes. Toolbar toggles keep the quiet tint.
++				outline:
++					"border border-input bg-transparent hover:bg-muted aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:hover:bg-primary/90 aria-pressed:hover:text-primary-foreground",
+ 			},
+ 		},
+ 	}
