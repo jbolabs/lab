@@ -234,7 +234,8 @@ export function RichTextEditor({
 
 	return (
 		<div className={cn("flex min-h-0 flex-1 flex-col", className)}>
-			<div className="sticky top-0 z-10 flex shrink-0 items-center gap-0.5 overflow-x-auto bg-card px-2 py-1 md:hidden">
+			{/* Scrolls sideways on narrow phones; the right edge fades instead of cutting a button in half. */}
+			<div className="sticky top-0 z-10 flex shrink-0 [scrollbar-width:none] items-center gap-0.5 overflow-x-auto overscroll-x-contain bg-card mask-r-from-90% py-1 pr-6 pl-2 md:hidden [&::-webkit-scrollbar]:hidden">
 				{formatButtons}
 			</div>
 			<div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain">

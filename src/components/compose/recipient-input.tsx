@@ -7,7 +7,7 @@ import type { KeyboardEvent } from "react";
 import { useLanguage } from "@/components/language-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { InputGroupInput } from "@/components/ui/input-group";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getEmailAddress } from "@/lib/email/address";
 
@@ -68,7 +68,8 @@ export function RecipientInput({
 	}
 
 	return (
-		<div className="relative flex min-h-9 items-center gap-2 border-b border-border px-4 py-1 max-md:min-h-12 max-md:py-1.5">
+		// Label, chips and toggles share one line height so the row grows by whole lines as chips wrap.
+		<div className="relative flex items-start gap-2 border-b border-border px-4 py-1 max-md:py-1.5">
 			<Button
 				type="button"
 				variant="plain"
@@ -79,13 +80,12 @@ export function RecipientInput({
 				className="absolute inset-0 w-full"
 				onClick={() => inputRef.current?.focus()}
 			/>
-			<Label
-				htmlFor={id}
-				className="relative w-8 shrink-0 text-muted-foreground"
-			>
-				{label}
-			</Label>
-			<div className="pointer-events-none relative flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+			<div className="relative flex h-9 w-10 shrink-0 items-center max-md:h-10">
+				<Label htmlFor={id} className="text-muted-foreground">
+					{label}
+				</Label>
+			</div>
+			<div className="pointer-events-none relative flex min-h-9 min-w-0 flex-1 flex-wrap items-center gap-1.5 py-1 max-md:min-h-10">
 				{value.map((entry) => {
 					const valid = isValidRecipient(entry);
 					return (
@@ -119,7 +119,8 @@ export function RecipientInput({
 						</Badge>
 					);
 				})}
-				<InputGroupInput
+				<Input
+					variant="token"
 					ref={inputRef}
 					id={id}
 					value={draft}
@@ -148,12 +149,14 @@ export function RecipientInput({
 					disabled={disabled}
 					// Native `required` would block submit while chips exist; the form checks itself.
 					aria-required={required}
+					// With chips and nothing typed, the idle field leaves the layout; the row button still focuses it.
+					data-idle={value.length > 0 && !draft ? "" : undefined}
 					className="pointer-events-auto min-w-24"
 				/>
 			</div>
 			{trailing && (
 				// Toggles live inside the clickable row; keep their clicks from refocusing this field.
-				<div className="relative flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+				<div className="relative flex h-9 shrink-0 items-center gap-1 text-xs text-muted-foreground max-md:h-10">
 					{trailing}
 				</div>
 			)}
