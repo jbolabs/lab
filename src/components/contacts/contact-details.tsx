@@ -139,7 +139,8 @@ export function ContactDetailsTrigger({
 		<>
 			<Button
 				type="button"
-				variant="link"
+				variant="quiet-link"
+				size="inline"
 				onClick={() => handleOpenChange(true)}
 				className={cn(
 					"text-left whitespace-normal active:not-disabled:scale-100",
