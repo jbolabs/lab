@@ -96,3 +96,13 @@ test("every existing HTTP endpoint is connected to a native Start server route",
 		}
 	}
 });
+
+test("Cloudflare static caching follows Vite's emitted asset URLs", () => {
+	const headers = readFileSync(path.join(root, "public/_headers"), "utf-8");
+	assert.doesNotMatch(headers, /_next/);
+	assert.match(
+		headers,
+		/^\/assets\/\*\n\s+Cache-Control: public,max-age=31536000,immutable/m
+	);
+	assert.match(headers, /^\/\*\n\s+X-Content-Type-Options: nosniff/m);
+});
