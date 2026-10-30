@@ -8,7 +8,9 @@ function Empty({ className, ...props }: React.ComponentProps<"div">) {
 		<div
 			data-slot="empty"
 			className={cn(
-				"flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-4 rounded-lg border-dashed p-12 text-center text-balance",
+				// Without media it is a one-line note inside a card ("No rules yet"): keep it compact
+				// instead of a tall padded box that stretches to fill its container.
+				"flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-4 rounded-lg border-dashed p-12 text-center text-balance not-has-data-[slot=empty-media]:flex-none not-has-data-[slot=empty-media]:p-6",
 				className
 			)}
 			{...props}
