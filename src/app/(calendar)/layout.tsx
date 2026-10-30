@@ -6,6 +6,7 @@ import { layoutLength } from "@/app/layout-values";
 import { AgentPanel } from "@/components/agent/agent-panel";
 import { AssistantOpenContext } from "@/components/agent/assistant-open-state";
 import Link from "@/components/app-link";
+import { AppTopBar } from "@/components/app-top-bar";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ComposeProvider } from "@/components/compose/compose-context";
 import { FloatingComposer } from "@/components/compose/floating-composer";
@@ -135,7 +136,7 @@ export default function CalendarLayout({
 										<CalendarMobileUpcoming />
 									</SidebarAside>
 									<div className="flex min-h-0 min-w-0 flex-col">
-										<header className="flex h-16 w-full shrink-0 items-center gap-3 pr-4 text-sm max-md:h-auto max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-2 max-md:pt-1 max-md:pr-2 max-md:pb-2">
+										<AppTopBar className="gap-3 pr-4 max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-2 max-md:pr-2 max-md:pb-2">
 											<MobileMenuButton className="ml-1" />
 											<div
 												className={clsx(
@@ -247,7 +248,7 @@ export default function CalendarLayout({
 												</Button>
 											)}
 											<MailboxSelector />
-										</header>
+										</AppTopBar>
 										{renderCalendarWorkspace()}
 									</div>
 									<FloatingComposer />

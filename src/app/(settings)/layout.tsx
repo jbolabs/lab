@@ -1,5 +1,6 @@
 "use client";
 
+import { AppTopBar } from "@/components/app-top-bar";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ComposeProvider } from "@/components/compose/compose-context";
 import { FloatingComposer } from "@/components/compose/floating-composer";
@@ -48,7 +49,7 @@ export default function DashboardLayout({
 										<DashboardNav />
 									</SidebarAside>
 									<div className="flex min-h-0 min-w-0 flex-col">
-										<header className="flex h-16 w-full shrink-0 items-center gap-4 pr-4 text-sm">
+										<AppTopBar className="gap-4 pr-4">
 											<MobileMenuButton className="ml-2" />
 											<MailSearchInput />
 											{/* <Link
@@ -58,7 +59,7 @@ export default function DashboardLayout({
                     <HelpCircle className="h-5 w-5" />
                   </Link> */}
 											<MailboxSelector />
-										</header>
+										</AppTopBar>
 										<main
 											id="main-content"
 											tabIndex={-1}

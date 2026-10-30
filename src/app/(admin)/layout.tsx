@@ -67,9 +67,9 @@ export default function DashboardLayout({
 								</SidebarAside>
 								<div className="relative flex min-h-0 min-w-0 flex-col">
 									<MobileTopBar title={mobileTitle} />
-									<header className="absolute top-safe-2 right-4 z-10 flex items-center gap-4">
+									<div className="absolute top-safe-2 right-4 z-10 flex items-center gap-4">
 										<MailboxSelector />
-									</header>
+									</div>
 									<main
 										id="main-content"
 										tabIndex={-1}
