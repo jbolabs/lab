@@ -137,8 +137,8 @@ async function emulateStandalone(page, safeArea) {
 function contactSheet(dir, viewportName) {
 	const tile =
 		viewportName === "phone"
-			? "scale=iw/4:-1,tile=6x2"
-			: "scale=iw/3:-1,tile=4x3";
+			? "scale=iw/4:-1,tile=6x2:padding=12:margin=12:color=0xFF00FF"
+			: "scale=iw/3:-1,tile=4x3:padding=12:margin=12:color=0xFF00FF";
 	const result = spawnSync(
 		"ffmpeg",
 		[
