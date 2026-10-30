@@ -41,16 +41,19 @@ export function AccountSettingsNav() {
 						const active = isActiveAccountSettingsPath(pathname, href);
 						return (
 							<Item
-								asChild
 								key={item.segment || "details"}
 								size="navigation"
 								variant={active ? "selected" : "default"}
+								render={
+									<Link
+										href={href}
+										aria-current={active ? "page" : undefined}
+									/>
+								}
 							>
-								<Link href={href} aria-current={active ? "page" : undefined}>
-									<ItemContent>
-										<ItemTitle>{t(item.labelKey)}</ItemTitle>
-									</ItemContent>
-								</Link>
+								<ItemContent>
+									<ItemTitle>{t(item.labelKey)}</ItemTitle>
+								</ItemContent>
 							</Item>
 						);
 					})}

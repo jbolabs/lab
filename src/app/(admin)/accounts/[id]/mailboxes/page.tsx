@@ -145,13 +145,18 @@ export default function AccountMailboxesPage() {
 										</ItemDescription>
 									</ItemContent>
 									<ItemActions>
-										<Button asChild variant="ghost" size="sm">
-											<Link
-												href={`/mailboxes/${mailbox.id}`}
-												aria-label={`${t("mailbox.title")}: ${mailbox.localPart}@${mailbox.hostname}`}
-											>
-												{t("mailbox.title")}
-											</Link>
+										<Button
+											variant="ghost"
+											size="sm"
+											render={
+												<Link
+													href={`/mailboxes/${mailbox.id}`}
+													aria-label={`${t("mailbox.title")}: ${mailbox.localPart}@${mailbox.hostname}`}
+												/>
+											}
+											nativeButton={false}
+										>
+											{t("mailbox.title")}
 										</Button>
 										<AdminRowActions
 											title={t("account.mailboxes.removeInbox")}

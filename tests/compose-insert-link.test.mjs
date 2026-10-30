@@ -36,7 +36,14 @@ await build({
 	alias: { "@": join(root, "src") },
 	bundle: true,
 	entryPoints: [join(root, "src/components/compose/rich-text-editor.tsx")],
-	external: ["react", "react-dom", "react-dom/*"],
+	// Base UI reaches React through the CommonJS use-sync-external-store shim, which cannot be bundled into ESM.
+	external: [
+		"react",
+		"react-dom",
+		"react-dom/*",
+		"use-sync-external-store",
+		"use-sync-external-store/*",
+	],
 	format: "esm",
 	logLevel: "silent",
 	outfile: join(outDir, "editor.mjs"),

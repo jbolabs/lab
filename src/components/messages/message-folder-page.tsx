@@ -1224,14 +1224,16 @@ function MessageFolderPageControls({
 					</HintTooltip>
 					{config.folder === "inbox" && (
 						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									aria-label={t("list.showUnreadOnly")}
-								>
-									<ListFilter data-icon="inline-start" />
-								</Button>
+							<DropdownMenuTrigger
+								render={
+									<Button
+										variant="ghost"
+										size="icon"
+										aria-label={t("list.showUnreadOnly")}
+									/>
+								}
+							>
+								<ListFilter data-icon="inline-start" />
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end">
 								<DropdownMenuGroup>

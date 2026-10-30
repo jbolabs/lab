@@ -155,11 +155,11 @@ export function ScheduleSendSheet({
 							</Button>
 						)}
 						<DrawerTitle className="flex-1 text-center">{title}</DrawerTitle>
-						<DrawerClose asChild>
-							<Button variant="ghost" size="icon-lg" type="button">
-								<X />
-								<span className="sr-only">{t("navigation.close")}</span>
-							</Button>
+						<DrawerClose
+							render={<Button variant="ghost" size="icon-lg" type="button" />}
+						>
+							<X />
+							<span className="sr-only">{t("navigation.close")}</span>
 						</DrawerClose>
 					</div>
 					<div

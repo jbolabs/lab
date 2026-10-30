@@ -588,7 +588,7 @@ function BookingEditorSession({
 								<div className="mt-4 flex flex-col gap-4">
 									<fieldset aria-label={t("booking.editor.availableDays")}>
 										<ToggleGroup
-											type="multiple"
+											multiple
 											variant="outline"
 											value={form.weekdays.map(String)}
 											onValueChange={(values) =>
@@ -747,20 +747,18 @@ function BookingEditorSession({
 					<div className="relative flex shrink-0 items-center justify-end gap-2 bg-card px-4 py-3">
 						{editingId && (
 							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<Button variant="outline">
-										<MoreHorizontal data-icon="inline-start" />
-										{t("booking.editor.more")}
-									</Button>
+								<DropdownMenuTrigger render={<Button variant="outline" />}>
+									<MoreHorizontal data-icon="inline-start" />
+									{t("booking.editor.more")}
 								</DropdownMenuTrigger>
 								<DropdownMenuContent side="top" align="end">
 									<DropdownMenuGroup>
-										<DropdownMenuItem onSelect={onToggleEnabled}>
+										<DropdownMenuItem onClick={onToggleEnabled}>
 											{form.enabled
 												? t("booking.turnOff")
 												: t("booking.turnOn")}
 										</DropdownMenuItem>
-										<DropdownMenuItem variant="destructive" onSelect={onDelete}>
+										<DropdownMenuItem variant="destructive" onClick={onDelete}>
 											{t("common.delete")}
 										</DropdownMenuItem>
 									</DropdownMenuGroup>

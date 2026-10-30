@@ -31,11 +31,11 @@ export function LanguageSelector({
 	if (variant === "text") {
 		return (
 			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" aria-label={t("language.label")}>
-						{locales[locale].label}
-						<ChevronDown data-icon="inline-end" />
-					</Button>
+				<DropdownMenuTrigger
+					render={<Button variant="ghost" aria-label={t("language.label")} />}
+				>
+					{locales[locale].label}
+					<ChevronDown data-icon="inline-end" />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					<DropdownMenuRadioGroup

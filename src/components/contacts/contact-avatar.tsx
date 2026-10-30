@@ -38,10 +38,8 @@ export function ContactAvatar({
 
 				aria-hidden
 			>
-				<AvatarFallback asChild>
-					<span className="bg-(--avatar-background) text-(--avatar-foreground)">
-						{getContactAvatarInitial(name, address)}
-					</span>
+				<AvatarFallback>
+					{getContactAvatarInitial(name, address)}
 				</AvatarFallback>
 				<ContactAvatarImage
 					key={JSON.stringify([

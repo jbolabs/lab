@@ -86,21 +86,23 @@ export function AccountsTable({
 	);
 	const actions = (
 		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="icon"
-					aria-label={t("accounts.moreActions")}
-				>
-					<MoreVertical />
-				</Button>
+			<DropdownMenuTrigger
+				render={
+					<Button
+						variant="ghost"
+						size="icon"
+						aria-label={t("accounts.moreActions")}
+					/>
+				}
+			>
+				<MoreVertical />
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
 				<DropdownMenuGroup>
 					<DropdownMenuItem
 						variant="destructive"
 						disabled={!selected.size}
-						onSelect={onDeleteSelected}
+						onClick={onDeleteSelected}
 					>
 						<Trash2 />
 						{t("accounts.deleteSelected")}

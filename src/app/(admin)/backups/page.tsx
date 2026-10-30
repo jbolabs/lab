@@ -232,7 +232,7 @@ export default function BackupsPage() {
 							>
 								<DropdownMenuItem
 									disabled={backup.status !== "completed" || download.isPending}
-									onSelect={() => download.mutate(backup)}
+									onClick={() => download.mutate(backup)}
 								>
 									<Download />
 									{t("backups.download")}
@@ -457,22 +457,24 @@ export default function BackupsPage() {
 						{runBackup.isPending ? t("backups.starting") : t("backups.backUp")}
 					</Button>
 					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button
-								type="button"
-								variant="outline"
-								size="icon"
-								aria-label={t("backups.actions")}
-							>
-								<MoreVertical data-icon="inline-start" />
-							</Button>
+						<DropdownMenuTrigger
+							render={
+								<Button
+									type="button"
+									variant="outline"
+									size="icon"
+									aria-label={t("backups.actions")}
+								/>
+							}
+						>
+							<MoreVertical data-icon="inline-start" />
 						</DropdownMenuTrigger>
 
 						<DropdownMenuContent align="end" sideOffset={6}>
 							<DropdownMenuGroup>
 								<DropdownMenuItem
 									disabled={restore.isPending}
-									onSelect={() => restoreInput.current?.click()}
+									onClick={() => restoreInput.current?.click()}
 								>
 									<Upload className="size-4" />
 									{restore.isPending
@@ -481,7 +483,7 @@ export default function BackupsPage() {
 								</DropdownMenuItem>
 								<DropdownMenuItem
 									disabled={!settings || autoSaveSettings.isPending}
-									onSelect={() => setSettingsOpen(true)}
+									onClick={() => setSettingsOpen(true)}
 								>
 									<Settings className="size-4" />
 									{t("backups.settings")}

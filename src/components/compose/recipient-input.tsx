@@ -90,33 +90,32 @@ export function RecipientInput({
 					const valid = isValidRecipient(entry);
 					return (
 						<Badge
-							asChild
 							variant={valid ? "secondary" : "destructive-soft"}
 							key={entry}
 							title={getEmailAddress(entry)}
 							className="pointer-events-auto max-w-full"
+							// oxlint-disable-next-line jsx-a11y/label-has-associated-control -- Base UI render: the text is this component's children.
+							render={<label htmlFor={id} />}
 						>
-							<label htmlFor={id}>
-								<span className="truncate">{getRecipientLabel(entry)}</span>
-								{!disabled && (
-									<Button
-										variant="ghost"
-										size="icon-xs"
-										type="button"
-										aria-label={t("recipient.remove", {
-											address: getEmailAddress(entry),
-										})}
-										// The visible button stays chip-sized; the ::after inset gives touch its 44pt target.
-										className="relative after:absolute after:-inset-3"
-										onClick={(event) => {
-											event.stopPropagation();
-											onChange(value.filter((item) => item !== entry));
-										}}
-									>
-										<X data-icon="inline-start" />
-									</Button>
-								)}
-							</label>
+							<span className="truncate">{getRecipientLabel(entry)}</span>
+							{!disabled && (
+								<Button
+									variant="ghost"
+									size="icon-xs"
+									type="button"
+									aria-label={t("recipient.remove", {
+										address: getEmailAddress(entry),
+									})}
+									// The visible button stays chip-sized; the ::after inset gives touch its 44pt target.
+									className="relative after:absolute after:-inset-3"
+									onClick={(event) => {
+										event.stopPropagation();
+										onChange(value.filter((item) => item !== entry));
+									}}
+								>
+									<X data-icon="inline-start" />
+								</Button>
+							)}
 						</Badge>
 					);
 				})}

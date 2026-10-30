@@ -468,10 +468,9 @@ export default function SettingsImportPage() {
 							{t("importPage.source")}
 						</FieldLabel>
 						<ToggleGroup
-							type="single"
 							variant="outline"
-							value={activeTab}
-							onValueChange={(next) => {
+							value={[activeTab]}
+							onValueChange={([next]) => {
 								if (next) {
 									setActiveTab(next as ImportTab);
 								}
@@ -490,7 +489,7 @@ export default function SettingsImportPage() {
 					<Field>
 						<FieldLabel>{t("importPage.chooseSections")}</FieldLabel>
 						<ToggleGroup
-							type="multiple"
+							multiple
 							variant="outline"
 							value={selectedSections}
 							onValueChange={(next) => {

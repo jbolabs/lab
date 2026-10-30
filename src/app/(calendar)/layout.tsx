@@ -177,7 +177,6 @@ export default function CalendarLayout({
 													className="flex shrink-0 items-center gap-1 rounded-lg bg-card p-1 max-md:hidden"
 												>
 													<Button
-														asChild
 														size="sm"
 														variant={
 															pathname === "/booking" ? "default" : "ghost"
@@ -185,18 +184,19 @@ export default function CalendarLayout({
 														className={clsx(
 															pathname !== "/booking" && "text-muted-foreground"
 														)}
+														render={
+															<Link
+																href="/booking"
+																aria-current={
+																	pathname === "/booking" ? "page" : undefined
+																}
+															/>
+														}
+														nativeButton={false}
 													>
-														<Link
-															href="/booking"
-															aria-current={
-																pathname === "/booking" ? "page" : undefined
-															}
-														>
-															{t("calendar.bookings")}
-														</Link>
+														{t("calendar.bookings")}
 													</Button>
 													<Button
-														asChild
 														size="sm"
 														variant={
 															pathname === "/calendar" ? "default" : "ghost"
@@ -205,15 +205,17 @@ export default function CalendarLayout({
 															pathname !== "/calendar" &&
 																"text-muted-foreground"
 														)}
+														render={
+															<Link
+																href="/calendar"
+																aria-current={
+																	pathname === "/calendar" ? "page" : undefined
+																}
+															/>
+														}
+														nativeButton={false}
 													>
-														<Link
-															href="/calendar"
-															aria-current={
-																pathname === "/calendar" ? "page" : undefined
-															}
-														>
-															{t("calendar.calendar")}
-														</Link>
+														{t("calendar.calendar")}
 													</Button>
 												</nav>
 												<div

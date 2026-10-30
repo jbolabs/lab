@@ -148,11 +148,13 @@ export function MessageAttachmentViewer({
 				</div>
 
 				<div className="flex shrink-0 justify-end">
-					<Button asChild>
-						<a href={downloadUrl} download={attachment.filename}>
-							<ArrowDownToLine className="size-4" />
-							{t("attachment.download")}
-						</a>
+					<Button
+						// oxlint-disable-next-line jsx-a11y/control-has-associated-label -- Base UI render: the text is this component's children.
+						render={<a href={downloadUrl} download={attachment.filename} />}
+						nativeButton={false}
+					>
+						<ArrowDownToLine className="size-4" />
+						{t("attachment.download")}
 					</Button>
 				</div>
 			</DialogContent>

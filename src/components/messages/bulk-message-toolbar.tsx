@@ -171,17 +171,19 @@ export function BulkMessageToolbar({
 			<span className="flex-1 max-md:hidden" />
 			<Root>
 				<HintTooltip label={t("common.moveSelected")} className="max-md:hidden">
-					<Trigger asChild>
-						<Button
-							variant="ghost"
-							size="sm"
-							className="max-md:hidden"
-							disabled={pending}
-						>
-							<FolderInput data-icon="inline-start" />
-							{t("common.moveTo")}
-							<ChevronDown data-icon="inline-start" />
-						</Button>
+					<Trigger
+						render={
+							<Button
+								variant="ghost"
+								size="sm"
+								className="max-md:hidden"
+								disabled={pending}
+							/>
+						}
+					>
+						<FolderInput data-icon="inline-start" />
+						{t("common.moveTo")}
+						<ChevronDown data-icon="inline-start" />
 					</Trigger>
 				</HintTooltip>
 
@@ -190,7 +192,7 @@ export function BulkMessageToolbar({
 						{moveOptions.map(({ value, label, Icon }) => (
 							<Item
 								key={value}
-								onSelect={() => onAction(value as BulkMessageAction)}
+								onClick={() => onAction(value as BulkMessageAction)}
 							>
 								<Icon data-icon="inline-start" />
 								{label}
@@ -203,7 +205,7 @@ export function BulkMessageToolbar({
 								{folders.map((item) => (
 									<Item
 										key={item.id}
-										onSelect={() => onAction("folder", item.id)}
+										onClick={() => onAction("folder", item.id)}
 									>
 										<Folder
 											className="size-4 shrink-0 text-(--mf-color)"

@@ -368,15 +368,17 @@ export function DashboardNav({ className }: { className?: string }) {
 								open={folderDialogOpen}
 								onOpenChange={setFolderDialogOpen}
 							>
-								<DialogTrigger asChild>
-									<Button
-										variant="ghost"
-										size="icon-sm"
-										type="button"
-										aria-label={t("navigation.createFolder")}
-									>
-										<Plus />
-									</Button>
+								<DialogTrigger
+									render={
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											type="button"
+											aria-label={t("navigation.createFolder")}
+										/>
+									}
+								>
+									<Plus />
 								</DialogTrigger>
 								<DialogContent>
 									<DialogHeader>

@@ -147,16 +147,18 @@ function ConversationMessageBody({
 				<ul className="mt-4 flex flex-wrap gap-2">
 					{attachments.map((attachment) => (
 						<li key={attachment.id}>
-							<Item variant="outline" size="sm" asChild>
-								<a
-									href={`/api/messages/${message.id}/attachments/${attachment.id}`}
-									className="min-h-11"
-								>
-									<Paperclip className="size-3" />
-									<span className="max-w-48 truncate">
-										{attachment.filename}
-									</span>
-								</a>
+							<Item
+								variant="outline"
+								size="sm"
+								render={
+									// oxlint-disable-next-line jsx-a11y/control-has-associated-label -- Base UI render: the text is this component's children.
+									<a
+										href={`/api/messages/${message.id}/attachments/${attachment.id}`}
+									/>
+								}
+							>
+								<Paperclip className="size-3" />
+								<span className="max-w-48 truncate">{attachment.filename}</span>
 							</Item>
 						</li>
 					))}

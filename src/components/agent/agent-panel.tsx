@@ -891,19 +891,21 @@ function AgentPanelSession({
 				</div>
 				<div className="flex shrink-0 items-center gap-0.5">
 					<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-						<DropdownMenuTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								aria-label={t("agent.panel.menuLabel")}
-							>
-								<Settings2 data-icon="inline-start" />
-							</Button>
+						<DropdownMenuTrigger
+							render={
+								<Button
+									variant="ghost"
+									size="icon"
+									aria-label={t("agent.panel.menuLabel")}
+								/>
+							}
+						>
+							<Settings2 data-icon="inline-start" />
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-72">
 							<DropdownMenuGroup>
 								<DropdownMenuItem
-									onSelect={() => {
+									onClick={() => {
 										abort.current?.abort();
 										abort.current = null;
 										runningRef.current = false;
@@ -936,7 +938,7 @@ function AgentPanelSession({
 											<div key={item.id} className="flex items-center gap-1">
 												<DropdownMenuItem
 													className="min-w-0 flex-1"
-													onSelect={() => selectConversation(item.id)}
+													onClick={() => selectConversation(item.id)}
 												>
 													<span className="truncate">{item.title}</span>
 												</DropdownMenuItem>
@@ -961,7 +963,7 @@ function AgentPanelSession({
 								)}
 								<DropdownMenuSeparator />
 								<DropdownMenuItem
-									onSelect={() =>
+									onClick={() =>
 										setView((current) =>
 											current === "settings" ? "chat" : "settings"
 										)

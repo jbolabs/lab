@@ -110,17 +110,15 @@ export default function AdminSettingsPage() {
 				{sections.filter(canSee).map((section) => {
 					const Icon = section.icon;
 					return (
-						<Item asChild key={section.href}>
-							<Link href={section.href}>
-								<ItemMedia variant="icon">
-									<Icon />
-								</ItemMedia>
-								<ItemContent className="min-w-0">
-									<ItemTitle>{t(section.titleKey)}</ItemTitle>
-									<ItemDescription>{t(section.descriptionKey)}</ItemDescription>
-								</ItemContent>
-								<ChevronRight className="size-4 text-muted-foreground" />
-							</Link>
+						<Item key={section.href} render={<Link href={section.href} />}>
+							<ItemMedia variant="icon">
+								<Icon />
+							</ItemMedia>
+							<ItemContent className="min-w-0">
+								<ItemTitle>{t(section.titleKey)}</ItemTitle>
+								<ItemDescription>{t(section.descriptionKey)}</ItemDescription>
+							</ItemContent>
+							<ChevronRight className="size-4 text-muted-foreground" />
 						</Item>
 					);
 				})}

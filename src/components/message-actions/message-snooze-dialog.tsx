@@ -84,10 +84,9 @@ export function MessageSnoozeDialog({
 				</Header>
 				<FieldGroup>
 					<ToggleGroup
-						type="single"
 						variant="outline"
-						value={snoozedUntil}
-						onValueChange={(value) => {
+						value={[snoozedUntil]}
+						onValueChange={([value]) => {
 							if (value) {
 								setSnoozedUntil(value);
 							}

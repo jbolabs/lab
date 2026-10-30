@@ -69,8 +69,12 @@ export default function AiUsagePage() {
 					<PageDescription>{t("aiUsage.description")}</PageDescription>
 				</PageHeaderText>
 				<PageHeaderActions>
-					<Button asChild variant="link">
-						<Link href="/agent">{t("aiUsage.back")}</Link>
+					<Button
+						variant="link"
+						render={<Link href="/agent" />}
+						nativeButton={false}
+					>
+						{t("aiUsage.back")}
 					</Button>
 				</PageHeaderActions>
 			</PageHeader>

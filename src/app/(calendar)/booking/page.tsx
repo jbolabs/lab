@@ -342,20 +342,24 @@ export default function BookingsPage() {
 									</PageHeaderText>
 									<PageHeaderActions className="flex-nowrap">
 										<Button
-											asChild
 											variant="ghost"
 											size="icon"
 											className="max-md:-mr-2"
+											render={
+												<Link
+													href={`/c/${username}`}
+													target="_blank"
+													rel="noopener noreferrer"
+													aria-label={t("booking.openPage", { name: username })}
+												/>
+											}
+											nativeButton={false}
 										>
-											<Link
-												href={`/c/${username}`}
-												target="_blank"
-												rel="noopener noreferrer"
-												aria-label={t("booking.openPage", { name: username })}
+											<ExternalLink
+												size={18}
+												aria-hidden="true"
 												className="text-signal"
-											>
-												<ExternalLink size={18} aria-hidden="true" />
-											</Link>
+											/>
 										</Button>
 
 										<Button
@@ -448,20 +452,21 @@ export default function BookingsPage() {
 														</Button>
 														{username && (
 															<Button
-																asChild
 																variant="ghost"
 																size="icon"
 																className="text-muted-foreground"
+																render={
+																	<Link
+																		href={`/c/${username}/${event.slug}`}
+																		target="_blank"
+																		aria-label={t("booking.openPage", {
+																			name: event.name,
+																		})}
+																	/>
+																}
+																nativeButton={false}
 															>
-																<Link
-																	href={`/c/${username}/${event.slug}`}
-																	target="_blank"
-																	aria-label={t("booking.openPage", {
-																		name: event.name,
-																	})}
-																>
-																	<ExternalLink />
-																</Link>
+																<ExternalLink />
 															</Button>
 														)}
 													</>
@@ -481,26 +486,28 @@ export default function BookingsPage() {
 												)}
 												{!event.isTemplate && (
 													<DropdownMenu>
-														<DropdownMenuTrigger asChild>
-															<Button
-																variant="ghost"
-																size="icon"
-																aria-label={t("booking.moreOptions", {
-																	name: event.name,
-																})}
-															>
-																<MoreHorizontal />
-															</Button>
+														<DropdownMenuTrigger
+															render={
+																<Button
+																	variant="ghost"
+																	size="icon"
+																	aria-label={t("booking.moreOptions", {
+																		name: event.name,
+																	})}
+																/>
+															}
+														>
+															<MoreHorizontal />
 														</DropdownMenuTrigger>
 														<DropdownMenuContent align="end">
 															<DropdownMenuGroup>
 																<DropdownMenuItem
-																	onSelect={() => startEdit(event)}
+																	onClick={() => startEdit(event)}
 																>
 																	{t("booking.edit")}
 																</DropdownMenuItem>
 																<DropdownMenuItem
-																	onSelect={() =>
+																	onClick={() =>
 																		setEnabled(event, !event.enabled)
 																	}
 																>
@@ -510,7 +517,7 @@ export default function BookingsPage() {
 																</DropdownMenuItem>
 																<DropdownMenuItem
 																	variant="destructive"
-																	onSelect={() => remove(event)}
+																	onClick={() => remove(event)}
 																>
 																	{t("common.delete")}
 																</DropdownMenuItem>

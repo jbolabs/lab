@@ -53,26 +53,30 @@ export function MessageAttachmentItem({
 		);
 	};
 	return (
-		<Item variant="outline" size="sm" asChild>
-			<Button
-				type="button"
-				variant="plain"
-				size="none"
-				className="w-full"
-				onClick={() => onPreview(attachment)}
-			>
-				<ItemMedia variant={visual.thumbnail ? "image" : "icon"}>
-					{renderThumbnail()}
-				</ItemMedia>
-				<ItemContent className="min-w-0">
-					<ItemTitle className="max-w-full">
-						<span className="truncate">{attachment.filename}</span>
-					</ItemTitle>
-					<ItemDescription>
-						{t(visual.labelKey)} · {formatAttachmentSize(attachment.size)}
-					</ItemDescription>
-				</ItemContent>
-			</Button>
+		<Item
+			variant="outline"
+			size="sm"
+			render={
+				<Button
+					type="button"
+					variant="plain"
+					size="none"
+					className="w-full"
+					onClick={() => onPreview(attachment)}
+				/>
+			}
+		>
+			<ItemMedia variant={visual.thumbnail ? "image" : "icon"}>
+				{renderThumbnail()}
+			</ItemMedia>
+			<ItemContent className="min-w-0">
+				<ItemTitle className="max-w-full">
+					<span className="truncate">{attachment.filename}</span>
+				</ItemTitle>
+				<ItemDescription>
+					{t(visual.labelKey)} · {formatAttachmentSize(attachment.size)}
+				</ItemDescription>
+			</ItemContent>
 		</Item>
 	);
 }

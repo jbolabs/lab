@@ -69,7 +69,7 @@ export function TemplateMenu({ onApply, onNew }: TemplateMenuProps) {
 						{templates.map((template) => (
 							<DropdownMenuItem
 								key={template.id}
-								onSelect={() =>
+								onClick={() =>
 									onApply({
 										html:
 											template.htmlBody ?? textToHtml(template.textBody ?? ""),
@@ -99,7 +99,7 @@ export function TemplateMenu({ onApply, onNew }: TemplateMenuProps) {
 						))}
 					</div>
 					<DropdownMenuSeparator />
-					<DropdownMenuItem onSelect={onNew}>
+					<DropdownMenuItem onClick={onNew}>
 						<Plus className="mr-2 size-4" />
 						{t("template.new")}
 					</DropdownMenuItem>

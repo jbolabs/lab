@@ -92,11 +92,17 @@ export function DriveMobileNew() {
 							{t("drive.newFolder")}
 						</Button>
 						{documentHref && (
-							<Button variant="ghost" size="lg" className={action} asChild>
-								<Link href={documentHref} onClick={() => setOpen(false)}>
-									<FilePlus2 data-icon="inline-start" />
-									{t("docs.create")}
-								</Link>
+							<Button
+								variant="ghost"
+								size="lg"
+								className={action}
+								render={
+									<Link href={documentHref} onClick={() => setOpen(false)} />
+								}
+								nativeButton={false}
+							>
+								<FilePlus2 data-icon="inline-start" />
+								{t("docs.create")}
 							</Button>
 						)}
 					</div>

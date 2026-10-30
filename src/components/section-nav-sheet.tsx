@@ -52,16 +52,18 @@ export function SectionNavSheet({
 	}
 	return (
 		<Drawer open={open} onOpenChange={setOpen}>
-			<DrawerTrigger asChild>
-				<Button
-					variant="floating"
-					size="lg"
-					shape="pill"
-					className="fixed bottom-safe-add-4 left-1/2 z-40 max-w-[85vw] -translate-x-1/2"
-				>
-					<span className="truncate">{label}</span>
-					<ChevronUp data-icon="inline-end" />
-				</Button>
+			<DrawerTrigger
+				render={
+					<Button
+						variant="floating"
+						size="lg"
+						shape="pill"
+						className="fixed bottom-safe-add-4 left-1/2 z-40 max-w-[85vw] -translate-x-1/2"
+					/>
+				}
+			>
+				<span className="truncate">{label}</span>
+				<ChevronUp data-icon="inline-end" />
 			</DrawerTrigger>
 			<DrawerContent aria-describedby={undefined}>
 				<DrawerHeader>
