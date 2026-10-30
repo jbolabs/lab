@@ -401,6 +401,19 @@ try {
 	const storageState = group.auth === false ? undefined : await login(browser);
 	const metrics = {
 		base: args.base,
+		// compare.mjs refuses a baseline captured from a dirty tree: it would already contain
+		// the change being judged.
+		git: {
+			dirty:
+				spawnSync("git", ["status", "--porcelain", "--", "src", "public"], {
+					cwd: ROOT,
+					encoding: "utf-8",
+				}).stdout.trim() !== "",
+			head: spawnSync("git", ["rev-parse", "--short", "HEAD"], {
+				cwd: ROOT,
+				encoding: "utf-8",
+			}).stdout.trim(),
+		},
 		capturedAt: new Date().toISOString(),
 		group: args.group,
 		interactions: {},

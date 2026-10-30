@@ -36,6 +36,12 @@ const serious = (m) =>
 const failures = [];
 const notes = [];
 
+if (base.git?.dirty !== false) {
+	failures.push(
+		`baseline "${args.base}" was captured with uncommitted changes under src/ (or before captures recorded git state); recapture it from a clean tree`
+	);
+}
+
 for (const [key, b] of Object.entries(base.pages)) {
 	const h = head.pages[key];
 	if (!h) {
