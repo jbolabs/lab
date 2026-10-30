@@ -162,8 +162,6 @@ export const GROUPS = {
 			{ name: "archived", path: "/archived" },
 			{ name: "spam", path: "/spam" },
 			{ name: "trash", path: "/trash" },
-			{ name: "rules", path: "/rules" },
-			{ name: "import-export", path: "/import-export" },
 		],
 	},
 	settings: {
@@ -185,11 +183,9 @@ export const GROUPS = {
 				"mailboxes",
 				"inbox",
 				"rules",
-				"auto-reply",
 				"api-keys",
 				"import",
 				"export",
-				"import-export",
 			].map((p) => ({
 				name: p || "settings",
 				path: `/settings${p ? `/${p}` : ""}`,
@@ -218,8 +214,12 @@ export const UNSCANNED = {
 	"/c/$username/$slug": "needs a booking event; none are seeded",
 	"/d/$token": "needs a shared drive link; none are seeded",
 	"/folders/$folderId": "same list as the inbox; no folders are seeded",
+	"/import-export": "redirects to /settings/import",
 	"/oauth/consent": "only reachable inside an OAuth authorization request",
 	"/onboarding": "redirects once setup is done",
+	"/rules": "redirects to /settings/rules",
+	"/settings/auto-reply": "redirects to /settings/inbox, where auto-reply lives",
+	"/settings/import-export": "redirects to /settings/import",
 };
 
 // Equal weight: the rubric averages phone and desktop.
