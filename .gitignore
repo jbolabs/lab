@@ -62,3 +62,6 @@ skills-lock.json
 
 # TanStack Router temporary generation files
 /.tanstack/
+
+# UI hill-climb captures
+/.ui-scan
