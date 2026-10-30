@@ -62,6 +62,14 @@ for (const [key, b] of Object.entries(base.pages)) {
 	if (h.cls > b.cls + 0.02) {
 		failures.push(`${key}: CLS ${b.cls} → ${h.cls}`);
 	}
+	const newlyObscured = (h.obscuredFixed ?? []).filter(
+		(label) => !(b.obscuredFixed ?? []).includes(label)
+	);
+	if (newlyObscured.length > 0) {
+		failures.push(
+			`${key}: fixed controls now covered: ${newlyObscured.join(", ")}`
+		);
+	}
 	if (h.horizontalOverflow && !b.horizontalOverflow) {
 		failures.push(`${key}: now overflows horizontally`);
 	}

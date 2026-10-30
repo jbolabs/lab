@@ -235,6 +235,38 @@ async function measure(page) {
 			() => document.documentElement.scrollWidth > window.innerWidth + 1
 		),
 		longFrames: frames.filter((f) => f > 34).length,
+		// Fixed controls (floating buttons, bars) that something else paints over at their centre.
+		obscuredFixed: await page.evaluate(() =>
+			[...document.querySelectorAll("button, a, [role=button]")]
+				.filter((element) => {
+					let node = element;
+					while (node && getComputedStyle(node).position !== "fixed") {
+						node = node.parentElement;
+					}
+					const rect = element.getBoundingClientRect();
+					return (
+						node &&
+						rect.width > 0 &&
+						rect.height > 0 &&
+						rect.bottom > 0 &&
+						rect.top < window.innerHeight &&
+						getComputedStyle(element).visibility !== "hidden"
+					);
+				})
+				.filter((element) => {
+					const rect = element.getBoundingClientRect();
+					const hit = document.elementFromPoint(
+						rect.x + rect.width / 2,
+						rect.y + rect.height / 2
+					);
+					return hit && !element.contains(hit) && !hit.contains(element);
+				})
+				.map((element) =>
+					(element.getAttribute("aria-label") || element.textContent || "")
+						.trim()
+						.slice(0, 40)
+				)
+		),
 	};
 }
 
@@ -369,11 +401,30 @@ async function captureInteraction(browser, storageState, spec, viewportName) {
 		"reduce"
 	));
 	await spec.trigger(page);
-	await page.waitForTimeout(50);
-	const reducedAnimations = await page.evaluate(ANIMATIONS);
-	const reducedMotion = reducedAnimations.filter((a) =>
-		a.properties.some((p) => ["transform", "translate", "scale"].includes(p))
+	await page.waitForTimeout(30);
+	// What counts is visible movement: record where each animated element is mid-animation and
+	// compare once animations have settled. Keyframes that list `transform` without changing it
+	// (or ~1ms reduced-motion animations) are not motion.
+	const animated = await page.evaluate(ANIMATIONS);
+	await page.evaluate(() => {
+		window.__uiReduced = document.getAnimations().flatMap((animation) => {
+			const target = animation.effect?.target;
+			return target ? [{ rect: target.getBoundingClientRect(), target }] : [];
+		});
+	});
+	await page.waitForTimeout(900);
+	const moved = await page.evaluate(() =>
+		window.__uiReduced.map(({ rect, target }) => {
+			const now = target.getBoundingClientRect();
+			// Removed elements (skeletons replaced by content) did not move.
+			return (
+				(target.isConnected && Math.abs(now.x - rect.x) > 2) ||
+				Math.abs(now.y - rect.y) > 2 ||
+				Math.abs(now.width - rect.width) > 2
+			);
+		})
 	);
+	const reducedMotion = animated.filter((_, index) => moved[index]);
 	await context.close();
 
 	return { animations, longFrames, reducedMotion };

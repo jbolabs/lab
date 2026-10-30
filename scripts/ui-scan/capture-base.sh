@@ -1,5 +1,6 @@
 #!/bin/sh
-# Captures a clean baseline while you have uncommitted work: sets the work aside in a tagged stash,
+# Captures a clean baseline while you have uncommitted app work: sets src/ and public/ aside in a
+# tagged stash (the harness stays, so both captures measure the same things),
 # captures the groups from HEAD, then puts the work back. The stash is applied by SHA, never popped,
 # because the stash stack is shared with other worktrees.
 #
@@ -9,8 +10,8 @@ label="$1"
 shift
 tag="ui-scan-base-$$"
 sha=""
-if [ -n "$(git status --porcelain)" ]; then
-	git stash push -u -q -m "$tag"
+if [ -n "$(git status --porcelain -- src public)" ]; then
+	git stash push -u -q -m "$tag" -- src public
 	sha="$(git stash list --format='%H %gs' | grep "$tag" | cut -d' ' -f1)"
 fi
 restore() {

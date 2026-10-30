@@ -218,7 +218,8 @@ export const UNSCANNED = {
 	"/oauth/consent": "only reachable inside an OAuth authorization request",
 	"/onboarding": "redirects once setup is done",
 	"/rules": "redirects to /settings/rules",
-	"/settings/auto-reply": "redirects to /settings/inbox, where auto-reply lives",
+	"/settings/auto-reply":
+		"redirects to /settings/inbox, where auto-reply lives",
 	"/settings/import-export": "redirects to /settings/import",
 };
 
