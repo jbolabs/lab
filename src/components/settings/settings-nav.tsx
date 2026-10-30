@@ -7,6 +7,7 @@ import { Item, ItemContent, ItemTitle, ItemGroup } from "@/components/ui/item";
 import { PageHeader, PageTitle } from "@/components/ui/page-header";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { usePathname } from "@/lib/navigation";
+import { cn } from "@/lib/utils";
 
 import {
 	isActiveSettingsPath,
@@ -24,7 +25,13 @@ export function SettingsNav() {
 			</PageHeader>
 			{settingsNavSections.map((section) => (
 				<nav key={section.labelKey} aria-label={t(section.labelKey)}>
-					<h2 className="mb-3 px-3 text-sm font-medium text-muted-foreground">
+					<h2
+						className={cn(
+							"mb-3 px-3 text-sm font-medium text-muted-foreground",
+							// On the phone index the page title already says "Settings".
+							section.labelKey === "settings.nav.settings" && "max-md:sr-only"
+						)}
+					>
 						{t(section.labelKey)}
 					</h2>
 					<ItemGroup className="gap-1">
