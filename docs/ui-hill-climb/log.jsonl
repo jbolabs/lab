@@ -13,3 +13,4 @@
 {"group":"auth","step":12,"kind":"step","change":"Auth shell: vertically centered on desktop, header width matches content","gate":"PASS","judge":"skipped: alignment fix","accepted":true,"at":"2026-10-30T18:35:13.922Z"}
 {"kind":"step","group":"settings","step":13,"change":"Hide duplicate Settings label on phone settings index","gate":"PASS","accepted":true,"at":"2026-10-30T18:47:22.952Z"}
 {"kind":"step","group":"admin","step":14,"change":"Activity: stacked rows on phone instead of a clipped table","gate":"PASS","judge":"skipped: removes clipped columns","accepted":true,"at":"2026-10-30T18:47:22.982Z"}
+{"kind":"step","group":"mail","step":15,"change":"Inline Button size and quiet-link variant: phone message header is one aligned block; names read as text","gate":"PASS","judge":"skipped: fixes the alignment and colour defects the mail scorer named (layout 5, typography 5)","accepted":true,"at":"2026-10-30T18:53:07.100Z"}
