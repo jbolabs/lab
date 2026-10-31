@@ -49,6 +49,14 @@ function Toaster({ ...props }: ToasterProps) {
 					"--normal-text": "var(--popover-foreground)",
 				} as React.CSSProperties
 			}
+			// Sonner's own stylesheet squares off its buttons with a higher-specificity selector, hence `!`.
+			toastOptions={{
+				classNames: {
+					actionButton: "h-7! rounded-4xl! px-3! font-medium!",
+					cancelButton: "h-7! rounded-4xl! px-3! font-medium!",
+					closeButton: "rounded-full!",
+				},
+			}}
 			{...props}
 		/>
 	);

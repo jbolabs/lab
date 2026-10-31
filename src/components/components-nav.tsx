@@ -16,6 +16,7 @@ import {
 } from "./components-nav-utils";
 import { useCompose } from "./compose/compose-context";
 import { useSelectedMailbox } from "./mailbox-provider";
+import { sidebarNavItemClass } from "./sidebar-nav-item-utils";
 import { useSidebar } from "./sidebar-state";
 
 interface Props {
@@ -33,12 +34,9 @@ function navClasses(
 	wrap?: boolean
 ) {
 	return cn(
-		"flex h-9 items-center gap-3 rounded-md px-3 text-sm text-sidebar-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring max-md:min-h-11",
+		sidebarNavItemClass({ active, dropTarget: dragOver }),
+		"h-9 gap-3 px-3",
 		minimal && "relative mx-auto size-10 justify-center px-0",
-		active
-			? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-			: "hover:bg-sidebar-accent",
-		dragOver && "bg-signal-soft text-signal-soft-foreground ring-1 ring-ring",
 		link.primary && "mb-3 h-10 w-full",
 		link.count && "font-semibold",
 		link.primary && minimal && "size-10 px-0",

@@ -1266,7 +1266,10 @@ function ComposeAddressFields({
 	return (
 		<>
 			<div className="flex flex-row items-center gap-2 border-b border-border px-4 py-1">
-				<Label htmlFor={`${mode}-from`} className="text-muted-foreground">
+				<Label
+					htmlFor={`${mode}-from`}
+					className="w-10 shrink-0 text-muted-foreground"
+				>
 					{t("compose.from")}
 				</Label>
 				<NativeSelect

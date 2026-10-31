@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { layoutLength } from "@/app/layout-values";
 import Link from "@/components/app-link";
 import { useLanguage } from "@/components/language-provider";
+import { sidebarNavItemClass } from "@/components/sidebar-nav-item-utils";
 import { useSidebar } from "@/components/sidebar-state";
 import { Button } from "@/components/ui/button";
 import {
@@ -266,8 +267,6 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 					})()
 				)
 		);
-	const dropHighlight =
-		"bg-signal-soft text-signal-soft-foreground ring-2 ring-inset ring-ring";
 	const links = [
 		{ href: "/drive", icon: HardDrive, key: "my", label: t("drive.myDrive") },
 		{
@@ -384,17 +383,12 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 									aria-current={active ? "page" : undefined}
 									title={compact ? label : undefined}
 									className={clsx(
-										"flex h-9 items-center gap-3 rounded-md text-sm text-sidebar-foreground transition-colors max-md:min-h-11",
-										compact ? "mx-auto size-10 justify-center" : "px-3",
-										(() => {
-											if (dropKey === key) {
-												return dropHighlight;
-											}
-											if (active) {
-												return "bg-sidebar-accent font-medium text-sidebar-accent-foreground";
-											}
-											return "hover:bg-sidebar-accent";
-										})()
+										sidebarNavItemClass({
+											active,
+											dropTarget: dropKey === key,
+										}),
+										"h-9 gap-3",
+										compact ? "mx-auto size-10 justify-center" : "px-3"
 									)}
 								>
 									<Icon size={16} />
@@ -465,19 +459,11 @@ export function DriveNav({ onNavigate }: { onNavigate?: () => void }) {
 													} as React.CSSProperties
 												}
 												className={clsx(
-													clsx(
-														"flex h-8 items-center gap-2 rounded-md pr-3 text-sm text-sidebar-foreground max-md:min-h-11",
-														(() => {
-															if (dropKey === folder.id) {
-																return dropHighlight;
-															}
-															if (activeFolder === folder.id) {
-																return "bg-sidebar-accent font-medium text-sidebar-accent-foreground";
-															}
-															return "hover:bg-sidebar-accent";
-														})()
-													),
-													"pl-(--layout-indent)"
+													sidebarNavItemClass({
+														active: activeFolder === folder.id,
+														dropTarget: dropKey === folder.id,
+													}),
+													"h-8 gap-2 pr-3 pl-(--layout-indent)"
 												)}
 											>
 												<Folder
