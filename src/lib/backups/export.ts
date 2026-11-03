@@ -50,6 +50,8 @@ export const INTERNAL_TABLES = [
 	// after a restore clients resync because their states no longer apply.
 	"jmap_changes",
 	"jmap_change_floor",
+	// Signed Drive upload/download URLs live for minutes to hours; a restore simply invalidates them.
+	"drive_transfer_tokens",
 	// Push registrations are re-sent by each app on launch.
 	"push_devices",
 	// Web-push subscriptions are saved again by each client whenever it resolves

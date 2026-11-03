@@ -1,9 +1,9 @@
 import { eq, inArray } from "drizzle-orm";
 
-import { chunks } from "@/app/api/drive/bulk-utils";
 import { getDb } from "@/db";
 import { messageAttachments, messages } from "@/db/schema";
 import { authorizeDrive } from "@/lib/drive/auth";
+import { chunks } from "@/lib/drive/utils";
 import {
 	getMailboxAccessLevel,
 	hasMailboxPermission,
@@ -64,7 +64,7 @@ async function getPermittedAttachments(
  * The message itself is never touched. Read-only mailbox access is not enough for any of these.
  */
 export async function POST(request: Request) {
-	const auth = await authorizeDrive(request, true);
+	const auth = await authorizeDrive(request, true, { sessionOnly: true });
 	if (auth.error) {
 		return auth.error;
 	}

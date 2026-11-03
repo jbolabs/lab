@@ -1388,6 +1388,26 @@ export const driveShares = sqliteTable(
 	]
 );
 
+/**
+ * Short-lived capabilities behind the signed upload and download URLs that MCP tools hand out, so a client with a
+ * shell can move large files with curl. Only the hash is stored; rows expire within hours and are not backed up.
+ */
+export const driveTransferTokens = sqliteTable(
+	"drive_transfer_tokens",
+	{
+		action: text("action", { enum: ["upload", "download"] }).notNull(),
+		expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+		itemId: text("item_id")
+			.notNull()
+			.references(() => driveItems.id, { onDelete: "cascade" }),
+		tokenHash: text("token_hash").primaryKey(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+	},
+	(t) => [index("drive_transfer_tokens_expiry_idx").on(t.expiresAt)]
+);
+
 // OAuth credentials use epoch seconds, matching the framework-independent D1/SQLite store.
 export const oauthClients = sqliteTable("oauth_clients", {
 	createdAt: integer("created_at").notNull(),

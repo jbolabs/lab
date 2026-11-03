@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getDb } from "@/db";
 import { agentSendApprovals, apiKeys, mcpKeyMailboxes } from "@/db/schema";
 import { generateApiKey, parseScopes, scopesToJson } from "@/lib/api-keys";
-import { ADMIN_API_KEY_SCOPES } from "@/lib/api/scopes";
+import { ADMIN_API_KEY_SCOPES, scopeNeedsMailbox } from "@/lib/api/scopes";
 import { getCurrentUser } from "@/lib/auth/cookies";
 import { hasValidSessionMutationOrigin } from "@/lib/auth/origin";
 import { getEnv } from "@/lib/cloudflare";
@@ -23,6 +23,8 @@ const createSchema = z.object({
 				"mcp:request-send",
 				"mcp:calendar-read",
 				"mcp:calendar-write",
+				"mcp:drive-read",
+				"mcp:drive-write",
 			])
 		)
 		.min(1),
@@ -88,10 +90,7 @@ export async function POST(request: Request) {
 	}
 	const db = getDb(env);
 	const mailboxIds = [...new Set(parsed.data.mailboxIds)];
-	if (
-		!mailboxIds.length &&
-		parsed.data.scopes.some((scope) => !scope.startsWith("mcp:calendar-"))
-	) {
+	if (!mailboxIds.length && parsed.data.scopes.some(scopeNeedsMailbox)) {
 		return Response.json(
 			{ error: "Choose a mailbox for mail permissions" },
 			{ status: 400 }

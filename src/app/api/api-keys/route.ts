@@ -9,7 +9,11 @@ import {
 	parseScopes,
 	scopesToJson,
 } from "@/lib/api-keys";
-import { API_KEY_SCOPES, ADMIN_API_KEY_SCOPES } from "@/lib/api/scopes";
+import {
+	API_KEY_SCOPES,
+	ADMIN_API_KEY_SCOPES,
+	scopeNeedsMailbox,
+} from "@/lib/api/scopes";
 import { requireUser } from "@/lib/auth/cookies";
 import { hasValidSessionMutationOrigin } from "@/lib/auth/origin";
 import { getEnv } from "@/lib/cloudflare";
@@ -85,10 +89,7 @@ export async function POST(request: Request) {
 		: generateApiKey();
 	const db = getDb(env);
 	const mailboxIds = [...new Set(parsed.data.mailboxIds)];
-	if (
-		!mailboxIds.length &&
-		parsed.data.scopes.some((scope) => !scope.startsWith("calendar:"))
-	) {
+	if (!mailboxIds.length && parsed.data.scopes.some(scopeNeedsMailbox)) {
 		return Response.json(
 			{ error: "Choose a mailbox for mail permissions" },
 			{ status: 400 }

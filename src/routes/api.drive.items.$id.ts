@@ -9,6 +9,10 @@ export const Route = createFileRoute("/api/drive/items/$id")({
 				const handler = await import("@/app/api/drive/items/[id]/route");
 				return invokeHandler(handler.DELETE, request, params);
 			},
+			GET: async ({ request, params }) => {
+				const handler = await import("@/app/api/drive/items/[id]/route");
+				return invokeHandler(handler.GET, request, params);
+			},
 			PATCH: async ({ request, params }) => {
 				const handler = await import("@/app/api/drive/items/[id]/route");
 				return invokeHandler(handler.PATCH, request, params);

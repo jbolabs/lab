@@ -142,6 +142,10 @@ Two independent auth surfaces:
 
 Mailbox authorization is separate from user role and goes through `src/lib/mailboxes/access.ts` (`getMailboxAccessLevel`, `listAccessibleMailboxes`, `listAccessibleMailboxIds`), which accounts for ownership, the `mailbox_access` sharing table, and admin role. Message queries scope by accessible mailbox IDs, not by `userId` — see `src/app/api/messages/route.ts` for the canonical pattern.
 
+### Drive has one service layer and three ways in
+
+Drive logic lives in `src/lib/drive/` (`items.ts`, `uploads.ts`, `sharing.ts`, `documents.ts`); the `/api/drive/*` routes and the MCP tools (`src/lib/mcp/drive-tools.ts`) are thin callers, so add behavior there, not in a route. `authorizeDrive` (`src/lib/drive/auth.ts`) admits the session, an `ep_` API key with `drive:read` / `drive:write`, or, on the part-PUT and content routes only, a signed `?token=` from `drive_transfer_tokens` that MCP's `start_drive_upload` / `get_drive_download_url` issue so large files skip the model. Email attachments in Drive stay session-only. `scripts/drive.mjs` is the dependency-free CLI over the HTTP API; `scripts/drive-check.mjs` checks it and the MCP flow against `npm run dev`.
+
 ### Folders are mostly virtual
 
 `messages.status` is a free-text column driving the folder views: `received` (inbox), `sent`, `draft`, `spam`, `trash`, `archived`. Orthogonal to that are `starred`, `snoozedUntil`, and `folderId` (user-created folders in the `folders` table). A "folder" route under `src/app/(dashboard)/` is usually a status filter, not a table.

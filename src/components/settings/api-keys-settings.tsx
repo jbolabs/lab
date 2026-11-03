@@ -30,6 +30,7 @@ import {
 	PageTitle,
 	PageDescription,
 } from "@/components/ui/page-header";
+import { scopeNeedsMailbox } from "@/lib/api/scopes";
 import type { ApiKeyScope } from "@/lib/api/scopes";
 import { withCleanup } from "@/lib/async-cleanup";
 import { formatUserDate } from "@/lib/time/utils";
@@ -346,13 +347,9 @@ export function ApiKeysSettings() {
 												busy ||
 												!name.trim() ||
 												(!mailboxIds.length &&
-													(mcpAllowed
-														? mcpScopes.some(
-																(scope) => !scope.startsWith("mcp:calendar-")
-															)
-														: standardScopes.some(
-																(scope) => !scope.startsWith("calendar:")
-															))) ||
+													(mcpAllowed ? mcpScopes : standardScopes).some(
+														scopeNeedsMailbox
+													)) ||
 												(mcpAllowed
 													? !mcpScopes.length
 													: !standardScopes.length)
