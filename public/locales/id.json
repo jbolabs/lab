@@ -1911,6 +1911,7 @@
 	"drive.empty": "Letakkan file di sini atau gunakan Baru untuk mengunggah",
 	"drive.emptyShared": "Belum ada yang dibagikan kepada Anda",
 	"drive.emptyTrash": "Sampah kosong",
+	"drive.publicEmpty": "Folder ini kosong",
 	"drive.emptySearch": "Tidak ada file yang cocok dengan pencarian Anda",
 	"drive.loadFailed": "Tidak dapat memuat file.",
 	"drive.folderName": "Nama folder",

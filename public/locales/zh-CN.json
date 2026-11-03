@@ -1911,6 +1911,7 @@
 	"drive.empty": "将文件拖放到此处，或使用“新建”上传",
 	"drive.emptyShared": "尚无与您共享的内容",
 	"drive.emptyTrash": "回收站为空",
+	"drive.publicEmpty": "此文件夹为空",
 	"drive.emptySearch": "没有与搜索匹配的文件",
 	"drive.loadFailed": "无法加载文件。",
 	"drive.folderName": "文件夹名称",

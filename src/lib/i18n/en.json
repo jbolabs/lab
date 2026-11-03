@@ -1932,6 +1932,7 @@
 	"drive.empty": "Drop files here or use New to upload",
 	"drive.emptyShared": "Nothing has been shared with you",
 	"drive.emptyTrash": "Trash is empty",
+	"drive.publicEmpty": "This folder is empty",
 	"drive.emptySearch": "No files match your search",
 	"drive.loadFailed": "Could not load files.",
 	"drive.folderName": "Folder name",

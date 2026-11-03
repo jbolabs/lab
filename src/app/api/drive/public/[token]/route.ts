@@ -1,21 +1,18 @@
-import { and, eq, isNull } from "drizzle-orm";
-
 import { getDb } from "@/db";
-import { driveItems } from "@/db/schema";
+import { getBranding } from "@/lib/branding/service";
 import { getEnv } from "@/lib/cloudflare";
-import { getDriveChain, getPublicDriveItem } from "@/lib/drive/access";
+import { getPublicDriveItem } from "@/lib/drive/access";
 import { streamDriveFile } from "@/lib/drive/content";
+import {
+	listDriveChildren,
+	loadPublicDriveListing,
+} from "@/lib/drive/public-listing";
+import {
+	drivePosterResponse,
+	shareImageResponse,
+} from "@/lib/drive/share-preview";
 
 import type { DriveTokenParams } from "./types";
-
-const publicItem = (row: typeof driveItems.$inferSelect) => ({
-	contentType: row.contentType,
-	id: row.id,
-	kind: row.kind,
-	name: row.name,
-	size: row.size,
-	updatedAt: row.updatedAt.toISOString(),
-});
 
 /** Public, unauthenticated access to an item (and its subtree) shared by link. */
 export async function GET(request: Request, { params }: DriveTokenParams) {
@@ -28,7 +25,7 @@ export async function GET(request: Request, { params }: DriveTokenParams) {
 	if (!resolved) {
 		return Response.json({ error: "Link not found" }, { status: 404 });
 	}
-	const { root, item } = resolved;
+	const { item } = resolved;
 	if (
 		url.searchParams.get("content") === "1" ||
 		url.searchParams.get("download") === "1"
@@ -40,26 +37,21 @@ export async function GET(request: Request, { params }: DriveTokenParams) {
 			url.searchParams.get("download") === "1"
 		);
 	}
-	const children =
-		item.kind === "folder"
-			? await db
-					.select()
-					.from(driveItems)
-					.where(
-						and(
-							eq(driveItems.parentId, item.id),
-							isNull(driveItems.trashedAt),
-							isNull(driveItems.uploadId)
-						)
-					)
-			: [];
-	const chain = await getDriveChain(db, item);
-	const path = chain
-		.slice(chain.findIndex((entry) => entry.id === root.id))
-		.map((entry) => ({ id: entry.id, name: entry.name }));
-	return Response.json({
-		item: publicItem(item),
-		items: children.map(publicItem),
-		path,
-	});
+	if (url.searchParams.get("poster") === "1") {
+		return drivePosterResponse(env, item);
+	}
+	if (url.searchParams.get("og") === "1") {
+		const [children, branding] = await Promise.all([
+			item.kind === "folder" ? listDriveChildren(db, item.id) : [],
+			getBranding(env),
+		]);
+		return shareImageResponse(
+			env,
+			request,
+			item,
+			children.length,
+			branding.appName
+		);
+	}
+	return Response.json(await loadPublicDriveListing(db, token, target));
 }

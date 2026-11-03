@@ -1134,7 +1134,8 @@ export default function DrivePage() {
 									<span className="truncate text-base font-medium">
 										{preview.name}
 									</span>
-									<span className="flex shrink-0 items-center gap-1">
+									{/* Clears the dialog's close button. */}
+									<span className="mr-8 flex shrink-0 items-center gap-1">
 										{preview.source && (
 											<Button
 												variant="ghost"

@@ -1911,6 +1911,7 @@
 	"drive.empty": "Thả tệp vào đây hoặc dùng Mới để tải lên",
 	"drive.emptyShared": "Chưa có gì được chia sẻ với bạn",
 	"drive.emptyTrash": "Thùng rác trống",
+	"drive.publicEmpty": "Thư mục này trống",
 	"drive.emptySearch": "Không có tệp nào khớp với tìm kiếm của bạn",
 	"drive.loadFailed": "Không thể tải tệp.",
 	"drive.folderName": "Tên thư mục",

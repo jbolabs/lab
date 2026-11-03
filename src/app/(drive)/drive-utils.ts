@@ -11,92 +11,32 @@ import {
 	Presentation,
 } from "lucide-react";
 
+import { driveKindOf } from "@/lib/drive/kind";
+import type { DriveKind } from "@/lib/drive/kind";
 import type { DriveItemDto } from "@/lib/drive/types";
 
-const extensionOf = (name: string) =>
-	name.slice(name.lastIndexOf(".") + 1).toLowerCase();
-const SPREADSHEET = /spreadsheet|ms-excel|csv/u;
-const PRESENTATION = /presentation|ms-powerpoint/u;
-const ARCHIVE = /zip|compressed|x-tar|gzip|rar|7z/u;
-const CODE_EXTENSIONS = new Set([
-	"js",
-	"ts",
-	"tsx",
-	"jsx",
-	"json",
-	"html",
-	"css",
-	"py",
-	"rb",
-	"go",
-	"rs",
-	"java",
-	"c",
-	"cpp",
-	"h",
-	"sh",
-	"sql",
-	"yml",
-	"yaml",
-	"xml",
-]);
+// One icon and colour per kind of file. Palette classes, not hex, so the dark theme remaps them.
+export const DRIVE_KIND_ICONS: Record<
+	DriveKind,
+	{ Icon: typeof FileIcon; className: string }
+> = {
+	archive: { Icon: FileArchive, className: "text-yellow-700" },
+	audio: { Icon: FileAudio, className: "text-orange-500" },
+	code: { Icon: FileCode, className: "text-teal-500" },
+	file: { Icon: FileIcon, className: "text-muted-foreground" },
+	folder: { Icon: Folder, className: "text-amber-500" },
+	image: { Icon: FileImage, className: "text-rose-500" },
+	pdf: { Icon: FileText, className: "text-red-600" },
+	sheet: { Icon: FileSpreadsheet, className: "text-green-600" },
+	slides: { Icon: Presentation, className: "text-orange-600" },
+	text: { Icon: FileText, className: "text-signal" },
+	video: { Icon: FileVideo, className: "text-purple-500" },
+};
 
-// One colour per kind of file. Palette classes, not hex, so the dark theme remaps them.
 export function driveIconFor(
 	item: Pick<DriveItemDto, "kind" | "contentType" | "name">
 ) {
-	if (item.kind === "folder") {
-		return { Icon: Folder, className: "text-amber-500" };
-	}
-	const type = item.contentType;
-	const extension = extensionOf(item.name);
-	if (type.startsWith("image/")) {
-		return { Icon: FileImage, className: "text-rose-500" };
-	}
-	if (type.startsWith("video/")) {
-		return { Icon: FileVideo, className: "text-purple-500" };
-	}
-	if (type.startsWith("audio/")) {
-		return { Icon: FileAudio, className: "text-orange-500" };
-	}
-	if (type === "application/pdf" || extension === "pdf") {
-		return { Icon: FileText, className: "text-red-600" };
-	}
-	if (
-		SPREADSHEET.test(type) ||
-		["xls", "xlsx", "ods", "csv", "numbers"].includes(extension)
-	) {
-		return { Icon: FileSpreadsheet, className: "text-green-600" };
-	}
-	if (
-		PRESENTATION.test(type) ||
-		["ppt", "pptx", "odp", "key"].includes(extension)
-	) {
-		return { Icon: Presentation, className: "text-orange-600" };
-	}
-	if (
-		ARCHIVE.test(type) ||
-		["zip", "rar", "7z", "tar", "gz"].includes(extension)
-	) {
-		return { Icon: FileArchive, className: "text-yellow-700" };
-	}
-	if (
-		CODE_EXTENSIONS.has(extension) ||
-		["application/json", "javascript", "xml"].some((value) =>
-			type.includes(value)
-		)
-	) {
-		return { Icon: FileCode, className: "text-teal-500" };
-	}
-	if (
-		type.startsWith("text/") ||
-		type.includes("word") ||
-		type.includes("opendocument.text") ||
-		["doc", "docx", "odt", "rtf", "txt", "md", "pages"].includes(extension)
-	) {
-		return { Icon: FileText, className: "text-signal" };
-	}
-	return { Icon: FileIcon, className: "text-muted-foreground" };
+	return DRIVE_KIND_ICONS[driveKindOf(item)];
 }
 
 export type DriveSortKey = "name" | "owner" | "updatedAt" | "size";
@@ -158,6 +98,10 @@ export function publicContentUrl(
 	download = false
 ): string {
 	return `/api/drive/public/${encodeURIComponent(token)}?item=${encodeURIComponent(itemId)}&${download ? "download=1" : "content=1"}`;
+}
+
+export function publicPosterUrl(token: string, itemId: string): string {
+	return `/api/drive/public/${encodeURIComponent(token)}?item=${encodeURIComponent(itemId)}&poster=1`;
 }
 
 export function canPreview(contentType: string): boolean {

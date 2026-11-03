@@ -1926,6 +1926,7 @@
 	"drive.empty": "ගොනු මෙහි අතහරින්න, නැතහොත් උඩුගත කිරීමට නව බොත්තම භාවිත කරන්න",
 	"drive.emptyShared": "ඔබ සමඟ කිසිවක් බෙදාගෙන නැත",
 	"drive.emptyTrash": "කුණු කූඩය හිස්ය",
+	"drive.publicEmpty": "මෙම ෆෝල්ඩරය හිස්ය",
 	"drive.emptySearch": "ඔබගේ සෙවීමට ගැළපෙන ගොනු නොමැත",
 	"drive.loadFailed": "ගොනු පූරණය කිරීමට නොහැකි විය.",
 	"drive.folderName": "ෆෝල්ඩරයේ නම",

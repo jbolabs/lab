@@ -1941,6 +1941,7 @@
 	"drive.empty": "Solte arquivos aqui ou use Novo para enviar",
 	"drive.emptyShared": "Nada foi compartilhado com você",
 	"drive.emptyTrash": "A lixeira está vazia",
+	"drive.publicEmpty": "Esta pasta está vazia",
 	"drive.emptySearch": "Nenhum arquivo corresponde à sua pesquisa",
 	"drive.loadFailed": "Não foi possível carregar os arquivos.",
 	"drive.folderName": "Nome da pasta",

@@ -1941,6 +1941,7 @@
 	"drive.empty": "Trascina i file qui o usa Nuovo per caricarli",
 	"drive.emptyShared": "Nessun elemento condiviso con te",
 	"drive.emptyTrash": "Il cestino è vuoto",
+	"drive.publicEmpty": "Questa cartella è vuota",
 	"drive.emptySearch": "Nessun file corrisponde alla ricerca",
 	"drive.loadFailed": "Impossibile caricare i file.",
 	"drive.folderName": "Nome cartella",

@@ -1926,6 +1926,7 @@
 	"drive.empty": "फ़ाइलें यहाँ छोड़ें या अपलोड करने के लिए \"नया\" का उपयोग करें",
 	"drive.emptyShared": "आपके साथ कुछ भी साझा नहीं किया गया है",
 	"drive.emptyTrash": "ट्रैश खाली है",
+	"drive.publicEmpty": "यह फ़ोल्डर खाली है",
 	"drive.emptySearch": "आपकी खोज से कोई फ़ाइल मेल नहीं खाती",
 	"drive.loadFailed": "फ़ाइलें लोड नहीं हो सकीं।",
 	"drive.folderName": "फ़ोल्डर का नाम",

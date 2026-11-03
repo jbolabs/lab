@@ -29,6 +29,8 @@ import type {
 	DriveShareRole,
 } from "@/lib/drive/types";
 
+import { ensureVideoPoster } from "./drive-poster";
+
 function DriveShareSession({
 	item,
 	onClose,
@@ -72,6 +74,19 @@ function DriveShareSession({
 			await load();
 		})();
 	}, [load]);
+
+	// A linked video needs a still for its link preview.
+	useEffect(() => {
+		if (linkToken && item) {
+			void ensureVideoPoster(item).catch(() => null);
+		}
+	}, [linkToken, item]);
+
+	function copyLink(token: string) {
+		void navigator.clipboard
+			.writeText(`${window.location.origin}/d/${token}`)
+			.then(() => toast.success(t("drive.linkCopied")));
+	}
 
 	function request(input: string, init: RequestInit) {
 		setBusy(true);
@@ -136,6 +151,9 @@ function DriveShareSession({
 		});
 		if (data) {
 			setLinkToken(data.linkToken ?? null);
+			if (data.linkToken) {
+				copyLink(data.linkToken);
+			}
 		}
 	}
 
@@ -262,11 +280,7 @@ function DriveShareSession({
 						<Button
 							type="button"
 							variant="outline"
-							onClick={() => {
-								void navigator.clipboard
-									.writeText(linkUrl)
-									.then(() => toast.success(t("drive.linkCopied")));
-							}}
+							onClick={() => copyLink(linkToken)}
 						>
 							<Copy data-icon="inline-start" />
 							{t("drive.copyLink")}

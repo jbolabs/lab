@@ -274,6 +274,7 @@ import { Route as ApiDraftsIdAttachmentsAttachmentIdRouteImport } from './routes
 import { Route as ApiDriveAttachmentsIdContentRouteImport } from './routes/api.drive.attachments.$id.content'
 import { Route as ApiDriveItemsIdContentRouteImport } from './routes/api.drive.items.$id.content'
 import { Route as ApiDriveItemsIdLinkRouteImport } from './routes/api.drive.items.$id.link'
+import { Route as ApiDriveItemsIdPosterRouteImport } from './routes/api.drive.items.$id.poster'
 import { Route as ApiDriveItemsIdSharesRouteImport } from './routes/api.drive.items.$id.shares'
 import { Route as ApiDriveOwnersIdAvatarRouteImport } from './routes/api.drive.owners.$id.avatar'
 import { Route as ApiMessagesMessageIdAttachmentsAttachmentIdRouteImport } from './routes/api.messages.$messageId.attachments.$attachmentId'
@@ -1655,6 +1656,11 @@ const ApiDriveItemsIdLinkRoute = ApiDriveItemsIdLinkRouteImport.update({
   path: '/link',
   getParentRoute: () => ApiDriveItemsIdRoute,
 } as any)
+const ApiDriveItemsIdPosterRoute = ApiDriveItemsIdPosterRouteImport.update({
+  id: '/poster',
+  path: '/poster',
+  getParentRoute: () => ApiDriveItemsIdRoute,
+} as any)
 const ApiDriveItemsIdSharesRoute = ApiDriveItemsIdSharesRouteImport.update({
   id: '/shares',
   path: '/shares',
@@ -1943,6 +1949,7 @@ export interface FileRoutesByFullPath {
   '/api/drive/attachments/$id/content': typeof ApiDriveAttachmentsIdContentRoute
   '/api/drive/items/$id/content': typeof ApiDriveItemsIdContentRoute
   '/api/drive/items/$id/link': typeof ApiDriveItemsIdLinkRoute
+  '/api/drive/items/$id/poster': typeof ApiDriveItemsIdPosterRoute
   '/api/drive/items/$id/shares': typeof ApiDriveItemsIdSharesRoute
   '/api/drive/owners/$id/avatar': typeof ApiDriveOwnersIdAvatarRoute
   '/api/messages/$messageId/attachments/$attachmentId': typeof ApiMessagesMessageIdAttachmentsAttachmentIdRoute
@@ -2200,6 +2207,7 @@ export interface FileRoutesByTo {
   '/api/drive/attachments/$id/content': typeof ApiDriveAttachmentsIdContentRoute
   '/api/drive/items/$id/content': typeof ApiDriveItemsIdContentRoute
   '/api/drive/items/$id/link': typeof ApiDriveItemsIdLinkRoute
+  '/api/drive/items/$id/poster': typeof ApiDriveItemsIdPosterRoute
   '/api/drive/items/$id/shares': typeof ApiDriveItemsIdSharesRoute
   '/api/drive/owners/$id/avatar': typeof ApiDriveOwnersIdAvatarRoute
   '/api/messages/$messageId/attachments/$attachmentId': typeof ApiMessagesMessageIdAttachmentsAttachmentIdRoute
@@ -2474,6 +2482,7 @@ export interface FileRoutesById {
   '/api/drive/attachments/$id/content': typeof ApiDriveAttachmentsIdContentRoute
   '/api/drive/items/$id/content': typeof ApiDriveItemsIdContentRoute
   '/api/drive/items/$id/link': typeof ApiDriveItemsIdLinkRoute
+  '/api/drive/items/$id/poster': typeof ApiDriveItemsIdPosterRoute
   '/api/drive/items/$id/shares': typeof ApiDriveItemsIdSharesRoute
   '/api/drive/owners/$id/avatar': typeof ApiDriveOwnersIdAvatarRoute
   '/api/messages/$messageId/attachments/$attachmentId': typeof ApiMessagesMessageIdAttachmentsAttachmentIdRoute
@@ -2744,6 +2753,7 @@ export interface FileRouteTypes {
     | '/api/drive/attachments/$id/content'
     | '/api/drive/items/$id/content'
     | '/api/drive/items/$id/link'
+    | '/api/drive/items/$id/poster'
     | '/api/drive/items/$id/shares'
     | '/api/drive/owners/$id/avatar'
     | '/api/messages/$messageId/attachments/$attachmentId'
@@ -3001,6 +3011,7 @@ export interface FileRouteTypes {
     | '/api/drive/attachments/$id/content'
     | '/api/drive/items/$id/content'
     | '/api/drive/items/$id/link'
+    | '/api/drive/items/$id/poster'
     | '/api/drive/items/$id/shares'
     | '/api/drive/owners/$id/avatar'
     | '/api/messages/$messageId/attachments/$attachmentId'
@@ -3274,6 +3285,7 @@ export interface FileRouteTypes {
     | '/api/drive/attachments/$id/content'
     | '/api/drive/items/$id/content'
     | '/api/drive/items/$id/link'
+    | '/api/drive/items/$id/poster'
     | '/api/drive/items/$id/shares'
     | '/api/drive/owners/$id/avatar'
     | '/api/messages/$messageId/attachments/$attachmentId'
@@ -5264,6 +5276,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDriveItemsIdLinkRouteImport
       parentRoute: typeof ApiDriveItemsIdRoute
     }
+    '/api/drive/items/$id/poster': {
+      id: '/api/drive/items/$id/poster'
+      path: '/poster'
+      fullPath: '/api/drive/items/$id/poster'
+      preLoaderRoute: typeof ApiDriveItemsIdPosterRouteImport
+      parentRoute: typeof ApiDriveItemsIdRoute
+    }
     '/api/drive/items/$id/shares': {
       id: '/api/drive/items/$id/shares'
       path: '/shares'
@@ -6110,12 +6129,14 @@ const ApiDriveDocumentsRouteWithChildren =
 interface ApiDriveItemsIdRouteChildren {
   ApiDriveItemsIdContentRoute: typeof ApiDriveItemsIdContentRoute
   ApiDriveItemsIdLinkRoute: typeof ApiDriveItemsIdLinkRoute
+  ApiDriveItemsIdPosterRoute: typeof ApiDriveItemsIdPosterRoute
   ApiDriveItemsIdSharesRoute: typeof ApiDriveItemsIdSharesRoute
 }
 
 const ApiDriveItemsIdRouteChildren: ApiDriveItemsIdRouteChildren = {
   ApiDriveItemsIdContentRoute: ApiDriveItemsIdContentRoute,
   ApiDriveItemsIdLinkRoute: ApiDriveItemsIdLinkRoute,
+  ApiDriveItemsIdPosterRoute: ApiDriveItemsIdPosterRoute,
   ApiDriveItemsIdSharesRoute: ApiDriveItemsIdSharesRoute,
 }
 

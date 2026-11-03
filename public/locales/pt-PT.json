@@ -1941,6 +1941,7 @@
 	"drive.empty": "Largue ficheiros aqui ou use Novo para carregar",
 	"drive.emptyShared": "Nada foi partilhado com você",
 	"drive.emptyTrash": "A reciclagem está vazia",
+	"drive.publicEmpty": "Esta pasta está vazia",
 	"drive.emptySearch": "Nenhum ficheiro corresponde à sua pesquisa",
 	"drive.loadFailed": "Não foi possível carregar os ficheiros.",
 	"drive.folderName": "Nome da pasta",

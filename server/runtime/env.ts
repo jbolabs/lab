@@ -81,6 +81,7 @@ export function createNodeRuntime(): NodeRuntime {
 		LOGIN_RATE_LIMIT: openRateLimiter(20, 60),
 		// Marks the runtime for the few places that must behave differently.
 		MAILFLARE_RUNTIME: "node",
+		MEDIA: undefined as unknown as CloudflareEnv["MEDIA"],
 		OUTBOUND_QUEUE: outboundQueue,
 		REALTIME: realtime.namespace(),
 		S3_ACCESS_KEY_ID:

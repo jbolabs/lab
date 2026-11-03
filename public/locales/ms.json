@@ -1926,6 +1926,7 @@
 	"drive.empty": "Seret fail ke sini atau guna Baharu untuk memuat naik",
 	"drive.emptyShared": "Tiada apa yang dikongsi dengan anda",
 	"drive.emptyTrash": "Sampah kosong",
+	"drive.publicEmpty": "Folder ini kosong",
 	"drive.emptySearch": "Tiada fail sepadan dengan carian anda",
 	"drive.loadFailed": "Tidak dapat memuatkan fail.",
 	"drive.folderName": "Nama folder",

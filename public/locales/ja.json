@@ -1911,6 +1911,7 @@
 	"drive.empty": "ここにファイルをドロップするか、[新規]からアップロードしてください",
 	"drive.emptyShared": "共有されているアイテムはありません",
 	"drive.emptyTrash": "ゴミ箱は空です",
+	"drive.publicEmpty": "このフォルダは空です",
 	"drive.emptySearch": "検索に一致するファイルはありません",
 	"drive.loadFailed": "ファイルを読み込めませんでした。",
 	"drive.folderName": "フォルダ名",
