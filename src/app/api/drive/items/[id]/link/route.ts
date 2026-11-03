@@ -1,9 +1,5 @@
-import { eq } from "drizzle-orm";
-
-import { driveItems } from "@/db/schema";
-import { getDriveItem } from "@/lib/drive/access";
-import { authorizeDrive } from "@/lib/drive/auth";
-import { newId } from "@/lib/ids";
+import { authorizeDrive, driveResponse } from "@/lib/drive/auth";
+import { setDriveLink } from "@/lib/drive/sharing";
 
 import type { DriveItemParams } from "../types";
 
@@ -14,20 +10,10 @@ export async function POST(request: Request, { params }: DriveItemParams) {
 	if (auth.error) {
 		return auth.error;
 	}
-	const item = await getDriveItem(auth.db, id);
-	if (!item || item.ownerId !== auth.user.id || item.trashedAt) {
-		return Response.json({ error: "Not found" }, { status: 404 });
-	}
 	const body = (await request.json().catch(() => ({}))) as {
 		enabled?: unknown;
 	};
-	const linkToken = body.enabled
-		? (item.linkToken ??
-			`${newId()}${newId()}`.replaceAll(/[^A-Za-z0-9]/gu, "").slice(0, 32))
-		: null;
-	await auth.db
-		.update(driveItems)
-		.set({ linkToken })
-		.where(eq(driveItems.id, id));
-	return Response.json({ linkToken });
+	return driveResponse(() =>
+		setDriveLink(auth.env, auth.user.id, id, !!body.enabled)
+	);
 }

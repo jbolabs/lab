@@ -46,6 +46,11 @@ await build({
  export * from "./src/lib/mcp/auth.ts";
  export * from "./src/lib/mcp/admin-auth.ts";
  export * from "./server/runtime/sqlite-database.ts";
+ export { generateApiKey } from "./src/lib/api-keys.ts";
+ export { scopeNeedsMailbox } from "./src/lib/api/scopes.ts";
+ export { GET as driveList } from "./src/app/api/drive/items/route.ts";
+ export { GET as driveContent } from "./src/app/api/drive/items/[id]/content/route.ts";
+ export { PUT as drivePartPut } from "./src/app/api/drive/upload/[id]/route.ts";
 `,
 		resolveDir: root,
 		sourcefile: "oauth-test.ts",
@@ -78,6 +83,11 @@ const {
 	secret,
 	now,
 	oauthError,
+	generateApiKey,
+	scopeNeedsMailbox,
+	driveList,
+	driveContent,
+	drivePartPut,
 } = await import(pathToFileURL(join(out, "entry.mjs")));
 const origin = "https://mail.example.com";
 const resource = `${origin}/mcp`;
@@ -1119,6 +1129,209 @@ test("ordinarily uploaded Markdown saves with the real Node filesystem bucket", 
 	const awaitedValue26 = await readDocument(f.env, "user", "uploaded");
 	assert.equal(awaitedValue26.content, "Edited upload");
 	assert.equal(await f.env.BUCKET.get(key), null);
+});
+
+const routeParams = (id) => ({ params: Promise.resolve({ id }) });
+const listDrive = (key, query = "") =>
+	driveList(
+		new Request(`${origin}/api/drive/items${query}`, {
+			headers: { Authorization: `Bearer ${key}` },
+		})
+	);
+test("MCP moves a file over 1 MiB through signed part and download URLs", async (t) => {
+	const f = await driveFixture(t);
+	const bytes = new Uint8Array(1_500_000).map((_, index) => index % 251);
+	const started = toolData(
+		await callMcp(f, f.token, "start_drive_upload", {
+			name: "clip.mp4",
+			size: bytes.length,
+		})
+	);
+	assert.equal(started.parts.length, 1);
+	assert.deepEqual(
+		{ offset: started.parts[0].offset, size: started.parts[0].size },
+		{ offset: 0, size: bytes.length }
+	);
+	const early = toolData(
+		await callMcp(f, f.token, "complete_drive_upload", { id: started.id })
+	);
+	assert.equal(early.complete, false);
+	const put = (url, id = started.id) =>
+		drivePartPut(
+			new Request(url, {
+				body: bytes,
+				headers: { "Content-Length": String(bytes.length) },
+				method: "PUT",
+			}),
+			routeParams(id)
+		);
+	const forged = await put(
+		early.parts[0].url.replace(/token=[^&]+/u, `token=${secret()}`)
+	);
+	assert.equal(forged.status, 401);
+	// The token is bound to its upload: it cannot write to another item.
+	const crossItem = await put(early.parts[0].url, "other");
+	assert.equal(crossItem.status, 401);
+	const accepted = await put(early.parts[0].url);
+	assert.equal(accepted.status, 200);
+	const completed = toolData(
+		await callMcp(f, f.token, "complete_drive_upload", { id: started.id })
+	);
+	assert.equal(completed.complete, true);
+	assert.equal(completed.item.size, bytes.length);
+	const tooBig = await callMcp(f, f.token, "read_drive_file", {
+		id: completed.item.id,
+	});
+	assert.equal(tooBig.result.isError, true);
+	const link = toolData(
+		await callMcp(f, f.token, "get_drive_download_url", {
+			id: completed.item.id,
+		})
+	);
+	const downloaded = await driveContent(
+		new Request(link.url),
+		routeParams(completed.item.id)
+	);
+	assert.equal(downloaded.status, 200);
+	assert.deepEqual(new Uint8Array(await downloaded.arrayBuffer()), bytes);
+	// Download tokens cannot be replayed as upload tokens.
+	const swapped = await drivePartPut(
+		new Request(link.url, { body: bytes, method: "PUT" }),
+		routeParams(completed.item.id)
+	);
+	assert.equal(swapped.status, 401);
+});
+
+test("MCP organizes, shares and trashes Drive items", async (t) => {
+	const f = await driveFixture(t);
+	f.db
+		.prepare(
+			"INSERT INTO users(id,email,name,password_hash,role,disabled,created_at) VALUES ('friend','friend@example.com','Friend','unused','user',0,?)"
+		)
+		.run(now());
+	const folder = toolData(
+		await callMcp(f, f.token, "create_drive_folder", { name: "Videos" })
+	).item;
+	const file = toolData(
+		await callMcp(f, f.token, "create_drive_file", {
+			content: "hello",
+			contentType: "text/plain",
+			name: "a.txt",
+		})
+	).item;
+	await callMcp(f, f.token, "rename_drive_item", {
+		id: file.id,
+		name: "b.txt",
+	});
+	const moved = toolData(
+		await callMcp(f, f.token, "update_drive_items", {
+			action: "move",
+			ids: [file.id],
+			parentId: folder.id,
+		})
+	);
+	assert.equal(moved.count, 1);
+	const details = toolData(
+		await callMcp(f, f.token, "get_drive_item", { id: file.id })
+	);
+	assert.deepEqual(
+		details.path.map((crumb) => crumb.name),
+		["Videos", "b.txt"]
+	);
+	const shared = toolData(
+		await callMcp(f, f.token, "share_drive_item", {
+			email: "friend@example.com",
+			id: folder.id,
+			link: true,
+			role: "edit",
+		})
+	);
+	assert.deepEqual(
+		shared.shares.map((share) => [share.email, share.role]),
+		[["friend@example.com", "edit"]]
+	);
+	assert.match(shared.linkUrl, /^https:\/\/mail\.example\.com\/d\//u);
+	const unshared = toolData(
+		await callMcp(f, f.token, "share_drive_item", {
+			email: "friend@example.com",
+			id: folder.id,
+			link: false,
+			role: "none",
+		})
+	);
+	assert.deepEqual(unshared, { linkUrl: null, shares: [] });
+	const search = toolData(
+		await callMcp(f, f.token, "list_drive_items", { query: "b.t" })
+	);
+	assert.deepEqual(
+		search.items.map((item) => item.id),
+		[file.id]
+	);
+	assert.equal(search.storageUsed, 5);
+	const deleteLive = toolData(
+		await callMcp(f, f.token, "update_drive_items", {
+			action: "delete",
+			ids: [folder.id],
+		})
+	);
+	assert.equal(deleteLive.count, 0, "delete only removes trashed items");
+	await callMcp(f, f.token, "update_drive_items", {
+		action: "trash",
+		ids: [folder.id],
+	});
+	const trash = toolData(
+		await callMcp(f, f.token, "list_drive_items", { trash: true })
+	);
+	assert.deepEqual(
+		trash.items.map((item) => item.id),
+		[folder.id]
+	);
+	await callMcp(f, f.token, "update_drive_items", {
+		action: "delete",
+		ids: [folder.id],
+	});
+	const gone = await callMcp(f, f.token, "get_drive_item", { id: file.id });
+	assert.equal(gone.result.isError, true);
+});
+
+test("Drive routes accept API keys with drive scopes and keep attachments session-only", async (t) => {
+	const f = await driveFixture(t);
+	globalThis.__mailflareNodeEnv = f.env;
+	const keyFor = (scopes) => {
+		const { fullKey, prefix, hash: keyHash } = generateApiKey();
+		f.db
+			.prepare(
+				"INSERT INTO api_keys(id,user_id,name,key_hash,prefix,scopes,created_at) VALUES (?,?,?,?,?,?,?)"
+			)
+			.run(
+				secret(),
+				"user",
+				"cli",
+				keyHash,
+				prefix,
+				JSON.stringify(scopes),
+				now()
+			);
+		return fullKey;
+	};
+	const driveKey = await listDrive(keyFor(["drive:read"]));
+	assert.equal(driveKey.status, 200);
+	const mailKey = await listDrive(keyFor(["read"]));
+	assert.equal(mailKey.status, 403);
+	const refusal = await mailKey.json();
+	assert.match(refusal.error, /drive:read/u);
+	const attachments = await listDrive(
+		keyFor(["drive:read"]),
+		"?view=attachments"
+	);
+	assert.equal(attachments.status, 403);
+	const unknown = await listDrive("ep_not-a-key");
+	assert.equal(unknown.status, 401);
+	assert.equal(scopeNeedsMailbox("drive:write"), false);
+	assert.equal(scopeNeedsMailbox("mcp:drive-read"), false);
+	assert.equal(scopeNeedsMailbox("calendar:read"), false);
+	assert.equal(scopeNeedsMailbox("read"), true);
+	assert.equal(scopeNeedsMailbox("mcp:draft"), true);
 });
 
 test("offline access survives 90 days and refresh cannot extend the one-year approval", async (t) => {

@@ -16,4 +16,6 @@ export type McpKeyScope =
 	| "mcp:organize"
 	| "mcp:request-send"
 	| "mcp:calendar-read"
-	| "mcp:calendar-write";
+	| "mcp:calendar-write"
+	| "mcp:drive-read"
+	| "mcp:drive-write";

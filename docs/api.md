@@ -83,6 +83,29 @@ An administrator can add other users as hosts of a booking event. The booking is
 | `GET /api/public/booking/[eventId]?username=` | Public: one event and its open slots |
 | `POST /api/public/booking/[eventId]?username=` | Public: book a slot (`{ name, email, startsAt, guestEmails?, notes? }`) |
 
+## Drive
+
+Every `/api/drive/*` route accepts the dashboard session or an API key (`Authorization: Bearer <key>`) with **Read Drive** (`drive:read`) for reads or **Manage Drive** (`drive:write`) for changes. Email attachments shown in Drive (`view=attachments`, `/api/drive/attachments`) stay session-only, because they are mail.
+
+| Route | Purpose |
+| --- | --- |
+| `GET /api/drive/items?parent=&q=&view=my\|shared\|trash&types=` | List a folder, My Drive (searched by name with `q`), shared items or the trash, with `storageUsed` / `storageLimit` |
+| `GET /api/drive/items/[id]` | An item and its path |
+| `POST /api/drive/items` | Create a folder (`{ name, parentId? }`) |
+| `PATCH /api/drive/items/[id]` | Rename (`{ name }`), trash or restore (`{ trashed }`) |
+| `DELETE /api/drive/items/[id]` | Delete a trashed item forever |
+| `POST /api/drive/items/bulk` | `{ action: trash\|restore\|move\|delete, ids, parentId? }` |
+| `GET /api/drive/items/[id]/content?download=1` | Download, with `Range` / `If-Range` |
+| `POST /api/drive/upload` | Start an upload (`{ name, size, contentType?, parentId?, fingerprint? }`); the same fingerprint resumes |
+| `PUT /api/drive/upload/[id]?part=N` | Send one part as the raw body; every part but the last is exactly `partSize` |
+| `GET /api/drive/upload/[id]` | Parts still missing |
+| `POST` / `DELETE /api/drive/upload/[id]` | Complete or cancel |
+| `GET` / `POST` / `DELETE /api/drive/items/[id]/shares` | List, add (`{ email, role }`) or remove (`?shareId=` or `?email=`) account shares |
+| `POST /api/drive/items/[id]/link` | Turn the public `/d/<token>` link on or off (`{ enabled }`) |
+| `GET` / `PUT /api/drive/documents/[id]`, `POST /api/drive/documents` | Markdown documents with revision checks |
+
+`scripts/drive.mjs` wraps these for scripts and agents (no dependencies). Set `LAB_URL` and `LAB_API_KEY`, then `node scripts/drive.mjs ls`, `upload <files…> --to /Folder`, `download <file> [dest|-]`, `mkdir`, `mv`, `rename`, `rm [--forever]`, `restore`, `share`, `info` and `usage`. Items are `drv_…` ids or paths in My Drive. Uploads and downloads resume when rerun, `--json` prints machine-readable output, and progress goes to stderr. `node scripts/drive-check.mjs` exercises the CLI and the MCP Drive tools end to end against `npm run dev`.
+
 ## Account and mailbox management
 
 Admin > API keys can also grant the `accounts`, `mailboxes` and `storage` scopes independently. These routes use `Authorization: Bearer <key>` and require the key owner to retain the admin role. Each key can access only accounts created by its owner and mailboxes owned by those accounts or the admin.

@@ -39,6 +39,16 @@ export const MCP_KEY_SCOPES: {
 		labelKey: "apiKeys.mcpCalendarWrite.label",
 		value: "mcp:calendar-write",
 	},
+	{
+		descriptionKey: "apiKeys.mcpDriveRead.description",
+		labelKey: "apiKeys.mcpDriveRead.label",
+		value: "mcp:drive-read",
+	},
+	{
+		descriptionKey: "apiKeys.mcpDriveWrite.description",
+		labelKey: "apiKeys.mcpDriveWrite.label",
+		value: "mcp:drive-write",
+	},
 ];
 
 export const STANDARD_KEY_SCOPES: {
@@ -65,6 +75,16 @@ export const STANDARD_KEY_SCOPES: {
 		descriptionKey: "apiKeys.calendarWrite.description",
 		labelKey: "apiKeys.calendarWrite.label",
 		value: "calendar:write",
+	},
+	{
+		descriptionKey: "apiKeys.driveRead.description",
+		labelKey: "apiKeys.driveRead.label",
+		value: "drive:read",
+	},
+	{
+		descriptionKey: "apiKeys.driveWrite.description",
+		labelKey: "apiKeys.driveWrite.label",
+		value: "drive:write",
 	},
 ];
 

@@ -1,16 +1,21 @@
-import { eq } from "drizzle-orm";
-
-import { driveItems } from "@/db/schema";
+import { authorizeDrive, driveResponse } from "@/lib/drive/auth";
 import {
-	deleteDriveItems,
-	getDriveItem,
-	getDriveRole,
-	toDriveItemDtos,
-} from "@/lib/drive/access";
-import { authorizeDrive } from "@/lib/drive/auth";
-import { canEditDrive, normalizeDriveName } from "@/lib/drive/utils";
+	deleteDriveItemForever,
+	getDriveItemDetails,
+	updateDriveItem,
+} from "@/lib/drive/items";
 
 import type { DriveItemParams } from "./types";
+
+/** An item's metadata and its path. */
+export async function GET(request: Request, { params }: DriveItemParams) {
+	const { id } = await params;
+	const auth = await authorizeDrive(request);
+	if (auth.error) {
+		return auth.error;
+	}
+	return driveResponse(() => getDriveItemDetails(auth.env, auth.user.id, id));
+}
 
 /** Rename, move to trash or restore. */
 export async function PATCH(request: Request, { params }: DriveItemParams) {
@@ -19,48 +24,11 @@ export async function PATCH(request: Request, { params }: DriveItemParams) {
 	if (auth.error) {
 		return auth.error;
 	}
-	const { db, user } = auth;
-	const item = await getDriveItem(db, id);
-	if (!item) {
-		return Response.json({ error: "Not found" }, { status: 404 });
-	}
 	const body = (await request.json().catch(() => ({}))) as {
 		name?: unknown;
 		trashed?: unknown;
 	};
-	const restoring = body.trashed === false && !!item.trashedAt;
-	const role = await getDriveRole(db, user.id, item, restoring);
-	if (!role || !canEditDrive(role)) {
-		return Response.json({ error: "Not found" }, { status: 404 });
-	}
-	// Editors may move an item to the trash; only the owner can bring it back.
-	if (body.trashed === false && role !== "owner") {
-		return Response.json(
-			{ error: "Only the owner can do that" },
-			{ status: 403 }
-		);
-	}
-	const patch: Partial<typeof driveItems.$inferInsert> = {
-		updatedAt: new Date(),
-	};
-	if (body.name !== undefined) {
-		const name = normalizeDriveName(body.name);
-		if (!name) {
-			return Response.json({ error: "Enter a name" }, { status: 400 });
-		}
-		patch.name = name;
-	}
-	if (typeof body.trashed === "boolean") {
-		patch.trashedAt = body.trashed ? new Date() : null;
-	}
-	await db.update(driveItems).set(patch).where(eq(driveItems.id, id));
-	const [updated] = await toDriveItemDtos(
-		db,
-		[{ ...item, ...patch } as typeof item],
-		user.id,
-		() => role
-	);
-	return Response.json({ item: updated });
+	return driveResponse(() => updateDriveItem(auth.env, auth.user.id, id, body));
 }
 
 /** Permanently deletes an item the owner has already moved to the trash. */
@@ -70,17 +38,7 @@ export async function DELETE(request: Request, { params }: DriveItemParams) {
 	if (auth.error) {
 		return auth.error;
 	}
-	const { env, db, user } = auth;
-	const item = await getDriveItem(db, id);
-	if (!item || item.ownerId !== user.id) {
-		return Response.json({ error: "Not found" }, { status: 404 });
-	}
-	if (!item.trashedAt) {
-		return Response.json(
-			{ error: "Move the item to trash first" },
-			{ status: 409 }
-		);
-	}
-	await deleteDriveItems(env, [item]);
-	return Response.json({ ok: true });
+	return driveResponse(() =>
+		deleteDriveItemForever(auth.env, auth.user.id, id)
+	);
 }

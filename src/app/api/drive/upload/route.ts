@@ -1,221 +1,27 @@
-import { and, eq, isNotNull, isNull, lt } from "drizzle-orm";
-
-import { driveItems, driveUploadParts } from "@/db/schema";
-import {
-	getDriveItem,
-	getDriveRole,
-	toDriveItemDtos,
-} from "@/lib/drive/access";
-import { authorizeDrive } from "@/lib/drive/auth";
-import { getDriveStorageLimit, getDriveStorageUsed } from "@/lib/drive/storage";
-import {
-	canEditDrive,
-	DRIVE_MAX_FILE_BYTES,
-	DRIVE_PART_BYTES,
-	DRIVE_UPLOAD_RESUME_MS,
-	driveObjectKey,
-	normalizeDriveName,
-} from "@/lib/drive/utils";
-import { newId } from "@/lib/ids";
+import { authorizeDrive, driveResponse } from "@/lib/drive/auth";
+import { startDriveUpload } from "@/lib/drive/uploads";
 
 /**
- * Starts an upload. The file itself is then sent as raw (non multipart/form-data) PUT requests, because the runtime
- * treats every multipart POST as a server action and rejects bodies over 1 MB.
+ * Starts an upload: `{ name, size, contentType?, parentId?, fingerprint? }`. The file itself is then sent as raw
+ * (non multipart/form-data) PUT requests, because the runtime treats every multipart POST as a server action and
+ * rejects bodies over 1 MB.
  */
 export async function POST(request: Request) {
 	const auth = await authorizeDrive(request, true);
 	if (auth.error) {
 		return auth.error;
 	}
-	const { env, db, user } = auth;
-	const body = (await request.json().catch(() => ({}))) as {
-		name?: unknown;
-		size?: unknown;
-		contentType?: unknown;
-		parentId?: unknown;
-		fingerprint?: unknown;
-	};
-	const size =
-		typeof body.size === "number" &&
-		Number.isInteger(body.size) &&
-		body.size >= 0
-			? body.size
-			: null;
-	const name = normalizeDriveName(body.name) ?? "Untitled";
-	if (size === null) {
-		return Response.json({ error: "Invalid file size" }, { status: 400 });
-	}
-	if (size > DRIVE_MAX_FILE_BYTES) {
-		return Response.json({ error: "File is too large" }, { status: 413 });
-	}
-
-	let ownerId = user.id;
-	let parentId: string | null = null;
-	const authorizeUploadParent = async () => {
-		if (typeof body.parentId === "string" && body.parentId) {
-			const parent = await getDriveItem(db, body.parentId);
-			const role =
-				parent?.kind === "folder"
-					? await getDriveRole(db, user.id, parent)
-					: null;
-			if (!parent || !canEditDrive(role)) {
-				return Response.json({ error: "Folder not found" }, { status: 404 });
-			}
-			parentId = parent.id;
-			({ ownerId } = parent);
-		}
-	};
-	const response1 = await authorizeUploadParent();
-	if (response1 !== undefined) {
-		return response1;
-	}
-
-	const fingerprint =
-		typeof body.fingerprint === "string" ? body.fingerprint.slice(0, 100) : "";
-
-	// Uploads nobody came back to are discarded so they do not pile up.
-	const stale = await db
-		.select()
-		.from(driveItems)
-		.where(
-			and(
-				eq(driveItems.ownerId, ownerId),
-				isNotNull(driveItems.uploadId),
-				lt(driveItems.updatedAt, new Date(Date.now() - DRIVE_UPLOAD_RESUME_MS))
-			)
-		)
-		.limit(20);
-	await Promise.all(
-		stale.map(async (old) => {
-			if (!old.uploadId) {
-				return;
-			}
-			await env.BUCKET.resumeMultipartUpload(
-				old.r2Key ?? driveObjectKey(old.ownerId, old.id),
-				old.uploadId
-			)
-				.abort()
-				.catch(() => {
-					// An expired multipart upload may already have been removed.
-				});
-			await db
-				.delete(driveUploadParts)
-				.where(eq(driveUploadParts.itemId, old.id));
-			await db.delete(driveItems).where(eq(driveItems.id, old.id));
+	const body = (await request.json().catch(() => ({}))) as Record<
+		string,
+		unknown
+	>;
+	return driveResponse(() =>
+		startDriveUpload(auth.env, auth.user.id, {
+			contentType: body.contentType,
+			fingerprint: body.fingerprint,
+			name: body.name,
+			parentId: body.parentId,
+			size: body.size,
 		})
 	);
-
-	// The same file picked again continues the upload that was interrupted.
-	const reuseExistingUpload = async () => {
-		if (fingerprint && size > 0) {
-			const [pending] = await db
-				.select()
-				.from(driveItems)
-				.where(
-					and(
-						eq(driveItems.ownerId, ownerId),
-						parentId
-							? eq(driveItems.parentId, parentId)
-							: isNull(driveItems.parentId),
-						eq(driveItems.name, name),
-						eq(driveItems.size, size),
-						eq(driveItems.uploadFingerprint, fingerprint),
-						isNotNull(driveItems.uploadId)
-					)
-				)
-				.limit(1);
-			if (pending?.uploadPartSize) {
-				const done = await db
-					.select({ partNumber: driveUploadParts.partNumber })
-					.from(driveUploadParts)
-					.where(eq(driveUploadParts.itemId, pending.id));
-				await db
-					.update(driveItems)
-					.set({ updatedAt: new Date() })
-					.where(eq(driveItems.id, pending.id));
-				return Response.json({
-					id: pending.id,
-					partSize: pending.uploadPartSize,
-					parts: Math.ceil(size / pending.uploadPartSize),
-					resumed: true,
-					uploaded: done.map((part) => part.partNumber),
-				});
-			}
-		}
-	};
-	const response2 = await reuseExistingUpload();
-	if (response2 !== undefined) {
-		return response2;
-	}
-
-	const limit = await getDriveStorageLimit(env);
-	if (
-		limit !== null &&
-		(await getDriveStorageUsed(db, ownerId)) + size > limit
-	) {
-		return Response.json(
-			{ error: "Not enough Drive storage left for this file" },
-			{ status: 413 }
-		);
-	}
-
-	const id = newId("drv");
-	const key = driveObjectKey(ownerId, id);
-	const contentType =
-		typeof body.contentType === "string" && body.contentType
-			? body.contentType.slice(0, 255)
-			: "application/octet-stream";
-	const now = new Date();
-	const row: typeof driveItems.$inferSelect = {
-		contentType,
-		createdAt: now,
-		id,
-		kind: "file",
-		linkToken: null,
-		name,
-		ownerId,
-		parentId,
-		r2Key: key,
-		size,
-		trashedAt: null,
-		updatedAt: now,
-		uploadFingerprint: null,
-		uploadId: null,
-		uploadPartSize: null,
-	};
-	const role = ownerId === user.id ? "owner" : "edit";
-
-	// Multipart uploads need at least one part, so an empty file is simply stored.
-	if (size === 0) {
-		await env.BUCKET.put(key, new Uint8Array(0), {
-			httpMetadata: { contentType },
-		});
-		try {
-			await db.insert(driveItems).values(row);
-		} catch (error) {
-			await env.BUCKET.delete(key);
-			throw error;
-		}
-		const [item] = await toDriveItemDtos(db, [row], user.id, () => role);
-		return Response.json({ complete: true, item });
-	}
-
-	const upload = await env.BUCKET.createMultipartUpload(key, {
-		httpMetadata: { contentType },
-	});
-	row.uploadId = upload.uploadId;
-	row.uploadPartSize = DRIVE_PART_BYTES;
-	row.uploadFingerprint = fingerprint || null;
-	try {
-		await db.insert(driveItems).values(row);
-	} catch (error) {
-		await upload.abort();
-		throw error;
-	}
-	return Response.json({
-		id,
-		partSize: DRIVE_PART_BYTES,
-		parts: Math.ceil(size / DRIVE_PART_BYTES),
-		uploaded: [],
-	});
 }

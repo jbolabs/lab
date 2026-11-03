@@ -6,19 +6,12 @@ import { newId } from "@/lib/ids";
 
 import { getDriveItem, getDriveRole, toDriveItemDtos } from "./access";
 import { isMarkdownFile } from "./documents-client";
+import { DriveFailure as DriveFailureError } from "./errors";
 import { getDriveStorageLimit, getDriveStorageUsed } from "./storage";
 import { canEditDrive, driveObjectKey, normalizeDriveName } from "./utils";
 
 export const DOCUMENT_MAX_BYTES = 1024 * 1024;
-class DriveFailureError extends Error {
-	status: number;
-	constructor(message: string, status = 400) {
-		super(message);
-		this.name = "DriveFailureError";
-		this.status = status;
-	}
-}
-export { DriveFailureError as DriveFailure };
+export { DriveFailure } from "./errors";
 
 export async function accessibleDriveFile(
 	env: CloudflareEnv,
@@ -43,7 +36,7 @@ export async function readDriveFile(
 	const { item, role } = await accessibleDriveFile(env, userId, id);
 	if (item.size > DOCUMENT_MAX_BYTES) {
 		throw new DriveFailureError(
-			"Open or download files larger than 1 MiB in Drive",
+			"Files larger than 1 MiB are read through a download URL",
 			413
 		);
 	}

@@ -62,7 +62,7 @@ export function createMailflareMcpHandler(
 	return createMcpHandler(
 		() => {
 			const server = new McpServer({ name: "lab", version: "0.1.0" });
-			registerDriveTools(server, env, principal);
+			registerDriveTools(server, env, principal, baseUrl);
 			if (principal.scopes.some((scope) => scope.startsWith("mcp:"))) {
 				for (const name of CALENDAR_TOOL_NAMES) {
 					if (!principal.scopes.includes(calendarToolScope(name))) {
