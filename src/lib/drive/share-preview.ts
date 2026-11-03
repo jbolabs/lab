@@ -1,3 +1,5 @@
+import { getInlineContentType } from "@/lib/http/content-type";
+
 import { driveKindOf } from "./kind";
 import { describeDriveItem, OG_IMAGE } from "./share-preview-utils";
 import type { DriveRow } from "./types";
@@ -177,11 +179,16 @@ export async function shareImageResponse(
 	const { origin } = new URL(request.url);
 	const kind = driveKindOf(item);
 	const { IMAGES: images } = env;
-	if (kind === "image" && item.contentType !== "image/svg+xml") {
-		const key = item.r2Key ?? driveObjectKey(item.ownerId, item.id);
+	// Only types the content endpoint serves inline as images; SVG and anything unparsable get the card.
+	const inlineImage = getInlineContentType(item.contentType)?.startsWith(
+		"image/"
+	);
+	if (inlineImage) {
 		const source =
 			images && item.size <= IMAGES_INPUT_MAX_BYTES
-				? await env.BUCKET.get(key)
+				? await env.BUCKET.get(
+						item.r2Key ?? driveObjectKey(item.ownerId, item.id)
+					)
 				: null;
 		if (source) {
 			try {
@@ -190,12 +197,13 @@ export async function shareImageResponse(
 				console.warn("Share image resize failed", error);
 			}
 		}
-		const raw =
-			item.size <= RAW_IMAGE_MAX_BYTES ? await env.BUCKET.get(key) : null;
-		if (raw) {
-			return new Response(raw.body, {
-				headers: { ...CARD_HEADERS, "Content-Type": item.contentType },
-			});
+		// Unresized, the photo itself, through the endpoint that already serves it safely.
+		if (item.size <= RAW_IMAGE_MAX_BYTES) {
+			const content = new URL(request.url);
+			content.search = "";
+			content.searchParams.set("item", item.id);
+			content.searchParams.set("content", "1");
+			return Response.redirect(content.href, 302);
 		}
 	}
 	if (kind === "video") {

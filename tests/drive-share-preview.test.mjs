@@ -11,7 +11,7 @@ const bundle = await build({
 		contents: `
 			export { driveKindOf, DRIVE_KINDS } from "./src/lib/drive/kind";
 			export { describeDriveItem } from "./src/lib/drive/share-preview-utils";
-			export { fitCardText } from "./src/lib/drive/share-preview";
+			export { fitCardText, shareImageResponse } from "./src/lib/drive/share-preview";
 			export { publicShareMeta } from "./src/app/d/[token]/utils";
 		`,
 		loader: "ts",
@@ -25,6 +25,7 @@ const {
 	driveKindOf,
 	fitCardText,
 	publicShareMeta,
+	shareImageResponse,
 } = await import(
 	`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`
 );
@@ -99,4 +100,43 @@ test("a missing share has no preview tags", () => {
 		origin: "https://mail.example.com",
 	});
 	assert.deepEqual(meta, [{ title: "The Lab" }]);
+});
+
+test("uploaded images never reach a preview with their own type", async () => {
+	const env = {
+		BUCKET: {
+			get: () => {
+				throw new Error("bytes must not be read");
+			},
+		},
+	};
+	const request = new Request(
+		"https://mail.example.com/api/drive/public/tok?og=1"
+	);
+	const preview = (contentType) =>
+		shareImageResponse(
+			env,
+			request,
+			{ ...file("x", contentType, 1000), ownerId: "u", r2Key: "k" },
+			0,
+			"The Lab"
+		);
+	for (const type of [
+		"image/svg+xml",
+		"image/svg+xml;charset=utf-8",
+		"image/png, text/html",
+	]) {
+		const response = await preview(type);
+		assert.equal(response.status, 302, type);
+		assert.equal(
+			response.headers.get("location"),
+			"https://mail.example.com/og/image.png",
+			type
+		);
+	}
+	const photo = await preview("image/png");
+	assert.equal(
+		photo.headers.get("location"),
+		"https://mail.example.com/api/drive/public/tok?item=drv_1&content=1"
+	);
 });
