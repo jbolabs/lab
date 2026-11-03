@@ -1926,6 +1926,7 @@
 	"drive.empty": "Dosyaları buraya bırakın veya yüklemek için Yeni'yi kullanın",
 	"drive.emptyShared": "Sizinle henüz hiçbir şey paylaşılmadı",
 	"drive.emptyTrash": "Çöp kutusu boş",
+	"drive.publicEmpty": "Bu klasör boş",
 	"drive.emptySearch": "Aramanızla eşleşen dosya yok",
 	"drive.loadFailed": "Dosyalar yüklenemedi.",
 	"drive.folderName": "Klasör adı",

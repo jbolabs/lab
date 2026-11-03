@@ -42,6 +42,13 @@ export function driveObjectKey(ownerId: string, itemId: string): string {
 	return `drive/${ownerId}/${itemId}`;
 }
 
+/** A video's still frame, captured by the owner's browser, shown before playback and in link previews. */
+export function drivePosterKey(ownerId: string, itemId: string): string {
+	return `drive-posters/${ownerId}/${itemId}.jpg`;
+}
+
+export const DRIVE_POSTER_MAX_BYTES = 2 * 1024 * 1024;
+
 export function toDriveCrumbs(chain: DriveRow[]): DriveCrumb[] {
 	return chain.map((item) => ({ id: item.id, name: item.name }));
 }

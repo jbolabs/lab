@@ -1926,6 +1926,7 @@
 	"drive.empty": "วางไฟล์ที่นี่หรือใช้ปุ่มใหม่เพื่ออัปโหลด",
 	"drive.emptyShared": "ยังไม่มีสิ่งที่แชร์กับคุณ",
 	"drive.emptyTrash": "ถังขยะว่างเปล่า",
+	"drive.publicEmpty": "โฟลเดอร์นี้ว่างเปล่า",
 	"drive.emptySearch": "ไม่มีไฟล์ที่ตรงกับการค้นหาของคุณ",
 	"drive.loadFailed": "ไม่สามารถโหลดไฟล์ได้",
 	"drive.folderName": "ชื่อโฟลเดอร์",

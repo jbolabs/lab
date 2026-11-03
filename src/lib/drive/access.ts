@@ -4,7 +4,7 @@ import { getDb } from "@/db";
 import { driveItems, driveShares, driveUploadParts, users } from "@/db/schema";
 
 import type { DriveItemDto, DriveRole, DriveRow } from "./types";
-import { DRIVE_MAX_DEPTH, driveObjectKey } from "./utils";
+import { DRIVE_MAX_DEPTH, driveObjectKey, drivePosterKey } from "./utils";
 
 type Db = ReturnType<typeof getDb>;
 
@@ -200,9 +200,16 @@ export async function deleteDriveItems(
 		roots.filter((row) => row.kind === "folder").map((row) => row.id)
 	);
 	const all = [...roots, ...descendants];
-	const keys = all
-		.filter((row) => row.kind === "file")
-		.map((row) => row.r2Key ?? driveObjectKey(row.ownerId, row.id));
+	const keys = all.flatMap((row) =>
+		row.kind === "file"
+			? [
+					row.r2Key ?? driveObjectKey(row.ownerId, row.id),
+					...(row.contentType.startsWith("video/")
+						? [drivePosterKey(row.ownerId, row.id)]
+						: []),
+				]
+			: []
+	);
 	for (let index = 0; index < keys.length; index += 500) {
 		await env.BUCKET.delete(keys.slice(index, index + 500));
 	}

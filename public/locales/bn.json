@@ -1924,6 +1924,7 @@
 	"drive.empty": "এখানে ফাইল ছেড়ে দিন বা আপলোড করতে \"নতুন\" ব্যবহার করুন",
 	"drive.emptyShared": "আপনার সাথে কিছু শেয়ার করা হয়নি",
 	"drive.emptyTrash": "ট্র্যাশ খালি",
+	"drive.publicEmpty": "এই ফোল্ডারটি খালি",
 	"drive.emptySearch": "আপনার অনুসন্ধানের সাথে কোনো ফাইল মেলেনি",
 	"drive.loadFailed": "ফাইল লোড করা যায়নি।",
 	"drive.folderName": "ফোল্ডারের নাম",

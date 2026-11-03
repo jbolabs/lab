@@ -1986,6 +1986,7 @@
 	"drive.empty": "أفلت الملفات هنا أو استخدم «جديد» للرفع",
 	"drive.emptyShared": "لم تتم مشاركة أي شيء معك",
 	"drive.emptyTrash": "المحذوفات فارغة",
+	"drive.publicEmpty": "هذا المجلد فارغ",
 	"drive.emptySearch": "لا توجد ملفات مطابقة لبحثك",
 	"drive.loadFailed": "تعذّر تحميل الملفات.",
 	"drive.folderName": "اسم المجلد",

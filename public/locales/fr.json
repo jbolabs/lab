@@ -1941,6 +1941,7 @@
 	"drive.empty": "Déposez des fichiers ici ou utilisez Nouveau pour les importer",
 	"drive.emptyShared": "Rien n'a été partagé avec vous",
 	"drive.emptyTrash": "La corbeille est vide",
+	"drive.publicEmpty": "Ce dossier est vide",
 	"drive.emptySearch": "Aucun fichier ne correspond à votre recherche",
 	"drive.loadFailed": "Impossible de charger les fichiers.",
 	"drive.folderName": "Nom du dossier",

@@ -27,3 +27,9 @@ export const consent = createServerFn({ method: "GET" })
 		const module = await import("./consent.server");
 		return module.loadConsent(data);
 	});
+export const publicShare = createServerFn({ method: "GET" })
+	.validator(z.object({ token: z.string() }))
+	.handler(async ({ data }) => {
+		const module = await import("./public-share.server");
+		return module.loadPublicShare(data.token);
+	});

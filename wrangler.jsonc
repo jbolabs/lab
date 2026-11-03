@@ -12,6 +12,10 @@
 	"images": {
 		"binding": "IMAGES",
 	},
+	"media": {
+		"binding": "MEDIA",
+		"remote": true,
+	},
 	"services": [
 		{
 			"binding": "WORKER_SELF_REFERENCE",

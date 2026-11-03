@@ -1,13 +1,8 @@
-export interface PublicDriveItem {
-	id: string;
-	kind: "file" | "folder";
-	name: string;
-	size: number;
-	contentType: string;
-	updatedAt: string;
-}
-export interface PublicDriveListing {
-	item: PublicDriveItem;
-	items: PublicDriveItem[];
-	path: { id: string; name: string }[];
-}
+import type { publicShare } from "@/lib/route-data";
+
+export type {
+	PublicDriveItem,
+	PublicDriveListing,
+} from "@/lib/drive/public-listing";
+
+export type PublicShare = Awaited<ReturnType<typeof publicShare>>;

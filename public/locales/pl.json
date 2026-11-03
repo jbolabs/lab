@@ -1956,6 +1956,7 @@
 	"drive.empty": "Upuść pliki tutaj lub użyj przycisku Nowy, aby przesłać",
 	"drive.emptyShared": "Nic nie zostało Ci udostępnione",
 	"drive.emptyTrash": "Kosz jest pusty",
+	"drive.publicEmpty": "Ten folder jest pusty",
 	"drive.emptySearch": "Brak plików pasujących do wyszukiwania",
 	"drive.loadFailed": "Nie udało się wczytać plików.",
 	"drive.folderName": "Nazwa folderu",

@@ -1926,6 +1926,7 @@
 	"drive.empty": "فایل‌ها را اینجا رها کنید یا برای آپلود از «جدید» استفاده کنید",
 	"drive.emptyShared": "چیزی با شما به اشتراک گذاشته نشده است",
 	"drive.emptyTrash": "سطل زباله خالی است",
+	"drive.publicEmpty": "این پوشه خالی است",
 	"drive.emptySearch": "هیچ فایلی با جست‌وجوی شما مطابقت ندارد",
 	"drive.loadFailed": "بارگیری فایل‌ها ممکن نشد.",
 	"drive.folderName": "نام پوشه",

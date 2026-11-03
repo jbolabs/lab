@@ -1926,6 +1926,7 @@
 	"drive.empty": "Sleep bestanden hierheen of gebruik Nieuw om te uploaden",
 	"drive.emptyShared": "Er is niets met je gedeeld",
 	"drive.emptyTrash": "Prullenbak is leeg",
+	"drive.publicEmpty": "Deze map is leeg",
 	"drive.emptySearch": "Geen bestanden komen overeen met je zoekopdracht",
 	"drive.loadFailed": "Bestanden laden mislukt.",
 	"drive.folderName": "Mapnaam",

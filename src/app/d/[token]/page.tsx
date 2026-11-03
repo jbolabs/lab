@@ -1,11 +1,13 @@
-import { useParams } from "@tanstack/react-router";
-import { ChevronRight, Download } from "lucide-react";
+import { useLoaderData, useParams } from "@tanstack/react-router";
+import { ChevronLeft, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { DrivePreviewBody } from "@/app/(drive)/drive-preview";
 import {
+	canPreview,
 	driveIconFor,
 	publicContentUrl,
+	publicPosterUrl,
 	sortDriveItems,
 } from "@/app/(drive)/drive-utils";
 import { useLanguage } from "@/components/language-provider";
@@ -17,12 +19,51 @@ import {
 	EmptyTitle,
 } from "@/components/ui/empty";
 import { PageTitle } from "@/components/ui/page-header";
-import { formatDriveSize } from "@/lib/drive/utils";
-import { cn as scopeLayoutClasses } from "@/lib/utils";
+import { describeDriveItem } from "@/lib/drive/share-preview-utils";
+import { cn } from "@/lib/utils";
 
-import type { PublicDriveItem, PublicDriveListing } from "./types";
+import type { PublicDriveItem, PublicDriveListing, PublicShare } from "./types";
 
-function PublicRow({
+function KindIcon({
+	item,
+	className,
+}: {
+	item: PublicDriveItem;
+	className?: string;
+}) {
+	const { Icon, className: tint } = driveIconFor(item);
+	return (
+		<Icon
+			className={cn(tint, className)}
+			fill={item.kind === "folder" ? "currentColor" : "none"}
+		/>
+	);
+}
+
+function DownloadButton({
+	href,
+	compact = false,
+}: {
+	href: string;
+	compact?: boolean;
+}) {
+	const { t } = useLanguage();
+	return (
+		<Button
+			size={compact ? "icon" : "default"}
+			className="shrink-0"
+			aria-label={compact ? t("drive.download") : undefined}
+			// oxlint-disable-next-line jsx-a11y/control-has-associated-label -- Base UI render: the label is this component's children or aria-label.
+			render={<a href={href} />}
+			nativeButton={false}
+		>
+			<Download data-icon={compact ? undefined : "inline-start"} />
+			{!compact && t("drive.download")}
+		</Button>
+	);
+}
+
+function FolderRow({
 	entry,
 	token,
 	onOpen,
@@ -31,31 +72,26 @@ function PublicRow({
 	token: string;
 	onOpen: (id: string) => void;
 }) {
-	const { Icon, className } = driveIconFor(entry);
 	return (
-		<div className="flex items-center gap-4 rounded-lg px-3 text-sm hover:bg-accent/60">
+		<li className="flex items-center gap-1 rounded-lg pr-1 transition-colors hover:bg-accent/60">
 			<Button
 				variant="ghost"
 				type="button"
 				onClick={() => onOpen(entry.id)}
 				className="min-w-0 flex-1 justify-start text-left"
 			>
-				<Icon
-					data-icon="inline-start"
-					className={className}
-					fill={entry.kind === "folder" ? "currentColor" : "none"}
-				/>
-				<span className="truncate text-foreground">{entry.name}</span>
-			</Button>
-			{entry.kind === "file" && (
-				<span className="hidden shrink-0 text-muted-foreground sm:block">
-					{formatDriveSize(entry.size)}
+				<KindIcon item={entry} className="shrink-0" />
+				<span className="min-w-0 flex-1 truncate text-foreground">
+					{entry.name}
 				</span>
-			)}
+				<span className="shrink-0 text-xs text-muted-foreground tabular-nums max-sm:hidden">
+					{entry.kind === "file" ? describeDriveItem(entry) : null}
+				</span>
+			</Button>
 			{entry.kind === "file" && (
 				<Button
 					variant="ghost"
-					size="icon"
+					size="icon-sm"
 					className="shrink-0 text-muted-foreground"
 					render={
 						<a
@@ -68,46 +104,133 @@ function PublicRow({
 					<Download />
 				</Button>
 			)}
+		</li>
+	);
+}
+
+/** A file the browser cannot show: its icon, name and a way to get it. */
+function FileCard({ item, href }: { item: PublicDriveItem; href: string }) {
+	return (
+		<div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl border bg-card px-6 py-10 text-center shadow-xs">
+			<span className="flex size-16 items-center justify-center rounded-2xl bg-muted">
+				<KindIcon item={item} className="size-8" />
+			</span>
+			<div className="flex max-w-full min-w-0 flex-col gap-1">
+				<p className="font-medium break-words text-foreground">{item.name}</p>
+				<p className="text-sm text-muted-foreground tabular-nums">
+					{describeDriveItem(item)}
+				</p>
+			</div>
+			<DownloadButton href={href} />
+		</div>
+	);
+}
+
+function Stage({
+	listing,
+	token,
+	onOpen,
+}: {
+	listing: PublicDriveListing;
+	token: string;
+	onOpen: (id: string) => void;
+}) {
+	const { t } = useLanguage();
+	const { item, items } = listing;
+	if (item.kind === "folder") {
+		return (
+			<div className="mx-auto w-full max-w-3xl rounded-2xl border bg-card p-2 shadow-xs">
+				{items.length === 0 ? (
+					<Empty>
+						<EmptyHeader>
+							<EmptyTitle>{t("drive.publicEmpty")}</EmptyTitle>
+						</EmptyHeader>
+					</Empty>
+				) : (
+					<ul className="flex flex-col">
+						{sortDriveItems(items, "name", true).map((entry) => (
+							<FolderRow
+								key={entry.id}
+								entry={entry}
+								token={token}
+								onOpen={onOpen}
+							/>
+						))}
+					</ul>
+				)}
+			</div>
+		);
+	}
+	const download = publicContentUrl(token, item.id, true);
+	if (!canPreview(item.contentType)) {
+		return (
+			<div className="flex flex-1 items-center justify-center">
+				<FileCard item={item} href={download} />
+			</div>
+		);
+	}
+	const document = !/^(?:image|video|audio)\//u.test(item.contentType);
+	return (
+		<div
+			className={cn(
+				"mx-auto flex min-h-0 w-full flex-1",
+				document && "max-w-4xl"
+			)}
+		>
+			<DrivePreviewBody
+				src={publicContentUrl(token, item.id)}
+				downloadHref={download}
+				contentType={item.contentType}
+				name={item.name}
+				poster={
+					item.contentType.startsWith("video/")
+						? publicPosterUrl(token, item.id)
+						: undefined
+				}
+			/>
 		</div>
 	);
 }
 
 export default function PublicDrivePage() {
 	const { token } = useParams({ from: "/d/$token/" });
+	const share = useLoaderData({ strict: false }) as PublicShare | undefined;
 	const { t } = useLanguage();
 	const [itemId, setItemId] = useState<string | null>(null);
-	const [data, setData] = useState<PublicDriveListing | null>(null);
-	const [missing, setMissing] = useState(false);
+	const [fetched, setFetched] = useState<{
+		id: string;
+		listing: PublicDriveListing | null;
+	} | null>(null);
 
 	useEffect(() => {
+		if (!itemId) {
+			return;
+		}
 		let active = true;
-		const search = itemId ? `?item=${encodeURIComponent(itemId)}` : "";
-		void fetch(`/api/drive/public/${encodeURIComponent(token)}${search}`)
-			.then((response) => {
-				if (!response.ok) {
-					throw new Error("Request failed");
-				}
-				return response.json() as Promise<PublicDriveListing>;
-			})
+		void fetch(
+			`/api/drive/public/${encodeURIComponent(token)}?item=${encodeURIComponent(itemId)}`
+		)
+			.then((response) =>
+				response.ok ? (response.json() as Promise<PublicDriveListing>) : null
+			)
+			.catch(() => null)
 			.then((listing) => {
 				if (active) {
-					setData(listing);
-					setMissing(false);
+					setFetched({ id: itemId, listing });
 				}
-
 				return null;
-			})
-			.catch(() => {
-				if (active) {
-					setMissing(true);
-				}
 			});
 		return () => {
 			active = false;
 		};
 	}, [token, itemId]);
 
-	if (missing) {
+	let listing = share?.listing;
+	if (itemId) {
+		listing = fetched?.id === itemId ? fetched.listing : undefined;
+	}
+
+	if (listing === null) {
 		return (
 			<main className="flex min-h-dvh items-center justify-center bg-sidebar p-6">
 				<Empty>
@@ -118,82 +241,58 @@ export default function PublicDrivePage() {
 			</main>
 		);
 	}
-	if (!data) {
+	if (!listing) {
 		return <main className="min-h-dvh bg-sidebar" aria-busy="true" />;
 	}
-	const { item, items, path } = data;
-	const isFile = item.kind === "file";
+	const { item, path } = listing;
+	const parent = path.at(-2);
+	const open = (id: string) => setItemId(id === path[0]?.id ? null : id);
 
 	return (
-		<main className="mx-auto flex min-h-dvh max-w-5xl flex-col bg-sidebar p-4 md:p-8">
-			<nav className="mb-4 flex flex-wrap items-center gap-1 text-lg text-foreground">
-				{path.map((crumb, index) => (
-					<span key={crumb.id} className="flex items-center gap-1">
-						{index > 0 && (
-							<ChevronRight size={18} className="text-muted-foreground" />
-						)}
-						{index === path.length - 1 ? (
-							<PageTitle size="sm" className="">
-								{crumb.name}
-							</PageTitle>
-						) : (
-							<Button
-								variant="ghost"
-								type="button"
-								onClick={() => setItemId(crumb.id)}
-								className=""
-							>
-								{crumb.name}
-							</Button>
-						)}
-					</span>
-				))}
-				{isFile && (
+		<main className="flex h-dvh flex-col bg-sidebar pt-safe">
+			<header className="flex h-16 shrink-0 items-center gap-3 px-4 md:px-6">
+				{parent ? (
 					<Button
-						className="ml-auto"
-						// oxlint-disable-next-line jsx-a11y/control-has-associated-label -- Base UI render: the text is this component's children.
-						render={<a href={publicContentUrl(token, item.id, true)} />}
-						nativeButton={false}
+						variant="ghost"
+						size="icon"
+						className="-ml-2 shrink-0"
+						aria-label={parent.name}
+						data-edge-swipe-back
+						onClick={() => open(parent.id)}
 					>
-						<Download data-icon="inline-start" />
-						{t("drive.download")}
+						<ChevronLeft />
 					</Button>
+				) : (
+					<span className="flex size-9 shrink-0 items-center justify-center rounded-xl border bg-card shadow-xs">
+						<KindIcon item={item} className="size-[18px]" />
+					</span>
 				)}
-			</nav>
-			{isFile ? (
-				<div
-					className={scopeLayoutClasses(
-						"flex-1 rounded-lg bg-primary p-3",
-						"min-h-[70vh]"
-					)}
-				>
-					<DrivePreviewBody
-						src={publicContentUrl(token, item.id)}
-						downloadHref={publicContentUrl(token, item.id, true)}
-						contentType={item.contentType}
-						name={item.name}
-					/>
+				<div className="min-w-0 flex-1">
+					<PageTitle size="sm">
+						<span className="block truncate">{item.name}</span>
+					</PageTitle>
+					<p className="truncate text-xs text-muted-foreground tabular-nums">
+						{describeDriveItem(item, listing.items.length)}
+					</p>
 				</div>
-			) : (
-				<div className="flex flex-col rounded-lg border bg-card p-2">
-					{items.length === 0 ? (
-						<Empty>
-							<EmptyHeader>
-								<EmptyTitle>{t("drive.empty")}</EmptyTitle>
-							</EmptyHeader>
-						</Empty>
-					) : (
-						sortDriveItems(items, "name", true).map((entry) => (
-							<PublicRow
-								key={entry.id}
-								entry={entry}
-								token={token}
-								onOpen={setItemId}
+				{/* A file with no preview gets its Download in the card instead. */}
+				{item.kind === "file" && canPreview(item.contentType) && (
+					<>
+						<span className="max-sm:hidden">
+							<DownloadButton href={publicContentUrl(token, item.id, true)} />
+						</span>
+						<span className="sm:hidden">
+							<DownloadButton
+								compact
+								href={publicContentUrl(token, item.id, true)}
 							/>
-						))
-					)}
-				</div>
-			)}
+						</span>
+					</>
+				)}
+			</header>
+			<div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-safe-5 md:px-6 md:pb-safe-6">
+				<Stage listing={listing} token={token} onOpen={open} />
+			</div>
 		</main>
 	);
 }

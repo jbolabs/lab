@@ -1956,6 +1956,7 @@
 	"drive.empty": "Перетащите файлы сюда или нажмите «Создать», чтобы загрузить",
 	"drive.emptyShared": "Вам ничем не поделились",
 	"drive.emptyTrash": "Корзина пуста",
+	"drive.publicEmpty": "Эта папка пуста",
 	"drive.emptySearch": "Нет файлов, соответствующих запросу",
 	"drive.loadFailed": "Не удалось загрузить файлы.",
 	"drive.folderName": "Название папки",

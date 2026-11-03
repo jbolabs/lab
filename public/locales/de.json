@@ -1926,6 +1926,7 @@
 	"drive.empty": "Dateien hierher ziehen oder über „Neu“ hochladen",
 	"drive.emptyShared": "Es wurde nichts mit dir geteilt",
 	"drive.emptyTrash": "Der Papierkorb ist leer",
+	"drive.publicEmpty": "Dieser Ordner ist leer",
 	"drive.emptySearch": "Keine Dateien entsprechen deiner Suche",
 	"drive.loadFailed": "Die Dateien konnten nicht geladen werden.",
 	"drive.folderName": "Ordnername",
