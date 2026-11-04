@@ -18,6 +18,7 @@ import {
 	readDriveFile,
 	saveDocument,
 } from "@/lib/drive/documents";
+import { describeDriveError } from "@/lib/drive/errors";
 import {
 	applyDriveBulkAction,
 	createDriveFolder,
@@ -115,15 +116,11 @@ export function registerDriveTools(
 						],
 					};
 				} catch (error) {
+					const { message } = await describeDriveError(env, error, name);
 					return {
 						content: [
 							{
-								text: JSON.stringify({
-									error:
-										error instanceof DriveFailure
-											? error.message
-											: "Drive operation failed",
-								}),
+								text: JSON.stringify({ error: message }),
 								type: "text" as const,
 							},
 						],
