@@ -118,9 +118,24 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/install
-      - run: npx alchemy deploy --stage prod --yes --no-input
+      # A run (or rerun) of an older commit must never replace a newer deploy.
+      - name: Check this is still the head of main
+        id: head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          head=$(gh api "repos/${{ github.repository }}/commits/main" --jq .sha)
+          if [ "$head" = "$GITHUB_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Skipping: main is at $head, newer than $GITHUB_SHA."
+          fi
+      - if: ${{ steps.head.outputs.current == 'true' }}
+        uses: ./.github/actions/install
+      - if: ${{ steps.head.outputs.current == 'true' }}
+        run: npx alchemy deploy --stage prod --yes --no-input
       - name: Smoke test
+        if: ${{ steps.head.outputs.current == 'true' }}
         run: curl --fail --silent --show-error --retry 5 --retry-all-errors https://lab.jbolabs.com/api/setup/status
 
   preview:
