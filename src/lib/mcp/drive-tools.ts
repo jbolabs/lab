@@ -116,7 +116,7 @@ export function registerDriveTools(
 						],
 					};
 				} catch (error) {
-					const { message } = await describeDriveError(env, error, name);
+					const { message } = describeDriveError(error, name);
 					return {
 						content: [
 							{

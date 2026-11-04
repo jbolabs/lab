@@ -7,11 +7,10 @@ const { readdir, readFile } = fsPromises;
 const { join } = nodePath;
 
 /**
- * Apply the repository's D1 migrations to the local database in journal
- * order, recording them in `d1_migrations` exactly as Wrangler does. A fresh
- * database and an upgraded one therefore follow the same path, and the
- * hand-copied bootstrap schema in src/lib/setup/migration.ts is never used
- * here.
+ * Apply the repository's D1 migrations to the local database in name order,
+ * recording them in `d1_migrations`. A fresh database and an upgraded one
+ * follow the same path. On Cloudflare, Alchemy applies the same files in the
+ * same order on deploy (`alchemy.run.ts`).
  */
 export async function applyMigrations(
 	database: SqliteDatabase,
@@ -27,25 +26,8 @@ export async function applyMigrations(
 			.all()
 			.map((row) => (row as { name: string }).name)
 	);
-
-	let order: string[];
-	try {
-		const journal = JSON.parse(
-			await readFile(join(migrationsDir, "meta", "_journal.json"), "utf-8")
-		) as { entries: { tag: string }[] };
-		order = journal.entries.map((entry) => `${entry.tag}.sql`);
-	} catch {
-		order = [];
-	}
-	const awaitedValue1 = await readdir(migrationsDir);
-	const files = awaitedValue1
-		.filter((name) => name.endsWith(".sql"))
-		.toSorted();
-	// Anything the journal does not list (hand-written migrations) runs after it, in name order.
-	const names = [
-		...order.filter((name) => files.includes(name)),
-		...files.filter((name) => !order.includes(name)),
-	];
+	const files = await readdir(migrationsDir);
+	const names = files.filter((name) => name.endsWith(".sql")).toSorted();
 
 	const ran: string[] = [];
 	for (const name of names) {

@@ -92,11 +92,7 @@ export async function driveResponse(
 		const result = await run();
 		return result instanceof Response ? result : Response.json(result);
 	} catch (error) {
-		const { message, status } = await describeDriveError(
-			getEnv(),
-			error,
-			"request"
-		);
+		const { message, status } = describeDriveError(error, "request");
 		return Response.json({ error: message }, { status });
 	}
 }

@@ -5,8 +5,13 @@ import type { SetupRequirementCheck } from "./types";
 export function getSetupRequirementChecks(
 	env: CloudflareEnv
 ): SetupRequirementCheck[] {
-	const hasApiToken = !!env.CF_TOKEN?.trim();
-	const hasGlobalKey = !!env.CF_API_KEY?.trim() && !!env.CF_EMAIL?.trim();
+	const cloudflare: SetupRequirementCheck = {
+		configured: true,
+		key: "Cloudflare API credentials (optional)",
+		message: hasCloudflareCredentials(env)
+			? "Domains are provisioned on Cloudflare automatically."
+			: "Not set: add MX and SPF records for each domain by hand, as shown on the domain page.",
+	};
 
 	if (isNodeRuntime(env)) {
 		const mailer = env.EMAIL as unknown as { configured?: boolean };
@@ -23,26 +28,16 @@ export function getSetupRequirementChecks(
 				message:
 					"Set SMTP_URL, or CF_ACCOUNT_ID with CF_TOKEN to send through Cloudflare. Receiving works without it.",
 			},
-			{
-				configured: true,
-				key: "Cloudflare API credentials (optional)",
-				message: hasCloudflareCredentials(env)
-					? "Domains are provisioned on Cloudflare automatically."
-					: "Not set: add MX and SPF records for each domain by hand, as shown on the domain page.",
-			},
+			cloudflare,
 		];
 	}
 
 	return [
 		{
-			configured: hasApiToken || hasGlobalKey,
-			key: "Cloudflare API credentials",
-			message: "Set CF_TOKEN, or set both CF_API_KEY and CF_EMAIL.",
-		},
-		{
 			configured: !!env.DB,
 			key: "D1 database",
-			message: "Deploy the Worker with the DB binding from wrangler.jsonc.",
+			message: "Deploy with `npm run deploy`, which binds and migrates it.",
 		},
+		cloudflare,
 	];
 }

@@ -1,23 +1,15 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import Database from "better-sqlite3";
 
-const { migrations } = JSON.parse(
-	readFileSync(
-		new URL("../src/lib/migrations/bundle.json", import.meta.url),
-		"utf-8"
-	)
-);
+import { migrations } from "./helpers/migrations.mjs";
 
 function database() {
 	const db = new Database(":memory:");
 	db.pragma("foreign_keys = OFF");
 	for (const migration of migrations) {
-		for (const statement of migration.statements) {
-			db.exec(statement);
-		}
+		db.exec(migration.sql);
 	}
 	return db;
 }

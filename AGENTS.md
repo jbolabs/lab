@@ -15,7 +15,7 @@ Build every app and site to the bar of Linear's website or Apple Notes: simple p
 
 ## Installation and releases
 
-- The existing inbox runtime is Alchemy `mail` / `prod` in `deployment/alchemy.run.ts`; never change its stack/stage/resource identities or use Wrangler/raw cloud writes. Shared studio infrastructure remains in jbolabs/jbolabs.
-- Keep the deployment toolchain isolated in `deployment/`. Read `docs/jbo-deployment.md` before plan/deploy/CI changes. Cloud changes, CI bootstrap and production enablement each need explicit operator authorization; a PR request is not deployment approval.
+- The installation is the Alchemy stack in `alchemy.run.ts` (config and the CI stack in `stacks/`); prod is stage `prod` of stack `mail`. Never change its stack, stage, logical IDs or physical names, and never use Wrangler or raw cloud writes. Shared studio infrastructure remains in jbolabs/jbolabs.
+- Read `docs/jbo-deployment.md` before plan/deploy/CI changes. Deploying prod outside CI, applying the CI stack and upgrading the state store each need explicit operator authorization; a PR request is not deployment approval.
 
 - Lab display/repository names are separate from compatibility identifiers. Preserve the `mailflare` Worker and persisted resource IDs, storage keys and backup formats during renames.

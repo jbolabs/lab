@@ -1,6 +1,6 @@
 # Mailflare self-hosted image: TanStack Start app, SMTP listener, job queues and
 # backups in one Node process. Data lives in /data (mount a volume).
-FROM node:22-bookworm-slim AS base
+FROM node:24-bookworm-slim AS base
 WORKDIR /app
 ENV MAILFLARE_RUNTIME=node
 

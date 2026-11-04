@@ -9,7 +9,7 @@ One run climbs one page group from `scripts/ui-scan/pages.mjs` (which must cover
 
 ## Setup
 
-1. Dev server on a free port (`npm run dev -- --port 3017`). On a fresh worktree apply migrations first (`yes | npx wrangler d1 migrations apply DB --local`) and then `curl -X POST localhost:3017/api/seed`.
+1. Dev server on a free port (`PORT=3017 npm run dev`; it applies migrations itself), then `curl -X POST localhost:3017/api/seed`.
 2. Branch `ui-climb/<group>` from `main`.
 3. Baseline: `scripts/ui-scan/capture-base.sh base-0 <group>`. It sets uncommitted `src/` work aside, so a baseline is always clean (the gate refuses dirty ones). Omit the group to capture every group; do that for any change to a shared component, since a one-group capture missed a regression elsewhere once.
 

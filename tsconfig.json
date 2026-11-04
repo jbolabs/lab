@@ -17,13 +17,13 @@
 		"paths": {
 			"@/*": ["./src/*"]
 		},
-		"types": [
-			"./cloudflare-env.d.ts",
-			"./env.d.ts",
-			"node",
-			"@cloudflare/workers-types"
-		]
+		"types": ["node", "@cloudflare/workers-types"],
+		"allowImportingTsExtensions": true
 	},
 	"include": ["**/*.ts", "**/*.tsx"],
-	"exclude": ["node_modules", "deployment"]
+	"exclude": [
+		"node_modules",
+
+		"dist"
+	]
 }

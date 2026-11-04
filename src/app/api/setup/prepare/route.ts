@@ -1,7 +1,6 @@
 import { hasAdminAccount } from "@/lib/auth/setup";
 import { getEnv } from "@/lib/cloudflare";
 import { getSetupRequirementChecks } from "@/lib/setup/configuration";
-import { migrateCleanDatabase } from "@/lib/setup/migration";
 
 export async function POST() {
 	const env = getEnv();
@@ -13,19 +12,6 @@ export async function POST() {
 	}
 
 	const checks = getSetupRequirementChecks(env);
-	if (checks.some((check) => !check.configured)) {
-		return Response.json({ checks, migrated: false }, { status: 503 });
-	}
-
-	try {
-		const migrated = await migrateCleanDatabase(env.DB);
-		return Response.json({ checks, migrated });
-	} catch (error) {
-		const message =
-			error instanceof Error ? error.message : "Database preparation failed";
-		return Response.json(
-			{ checks, error: message, migrated: false },
-			{ status: 500 }
-		);
-	}
+	const ready = checks.every((check) => check.configured);
+	return Response.json({ checks }, { status: ready ? 200 : 503 });
 }

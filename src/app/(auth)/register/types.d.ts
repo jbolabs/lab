@@ -13,7 +13,6 @@ export interface SetupRequirementCheck {
 
 export interface SetupPreparationResult {
 	checks?: SetupRequirementCheck[];
-	migrated?: boolean;
 	error?: string;
 }
 

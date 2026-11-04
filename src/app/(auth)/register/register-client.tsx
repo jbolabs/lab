@@ -62,7 +62,6 @@ export function RegisterClient() {
 	const [setupSkipDns, setSetupSkipDns] = useState(false);
 	const [step, setStep] = useState<1 | 2 | 3>(1);
 	const [checks, setChecks] = useState<SetupRequirementCheck[]>([]);
-	const [databaseMigrated, setDatabaseMigrated] = useState(false);
 	const [preparationComplete, setPreparationComplete] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [mxChecking, setMxChecking] = useState(true);
@@ -79,7 +78,6 @@ export function RegisterClient() {
 			async () => {
 				try {
 					setChecks(preparation.data.checks ?? []);
-					setDatabaseMigrated(!!preparation.data.migrated);
 					if (!preparation.ok) {
 						setError(preparation.data.error ?? t("setup.completeConfig"));
 						return;
@@ -385,9 +383,7 @@ export function RegisterClient() {
 									<Alert variant="success">
 										<CheckCircle2 />
 										<AlertDescription>
-											{databaseMigrated
-												? t("setup.migrated")
-												: t("setup.schemaReady")}
+											{t("setup.schemaReady")}
 										</AlertDescription>
 									</Alert>
 								)}

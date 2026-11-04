@@ -159,7 +159,7 @@ test("the setting accepts only a boolean", () => {
 	);
 });
 
-test("migration adds the user column off by default and the journal lists it", () => {
+test("migration adds the user column off by default", () => {
 	const db = new Database(":memory:");
 	db.exec("CREATE TABLE users (id text primary key)");
 	db.exec(
@@ -177,12 +177,4 @@ test("migration adds the user column off by default and the journal lists it", (
 			.value,
 		0
 	);
-
-	const journal = JSON.parse(
-		readFileSync(join(root, "drizzle/migrations/meta/_journal.json"), "utf-8")
-	);
-	const entry = journal.entries.find(
-		(item) => item.tag === "0050_add_show_full_recipient_addresses"
-	);
-	assert.equal(entry?.idx, 42);
 });

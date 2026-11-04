@@ -12,39 +12,56 @@ Build every app and site to the bar of Linear's website or Apple Notes: simple p
 ## Commands
 
 ```bash
-npm run dev                    # Vite + vinext in local workerd
+npm run dev                    # alchemy dev: every binding local, migrations applied, http://localhost:3000 (PORT= to change)
+npm run dev:destroy            # tear down this worktree's dev stage
+npm run plan                   # alchemy plan for your cloud sandbox stage
+npm run deploy                 # deploy your cloud sandbox stage (live_<user>_<worktree>)
+npm run destroy                # destroy it
+npm run ci:plan                # plan the CI stack (stacks/github.ts), admin profile
+npm run ci:deploy              # apply it (operator only)
+
 npm run lint                   # Ultracite Oxlint + strict shadcn rules (check only)
 npm run lint:fix               # apply safe lint fixes
 npm run format                 # Oxfmt: tabs, double quotes, semicolons
 npm run format:check           # check formatting without writes
-npm run build                  # vinext build, including the complete Worker
+npm run typecheck              # tsc --noEmit
+npm test                       # every node:test file in tests/
 
-npm run db:generate            # drizzle-kit generate from src/db/schema/index.ts
-npm run db:migrate:local       # wrangler d1 migrations apply DB --local
-npm run db:migrate:remote      # --remote (needs a concrete database_id in wrangler.jsonc)
+npm run dev:node               # self-hosted Node runtime, development
+npm run build:node             # build it to dist/server.mjs
+npm run start:node             # run it
+npm run push:keys              # generate VAPID keys for a Node install
 npm run db:seed                # POST /api/seed against localhost:3000
-
-npm run deploy                 # vinext build + wrangler deploy
-npm run deploy                 # build and deploy; migrate later from Admin settings
-npm run preview                # build and preview the vinext Worker locally
-npm run cf-typegen             # regenerate cloudflare-env.d.ts from wrangler.jsonc
+npm run ui:capture             # UI hill-climb screenshots
+npm run ui:compare
 ```
 
-There is no test script in `package.json`; the checks under `tests/` are `node:test` files run with `node --test tests/*.test.mjs` (pass the glob — on Node 24 a bare `tests/` is read as a module path). They must not need Workers bindings, so anything that reaches D1 or R2 belongs in a script under `scripts/` run against `npm run dev` instead.
+Tests are `node:test` files. They must not need Workers bindings, so anything that reaches D1 or R2 belongs in a script under `scripts/` run against `npm run dev` instead.
 
-`next.config.ts` sets `typescript.ignoreBuildErrors: true` and `tsconfig.json` sets `noImplicitAny: false`, so the build will not catch type errors. Run `npx tsc --noEmit` if you want real type checking.
+`tsconfig.json` sets `noImplicitAny: false`; nothing in the deploy type-checks, so run `npm run typecheck`.
 
-`npm run deploy` builds with vinext and uploads with Wrangler. The Cloudflare Vite plugin generates `dist/server/wrangler.json` and redirects Wrangler to it, preserving the custom `worker.ts` entrypoint.
+## Infrastructure
+
+`alchemy.run.ts` is the whole Cloudflare install: the Worker (`Cloudflare.Website.Vite`, which builds this Vite app with `worker.ts` as its entry), D1, R2, queues and consumers, the Durable Object, rate limits and, in prod only, the mail domains and the app's runtime API token. `stacks/` holds its config (`config.ts`), the optional app settings it binds (`settings.ts`), the Web Push key conversion (`web-push.ts`) and the CI stack (`github.ts`). There is no `wrangler.jsonc`.
+
+Stages:
+
+- `prod` — lab.jbolabs.com, deployed by CI from `main`. It keeps the stack name `mail`, every logical ID and every physical name it has always had; never rename them.
+- `pr-<n>` — a preview for a PR with the `preview` label (workers.dev, fresh database, no mail domains), destroyed when the PR closes or loses the label.
+- `dev_<user>_<worktree>` — `npm run dev`, all local.
+- `live_<user>_<worktree>` — `npm run deploy`, your own cloud sandbox.
+
+Infra changes go through `npm run plan` and CI. Operators deploy prod and the CI stack; see `docs/jbo-deployment.md`.
 
 ## Architecture
 
-Next.js App Router APIs running on Cloudflare Workers via vinext. Drizzle ORM over D1, R2 for raw MIME, attachments, and record backups, Queues for async mail processing, a Durable Object for realtime, and a cron trigger for scheduled backups.
+TanStack Start (pages, server functions, HTTP routes) on Cloudflare Workers, built by Vite. Route handlers still live under `src/app/api` and are mounted by `src/routes`. Drizzle ORM over D1, R2 for raw MIME, attachments, and record backups, Queues for async mail processing, a Durable Object for realtime, and a cron trigger for scheduled backups.
 
 ### worker.ts is the entrypoint
 
-`worker.ts` wraps `vinext/server/fetch-handler` and adds handlers Next.js cannot express:
+`worker.ts` wraps the TanStack Start handler (`src/server.ts`) and adds handlers it cannot express:
 
-- **`fetch`** — intercepts `/api/realtime` for the WebSocket upgrade (authenticates the session cookie, then routes to `env.REALTIME.getByName(user.id)`), delegating everything else to vinext.
+- **`fetch`** — intercepts `/api/realtime` for the WebSocket upgrade (authenticates the session cookie, then routes to `env.REALTIME.getByName(user.id)`), delegating everything else to `src/server.ts`.
 - **`email`** — the Cloudflare Email Routing handler. Resolves domain routing rules first (`resolveIncomingMail` in `src/lib/email/incoming.ts`) because `message.setReject()` and `message.forward()` only exist here, then applies optional account-level forwarding (loop-guarded by the `MAILFLARE_FORWARDED_HEADER`), writes raw MIME to R2, and enqueues to `INBOUND_QUEUE`. It never parses mail inline.
 - **`queue`** — a single consumer for both queues; `isInboundQueueMessage` and `isWebhookRetryMessage` in `worker-utils.ts` discriminate inbound mail, webhook retries, and outbound payloads. Failures `retry({ delaySeconds: 10 })`.
 
@@ -87,17 +104,15 @@ Both queries filter on `scope`, so any new rule must set it explicitly. `forward
 
 Domain and mailbox management call the Cloudflare API at runtime (`src/lib/cloudflare-api.ts`, `src/lib/domains/`). Adding a domain enables Email Routing DNS and sending subdomains on the zone; creating a mailbox creates a Cloudflare Email Routing rule targeting `CF_EMAIL_WORKER_NAME`; removing a domain cleans those up (`src/lib/domains/cloudflare-cleanup.ts`).
 
-Consequence: `CF_EMAIL_WORKER_NAME`, the deployed Worker `name`, and `services[].service` for `WORKER_SELF_REFERENCE` in `wrangler.jsonc` must all agree. Cloudflare service bindings need a literal name and cannot reference the top-level `name`.
+Consequence: `CF_EMAIL_WORKER_NAME` must name the deployed Worker. In prod both come from `workerName` in `stacks/config.ts`; other stages set no token, so domains are recorded as manual and the catch-all is never pointed anywhere.
 
 Auth is `CF_TOKEN` (preferred) or the legacy `CF_EMAIL` + `CF_API_KEY` pair.
 
-### Schema and the dual-migration gotcha
+### Schema and migrations
 
-Schema lives in one file: `src/db/schema/index.ts` (21 tables). Migrations are generated into `drizzle/migrations/`. Note that `drizzle-kit generate` currently prompts interactively about a snapshot rename conflict, so recent migrations were hand-written to match the generated style.
+Schema lives in one file: `src/db/schema/index.ts`. Migrations are hand-written SQL files in `drizzle/migrations/` (flat, no drizzle-kit), applied in name order and never edited once merged: add a new file.
 
-`npm run db:bundle` packages the SQL files for the Worker. `/api/setup/prepare` and the admin migration endpoint use the shared runner in `src/lib/migrations/service.ts`; migration files remain the only schema history to maintain. Build, deploy, preview, and development scripts generate the bundle before loading application code.
-
-The setup path only ever initializes an empty database — it refuses to touch one that already has tables.
+On Cloudflare, Alchemy applies them on every deploy and on every `npm run dev`, recording them in `__alchemy_migrations`. Prod's older `d1_migrations` table is frozen history Alchemy adopted once. The Node runtime applies the same files in the same order at start (`server/runtime/migrate.ts`, recording in `d1_migrations`). The app has no migration runner of its own, so the schema always matches the deployed code.
 
 ### Object storage is `env.BUCKET`, from R2, Backblaze B2 or AWS S3
 
@@ -105,9 +120,9 @@ Every blob (raw MIME, attachments, Drive, avatars, branding icon, JMAP uploads, 
 
 ### Two runtimes, one code path
 
-The Node build aliases `cloudflare:workers` to `server/runtime/cloudflare-workers.ts`, allowing the shared helper to use its existing `getNodeEnv()` fallback. That alias only applies when `MAILFLARE_RUNTIME=node`; vinext uses the native Workers module. Next outputs to `.next-node` so its generated types do not collide with vinext's `.next/types`.
+The Node build aliases `cloudflare:workers` to `server/runtime/cloudflare-workers.ts`, allowing the shared helper to use its existing `getNodeEnv()` fallback. That alias only applies when `MAILFLARE_RUNTIME=node`; on Workers the native module is used.
 
-The app reaches every platform service through `getEnv()` (`src/lib/cloudflare.ts`). On Workers that is the native `cloudflare:workers` env. In the self-hosted runtime, `server/index.ts` builds an object with the same shape (`server/runtime/env.ts`: a D1-compatible wrapper over better-sqlite3, an R2-compatible file bucket, `EMAIL` over nodemailer or the Cloudflare Sending REST API, in-process queues, a WebSocket hub standing in for the Durable Object, a fixed-window rate limiter) and publishes it as `globalThis.__mailflareNodeEnv` before Next starts; `getNodeEnv()` in `src/lib/runtime.ts` returns it. Application code must not care which one it got. The few places that must differ check `isNodeRuntime(env)`: setup requirement checks, the self-update button, and domain provisioning, which without Cloudflare credentials records the zone as `"manual"` (`src/lib/domains/provision.ts`) so every Cloudflare call is a no-op and the DNS page lists records to set by hand. Inbound mail off Workers goes through `intakeIncomingMail` (`src/lib/email/intake.ts`) from either the SMTP listener (`server/runtime/smtp.ts`) or the signed `/api/inbound` webhook the relay Worker in `deploy/cloudflare-email-relay` calls. `npm run build:node` builds Next in Node mode and bundles the server with esbuild to `dist/server.mjs`; the Dockerfile runs that. Migrations are applied from `drizzle/migrations` at start (`server/runtime/migrate.ts`), so the bootstrap schema in `src/lib/setup/migration.ts` is not used there.
+The app reaches every platform service through `getEnv()` (`src/lib/cloudflare.ts`). On Workers that is the native `cloudflare:workers` env. In the self-hosted runtime, `server/index.ts` builds an object with the same shape (`server/runtime/env.ts`: a D1-compatible wrapper over better-sqlite3, an R2-compatible file bucket, `EMAIL` over nodemailer or the Cloudflare Sending REST API, in-process queues, a WebSocket hub standing in for the Durable Object, a fixed-window rate limiter) and publishes it as `globalThis.__mailflareNodeEnv` before the app starts; `getNodeEnv()` in `src/lib/runtime.ts` returns it. Application code must not care which one it got. The few places that must differ check `isNodeRuntime(env)`: setup requirement checks, the self-update button, and domain provisioning, which without Cloudflare credentials records the zone as `"manual"` (`src/lib/domains/provision.ts`) so every Cloudflare call is a no-op and the DNS page lists records to set by hand. Inbound mail off Workers goes through `intakeIncomingMail` (`src/lib/email/intake.ts`) from either the SMTP listener (`server/runtime/smtp.ts`) or the signed `/api/inbound` webhook the relay Worker in `deploy/cloudflare-email-relay` calls. `npm run build:node` builds the app in Node mode and bundles the server with esbuild to `dist/server.mjs`; the Dockerfile runs that. Migrations are applied from `drizzle/migrations` at start (`server/runtime/migrate.ts`).
 
 ### JMAP lives in `src/lib/jmap/`
 
@@ -131,7 +146,7 @@ Native push goes straight to APNs when the server has `APNS_KEY_ID`/`APNS_TEAM_I
 
 ### Search is an FTS5 index kept by triggers
 
-`messages_fts` (migration 0030) is an external-content FTS5 table over `messages`; three triggers in the same migration keep it in sync on insert, update and delete, so no application code touches the index. `buildSearchConditions` in `src/lib/search/conditions.ts` turns the Gmail-style grammar (`src/lib/search/query-utils.ts`) into a `rowid IN (SELECT rowid FROM messages_fts WHERE messages_fts MATCH ?)` predicate plus plain column filters. Two consequences: the bootstrap SQL in `src/lib/setup/migration.ts` is split with `splitSqlStatements`, which keeps trigger bodies whole; and the backup coverage check skips `messages_fts%`, since the shadow tables are derived and repopulate on restore. `wrangler d1 export` does not work on databases with virtual tables; the app's own JSON backup is unaffected.
+`messages_fts` (migration 0030) is an external-content FTS5 table over `messages`; three triggers in the same migration keep it in sync on insert, update and delete, so no application code touches the index. `buildSearchConditions` in `src/lib/search/conditions.ts` turns the Gmail-style grammar (`src/lib/search/query-utils.ts`) into a `rowid IN (SELECT rowid FROM messages_fts WHERE messages_fts MATCH ?)` predicate plus plain column filters. The backup coverage check skips `messages_fts%`, since the shadow tables are derived and repopulate on restore. Cloudflare's D1 export does not work on databases with virtual tables; the app's own JSON backup is unaffected.
 
 ### Access control
 
@@ -156,7 +171,7 @@ Lab removed upstream Mailflare's Paymug licensing: accounts, shared inboxes, boo
 
 ### Self-update
 
-The admin overview dispatches `deploy-update.yml` (constant in `src/app/api/admin/update/utils.ts`) in the installation repo, which merges the upstream default branch and pushes it. It does not migrate, build, or deploy; the connected Cloudflare Git integration deploys the push. The admin update card separately reports and applies pending D1 migrations through the Worker binding.
+The admin overview dispatches the `lab.yml` workflow (constant in `src/app/api/admin/update/utils.ts`), which deploys `main` like a push does, migrations included.
 
 ## Conventions
 
@@ -166,7 +181,7 @@ The admin overview dispatches `deploy-update.yml` (constant in `src/app/api/admi
 - API routes return `NextResponse.json({ error: "..." }, { status })` for failures; there is no shared error envelope helper.
 - UI is Tailwind v4 + shadcn `base-maia` (Base UI primitives) in `src/components/ui/`. Compose with `render={<Link … />}`, not Radix's `asChild` (add `nativeButton={false}` when a button renders a non-button); menu items take `onClick`, not `onSelect`. `DialogContent` sets no max height, so a tall dialog overflows the viewport with an unreachable submit button — add `max-h-[calc(100vh-4rem)] overflow-y-auto` on any dialog with more than a few fields.
 - Design and check every UI change at desktop browser widths as well as on phones; much of the traffic is desktop. On phones the app is used as a home-screen web app (`display: "standalone"` in `src/app/manifest.ts`), not in Safari, so test phones in that mode. It has no URL bar, no browser back button or edge-swipe back, and no browser pull-to-refresh (the root sets `overscroll-behavior: none`), so every screen needs its own way back (mark its back button `data-edge-swipe-back`; the left-edge swipe in `src/components/edge-swipe.tsx` clicks it, or opens the drawer when there is none) and every list its own refresh. The page draws under the status bar (`viewportFit: "cover"`), so fixed headers, bars and sheets pad with `env(safe-area-inset-*)`. Use `haptic()` from `src/lib/haptics.ts` for touch feedback.
-- `cloudflare-env.d.ts` is generated (500KB) — regenerate with `cf-typegen`, never hand-edit.
+- `CloudflareEnv` (`env.d.ts`) extends `LabEnv`, inferred from the Worker's bindings in `alchemy.run.ts`. Add a binding there, never by hand-typing it; `env.d.ts` only narrows queue and Durable Object types and lists optional settings. A new optional setting goes in `stacks/settings.ts`, `.env.example` and the `production` job of `.github/workflows/lab.yml` (`tests/stack-settings.test.mjs` checks they agree).
 
 <!-- BEGIN:nextjs-agent-rules -->
 

@@ -33,7 +33,7 @@ Tokens and codes are random and stored only as SHA-256 hashes. Grant identities 
 
 ## Validation
 
-Run `npm run db:bundle`, `node --test tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs`, and `npx tsc --noEmit`. Exercise a real client against a deployed HTTPS origin before claiming compatibility with that client. Local protocol and browser tests do not prove an external client's connection behavior.
+Run `node --test tests/mcp-oauth.test.mjs tests/backup-table-list.test.mjs` and `npm run typecheck`. Exercise a real client against a deployed HTTPS origin before claiming compatibility with that client. Local protocol and browser tests do not prove an external client's connection behavior.
 
 New OAuth strings currently use English fallbacks in the other locale catalogs.
 
