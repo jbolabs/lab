@@ -4,7 +4,7 @@ import { authenticateApiKeyValue, hasScope } from "@/lib/api/key-auth";
 import { hasValidSessionMutationOrigin } from "@/lib/auth/origin";
 import { getEnv } from "@/lib/cloudflare";
 
-import { DriveFailure } from "./errors";
+import { describeDriveError } from "./errors";
 import { redeemDriveTransferToken } from "./transfer";
 import type { DriveTransferAction } from "./transfer";
 
@@ -84,7 +84,7 @@ export async function authorizeDrive(
 	return { db, env, error: null, user, via: "session" } as const;
 }
 
-/** Runs a Drive route body; a DriveFailure becomes `{ error }` with its status, anything else is returned as JSON. */
+/** Runs a Drive route body; a failure becomes `{ error }` with its status, anything else is returned as JSON. */
 export async function driveResponse(
 	run: () => Promise<unknown>
 ): Promise<Response> {
@@ -92,9 +92,11 @@ export async function driveResponse(
 		const result = await run();
 		return result instanceof Response ? result : Response.json(result);
 	} catch (error) {
-		if (error instanceof DriveFailure) {
-			return Response.json({ error: error.message }, { status: error.status });
-		}
-		throw error;
+		const { message, status } = await describeDriveError(
+			getEnv(),
+			error,
+			"request"
+		);
+		return Response.json({ error: message }, { status });
 	}
 }

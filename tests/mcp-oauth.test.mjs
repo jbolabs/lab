@@ -95,18 +95,24 @@ const resource = `${origin}/mcp`;
 const verifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
 const challenge = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
 const redirect = "http://127.0.0.1:18999/callback";
-function fixture(beforeOAuth = false) {
+function fixture(skipMigration) {
 	const DB = new SqliteDatabase(":memory:");
 	DB.db.pragma("foreign_keys = OFF");
+	DB.db.exec(
+		"CREATE TABLE d1_migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)"
+	);
 	for (const migration of JSON.parse(
 		readFileSync(join(root, "src/lib/migrations/bundle.json"))
 	).migrations) {
-		if (beforeOAuth && migration.name === "0067_add_mcp_oauth.sql") {
+		if (migration.name === skipMigration) {
 			continue;
 		}
 		for (const sql of migration.statements) {
 			DB.db.exec(sql);
 		}
+		DB.db
+			.prepare("INSERT INTO d1_migrations (name) VALUES (?)")
+			.run(migration.name);
 	}
 	DB.db.pragma("foreign_keys = ON");
 	DB.db
@@ -479,7 +485,7 @@ test("registration rejects external plaintext callbacks and bounded registration
 });
 
 test("backups work before OAuth migration, after it, and when restoring older full documents", async () => {
-	const older = fixture(true);
+	const older = fixture("0067_add_mcp_oauth.sql");
 	const oldBytes = await exportDatabaseRecords(older.env.DB);
 	const legacy = JSON.parse(new TextDecoder().decode(oldBytes));
 	delete legacy.tables.oauth_clients;
@@ -910,9 +916,10 @@ test("email-only connections expose no calendar tools; calendar access requires 
 
 async function driveFixture(
 	t,
-	scope = "mcp:drive-read mcp:drive-write offline_access"
+	scope = "mcp:drive-read mcp:drive-write offline_access",
+	skipMigration = null
 ) {
-	const f = fixture();
+	const f = fixture(skipMigration);
 	const directory = mkdtempSync(join(out, "bucket-"));
 	f.env.BUCKET = openFileBucket(directory);
 	t.after(() => {
@@ -1200,6 +1207,70 @@ test("MCP moves a file over 1 MiB through signed part and download URLs", async 
 		routeParams(completed.item.id)
 	);
 	assert.equal(swapped.status, 401);
+});
+
+test("MCP uploads small and multipart files end to end", async (t) => {
+	const f = await driveFixture(t);
+	for (const [name, size] of [
+		["small.pdf", 64_992],
+		["multipart.bin", 65 * 1024 * 1024 + 17],
+	]) {
+		const bytes = new Uint8Array(size).map((_, index) => index % 251);
+		const started = toolData(
+			await callMcp(f, f.token, "start_drive_upload", {
+				contentType: "application/octet-stream",
+				name,
+				size,
+			})
+		);
+		assert.equal(started.parts.length, size <= started.partSize ? 1 : 2);
+		for (const part of started.parts) {
+			const body = bytes.subarray(part.offset, part.offset + part.size);
+			const response = await drivePartPut(
+				new Request(part.url, {
+					body,
+					headers: { "Content-Length": String(body.length) },
+					method: "PUT",
+				}),
+				routeParams(started.id)
+			);
+			assert.equal(response.status, 200);
+		}
+		const completed = toolData(
+			await callMcp(f, f.token, "complete_drive_upload", { id: started.id })
+		);
+		assert.equal(completed.complete, true);
+		assert.equal(completed.item.size, size);
+		const link = toolData(
+			await callMcp(f, f.token, "get_drive_download_url", {
+				id: completed.item.id,
+			})
+		);
+		const downloaded = await driveContent(
+			new Request(link.url),
+			routeParams(completed.item.id)
+		);
+		assert.equal(downloaded.status, 200);
+		assert.deepEqual(new Uint8Array(await downloaded.arrayBuffer()), bytes);
+	}
+});
+
+test("a Drive tool names the database update it is missing", async (t) => {
+	const f = await driveFixture(
+		t,
+		undefined,
+		"0068_add_drive_transfer_tokens.sql"
+	);
+	const failed = await callMcp(f, f.token, "start_drive_upload", {
+		contentType: "application/pdf",
+		name: "Stud Construction Website Guide.pdf",
+		size: 64_992,
+	});
+	assert.equal(failed.result.isError, true);
+	assert.equal(
+		toolData(failed).error,
+		"Drive start_drive_upload failed: the database has pending migrations (0068_add_drive_transfer_tokens.sql). An admin can apply them from the Admin overview."
+	);
 });
 
 test("MCP organizes, shares and trashes Drive items", async (t) => {
