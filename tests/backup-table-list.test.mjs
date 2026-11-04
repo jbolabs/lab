@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import nodePath from "node:path";
@@ -9,16 +8,18 @@ import { pathToFileURL } from "node:url";
 import Database from "better-sqlite3";
 import { build } from "esbuild";
 
-const { existsSync, mkdtempSync, readFileSync, rmSync } = fs;
+import { migrations } from "./helpers/migrations.mjs";
+
+const { mkdtempSync, rmSync } = fs;
 const { tmpdir } = os;
 const { join } = nodePath;
 
 const root = join(import.meta.dirname, "..");
 
 /**
- * The backup constants and the bundled migrations move apart when a migration
- * adds a table, so the test bundles the constants with the esbuild already used
- * by other tests and replays the bundle exactly like `push-devices-migration.test.mjs`.
+ * The backup constants and the migrations move apart when a migration adds a
+ * table, so the test bundles the constants with the esbuild already used by
+ * other tests and replays every migration like `push-devices-migration.test.mjs`.
  */
 const outDir = mkdtempSync(join(tmpdir(), "mailflare-backup-table-list-test-"));
 after(() => rmSync(outDir, { force: true, recursive: true }));
@@ -67,20 +68,10 @@ const { BACKUP_TABLE_GROUPS } = await import(
 	)
 );
 
-const bundlePath = join(root, "src/lib/migrations/bundle.json");
-if (!existsSync(bundlePath)) {
-	spawnSync("node", [join(root, "scripts/generate-migration-bundle.mjs")], {
-		cwd: root,
-	});
-}
-const { migrations } = JSON.parse(readFileSync(bundlePath, "utf-8"));
-
 const db = new Database(":memory:");
 db.pragma("foreign_keys = OFF");
 for (const migration of migrations) {
-	for (const statement of migration.statements) {
-		db.exec(statement);
-	}
+	db.exec(migration.sql);
 }
 after(() => db.close());
 

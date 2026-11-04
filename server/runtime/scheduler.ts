@@ -13,7 +13,7 @@ async function reportFailure(task: Promise<unknown>, message: string) {
 	}
 }
 
-/** Fire the daily 02:00 UTC backup and the recurring maintenance jobs, matching the cron triggers in wrangler.jsonc. */
+/** Fire the daily 02:00 UTC backup and the recurring maintenance jobs, matching the Worker's cron triggers in alchemy.run.ts. */
 export function startScheduler(env: CloudflareEnv) {
 	let lastRunDay = "";
 	const timer = setInterval(() => {

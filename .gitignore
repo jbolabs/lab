@@ -41,16 +41,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
-/src/lib/migrations/bundle.json
-
-# wrangler files
-.wrangler
-.dev.vars*
-
-
-!.dev.vars.example
 yarn.lock
-wrangler.prod.jsonc
 mailflare-landing
 
 .agents

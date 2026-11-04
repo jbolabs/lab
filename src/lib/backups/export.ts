@@ -40,6 +40,8 @@ export const INTERNAL_TABLES = [
 	"oauth_codes",
 	"oauth_tokens",
 	"oauth_rate_limits",
+	// Migration bookkeeping: Alchemy owns `__alchemy_migrations`; `d1_migrations` is the frozen pre-Alchemy history.
+	"__alchemy_migrations",
 	"d1_migrations",
 	// JMAP state counters, also derived: the jmap_messages_* triggers on
 	// `messages` insert and bump a row per mailbox as messages are restored.

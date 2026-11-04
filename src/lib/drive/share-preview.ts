@@ -5,8 +5,6 @@ import { describeDriveItem, OG_IMAGE } from "./share-preview-utils";
 import type { DriveRow } from "./types";
 import { driveObjectKey, drivePosterKey } from "./utils";
 
-// Media Transformations reads at most this much of a video.
-const MEDIA_INPUT_MAX_BYTES = 100 * 1024 * 1024;
 // Images we pass through untouched when the Images binding is unavailable; crawlers skip larger ones.
 const RAW_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 // The Images binding reads at most this much of a photo.
@@ -31,35 +29,10 @@ const LATIN = /^[ -ɏ‘-‟…]*$/u;
 
 async function readPoster(env: CloudflareEnv, item: DriveRow) {
 	const stored = await env.BUCKET.get(drivePosterKey(item.ownerId, item.id));
-	if (stored) {
-		return stored.arrayBuffer();
-	}
-	if (!env.MEDIA || item.size > MEDIA_INPUT_MAX_BYTES) {
-		return null;
-	}
-	const source = await env.BUCKET.get(
-		item.r2Key ?? driveObjectKey(item.ownerId, item.id)
-	);
-	if (!source) {
-		return null;
-	}
-	try {
-		const frame = await env.MEDIA.input(source.body)
-			.transform({ fit: "scale-down", width: 1280 })
-			.output({ format: "jpg", mode: "frame", time: "1s" })
-			.media();
-		const bytes = await new Response(frame).arrayBuffer();
-		await env.BUCKET.put(drivePosterKey(item.ownerId, item.id), bytes, {
-			httpMetadata: { contentType: "image/jpeg" },
-		});
-		return bytes;
-	} catch (error) {
-		console.warn("Video poster extraction failed", error);
-		return null;
-	}
+	return stored ? stored.arrayBuffer() : null;
 }
 
-/** A still frame of a shared video: the one its owner's browser captured, or one pulled by Media Transformations. */
+/** A still frame of a shared video, captured by its owner's browser at upload. */
 export async function drivePosterResponse(
 	env: CloudflareEnv,
 	item: DriveRow

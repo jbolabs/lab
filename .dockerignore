@@ -1,12 +1,10 @@
 node_modules
-.wrangler
 dist
 data
 coverage
 *.log
 .git
 .github
-.dev.vars
 .env
 .env.*
 !.env.docker.example
@@ -14,7 +12,5 @@ docs/screenshots
 docs/demo.mp4
 
 .alchemy
-deployment/node_modules
-deployment/.alchemy
 screenshots
 .tanstack

@@ -16,7 +16,7 @@ import type {
 
 const GITHUB_API_URL = "https://api.github.com";
 const GITHUB_API_VERSION = "2026-03-10";
-const UPDATE_WORKFLOW = "mcp-oauth.yml";
+const UPDATE_WORKFLOW = "lab.yml";
 const UPDATE_SOURCE_REPOSITORY = "jbolabs/lab";
 
 export async function authorizeAdminRequest(request: Request) {

@@ -8,8 +8,9 @@ import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
 
 import { deferredPromise } from "./helpers/deferred.mjs";
+import { migrations } from "./helpers/migrations.mjs";
 
-const { mkdtempSync, readFileSync, rmSync } = fs;
+const { mkdtempSync, rmSync } = fs;
 const { join } = nodePath;
 
 const root = join(import.meta.dirname, "..");
@@ -101,15 +102,11 @@ function fixture(skipMigration) {
 	DB.db.exec(
 		"CREATE TABLE d1_migrations (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)"
 	);
-	for (const migration of JSON.parse(
-		readFileSync(join(root, "src/lib/migrations/bundle.json"))
-	).migrations) {
+	for (const migration of migrations) {
 		if (migration.name === skipMigration) {
 			continue;
 		}
-		for (const sql of migration.statements) {
-			DB.db.exec(sql);
-		}
+		DB.db.exec(migration.sql);
 		DB.db
 			.prepare("INSERT INTO d1_migrations (name) VALUES (?)")
 			.run(migration.name);
@@ -916,10 +913,9 @@ test("email-only connections expose no calendar tools; calendar access requires 
 
 async function driveFixture(
 	t,
-	scope = "mcp:drive-read mcp:drive-write offline_access",
-	skipMigration = null
+	scope = "mcp:drive-read mcp:drive-write offline_access"
 ) {
-	const f = fixture(skipMigration);
+	const f = fixture();
 	const directory = mkdtempSync(join(out, "bucket-"));
 	f.env.BUCKET = openFileBucket(directory);
 	t.after(() => {
@@ -1253,24 +1249,6 @@ test("MCP uploads small and multipart files end to end", async (t) => {
 		assert.equal(downloaded.status, 200);
 		assert.deepEqual(new Uint8Array(await downloaded.arrayBuffer()), bytes);
 	}
-});
-
-test("a Drive tool names the database update it is missing", async (t) => {
-	const f = await driveFixture(
-		t,
-		undefined,
-		"0068_add_drive_transfer_tokens.sql"
-	);
-	const failed = await callMcp(f, f.token, "start_drive_upload", {
-		contentType: "application/pdf",
-		name: "Stud Construction Website Guide.pdf",
-		size: 64_992,
-	});
-	assert.equal(failed.result.isError, true);
-	assert.equal(
-		toolData(failed).error,
-		"Drive start_drive_upload failed: the database has pending migrations (0068_add_drive_transfer_tokens.sql). An admin can apply them from the Admin overview."
-	);
 });
 
 test("MCP organizes, shares and trashes Drive items", async (t) => {

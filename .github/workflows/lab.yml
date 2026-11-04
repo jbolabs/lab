@@ -1,0 +1,191 @@
+name: Lab
+
+# main deploys the `prod` stage. A pull request with the `preview` label
+# deploys its own `pr-<number>` stage, destroyed when the PR closes or the
+# label comes off. Stages are defined in alchemy.run.ts.
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled, closed]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Runs on main queue in push order (a newer pending run replaces an older one),
+# so prod never deploys an older commit after a newer one. PR runs don't queue.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.run_id) || format('{0}-{1}', github.workflow, github.ref) }}
+  cancel-in-progress: false
+
+jobs:
+  changes:
+    if: ${{ github.event_name != 'pull_request' || contains(fromJSON('["opened","reopened","synchronize"]'), github.event.action) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ github.event_name != 'pull_request' || steps.filter.outputs.code == 'true' }}
+    steps:
+      - id: filter
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          # A file counts only if it matches every pattern, so the "!" entries carve docs out of "**".
+          predicate-quantifier: every
+          filters: |
+            code:
+              - "**"
+              - "!docs/**"
+              - "!**/*.md"
+              - "!screenshots/**"
+
+  check:
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: check-${{ github.event.pull_request.number || github.sha }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/install
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
+      - name: Build the self-hosted Node runtime
+        run: npm run build:node
+
+  # Deploys the whole stack to local emulators and drives it over HTTP: the
+  # Worker build, bindings and migrations, before any cloud deploy.
+  stack:
+    needs: changes
+    if: ${{ needs.changes.outputs.code == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: stack-${{ github.event.pull_request.number || github.sha }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/install
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+      - run: npm run test:stack
+
+  production:
+    needs: [check, stack]
+    if: ${{ github.repository == 'jbolabs/lab' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://lab.jbolabs.com
+    concurrency:
+      group: stage-prod
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      # Optional app settings (stacks/settings.ts); each is bound only when its secret is set.
+      AI_API_KEY: ${{ secrets.AI_API_KEY }}
+      AI_BASE_URL: ${{ secrets.AI_BASE_URL }}
+      AI_MODEL: ${{ secrets.AI_MODEL }}
+      APNS_KEY_ID: ${{ secrets.APNS_KEY_ID }}
+      APNS_PRIVATE_KEY: ${{ secrets.APNS_PRIVATE_KEY }}
+      APNS_RELAY_URL: ${{ secrets.APNS_RELAY_URL }}
+      APNS_TEAM_ID: ${{ secrets.APNS_TEAM_ID }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
+      B2_BUCKET: ${{ secrets.B2_BUCKET }}
+      B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+      B2_KEY_ID: ${{ secrets.B2_KEY_ID }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
+      S3_REGION: ${{ secrets.S3_REGION }}
+      S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+      TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # A run (or rerun) of an older commit must never replace a newer deploy.
+      - name: Check this is still the head of main
+        id: head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          head=$(gh api "repos/${{ github.repository }}/commits/main" --jq .sha)
+          if [ "$head" = "$GITHUB_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Skipping: main is at $head, newer than $GITHUB_SHA."
+          fi
+      - if: ${{ steps.head.outputs.current == 'true' }}
+        uses: ./.github/actions/install
+      - if: ${{ steps.head.outputs.current == 'true' }}
+        run: npx alchemy deploy --stage prod --yes --no-input
+      - name: Smoke test
+        if: ${{ steps.head.outputs.current == 'true' }}
+        run: curl --fail --silent --show-error --retry 5 --retry-all-errors https://lab.jbolabs.com/api/setup/status
+
+  preview:
+    needs: [check, stack]
+    # Runs on pushes to a labelled PR and when the label is added (checks are skipped then, hence !failure()).
+    if: >-
+      ${{ !failure() && !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'preview') && (github.event.action != 'labeled' || github.event.label.name == 'preview') && github.event.action != 'unlabeled' && github.event.action != 'closed' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: preview
+    permissions:
+      contents: read
+      pull-requests: write
+    concurrency:
+      group: stage-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      GITHUB_TOKEN: ${{ github.token }}
+      PULL_REQUEST: ${{ github.event.pull_request.number }}
+      COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/install
+      - run: npx alchemy deploy --stage pr-${{ github.event.pull_request.number }} --yes --no-input
+
+  preview-destroy:
+    if: >-
+      ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && ((github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, 'preview')) || (github.event.action == 'unlabeled' && github.event.label.name == 'preview')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: preview
+    permissions:
+      contents: read
+      pull-requests: write
+    concurrency:
+      group: stage-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    # Same providers as the deploy, so the preview comment can be destroyed too.
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      GITHUB_TOKEN: ${{ github.token }}
+      PULL_REQUEST: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/install
+      - run: npx alchemy destroy --stage pr-${{ github.event.pull_request.number }} --yes --no-input

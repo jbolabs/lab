@@ -102,7 +102,6 @@ import { Route as ApiAdminAiUsageRouteImport } from './routes/api.admin.ai-usage
 import { Route as ApiAdminApiKeysRouteImport } from './routes/api.admin.api-keys'
 import { Route as ApiAdminAwsRouteImport } from './routes/api.admin.aws'
 import { Route as ApiAdminGeneralRouteImport } from './routes/api.admin.general'
-import { Route as ApiAdminMigrationsRouteImport } from './routes/api.admin.migrations'
 import { Route as ApiAdminResendKeyRouteImport } from './routes/api.admin.resend-key'
 import { Route as ApiAdminSearchIndexRouteImport } from './routes/api.admin.search-index'
 import { Route as ApiAdminUpdateRouteImport } from './routes/api.admin.update'
@@ -745,11 +744,6 @@ const ApiAdminAwsRoute = ApiAdminAwsRouteImport.update({
 const ApiAdminGeneralRoute = ApiAdminGeneralRouteImport.update({
   id: '/api/admin/general',
   path: '/api/admin/general',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAdminMigrationsRoute = ApiAdminMigrationsRouteImport.update({
-  id: '/api/admin/migrations',
-  path: '/api/admin/migrations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminResendKeyRoute = ApiAdminResendKeyRouteImport.update({
@@ -1747,7 +1741,6 @@ export interface FileRoutesByFullPath {
   '/api/admin/api-keys': typeof ApiAdminApiKeysRoute
   '/api/admin/aws': typeof ApiAdminAwsRoute
   '/api/admin/general': typeof ApiAdminGeneralRoute
-  '/api/admin/migrations': typeof ApiAdminMigrationsRoute
   '/api/admin/resend-key': typeof ApiAdminResendKeyRoute
   '/api/admin/search-index': typeof ApiAdminSearchIndexRoute
   '/api/admin/update': typeof ApiAdminUpdateRoute
@@ -2005,7 +1998,6 @@ export interface FileRoutesByTo {
   '/api/admin/api-keys': typeof ApiAdminApiKeysRoute
   '/api/admin/aws': typeof ApiAdminAwsRoute
   '/api/admin/general': typeof ApiAdminGeneralRoute
-  '/api/admin/migrations': typeof ApiAdminMigrationsRoute
   '/api/admin/resend-key': typeof ApiAdminResendKeyRoute
   '/api/admin/search-index': typeof ApiAdminSearchIndexRoute
   '/api/admin/update': typeof ApiAdminUpdateRoute
@@ -2280,7 +2272,6 @@ export interface FileRoutesById {
   '/api/admin/api-keys': typeof ApiAdminApiKeysRoute
   '/api/admin/aws': typeof ApiAdminAwsRoute
   '/api/admin/general': typeof ApiAdminGeneralRoute
-  '/api/admin/migrations': typeof ApiAdminMigrationsRoute
   '/api/admin/resend-key': typeof ApiAdminResendKeyRoute
   '/api/admin/search-index': typeof ApiAdminSearchIndexRoute
   '/api/admin/update': typeof ApiAdminUpdateRoute
@@ -2551,7 +2542,6 @@ export interface FileRouteTypes {
     | '/api/admin/api-keys'
     | '/api/admin/aws'
     | '/api/admin/general'
-    | '/api/admin/migrations'
     | '/api/admin/resend-key'
     | '/api/admin/search-index'
     | '/api/admin/update'
@@ -2809,7 +2799,6 @@ export interface FileRouteTypes {
     | '/api/admin/api-keys'
     | '/api/admin/aws'
     | '/api/admin/general'
-    | '/api/admin/migrations'
     | '/api/admin/resend-key'
     | '/api/admin/search-index'
     | '/api/admin/update'
@@ -3083,7 +3072,6 @@ export interface FileRouteTypes {
     | '/api/admin/api-keys'
     | '/api/admin/aws'
     | '/api/admin/general'
-    | '/api/admin/migrations'
     | '/api/admin/resend-key'
     | '/api/admin/search-index'
     | '/api/admin/update'
@@ -3345,7 +3333,6 @@ export interface RootRouteChildren {
   ApiAdminApiKeysRoute: typeof ApiAdminApiKeysRoute
   ApiAdminAwsRoute: typeof ApiAdminAwsRoute
   ApiAdminGeneralRoute: typeof ApiAdminGeneralRoute
-  ApiAdminMigrationsRoute: typeof ApiAdminMigrationsRoute
   ApiAdminResendKeyRoute: typeof ApiAdminResendKeyRoute
   ApiAdminSearchIndexRoute: typeof ApiAdminSearchIndexRoute
   ApiAdminUpdateRoute: typeof ApiAdminUpdateRoute
@@ -4070,13 +4057,6 @@ declare module '@tanstack/react-router' {
       path: '/api/admin/general'
       fullPath: '/api/admin/general'
       preLoaderRoute: typeof ApiAdminGeneralRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/admin/migrations': {
-      id: '/api/admin/migrations'
-      path: '/api/admin/migrations'
-      fullPath: '/api/admin/migrations'
-      preLoaderRoute: typeof ApiAdminMigrationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/admin/resend-key': {
@@ -6329,7 +6309,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminApiKeysRoute: ApiAdminApiKeysRoute,
   ApiAdminAwsRoute: ApiAdminAwsRoute,
   ApiAdminGeneralRoute: ApiAdminGeneralRoute,
-  ApiAdminMigrationsRoute: ApiAdminMigrationsRoute,
   ApiAdminResendKeyRoute: ApiAdminResendKeyRoute,
   ApiAdminSearchIndexRoute: ApiAdminSearchIndexRoute,
   ApiAdminUpdateRoute: ApiAdminUpdateRoute,

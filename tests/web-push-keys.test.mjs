@@ -7,8 +7,9 @@ import {
 } from "node:crypto";
 import test from "node:test";
 
-import { Redacted } from "../node_modules/effect/dist/index.js";
-import { vapidPublicKey, vapidPrivateKey } from "../push-keys.ts";
+import { Redacted } from "effect";
+
+import { vapidPublicKey, vapidPrivateKey } from "../stacks/web-push.ts";
 
 test("persisted Alchemy P-256 keys convert to a matching Web Push key pair without exposing the private key", () => {
 	const keys = generateKeyPairSync("ec", {

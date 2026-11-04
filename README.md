@@ -57,42 +57,20 @@ You choose the provider per domain and can switch anytime (see [Sending and rece
 
 ## Deploy
 
-1. **Deploy the app.** Click **Deploy to Cloudflare**. Keep the app name `mailflare`. Other Worker names will break the app.
-2. **Finish setup.** Open the deployed app and follow `/setup` to check the install and create your admin account.
-3. **Connect a domain.** Add a domain from the same Cloudflare account and choose which service receives its mail. Mailflare sets up Email Routing, or guides you through Resend or Amazon SES. Then create your first mailbox. Add Resend or AWS credentials on the domain page when you need them.
+Lab deploys to Cloudflare with [Alchemy](https://alchemy.run). `alchemy.run.ts` declares the Worker, D1, R2, queues, the Durable Object and, for `prod`, the mail domains; there is no Wrangler config.
 
-⚠️ **`CF_TOKEN` is required during deployment.** Create a scoped [Cloudflare API token with these permissions](https://github.com/hieunc229/mailflare/issues/24#issuecomment-5523686105) for the domains you want to connect:
-
-- All accounts: Email Sending:Edit, DNS Settings:Edit, Email Routing Addresses:Edit
-- All zones: DNS Settings:Edit, Email Routing Rules:Edit, Zone Settings:Edit, DNS:Edit
-
-### Deploy with an AI coding agent
-
-Paste the prompt below into an agent with terminal access. Give it your Cloudflare account ID and **two separate scoped API tokens** through the agent's secret input. Never put them in a public chat, repository, or committed file.
-
-- **Deployment token** (Wrangler uses it as `CLOUDFLARE_API_TOKEN`): scope it to the target account with **Workers Scripts Edit** (or **Workers Admin** if you see Cloudflare's newer roles), **D1 Edit**, **Workers R2 Storage Edit**, **Queues Edit**, and **Account Settings Read**. Add **Workers Routes Edit** for the target zone only if the agent should attach a custom domain or route. See Cloudflare's [token permissions](https://developers.cloudflare.com/fundamentals/api/reference/permissions/) and [Workers roles](https://developers.cloudflare.com/workers/authorization/workers/).
-- **Runtime token** (stored as the Worker secret `CF_TOKEN`): use the domain permissions above. Add **Email Sending Edit** to send mail. It must cover the zones you will connect in Mailflare.
-
-```text
-Install Mailflare from https://github.com/hieunc229/mailflare in my Cloudflare account.
-Ask me for my Cloudflare account ID, a scoped deployment API token, and a separate
-runtime CF_TOKEN through a secret input. Never print, commit, or place either token
-in a command argument or a tracked file. Use the deployment token only for Wrangler
-authentication (CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID).
-
-Read README.md, docs/deployment.md, and wrangler.jsonc first. Keep the Worker name
-exactly mailflare. In the selected account, create or reuse the D1 database
-mailflare, R2 bucket mailflare-raw, and Queues mailflare-inbound,
-mailflare-outbound, and mailflare-agent. Set the D1 database_id in the local
-Wrangler config without committing that account-specific ID. Install dependencies,
-run npm run deploy, and set the runtime CF_TOKEN as a Worker secret. Do not run
-remote D1 migrations manually; the /setup flow initializes the database.
-
-Give me the deployed URL and any remaining Cloudflare account actions. I will
-open /setup, create the first admin account, and connect my domain there.
+```bash
+npm install
+npx alchemy profile edit           # once: connect your Cloudflare account
+npm run deploy                     # your own stage, live_<user>_<worktree>
 ```
 
-See the [deployment guide](docs/deployment.md) for permissions, manual deployment, backups, and updates.
+Each deploy builds the app and applies pending migrations. Optional settings (Turnstile, AI provider, APNs, Resend/SES, B2/S3) are read from `.env`; see `.env.example`. Then:
+
+1. **Finish setup.** Open the deployed URL and follow `/setup` to create your admin account.
+2. **Connect a domain.** Add a domain and choose which service receives its mail. With a `CF_TOKEN`, Lab sets up Email Routing itself; without one, the domain page lists the DNS records to add by hand. Then create your first mailbox.
+
+The `prod` stage (lab.jbolabs.com) is deployed by CI; see [docs/jbo-deployment.md](docs/jbo-deployment.md) and the [deployment guide](docs/deployment.md).
 
 ### Self-host with Docker
 
@@ -111,20 +89,14 @@ See [docs/self-hosting.md](docs/self-hosting.md).
 ## Local development
 
 ```bash
-cp .dev.vars.example .dev.vars
 npm install
-npm run db:migrate:local
 npm run dev
 ```
 
-Add your Cloudflare credentials to `.dev.vars`, then open [http://localhost:3000](http://localhost:3000). To load sample data, run `npm run db:seed` while the dev server is running.
+Alchemy runs the Worker and every binding locally (D1, R2, queues, the Durable Object, email and cron handlers) and applies the migrations, then serves [http://localhost:3000](http://localhost:3000) (set `PORT` to change it; each worktree gets its own stage). Optional settings go in `.env`. To load sample data, run `npm run db:seed` while the dev server is running.
 
-The Cloudflare app uses TanStack Start, Vite+, and the Cloudflare Vite plugin, with local D1, R2, Queues, and Durable Objects. Remote bindings are off by default. To use Workers AI locally, log in with Wrangler, set `CLOUDFLARE_ACCOUNT_ID`, and run `CLOUDFLARE_REMOTE_BINDINGS=true npm run dev`.
-
-- `npm run build`: build the full Worker.
-- `npm run start`: preview that build locally.
-- `npm run deploy`: build and deploy.
-- `npm run lint`: run Oxlint with the React and project rules. Run `npm run typecheck` separately.
+- `npm run typecheck`, `npm run lint`, `npm test`: the checks CI runs.
+- `npm run dev:destroy`: remove this worktree's dev stage.
 
 The Node/Docker runtime uses the same TanStack Start HTTP handler with `build:node`, `start:node`, and `dev:node`.
 

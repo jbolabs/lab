@@ -48,24 +48,13 @@ A sending-only Resend key cannot add domains or webhooks. Replace it with a full
 - **Sandbox.** An account in the SES sandbox can send only to verified addresses. Request production access in the SES console.
 - **Subscription pending.** The SNS subscription confirms itself when SNS calls the endpoint; the checklist shows it as not ready until then. Use **Check again** after a minute.
 
-## D1 error 7404: Database could not be found
+## A deploy fails on a migration
 
-D1 database IDs belong to a specific Cloudflare account. This error commonly means `wrangler.jsonc` contains an ID copied from another account.
-
-For a reusable one-click deployment repository, remove the committed `database_id` and keep only `database_name`. Cloudflare can then provision the database in the target account.
-
-For remote migrations after the first deployment:
-
-1. Open the Worker's **Settings → Bindings** page in Cloudflare.
-2. Open the `DB` D1 binding and copy its database ID.
-3. Add that ID to your local `wrangler.jsonc`.
-4. Run `npm run db:migrate:remote`.
-
-Do not commit that account-specific ID to a reusable public repository.
+Alchemy applies pending files from `drizzle/migrations` on every deploy and stops at the first one that fails, before the new Worker is uploaded. Fix it with a new migration file; never edit one that has been applied. Applied history lives in the database's `__alchemy_migrations` table.
 
 ## Scheduled backups are not running
 
-Deploy the complete Worker with `npm run deploy`. A local development server or a source-only update does not provision the cron trigger declared in `wrangler.jsonc`.
+Cron triggers are declared in `alchemy.run.ts` and provisioned by a deploy; `npm run dev` only simulates them (`/cdn-cgi/handler/scheduled`).
 
 Also confirm that automatic backups are enabled under **Admin → Backups** and that the Worker has its `DB` and `BUCKET` bindings.
 
@@ -73,8 +62,7 @@ Also confirm that automatic backups are enabled under **Admin → Backups** and 
 
 Confirm that:
 
-- The deployed Worker is named `mailflare`.
-- `services[].service` in `wrangler.jsonc` is also `mailflare`.
+- The deployed Worker is the one `CF_EMAIL_WORKER_NAME` names (`mailflare` in prod, from `stacks/config.ts`).
 - Email Routing is enabled for the domain in Cloudflare.
 - The mailbox has an Email Routing rule pointing to the Worker.
 - If the domain receives through Resend or Amazon SES instead, its receiving checklist is all green, the MX record points at that provider, and `APP_URL` is a public HTTPS address.

@@ -1,4 +1,3 @@
-import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
@@ -25,14 +24,7 @@ export default defineConfig({
 		},
 	},
 	plugins: [
-		...(node
-			? []
-			: [
-					cloudflare({
-						remoteBindings: process.env.CLOUDFLARE_REMOTE_BINDINGS === "true",
-						viteEnvironment: { name: "ssr" },
-					}),
-				]),
+		// On Workers, Alchemy adds its Cloudflare plugin (`alchemy.run.ts`).
 		tanstackStart({
 			server: { entry: node ? "./server.ts" : "../worker.ts" },
 			vite: { installDevServerMiddleware: node ? true : undefined },

@@ -1,36 +1,46 @@
 # Lab deployment
 
-`lab.jbolabs.com`, its Worker, D1, R2 bucket, queues, Durable Object, runtime token and Mailflare-specific routing/sending configuration are the existing Alchemy **`mail` / `prod`** stack, moved from `jbolabs/jbolabs:stacks/mail.ts` to `deployment/alchemy.run.ts`. Resource IDs and physical names are unchanged. The remote Cloudflare state store keys resources by stack, stage and logical resource ID, not repository path. No export/import, re-creation or cloud destroy is part of this move.
+Lab is one Alchemy stack, `alchemy.run.ts`, with its config, optional settings and CI stack in `stacks/`. It owns the Worker, D1, R2, queues, the realtime Durable Object, the runtime API token and Lab's mail routing and sending on its zones. Shared studio infrastructure (registrar, zones, `mail.jbolabs.com` site sending, jbolabs.com routing enablement) stays in `jbolabs/jbolabs`.
 
-Shared studio infrastructure stays in `jbolabs/jbolabs`: registrar/zone, `mail.jbolabs.com` site-sending subdomain, jbolabs.com Email Routing enablement and the verified forwarding destination. Mailflare keeps its catch-all and product-domain routing in the same existing stack so no resources need splitting between state owners. `shouldertap.app` retains its externally managed DMARC and its explicit support rule.
+## Stages
 
-## Toolchains and commands
+| Stage | What it is | Deployed by |
+| --- | --- | --- |
+| `prod` | lab.jbolabs.com and the mail domains | CI, on every push to `main` |
+| `pr-<n>` | A preview on workers.dev with a fresh database and no mail domains | CI, when PR `n` has the `preview` label; destroyed when it closes or loses the label |
+| `dev_<user>_<worktree>` | `npm run dev`, every binding local | You |
+| `live_<user>_<worktree>` | `npm run deploy`, your own cloud sandbox | You |
 
-The app keeps its npm/TanStack Start/Vite toolchain. `deployment/` has a separate pinned npm lockfile for the same Alchemy 2 beta.82 and Effect 4.0.4 (with SQL adapters pinned to the former owner’s compatible 4.0.2 versions) used by the former stack owner. Use Bun 1.4.2 for the Alchemy CLI; do not upgrade Alchemy during the ownership handoff.
+Prod keeps the stack name `mail`, every logical ID and every physical name (`mailflare`, `mailflare-raw`, `mailflare-inbound`…) it was created with. Its database, bucket, Web Push keys, routing and sending subdomains are retained: a destroy leaves them in place. Never rename them, and never use Wrangler or raw API writes against them.
+
+## Deploying prod
+
+Merging to `main` runs `.github/workflows/lab.yml`: lint, formatting, types, tests and the Node build, then `alchemy deploy --stage prod` in the `production` environment and a smoke request to `/api/setup/status`. Run `npx alchemy plan --stage prod --profile admin` beforehand to read the plan for a risky change. Deploying prod from a laptop needs explicit operator authorization.
+
+Rollback is a reviewed revert merged to `main`. Never `destroy` prod or restore an older database to roll back: that can discard delivered mail.
+
+## Migrations
+
+Migrations are the SQL files in `drizzle/migrations/`. Every deploy (and every `npm run dev`) applies pending ones before the new Worker goes live, recorded in `__alchemy_migrations`. Prod's first deploy on Alchemy beta.85 adopts the old `d1_migrations` history one way; that table is then frozen. Migrations must stay additive: the old Worker serves until the new one is up.
+
+## Optional settings
+
+`stacks/settings.ts` lists the settings the Worker can be deployed with (Turnstile, AI provider, APNs, Resend/SES, B2/S3). Each is bound only when set: from `.env` locally (see `.env.example`), and from the `production` environment's secrets in CI. To add one, add it to `stacks/settings.ts`, `.env.example` and the `production` job's `env` in `lab.yml`; `tests/stack-settings.test.mjs` fails until all three agree.
+
+## CI stack
+
+`stacks/github.ts` (stack `mailflare-ci`, stage `ci`) creates the `production` environment (main only) with its deploy token, the `preview` environment with a token that cannot touch the mail zones, and the `preview` label. Apply it from a trusted machine with the admin profile:
 
 ```sh
-npm ci --no-audit --no-fund
-npm run infra:install
-npm run infra:check
-ALCHEMY_PROFILE=admin npm run plan:prod
+npm run ci:plan
+npm run ci:deploy
 ```
 
-The production plan builds the Worker, then runs `alchemy plan --stage prod --no-input`. It must find the same Cloudflare account/state store and existing resources. Stop if it requests a state-store bootstrap or upgrade. Never add `--yes` to a plan to silence that condition. A wrong stage/account fails closed. The state provider explicitly forces `updateStateStore: false`, so application `--yes` approval cannot bootstrap or upgrade the shared state store. Do not export local Cloudflare API tokens: use the existing Alchemy profile.
+Both tokens expire on the date in that file. Rotate them before then by bumping `generation` and running `ci:deploy`. Applying this stack needs explicit operator authorization.
 
-`npm run deploy`, `deploy:worker` and `deploy:local` route to the guarded Alchemy production entry. `upload` refuses with a migration message; a staged-version upload is never silently converted into a deployment. They refuse unconfigured shells, PR refs, other repositories, disabled releases and the wrong account before building or reaching Alchemy. The fork does not use inherited Wrangler deploy/upload commands for production. No D1 migrations are run automatically; apply pending migrations through the existing Mailflare operator-controlled UI.
+## State store
 
-## Handoff and enablement (separate operator authorization)
-
-1. Merge the fork ownership PR with production still disabled. Merge the parent retirement PR only after this destination exists and its read-only plan has been checked. Do not deploy/destroy the old source stack or let two repositories release it.
-2. Compare old/new plans at the same application revision using the same `admin` profile. The destination should propose no creates, replacements or deletes of existing resources. A Worker code update for merged application fixes is separate from the source move. Confirm DB/bucket/queue and Durable Object identities before approving any deployment.
-3. With separate authorization, plan/bootstrap `deployment/github.ts` using `ALCHEMY_PROFILE=admin npm run plan:github` / `deploy:github`. This creates the fork's `production` environment, scoped expiring deploy token and account variable. Only `main` is permitted. The token is generated by Alchemy and delivered directly to a GitHub environment secret; never print, paste or commit it.
-4. Bootstrap defaults `DEPLOYS_ENABLED` to **false**. After the state/resource plan is approved and the old release path is retired, explicitly authorize enablement and rerun the CI stack with the nonsecret setting `MAILFLARE_ENABLE_DEPLOYS=true`. Do not bootstrap from a PR workflow. Its account-token permission is required because the runtime stack manages its own zone-scoped onboarding token; restrict this credential to the production environment/main workflow.
-5. Once enabled, a verified `main` push or manual production workflow deploys from this repository. All tests/types and credential-free builds must pass first. PR verification receives no production environment, token or Infisical values. The deployment job rebuilds the Worker after the Node verification build, which shares `dist/`. TanStack Start produces `dist/server/index.js` and its sibling server modules plus `dist/client` assets; the existing `bundle: false` Worker uploads these modules unchanged.
-6. Check the live inbox, OAuth metadata/consent and a controlled mail flow after an authorized deployment. Local tests/plans are not live publication proof. Pending application PRs (including Drive/docs PR #3) are not authorized for merge/deploy by this migration.
-
-To pause releases, separately authorize rerunning the CI stack with `MAILFLARE_ENABLE_DEPLOYS=false`. Rotate its token before expiry by bumping `generation` in `deployment/github.ts` and deliberately passing the intended enablement setting. Never run `destroy` as rollback. Before cutover, reverting the parent retirement PR restores the old source entry; after cutover, first disable the fork release path and ensure only one owner can deploy, then restore the old entry against the same unchanged state.
-
-Parent pin-only PR #19 is a transitional application release; do not close or take over its owning thread automatically. Future app releases require no parent pin once this handoff is complete.
+Every repo on the account shares one Cloudflare state store. Alchemy beta.85 upgrades it to v8, one way. After that, never run an older Alchemy against it from any repo or CI job: it can lose the store's encryption key, which nothing recovers. Upgrade every repo on the account to beta.85 or later before it deploys again.
 
 ## Lab rename
 
@@ -42,14 +52,12 @@ Rollback uses a reviewed revert deployed through the same stack. Never destroy/r
 
 ## iPhone web app notifications
 
-The runtime stack declares a retained `WebPushKeys` P-256 key pair. Alchemy keeps it in state across releases, converts the public key to Web Push format, and binds the private key as a Worker secret. `VAPID_SUBJECT` is the installation HTTPS origin. No extra CI secret or raw Cloudflare write is needed. Do not replace or rename this resource: that would invalidate browser subscriptions.
-
-Before the first authorized rollout of this resource, verify whether the existing Worker has VAPID keys configured outside this stack. If it does, stop and preserve/import that pair rather than silently rotating it. Review the production plan: the new key resource and the existing Worker update are expected; existing storage and mail resource identities must stay unchanged. Planning and deployment still require the operator authorization described above.
+`alchemy.run.ts` declares a `WebPushKeys` P-256 key pair, retained in prod. Alchemy keeps it in state across releases, converts the public key to Web Push format, and binds the private key as a Worker secret. `VAPID_SUBJECT` is the installation HTTPS origin. No extra CI secret or raw Cloudflare write is needed. Do not replace or rename this resource: that would invalidate browser subscriptions.
 
 On iPhone, add the Lab to the Home Screen from Safari's Share menu, open that icon, and enable **Settings → Inbox → Notifications → New email notifications**. Permission is requested only from that switch. Existing opt-ins refresh on app launch, resume, reconnect and account changes. Turning the switch off prevents automatic renewal. Each received push displays an alert even when the app is open, as Safari requires.
 
-After an authorized deployment, verify the authenticated `/api/push/config` reports `enabled: true` without exposing private keys. On a physical iPhone, enable notifications, lock the phone with the app closed, and deliver a controlled non-spam email. Confirm the alert, unread badge, and tap-through to the message; repeat with the app open, after relaunch, and after toggling off (no alerts). Also verify blocked permission and the Safari-tab installation guidance. Local tests do not establish physical-device delivery or delivery latency.
+After a deploy that touches push, verify the authenticated `/api/push/config` reports `enabled: true` without exposing private keys. On a physical iPhone, enable notifications, lock the phone with the app closed, and deliver a controlled non-spam email. Confirm the alert, unread badge, and tap-through to the message; repeat with the app open, after relaunch, and after toggling off (no alerts). Also verify blocked permission and the Safari-tab installation guidance. Local tests do not establish physical-device delivery or delivery latency.
 
 ## Framework runtime
 
-TanStack Start handles page rendering, nested layouts, server functions and HTTP routes. `worker.ts` retains the existing mail, queue, cron and RealtimeHub entrypoints and delegates ordinary HTTP to `src/server.ts`. The Node build uses that same HTTP handler with the existing SQLite, SMTP and scheduler runtime. Run `npm run build`, `npm run build:node`, `npm run typecheck` and `npm test` locally; neither build plans or changes cloud resources. Source components remain under `src/app`, but routing is explicit in `src/routes` and generated into `src/routeTree.gen.ts` by the Start plugin. Public `NEXT_PUBLIC_TURNSTILE_SITE_KEY` remains a supported build input for installation compatibility. Fonts are bundled locally.
+TanStack Start handles page rendering, nested layouts, server functions and HTTP routes. `worker.ts` retains the existing mail, queue, cron and RealtimeHub entrypoints and delegates ordinary HTTP to `src/server.ts`. The Node build uses that same HTTP handler with the existing SQLite, SMTP and scheduler runtime. Alchemy builds the Worker with Vite on deploy and in `npm run dev`; `npm run build:node`, `npm run typecheck` and `npm test` run locally without cloud credentials. Source components remain under `src/app`, but routing is explicit in `src/routes` and generated into `src/routeTree.gen.ts` by the Start plugin. Public `NEXT_PUBLIC_TURNSTILE_SITE_KEY` remains a supported build input for installation compatibility. Fonts are bundled locally.

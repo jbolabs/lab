@@ -39,7 +39,8 @@ export default defineConfig({
 				"worker.ts",
 				"server/**",
 				"scripts/**",
-				"deployment/**",
+				"alchemy.run.ts",
+				"stacks/**",
 				"deploy/**",
 			],
 			rules: {
